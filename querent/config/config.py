@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 from querent.lib.logger import logger
 
-CONFIG_FILE = "config.yaml"
+CONFIG_FILE = "querent.config.yaml"
 
 
 class Config(BaseSettings):
