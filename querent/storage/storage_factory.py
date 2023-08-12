@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from querent.storage.storage_base import Storage, StorageBackend, StorageResolverError
+from querent.storage.storage_base import Storage, StorageResolverError
+from querent.config.storage_config import StorageBackend, StorageBackendFlavor
 
 class StorageFactory(ABC):
     @abstractmethod

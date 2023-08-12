@@ -5,14 +5,6 @@ from asyncio import AbstractWriter
 from enum import Enum
 from enum import auto
 
-class StorageBackend(Enum):
-    LocalFile = auto()
-    Ram = auto()
-    # Add other backend types here
-
-class StorageResolverError(Exception):
-    pass
-
 class Storage(ABC):
     @abstractmethod
     async def check_connectivity(self) -> None:
@@ -58,3 +50,7 @@ class Storage(ABC):
     @abstractmethod
     def uri(self) -> str:
         pass
+
+
+class StorageResolverError(Exception):
+    pass
