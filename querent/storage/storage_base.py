@@ -50,7 +50,3 @@ class Storage(ABC):
     @abstractmethod
     def uri(self) -> str:
         pass
-
-
-class StorageResolverError(Exception):
-    pass
