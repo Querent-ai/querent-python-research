@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from pathlib import Path
 from asyncio import AbstractWriter
+from enum import Enum
+from enum import auto
 
 class Storage(ABC):
     @abstractmethod
@@ -48,3 +50,7 @@ class Storage(ABC):
     @abstractmethod
     def uri(self) -> str:
         pass
+
+
+class StorageResolverError(Exception):
+    pass
