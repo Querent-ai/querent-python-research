@@ -8,7 +8,24 @@
 #
 # Config file format version.
 #
-version: 0.1
+Querent:
+  version: 0.1
+
+  Ingester:
+    Type:
+    AWSIngest:
+      param1:
+      param2:
+    GCPIngest:
+      param1:
+      param2:
+    WebScraper:
+      param1:
+      param2:
+    LL:
+      param1:
+      param2:
+
 #
 # Node ID. Must be unique within a cluster. If not set, a random node ID is generated on each startup.
 #
