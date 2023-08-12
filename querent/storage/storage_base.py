@@ -2,6 +2,16 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from pathlib import Path
 from asyncio import AbstractWriter
+from enum import Enum
+from enum import auto
+
+class StorageBackend(Enum):
+    LocalFile = auto()
+    Ram = auto()
+    # Add other backend types here
+
+class StorageResolverError(Exception):
+    pass
 
 class Storage(ABC):
     @abstractmethod
