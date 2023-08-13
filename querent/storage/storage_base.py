@@ -2,13 +2,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import IO
 
+from querent.storage.payload import PutPayload
+
 class Storage(ABC):
     @abstractmethod
     async def check_connectivity(self) -> None:
         pass
 
     @abstractmethod
-    async def put(self, path: Path, payload) -> None:
+    async def put(self, path: Path, payload: PutPayload) -> None:
         pass
 
     @abstractmethod

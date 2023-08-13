@@ -4,7 +4,7 @@ from querent.storage.storage_base import Storage
 from querent.storage.storage_errors import StorageResolverError, StorageErrorKind
 from querent.common.uri import Protocol, Uri
 from querent.storage.storage_factory import StorageFactory
-from querent.storage.local.local_storage import LocalStorageFactory
+from querent.storage.local.local_file_storage import LocalStorageFactory
 class StorageResolver:
     def __init__(self):
         self.storage_factories: Dict[StorageBackend, StorageFactory] = {
