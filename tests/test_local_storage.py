@@ -38,7 +38,7 @@ def test_storage_resolver(temp_dir):
     
     storage = asyncio.run(resolver.resolve(uri))
         
-    payload = querent_payload.BytesPayload(b"ok")
+    payload = querent_payload.BytesPayload(b"ok testing")
     asyncio.run(storage.put(Path(temp_dir + "/test.txt"), payload))
     
     file_path = Path(temp_dir, "test.txt")
@@ -46,4 +46,4 @@ def test_storage_resolver(temp_dir):
     
     with open(file_path, "rb") as file:
         content = file.read()
-        assert content == b"ok"
+        assert content == b"ok testing"
