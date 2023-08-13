@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from querent.storage.local_storage import LocalFileStorage
 from querent.common.uri import Uri
-from querent.storage.storage_base import PutPayload
+from querent.storage.payload import PutPayload
 
 @pytest.fixture
 def temp_dir():

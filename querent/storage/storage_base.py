@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 from pathlib import Path
-from asyncio import AbstractWriter
-from enum import Enum
-from enum import auto
+from typing import IO
 
 class Storage(ABC):
     @abstractmethod
@@ -15,7 +12,7 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    async def copy_to(self, path: Path, output: AbstractWriter) -> None:
+    async def copy_to(self, path: Path, output: IO[bytes]) -> None:
         pass
 
     async def copy_to_file(self, path: Path, output_path: Path) -> None:
