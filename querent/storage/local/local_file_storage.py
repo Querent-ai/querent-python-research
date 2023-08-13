@@ -192,10 +192,9 @@ class LocalStorageFactory(StorageFactory):
     def backend(self) -> StorageBackend:
         return StorageBackend.LocalFile
 
-    async def resolve(self, uri: str) -> Storage:
-        parsed_uri = Uri(uri)  # Ensure you have the Uri class imported and defined
-        if parsed_uri.protocol == Protocol.File:
-            root_path = Path(parsed_uri.path)
+    async def resolve(self, uri: Uri) -> Storage:
+        if uri.protocol == Protocol.File:
+            root_path = Path(uri.path)
             return LocalFileStorage(uri, root_path)
         else:
             raise ValueError("Unsupported protocol")

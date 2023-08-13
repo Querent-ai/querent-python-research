@@ -11,11 +11,10 @@ class StorageResolver:
             StorageBackend.LocalFile: LocalStorageFactory(),
         }
 
-    def resolve(self, uri_str: str) -> Optional[Storage]:
-        uri = Uri(uri_str)
+    def resolve(self, uri: Uri) -> Optional[Storage]:
         backend = self._determine_backend(uri.protocol)
         if backend in self.storage_factories:
-            return self.storage_factories[backend].resolve(uri_str)
+            return self.storage_factories[backend].resolve(uri)
         else:
             raise StorageResolverError(
                 StorageErrorKind.NotSupported, backend, "Unsupported backend"
