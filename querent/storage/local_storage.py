@@ -11,6 +11,7 @@ from fnv import hash
 from asyncio.futures import Future
 from asyncio import Lock
 import tempfile
+import concurrent.futures
 
 class AsyncDebouncer(K, V: Clone):
     def __init__(self):
