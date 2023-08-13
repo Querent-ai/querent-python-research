@@ -1,27 +1,30 @@
-from typing import Dict
-from querent.storage.storage_base import Storage, StorageBackend, StorageResolverError
-
+from typing import Dict, Optional, Union
+from querent.config.storage_config import StorageBackend
+from querent.storage.storage_base import Storage
+from querent.storage.storage_errors import StorageResolverError, StorageErrorKind
+from querent.common.uri import Protocol, Uri
+from querent.storage.storage_factory import StorageFactory
+from querent.storage.local.local_storage import LocalStorageFactory
 class StorageResolver:
     def __init__(self):
-        self.storage_factories: Dict[StorageBackend, StorageFactory] = {}
+        self.storage_factories: Dict[StorageBackend, StorageFactory] = {
+            StorageBackend.LocalFile: LocalStorageFactory(),
+        }
 
-    def register_factory(self, backend: StorageBackend, factory: StorageFactory):
-        self.storage_factories[backend] = factory
-
-    async def resolve(self, uri: str) -> Optional[Storage]:
-        # Parse the URI and determine the backend
-        backend = ...
+    def resolve(self, uri_str: str) -> Optional[Storage]:
+        uri = Uri(uri_str)
+        backend = self._determine_backend(uri.protocol)
         if backend in self.storage_factories:
-            return await self.storage_factories[backend].resolve(uri)
+            return self.storage_factories[backend].resolve(uri_str)
         else:
-            raise StorageResolverError("Unsupported backend")
+            raise StorageResolverError(
+                StorageErrorKind.NotSupported, backend, "Unsupported backend"
+            )
 
-# Usage example
-resolver = StorageResolver()
-resolver.register_factory(StorageBackend.LocalFile, LocalFileStorageFactory())
-resolver.register_factory(StorageBackend.Ram, RamStorageFactory())
-# Add more factories for other backends
-
-# Resolve a storage instance
-uri = "localfile:///path/to/file"
-storage = resolver.resolve(uri)
+    def _determine_backend(self, protocol: Protocol) -> StorageBackend:
+        if protocol.is_file_storage():
+            return StorageBackend.LocalFile
+        else:
+            raise StorageResolverError(
+                StorageErrorKind.NotSupported, "Unknown backend", "Unknown backend"
+            )

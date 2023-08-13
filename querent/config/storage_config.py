@@ -3,15 +3,13 @@ from typing import Optional
 from pydantic import BaseModel
 
 class StorageBackend(str, Enum):
-    Azure = "azure"
-    File = "file"
-    Ram = "ram"
-    S3 = "s3"
+    LocalFile = "localfile"
+    Redis = "redis"
 
 class StorageBackendFlavor(str, Enum):
-    DigitalOcean = "digital_ocean"
+    DigitalOcean = "do"
     Garage = "garage"
-    Gcs = "gcs"
+    Gcs = "gcp"
     MinIO = "minio"
 
 class StorageConfig(BaseModel):
@@ -21,22 +19,18 @@ class StorageConfig(BaseModel):
     class Config:
         use_enum_values = True
 
-class AzureStorageConfig(BaseModel):
-    account_name: str
-    # Other Azure-specific config fields
+class LocalFileStorageConfig(BaseModel):
+    root_path: str
 
-class S3StorageConfig(BaseModel):
-    access_key_id: str
-    secret_access_key: str
-    region: str
-    endpoint: str
-    force_path_style_access: bool
-    disable_multi_object_delete: bool
-    disable_multipart_upload: bool
-    # Other S3-specific config fields
+class StorageConfigWrapper(BaseModel):
+    backend: StorageBackend
+    config: Optional[BaseModel] = None
 
-class FileStorageConfig(BaseModel):
-    pass
-
-class RamStorageConfig(BaseModel):
-    pass
+    @classmethod
+    def from_storage_config(cls, storage_config: StorageConfig):
+        if storage_config.backend == StorageBackend.LocalFile:
+            return cls(backend=StorageBackend.LocalFile, config=LocalFileStorageConfig())
+        elif storage_config.backend == StorageBackend.Redis:
+            raise NotImplementedError("Redis storage configuration is not implemented yet")
+        else:
+            raise ValueError(f"Unsupported storage backend: {storage_config.backend}")
