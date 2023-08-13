@@ -6,6 +6,7 @@ import tempfile
 import shutil
 from querent.common.uri import Protocol, Uri
 from querent.config.storage_config import StorageBackend
+from querent.storage.payload import PutPayload
 
 from querent.storage.storage_errors import StorageError, StorageErrorKind
 from querent.storage.storage_base import Storage
@@ -97,8 +98,10 @@ class DebouncedStorage:
         return self.underlying.uri()
 
 class LocalFileStorage(Storage):
-    def __init__(self, uri, root):
+    def __init__(self, uri: Uri, root=None):
         self.uri = uri
+        if not root:
+            root = Path(uri.path)
         self.root = root
         self.cache_lock = Lock()
 
@@ -125,24 +128,41 @@ class LocalFileStorage(Storage):
                     f"Failed to create directories at {self.root}: {e}",
                 )
 
-    async def put(self, path, payload):
+    async def put(self, path: Path, payload: PutPayload):
         full_path = await self.full_path(path)
         parent_dir = full_path.parent
         try:
             parent_dir.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(dir=parent_dir, delete=False) as temp_file:
-                temp_path = Path(temp_file.name)
-                temp_file.close()
-                await asyncio.to_thread(shutil.copyfileobj, payload.byte_stream(), temp_path)
-                temp_path.rename(full_path)
+            payload_len = payload.len()
+            if payload_len > 0:
+                with open(full_path, "wb") as file:
+                    for i in range(0, payload_len, 1024):
+                        chunk = await payload.range_byte_stream(i, i + 1024)
+                        file.write(chunk)
         except Exception as e:
             raise StorageError(
                 StorageErrorKind.Io,
                 f"Failed to write file to {full_path}: {e}",
             )
 
-    async def delete_single_file(self, relative_path):
-        full_path = await self.full_path(relative_path)
+    async def copy_to(self, path, output):
+        full_path = await self.full_path(path)
+        with open(full_path, "rb") as file:
+            await asyncio.to_thread(shutil.copyfileobj, file, output)
+
+    async def get_slice(self, path, start, end):
+        full_path = await self.full_path(path)
+        with open(full_path, "rb") as file:
+            file.seek(start)
+            return file.read(end - start)
+
+    async def get_all(self, path):
+        full_path = await self.full_path(path)
+        with open(full_path, "rb") as file:
+            return file.read()
+
+    async def delete(self, path):
+        full_path = await self.full_path(path)
         try:
             full_path.unlink()
         except FileNotFoundError:
@@ -153,17 +173,28 @@ class LocalFileStorage(Storage):
                 f"Failed to delete file {full_path}: {e}",
             )
 
-    async def delete(self, path):
-        await self.delete_single_file(path)
+    async def bulk_delete(self, paths):
+        for path in paths:
+            await self.delete(path)
+
+    async def exists(self, path):
+        full_path = await self.full_path(path)
+        return full_path.exists()
+
+    async def file_num_bytes(self, path):
+        full_path = await self.full_path(path)
+        return full_path.stat().st_size
+
+    def uri(self):
+        return str(self.uri)
 
 class LocalStorageFactory(StorageFactory):
     def backend(self) -> StorageBackend:
         return StorageBackend.LocalFile
 
-    async def resolve(self, uri: str) -> Storage:
-        parsed_uri = Uri(uri)  # Ensure you have the Uri class imported and defined
-        if parsed_uri.protocol == Protocol.File:
-            root_path = Path(parsed_uri.path)
+    async def resolve(self, uri: Uri) -> Storage:
+        if uri.protocol == Protocol.File:
+            root_path = Path(uri.path)
             return LocalFileStorage(uri, root_path)
         else:
             raise ValueError("Unsupported protocol")

@@ -62,6 +62,10 @@ class Uri:
     def extension(self) -> Optional[str]:
         return Path(self.uri).suffix.lstrip(".")
 
+    @property
+    def path(self) -> str:
+        return self.uri[self.protocol_idx + len(self.PROTOCOL_SEPARATOR) :]
+    
     def as_str(self) -> str:
         return self.uri
 

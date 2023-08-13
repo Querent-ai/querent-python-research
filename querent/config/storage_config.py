@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class StorageBackend(str, Enum):
     LocalFile = "localfile"
     Redis = "redis"
-
+    
 class StorageBackendFlavor(str, Enum):
     DigitalOcean = "do"
     Garage = "garage"
@@ -22,6 +22,11 @@ class StorageConfig(BaseModel):
 class LocalFileStorageConfig(BaseModel):
     root_path: str
 
+class RedisStorageConfig(BaseModel):
+    host: str
+    port: int
+    password: Optional[str] = None  
+    
 class StorageConfigWrapper(BaseModel):
     backend: StorageBackend
     config: Optional[BaseModel] = None

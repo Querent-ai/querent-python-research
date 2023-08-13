@@ -1,9 +1,11 @@
+import asyncio
 import tempfile
 from pathlib import Path
 import pytest
-from querent.storage.local.local_storage import LocalFileStorage
+from querent.storage.local.local_file_storage import LocalFileStorage, LocalStorageFactory
 from querent.common.uri import Uri
-from querent.storage.payload import PutPayload
+import querent.storage.payload as querent_payload
+from querent.storage.storage_resolver import StorageResolver
 
 @pytest.fixture
 def temp_dir():
@@ -12,11 +14,36 @@ def temp_dir():
     temp_dir.cleanup()
 
 def test_local_storage(temp_dir):
-    storage = LocalFileStorage(temp_dir)
-    uri = Uri("file://test.txt")
-    payload = PutPayload(b"test")
-    storage.put(uri, payload)
-    assert Path(temp_dir, uri.path).exists()
-    assert storage.get(uri).payload == b"test"
-    storage.delete(uri)
-    assert not Path(temp_dir, uri.path).exists()
+    uri = Uri("file://" + temp_dir)  # Use the temp_dir as the base URI
+    storage = LocalFileStorage(uri, Path(temp_dir))  # Provide the 'uri' argument only
+    payload = querent_payload.BytesPayload(b"test")
+    
+    print(f"Temp dir: {temp_dir}")
+    print(f"URI: {uri}")
+
+    # Put the payload
+    asyncio.run(storage.put(Path(temp_dir + "/test.txt"), payload))
+    file_path = Path(temp_dir, "test.txt")
+    print(f"File path: {file_path}")
+
+    assert file_path.exists()
+    with open(file_path, "rb") as file:
+        content = file.read()
+        print(f"File content: {content.decode('utf-8')}")
+        assert content == b"test"
+
+def test_storage_resolver(temp_dir):
+    uri = Uri("file://" + temp_dir)  # Use the temp_dir as the base URI
+    resolver = StorageResolver()
+    
+    storage = asyncio.run(resolver.resolve(uri))
+        
+    payload = querent_payload.BytesPayload(b"ok")
+    asyncio.run(storage.put(Path(temp_dir + "/test.txt"), payload))
+    
+    file_path = Path(temp_dir, "test.txt")
+    assert file_path.exists()
+    
+    with open(file_path, "rb") as file:
+        content = file.read()
+        assert content == b"ok"
