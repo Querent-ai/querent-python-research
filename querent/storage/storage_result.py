@@ -1,7 +1,7 @@
 from typing import Any, Union
 
 class StorageResult:
-    def __init__(self, value: Any, error: Optional[str] = None):
+    def __init__(self, value: Any, error: str = None) -> None:
         self.value = value
         self.error = error
 

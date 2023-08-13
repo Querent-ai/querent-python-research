@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 import pytest
-from querent.storage.local_storage import LocalFileStorage
+from querent.storage.local.local_storage import LocalFileStorage
 from querent.common.uri import Uri
 from querent.storage.payload import PutPayload
 

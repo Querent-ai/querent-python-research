@@ -4,9 +4,12 @@ import asyncio
 from asyncio import Lock
 import tempfile
 import shutil
+from querent.common.uri import Protocol, Uri
+from querent.config.storage_config import StorageBackend
 
 from querent.storage.storage_errors import StorageError, StorageErrorKind
 from querent.storage.storage_base import Storage
+from querent.storage.storage_factory import StorageFactory
 
 class AsyncDebouncer:
     def __init__(self):
@@ -152,3 +155,15 @@ class LocalFileStorage(Storage):
 
     async def delete(self, path):
         await self.delete_single_file(path)
+
+class LocalStorageFactory(StorageFactory):
+    def backend(self) -> StorageBackend:
+        return StorageBackend.LocalFile
+
+    async def resolve(self, uri: str) -> Storage:
+        parsed_uri = Uri(uri)  # Ensure you have the Uri class imported and defined
+        if parsed_uri.protocol == Protocol.File:
+            root_path = Path(parsed_uri.path)
+            return LocalFileStorage(uri, root_path)
+        else:
+            raise ValueError("Unsupported protocol")
