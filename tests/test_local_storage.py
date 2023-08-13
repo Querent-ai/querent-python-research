@@ -11,16 +11,12 @@ def temp_dir():
     yield temp_dir.name
     temp_dir.cleanup()
 
-@pytest.mark.asyncio
-async def test_put(temp_dir):
-    uri = Uri("file:///path/to/storage")
-    storage = LocalFileStorage(uri, Path(temp_dir))
-    payload = PutPayload(b"test content")
-
-    # Test put method
-    await storage.put(Path("test.txt"), payload)
-    file_path = Path(temp_dir) / "test.txt"
-    assert file_path.exists()
-    with open(file_path, "rb") as file:
-        content = file.read()
-        assert content == b"test content"
+def test_local_storage(temp_dir):
+    storage = LocalFileStorage(temp_dir)
+    uri = Uri("file://test.txt")
+    payload = PutPayload(b"test")
+    storage.put(uri, payload)
+    assert Path(temp_dir, uri.path).exists()
+    assert storage.get(uri).payload == b"test"
+    storage.delete(uri)
+    assert not Path(temp_dir, uri.path).exists()
