@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from enum import Enum
 from querent.collectors.collector_base import Collector
-from querent.collectors.collector_errors import CollectorResolverError, ConnectorResolverError, CollectorErrorKind
+from querent.collectors.collector_errors import CollectorResolverError, CollectorErrorKind
 from querent.config.collector_config import CollectorBackend
 
 

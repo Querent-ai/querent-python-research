@@ -5,10 +5,11 @@ from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend, FSCollectConfig
+from querent.config.collector_config import CollectorBackend, FSCollectorConfig
+
 
 class FSCollector(Collector):
-    def __init__(self, config: FSCollectConfig):
+    def __init__(self, config: FSCollectorConfig):
         self.root_dir = Path(config.root_path)
         self.chunk_size = config.chunk_size
 
@@ -38,16 +39,18 @@ class FSCollector(Collector):
             for filename in filenames:
                 yield Path(dir_path) / filename
 
+
 class FSCollectorFactory(CollectorFactory):
     def __init__(self):
         pass
-    
+
     def backend(self) -> CollectorBackend:
         return CollectorBackend.LocalFile
 
     def resolve(self, uri: Uri) -> Collector:
-        config = FSCollectConfig(root_path=uri.path)
+        config = FSCollectorConfig(root_path=uri.path)
         return FSCollector(config)
+
 
 # Test Case
 async def test_fs_collector():
@@ -61,6 +64,7 @@ async def test_fs_collector():
     await collector.connect()
     await poll_and_print()
     await collector.disconnect()
+
 
 if __name__ == "__main__":
     asyncio.run(test_fs_collector())
