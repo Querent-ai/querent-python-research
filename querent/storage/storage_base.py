@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 from pathlib import Path
-from asyncio import AbstractWriter
+from typing import IO
+
+from querent.common.uri import Uri
+from querent.storage.payload import PutPayload
+from querent.storage.storage_result import StorageResult
 
 class Storage(ABC):
     @abstractmethod
@@ -9,27 +12,27 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    async def put(self, path: Path, payload) -> None:
+    async def put(self, path: Path, payload: PutPayload) -> StorageResult:
         pass
 
     @abstractmethod
-    async def copy_to(self, path: Path, output: AbstractWriter) -> None:
+    async def copy_to(self, path: Path, output: IO[bytes]) -> StorageResult:
         pass
 
-    async def copy_to_file(self, path: Path, output_path: Path) -> None:
+    async def copy_to_file(self, path: Path, output_path: Path) -> StorageResult:
         async with open(output_path, "wb") as output_file:
             await self.copy_to(path, output_file)
 
     @abstractmethod
-    async def get_slice(self, path: Path, start: int, end: int) -> bytes:
+    async def get_slice(self, path: Path, start: int, end: int) -> StorageResult:
         pass
 
     @abstractmethod
-    async def get_all(self, path: Path) -> bytes:
+    async def get_all(self, path: Path) -> StorageResult:
         pass
 
     @abstractmethod
-    async def delete(self, path: Path) -> None:
+    async def delete(self, path: Path) -> StorageResult:
         pass
 
     @abstractmethod
@@ -37,14 +40,14 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    async def exists(self, path: Path) -> bool:
+    async def exists(self, path: Path) -> StorageResult:
         pass
 
     @abstractmethod
-    async def file_num_bytes(self, path: Path) -> int:
+    async def file_num_bytes(self, path: Path) -> StorageResult:
         pass
 
     @property
     @abstractmethod
-    def uri(self) -> str:
+    def get_uri(self) -> Uri:
         pass
