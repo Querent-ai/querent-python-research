@@ -1,14 +1,14 @@
 from typing import Optional
+from querent.collectors.fs.fs_collector import FSCollector, FSCollectorFactory
 from querent.config.collector_config import CollectorBackend, ConnectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import CollectorResolverError, CollectorErrorKind
 from querent.common.uri import Protocol, Uri
-from querent.collectors.collector_factory import CollectorFactory
 
 class CollectorResolver:
     def __init__(self):
         self.collector_factories = {
-            ConnectorBackend.LocalFile: LocalFileCollectorFactory(),
+            ConnectorBackend.LocalFile: FSCollectorFactory(),
             # Add other collector factories as needed
         }
 

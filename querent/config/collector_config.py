@@ -12,8 +12,9 @@ class CollectConfig(BaseModel):
     class Config:
         use_enum_values = True
 
-class LocalFileCollectConfig(BaseModel):
+class FSCollectConfig(BaseModel):
     root_path: str
+    chunk_size: int = 1024
 
 class S3CollectConfig(BaseModel):
     bucket: str
