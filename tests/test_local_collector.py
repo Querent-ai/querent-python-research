@@ -1,33 +1,56 @@
 import asyncio
 from pathlib import Path
 import tempfile
-
+from querent.collectors.collector_resolver import CollectorResolver
 from querent.collectors.fs.fs_collector import FSCollectorFactory
+import pytest
 
-async def create_test_files(root_dir: Path):
-    test_text = "Hello, this is a test file!"
-    file_names = ["test_file1.txt", "test_file2.txt"]
-
-    for file_name in file_names:
-        file_path = root_dir / file_name
-        with open(file_path, "w") as file:
-            file.write(test_text)
+from querent.common.uri import Uri
+from querent.config.collector_config import CollectorBackend
 
 
-async def test_fs_collector():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_root = Path(temp_dir)
-        create_test_files(temp_root)
+@pytest.fixture
+def temp_dir():
+    temp_dir = tempfile.TemporaryDirectory()
+    yield temp_dir.name
+    temp_dir.cleanup()
 
-        collector = FSCollectorFactory().resolve(uri=temp_root)
 
-        async def poll_and_print():
-            async for result in collector.poll():
-                print(result)
+def test_fs_collector(temp_dir):
+    uri = Uri("file://" + temp_dir)
+    resolver = CollectorResolver()
+    collector = resolver.resolve(uri)
+    assert collector is not None
 
-        await collector.connect()
-        await poll_and_print()
-        await collector.disconnect()
+
+def test_fs_collector_factory():
+    factory = FSCollectorFactory()
+    assert factory.backend() == CollectorBackend.LocalFile
+
+
+def test_add_files_read_via_collector(temp_dir):
+    # add some random files to the temp dir
+    file_path = Path(temp_dir, "test.txt")
+    with open(file_path, "wb") as file:
+        file.write(b"test")
+    uri = Uri("file://" + temp_dir)
+    resolver = CollectorResolver()
+    collector = resolver.resolve(uri)
+    assert collector is not None
+
+    async def poll_and_print():
+        async for result in collector.poll():
+            print(result)
+
+    async def add_files():
+        file_path = Path(temp_dir, "test.txt")
+        with open(file_path, "wb") as file:
+            file.write(b"test")
+
+    async def main():
+        await asyncio.gather(add_files(), poll_and_print())
+
+    asyncio.run(main())
 
 
 if __name__ == "__main__":

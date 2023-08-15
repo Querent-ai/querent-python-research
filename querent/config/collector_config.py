@@ -43,7 +43,7 @@ class CollectConfigWrapper(BaseModel):
     def from_collect_config(cls, collect_config: CollectConfig):
         if collect_config.backend == CollectorBackend.LocalFile:
             return cls(
-                backend=CollectorBackend.LocalFile, config=LocalFileCollectConfig()
+                backend=CollectorBackend.LocalFile, config=FSCollectorConfig()
             )
         elif collect_config.backend == CollectorBackend.S3:
             return cls(backend=CollectorBackend.S3, config=S3CollectConfig())

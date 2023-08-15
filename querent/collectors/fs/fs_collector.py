@@ -6,6 +6,7 @@ from querent.collectors.collector_factory import CollectorFactory
 from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, FSCollectorConfig
+import aiofiles
 
 
 class FSCollector(Collector):
@@ -22,10 +23,10 @@ class FSCollector(Collector):
         pass
 
     async def poll(self) -> AsyncGenerator[CollectorResult, None]:
-        for file_path in self.walk_files(self.root_dir):
-            async with file_path.open("rb") as file:
+        async for file_path in self.walk_files(self.root_dir):
+            async with aiofiles.open(file_path, "rb") as file:
                 async for chunk in self.read_chunks(file):
-                    yield CollectorResult(file_path, chunk)
+                    yield CollectorResult({"file_path": file_path, "chunk": chunk})
 
     async def read_chunks(self, file):
         while True:
@@ -33,11 +34,12 @@ class FSCollector(Collector):
             if not chunk:
                 break
             yield chunk
+        await file.close()
 
-    async def walk_files(self, root: Path):
-        for dir_path, _, filenames in root.iterdir():
-            for filename in filenames:
-                yield Path(dir_path) / filename
+    async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
+        for item in root.iterdir():
+            if item.is_file():
+                yield item
 
 
 class FSCollectorFactory(CollectorFactory):
@@ -50,21 +52,3 @@ class FSCollectorFactory(CollectorFactory):
     def resolve(self, uri: Uri) -> Collector:
         config = FSCollectorConfig(root_path=uri.path)
         return FSCollector(config)
-
-
-# Test Case
-async def test_fs_collector():
-    root_dir = Path("test_files")
-    collector = FSCollector(root_dir)
-
-    async def poll_and_print():
-        async for result in collector.poll():
-            print(result)
-
-    await collector.connect()
-    await poll_and_print()
-    await collector.disconnect()
-
-
-if __name__ == "__main__":
-    asyncio.run(test_fs_collector())
