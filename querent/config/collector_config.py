@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class CollectorBackend(str, Enum):
     LocalFile = "localfile"
+    WebScraper = "webscraper"
     S3 = "s3"
     Gcs = "gs"
 
