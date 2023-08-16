@@ -30,9 +30,9 @@ def test_fs_collector_factory():
 
 def test_add_files_read_via_collector(temp_dir):
     # add some random files to the temp dir
-    file_path = Path(temp_dir, "test.txt")
+    file_path = Path(temp_dir, "test_temp.txt")
     with open(file_path, "wb") as file:
-        file.write(b"test")
+        file.write(b"test_add_files_read_via_collector")
     uri = Uri("file://" + temp_dir)
     resolver = CollectorResolver()
     collector = resolver.resolve(uri)
@@ -40,12 +40,14 @@ def test_add_files_read_via_collector(temp_dir):
 
     async def poll_and_print():
         async for result in collector.poll():
-            print(result)
+            assert not result.is_error()
+            chunk = result.unwrap()
+            assert chunk is not None
 
     async def add_files():
-        file_path = Path(temp_dir, "test.txt")
+        file_path = Path(temp_dir, "test_temp.txt")
         with open(file_path, "wb") as file:
-            file.write(b"test")
+            file.write(b"test_add_files_read_via_collector")
 
     async def main():
         await asyncio.gather(add_files(), poll_and_print())
