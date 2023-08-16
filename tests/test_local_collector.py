@@ -6,7 +6,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 import pytest
 
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend
+from querent.config.collector_config import CollectorBackend, FSCollectorConfig
 
 
 @pytest.fixture
@@ -19,7 +19,8 @@ def temp_dir():
 def test_fs_collector(temp_dir):
     uri = Uri("file://" + temp_dir)
     resolver = CollectorResolver()
-    collector = resolver.resolve(uri)
+    fileConfig = FSCollectorConfig(root_path=uri.path)
+    collector = resolver.resolve(uri, fileConfig)
     assert collector is not None
 
 
@@ -35,7 +36,8 @@ def test_add_files_read_via_collector(temp_dir):
         file.write(b"test_add_files_read_via_collector")
     uri = Uri("file://" + temp_dir)
     resolver = CollectorResolver()
-    collector = resolver.resolve(uri)
+    fileConfig = FSCollectorConfig(root_path=uri.path)
+    collector = resolver.resolve(uri, fileConfig)
     assert collector is not None
 
     async def poll_and_print():
