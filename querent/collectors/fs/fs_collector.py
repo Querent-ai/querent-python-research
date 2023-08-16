@@ -40,8 +40,9 @@ class FSCollector(Collector):
         for item in root.iterdir():
             if item.is_file():
                 yield item
-
-
+            elif item.is_dir():
+                async for file_path in self.walk_files(item):
+                    yield file_path
 class FSCollectorFactory(CollectorFactory):
     def __init__(self):
         pass
@@ -49,6 +50,5 @@ class FSCollectorFactory(CollectorFactory):
     def backend(self) -> CollectorBackend:
         return CollectorBackend.LocalFile
 
-    def resolve(self, uri: Uri) -> Collector:
-        config = FSCollectorConfig(root_path=uri.path)
+    def resolve(self, uri: Uri, config: FSCollectorConfig) -> Collector:
         return FSCollector(config)

@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CollectorBackend(str, Enum):
@@ -35,6 +35,10 @@ class GcsCollectConfig(BaseModel):
     access_key: str
     secret_key: str
 
+class WebScraperConfig(BaseModel):
+    website_url: str = Field(
+        ..., description="The URL of the website to scrape."
+    )
 
 class CollectConfigWrapper(BaseModel):
     backend: CollectorBackend
@@ -50,5 +54,9 @@ class CollectConfigWrapper(BaseModel):
             return cls(backend=CollectorBackend.S3, config=S3CollectConfig())
         elif collect_config.backend == CollectorBackend.Gcs:
             return cls(backend=CollectorBackend.Gcs, config=GcsCollectConfig())
+        elif collect_config.backend == CollectorBackend.WebScraper:
+            return cls(
+                backend=CollectorBackend.WebScraper, config=WebScraperConfig()
+            )
         else:
             raise ValueError(f"Unsupported collector backend: {collect_config.backend}")
