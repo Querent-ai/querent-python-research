@@ -1,0 +1,72 @@
+import asyncio
+from pathlib import Path
+import tempfile
+from querent.collectors.collector_resolver import CollectorResolver
+from querent.collectors.fs.fs_collector import FSCollectorFactory
+import pytest
+
+from querent.common.uri import Uri
+from querent.config.collector_config import CollectorBackend
+
+
+@pytest.fixture
+def temp_dir():
+    temp_dir = tempfile.TemporaryDirectory()
+    yield temp_dir.name
+    temp_dir.cleanup()
+
+
+def test_fs_collector(temp_dir):
+    uri = Uri("file://" + temp_dir)
+    resolver = CollectorResolver()
+    collector = resolver.resolve(uri)
+    assert collector is not None
+
+
+def test_fs_collector_factory():
+    factory = FSCollectorFactory()
+    assert factory.backend() == CollectorBackend.LocalFile
+
+
+def test_add_files_read_via_collector(temp_dir):
+    # add some random files to the temp dir
+    file_path = Path(temp_dir, "test_temp.txt")
+    with open(file_path, "wb") as file:
+        file.write(b"test_add_files_read_via_collector")
+    uri = Uri("file://" + temp_dir)
+    resolver = CollectorResolver()
+    collector = resolver.resolve(uri)
+    assert collector is not None
+
+    async def poll_and_print():
+        async for result in collector.poll():
+            assert not result.is_error()
+            chunk = result.unwrap()
+            assert chunk is not None
+
+    # async def add_files():
+    #     file_path = Path(temp_dir, "test_temp.txt")
+    #     with open(file_path, "wb") as file:
+    #         file.write(b"test_add_files_read_via_collector")
+
+    async def add_files():
+        pdf_path = "/Users/ayushjunjhunwala/querent-local/querent-ai/sampleTestFiles/HP6 - Harry Potter and the Half-Blood Prince.pdf"
+        file_name = "test_temp.pdf"
+        file_path = Path(temp_dir, file_name)
+
+        # Read the content of the PDF file
+        with open(pdf_path, "rb") as pdf_file:
+            pdf_content = pdf_file.read()
+
+        # Write the PDF content to the temporary directory
+        with open(file_path, "wb") as file:
+            file.write(pdf_content)
+
+    async def main():
+        await asyncio.gather(add_files(), poll_and_print())
+
+    asyncio.run(main())
+
+
+if __name__ == "__main__":
+    asyncio.run(test_fs_collector())

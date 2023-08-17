@@ -27,6 +27,7 @@ class S3CollectConfig(BaseModel):
     region: str
     access_key: str
     secret_key: str
+    chunk: int = 1024
 
 
 class GcsCollectConfig(BaseModel):
@@ -51,4 +52,5 @@ class CollectConfigWrapper(BaseModel):
         elif collect_config.backend == CollectorBackend.Gcs:
             return cls(backend=CollectorBackend.Gcs, config=GcsCollectConfig())
         else:
-            raise ValueError(f"Unsupported collector backend: {collect_config.backend}")
+            raise ValueError(
+                f"Unsupported collector backend: {collect_config.backend}")
