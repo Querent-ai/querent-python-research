@@ -34,6 +34,8 @@ class CollectorResolver:
             return CollectorBackend.LocalFile
         elif protocol.is_s3():
             return CollectorBackend.S3
+        elif protocol.is_webscraper():
+            return CollectorBackend.WebScraper
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend", "Unknown backend"

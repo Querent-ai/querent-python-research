@@ -13,6 +13,7 @@ class Protocol(enum.Enum):
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"
+    Webscraper = "webscraper"
 
     def is_azure(self) -> bool:
         return self == Protocol.Azure
@@ -41,10 +42,14 @@ class Protocol(enum.Enum):
     def is_database(self) -> bool:
         return self == Protocol.PostgreSQL
 
+    def is_webscraper(self) -> bool:
+        return self == Protocol.Webscraper
+
 
 class Uri:
     PROTOCOL_SEPARATOR = "://"
-    DATABASE_URI_PATTERN = re.compile(r"(?P<before>^.*://.*)(?P<password>:.*@)(?P<after>.*)")
+    DATABASE_URI_PATTERN = re.compile(
+        r"(?P<before>^.*://.*)(?P<password>:.*@)(?P<after>.*)")
 
     def __init__(self, uri: str):
         self.uri = uri
@@ -64,8 +69,8 @@ class Uri:
 
     @property
     def path(self) -> str:
-        return self.uri[self.protocol_idx + len(self.PROTOCOL_SEPARATOR) :]
-    
+        return self.uri[self.protocol_idx + len(self.PROTOCOL_SEPARATOR):]
+
     def as_str(self) -> str:
         return self.uri
 
