@@ -27,6 +27,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
 ]
 
+
 class WebpageExtractor:
 
     def __init__(self, num_extracts=3):
@@ -52,7 +53,8 @@ class WebpageExtractor:
 
                 with BytesIO(response.content) as pdf_data:
                     reader = PdfReader(pdf_data)
-                    content = " ".join([reader.getPage(i).extract_text() for i in range(reader.getNumPages())])
+                    content = " ".join([reader.getPage(i).extract_text()
+                                       for i in range(reader.getNumPages())])
 
             else:
                 config = Config()
@@ -67,20 +69,24 @@ class WebpageExtractor:
                 article = Article(url, config=config)
                 article.set_html(html_content)
                 article.parse()
-                content = article.text.replace('\t', ' ').replace('\n', ' ').strip()
+                content = article.text.replace(
+                    '\t', ' ').replace('\n', ' ').strip()
 
             return content[:1500]
 
         except ArticleException as ae:
-            logger.error(f"Error while extracting text from HTML (newspaper3k): {str(ae)}")
+            logger.error(
+                f"Error while extracting text from HTML (newspaper3k): {str(ae)}")
             return f"Error while extracting text from HTML (newspaper3k): {str(ae)}"
 
         except RequestException as re:
-            logger.error(f"Error while making the request to the URL (newspaper3k): {str(re)}")
+            logger.error(
+                f"Error while making the request to the URL (newspaper3k): {str(re)}")
             return f"Error while making the request to the URL (newspaper3k): {str(re)}"
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (newspaper3k): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (newspaper3k): {str(e)}")
             return ""
 
     def extract_with_bs4(self, url):
@@ -104,13 +110,17 @@ class WebpageExtractor:
                 for tag in soup(['script', 'style', 'nav', 'footer', 'head', 'link', 'meta', 'noscript']):
                     tag.decompose()
 
-                main_content_areas = soup.find_all(['main', 'article', 'section', 'div'])
+                main_content_areas = soup.find_all(
+                    ['main', 'article', 'section', 'div'])
                 if main_content_areas:
-                    main_content = max(main_content_areas, key=lambda x: len(x.text))
+                    main_content = max(main_content_areas,
+                                       key=lambda x: len(x.text))
                     content_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
-                    content = ' '.join([tag.text.strip() for tag in main_content.find_all(content_tags)])
+                    content = ' '.join(
+                        [tag.text.strip() for tag in main_content.find_all(content_tags)])
                 else:
-                    content = ' '.join([tag.text.strip() for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])])
+                    content = ' '.join([tag.text.strip() for tag in soup.find_all(
+                        ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])])
 
                 content = re.sub(r'\t', ' ', content)
                 content = re.sub(r'\s+', ' ', content)
@@ -118,11 +128,13 @@ class WebpageExtractor:
             elif response.status_code == 404:
                 return f"Error: 404. Url is invalid or does not exist. Try with valid url..."
             else:
-                logger.error(f"Error while extracting text from HTML (bs4): {response.status_code}")
+                logger.error(
+                    f"Error while extracting text from HTML (bs4): {response.status_code}")
                 return f"Error while extracting text from HTML (bs4): {response.status_code}"
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (bs4): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (bs4): {str(e)}")
             return ""
 
     def extract_with_lxml(self, url):
@@ -147,20 +159,23 @@ class WebpageExtractor:
 
             tree = html.fromstring(html_content)
             paragraphs = tree.cssselect('p, h1, h2, h3, h4, h5, h6')
-            content = ' '.join([para.text_content() for para in paragraphs if para.text_content()])
+            content = ' '.join([para.text_content()
+                               for para in paragraphs if para.text_content()])
             content = content.replace('\t', ' ').replace('\n', ' ').strip()
 
             return content
 
         except ArticleException as ae:
-            logger.error("Error while extracting text from HTML (lxml): {str(ae)}")
+            logger.error(
+                "Error while extracting text from HTML (lxml): {str(ae)}")
             return ""
 
         except RequestException as re:
-            logger.error(f"Error while making the request to the URL (lxml): {str(re)}")
+            logger.error(
+                f"Error while making the request to the URL (lxml): {str(re)}")
             return ""
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (lxml): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (lxml): {str(e)}")
             return ""
-    

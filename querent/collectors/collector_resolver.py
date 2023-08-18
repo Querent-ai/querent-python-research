@@ -1,5 +1,5 @@
 from typing import Optional
-
+from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
@@ -15,6 +15,7 @@ class CollectorResolver:
             CollectorBackend.LocalFile: FSCollectorFactory(),
             CollectorBackend.S3: AWSCollectorFactory(),
             CollectorBackend.WebScraper: WebScraperFactory(),
+            CollectorBackend.Gcs: GCSCollectorFactory()
             # Add other collector factories as needed
         }
 
@@ -36,6 +37,8 @@ class CollectorResolver:
             return CollectorBackend.S3
         elif protocol.is_webscraper():
             return CollectorBackend.WebScraper
+        elif protocol.is_grpc():
+            return CollectorBackend.Gcs
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend", "Unknown backend"
