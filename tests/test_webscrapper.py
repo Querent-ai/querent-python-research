@@ -26,3 +26,13 @@ def test_scrapping_data():
     webscrapperConfig = WebScraperConfig(website_url = uri.uri)
     collector = resolver.resolve(uri, webscrapperConfig)
     assert collector is not None
+
+    print("REached here")
+    async def poll_and_print():
+        print("Part 2")
+        async for result in collector.poll():
+            print("Hola...")
+            assert not result.is_error()
+            print(result.unwrap())
+
+    asyncio.run(poll_and_print())         
