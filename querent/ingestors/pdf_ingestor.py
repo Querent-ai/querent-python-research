@@ -1,4 +1,4 @@
-import PyPDF2
+import pypdf
 
 
 class PDFConnector:
@@ -10,7 +10,7 @@ class PDFConnector:
     def open_pdf(self):
         """Open the PDF file."""
         self.pdf_file = open(self.file_path, 'rb')
-        self.pdf_reader = PyPDF2.PdfReader(self.pdf_file)
+        self.pdf_reader = pypdf.pdf_reader(self.pdf_file)
 
     def authenticate(self, password):
         """Authenticate the connection if the PDF is encrypted."""

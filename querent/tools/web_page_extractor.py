@@ -1,6 +1,5 @@
 from io import BytesIO
-from PyPDF2 import PdfFileReader
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import requests
 import re
 from requests.exceptions import RequestException
@@ -69,8 +68,7 @@ class WebpageExtractor:
                 article = Article(url, config=config)
                 article.set_html(html_content)
                 article.parse()
-                content = article.text.replace(
-                    '\t', ' ').replace('\n', ' ').strip()
+                content = article.text.replace('\t', ' ').replace('\n', ' ').strip()
 
             return content[:1500]
 

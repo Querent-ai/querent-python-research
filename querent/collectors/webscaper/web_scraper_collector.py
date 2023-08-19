@@ -3,6 +3,7 @@ from querent.collectors.collector_factory import CollectorFactory
 from querent.collectors.collector_result import CollectorResult
 from querent.config.collector_config import CollectorBackend, WebScraperConfig
 from querent.tools.web_page_extractor import WebpageExtractor
+from querent.common.uri import Uri
 
 class WebScraperCollector(Collector):
     def __init__(self, config: WebScraperConfig):
@@ -30,5 +31,5 @@ class WebScraperFactory(CollectorFactory):
     def backend(self) -> CollectorBackend:
         return CollectorBackend.WebScraper
 
-    def resolve(self, config: WebScraperConfig) -> Collector:
+    def resolve(self,uri: Uri, config: WebScraperConfig) -> Collector:
         return WebScraperCollector(config)

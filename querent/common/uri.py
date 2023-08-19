@@ -13,7 +13,7 @@ class Protocol(enum.Enum):
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"
-    Webscraper = "webscraper"
+    Webscraper = "https"
 
     def is_azure(self) -> bool:
         return self == Protocol.Azure
