@@ -2,9 +2,12 @@ from typing import Union
 
 
 class CollectedBytes:
-    def __init__(self, data: bytes, error: str = None) -> None:
+    def __init__(self, file: str, data: bytes, error: str = None) -> None:
         self.data = data
         self.error = error
+        self.file = file
+        self.extension = file.split(".")[-1]
+        self.file_id = file.split("/")[-1].split(".")[0]
 
     def __str__(self):
         if self.error:
@@ -14,6 +17,15 @@ class CollectedBytes:
     def is_error(self) -> bool:
         return self.error is not None
 
+    def get_file_path(self) -> str:
+        return self.file
+    
+    def get_extension(self) -> str:
+        return self.extension
+    
+    def get_file_id(self) -> str:
+        return self.file_id
+    
     @classmethod
     def success(cls, data: bytes) -> "CollectedBytes":
         return cls(data)
