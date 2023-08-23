@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator
 
-from querent.collectors.collector_result import CollectorResult
+from querent.common.types.collected_bytes import CollectedBytes
+
 
 class Collector(ABC):
     @abstractmethod
@@ -9,7 +10,7 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    async def poll(self) -> AsyncGenerator[CollectorResult, None]:
+    async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         pass
 
     @abstractmethod
