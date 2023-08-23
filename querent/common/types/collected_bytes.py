@@ -6,8 +6,9 @@ class CollectedBytes:
         self.data = data
         self.error = error
         self.file = file
-        self.extension = file.split(".")[-1]
-        self.file_id = file.split("/")[-1].split(".")[0]
+        if self.file:
+            self.extension = file.split(".")[-1]
+            self.file_id = file.split("/")[-1].split(".")[0]
 
     def __str__(self):
         if self.error:
@@ -19,13 +20,13 @@ class CollectedBytes:
 
     def get_file_path(self) -> str:
         return self.file
-    
+
     def get_extension(self) -> str:
         return self.extension
-    
+
     def get_file_id(self) -> str:
         return self.file_id
-    
+
     @classmethod
     def success(cls, data: bytes) -> "CollectedBytes":
         return cls(data)

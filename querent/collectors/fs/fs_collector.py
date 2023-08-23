@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import AsyncGenerator
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
-from querent.collectors.collector_result import CollectorResult
+from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, FSCollectorConfig
 import aiofiles
@@ -22,11 +22,11 @@ class FSCollector(Collector):
         # Add your cleanup logic here if needed
         pass
 
-    async def poll(self) -> AsyncGenerator[CollectorResult, None]:
+    async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
             async with aiofiles.open(file_path, "rb") as file:
                 async for chunk in self.read_chunks(file):
-                    yield CollectorResult({"file_path": file_path, "chunk": chunk})
+                    yield CollectedBytes(file=file_path, data=chunk, error=None)
 
     async def read_chunks(self, file):
         while True:
@@ -43,6 +43,8 @@ class FSCollector(Collector):
             elif item.is_dir():
                 async for file_path in self.walk_files(item):
                     yield file_path
+
+
 class FSCollectorFactory(CollectorFactory):
     def __init__(self):
         pass

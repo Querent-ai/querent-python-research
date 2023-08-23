@@ -1,6 +1,5 @@
 from io import BytesIO
-from PyPDF2 import PdfFileReader
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import requests
 import re
 from requests.exceptions import RequestException
@@ -11,6 +10,9 @@ import time
 import random
 from lxml import html
 from querent.lib.logger import logger
+import json
+from urllib.parse import urljoin
+import csv
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
@@ -24,16 +26,18 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36",
     "Mozilla/5.0 (iPhone; CPU iPhone OS 13_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Mobile/15E148 Safari/604.1",
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36",
 ]
 
-class WebpageExtractor:
 
+class WebpageExtractor:
     def __init__(self, num_extracts=3):
         """
         Initialize the WebpageExtractor class.
         """
+        self.crawled_urls = set()
         self.num_extracts = num_extracts
+        self.data = []
 
     def extract_with_3k(self, url):
         """
@@ -52,7 +56,12 @@ class WebpageExtractor:
 
                 with BytesIO(response.content) as pdf_data:
                     reader = PdfReader(pdf_data)
-                    content = " ".join([reader.getPage(i).extract_text() for i in range(reader.getNumPages())])
+                    content = " ".join(
+                        [
+                            reader.getPage(i).extract_text()
+                            for i in range(reader.getNumPages())
+                        ]
+                    )
 
             else:
                 config = Config()
@@ -67,20 +76,26 @@ class WebpageExtractor:
                 article = Article(url, config=config)
                 article.set_html(html_content)
                 article.parse()
-                content = article.text.replace('\t', ' ').replace('\n', ' ').strip()
+                content = article.text.replace("\t", " ").replace("\n", " ").strip()
 
             return content[:1500]
 
         except ArticleException as ae:
-            logger.error(f"Error while extracting text from HTML (newspaper3k): {str(ae)}")
+            logger.error(
+                f"Error while extracting text from HTML (newspaper3k): {str(ae)}"
+            )
             return f"Error while extracting text from HTML (newspaper3k): {str(ae)}"
 
         except RequestException as re:
-            logger.error(f"Error while making the request to the URL (newspaper3k): {str(re)}")
+            logger.error(
+                f"Error while making the request to the URL (newspaper3k): {str(re)}"
+            )
             return f"Error while making the request to the URL (newspaper3k): {str(re)}"
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (newspaper3k): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (newspaper3k): {str(e)}"
+            )
             return ""
 
     def extract_with_bs4(self, url):
@@ -93,37 +108,98 @@ class WebpageExtractor:
         Returns:
             str: The extracted text.
         """
-        headers = {
-            "User-Agent": random.choice(USER_AGENTS)
-        }
-
+        headers = {"User-Agent": random.choice(USER_AGENTS)}
         try:
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                for tag in soup(['script', 'style', 'nav', 'footer', 'head', 'link', 'meta', 'noscript']):
+                soup = BeautifulSoup(response.text, "html.parser")
+                for tag in soup(
+                    [
+                        "script",
+                        "style",
+                        "nav",
+                        "footer",
+                        "head",
+                        "link",
+                        "meta",
+                        "noscript",
+                    ]
+                ):
                     tag.decompose()
 
-                main_content_areas = soup.find_all(['main', 'article', 'section', 'div'])
+                main_content_areas = soup.find_all(
+                    ["main", "article", "section", "div"]
+                )
                 if main_content_areas:
                     main_content = max(main_content_areas, key=lambda x: len(x.text))
-                    content_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
-                    content = ' '.join([tag.text.strip() for tag in main_content.find_all(content_tags)])
+                    content_tags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"]
+                    content = " ".join(
+                        [
+                            tag.text.strip()
+                            for tag in main_content.find_all(content_tags)
+                        ]
+                    )
                 else:
-                    content = ' '.join([tag.text.strip() for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])])
+                    content = " ".join(
+                        [
+                            tag.text.strip()
+                            for tag in soup.find_all(
+                                ["p", "h1", "h2", "h3", "h4", "h5", "h6"]
+                            )
+                        ]
+                    )
 
-                content = re.sub(r'\t', ' ', content)
-                content = re.sub(r'\s+', ' ', content)
+                content = re.sub(r"\t", " ", content)
+                content = re.sub(r"\s+", " ", content)
+
+                # Store the content of the current URL
+                self.crawled_urls.add(url)
+                self.store_content(url, content)
+
+                # Recursively crawl internal links
+                self.extract_internal_links_and_crawl(soup)
                 return content
+
             elif response.status_code == 404:
                 return f"Error: 404. Url is invalid or does not exist. Try with valid url..."
             else:
-                logger.error(f"Error while extracting text from HTML (bs4): {response.status_code}")
-                return f"Error while extracting text from HTML (bs4): {response.status_code}"
+                logger.error(f"")
+                return f"Error while extracting text from HTML (bs4): {response.status_code} for url - {url}"
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (bs4): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (bs4): {str(e)}"
+            )
             return ""
+
+    def extract_internal_links_and_crawl(self, soup):
+        for link in soup.find_all("a", href=True):
+            link_href = link.get("href")
+            if (
+                link_href.startswith("/")
+                or link_href.startswith(".")
+                or link_href.startswith("#")
+            ):
+                link_href = urljoin("https://www.asecuritysite.com", link_href)
+            if (
+                link_href.startswith("https://www.asecuritysite.com")
+                and link_href not in self.crawled_urls
+            ):
+                self.extract_with_bs4(link_href)
+
+    def store_content(self, url, content):
+        self.data.append({"url": url, "content": content})
+
+    def save_to_csv(self):
+        csv_file_path = "/home/ansh/Desktop/asecuritysite.csv"
+        with open(csv_file_path, "w", newline="", encoding="utf-8") as csvfile:
+            fieldnames = ["url", "content"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()  # Write the header row
+
+            for data_dict in self.data:
+                writer.writerow(data_dict)
 
     def extract_with_lxml(self, url):
         """
@@ -146,9 +222,11 @@ class WebpageExtractor:
             html_content = response.html.html
 
             tree = html.fromstring(html_content)
-            paragraphs = tree.cssselect('p, h1, h2, h3, h4, h5, h6')
-            content = ' '.join([para.text_content() for para in paragraphs if para.text_content()])
-            content = content.replace('\t', ' ').replace('\n', ' ').strip()
+            paragraphs = tree.cssselect("p, h1, h2, h3, h4, h5, h6")
+            content = " ".join(
+                [para.text_content() for para in paragraphs if para.text_content()]
+            )
+            content = content.replace("\t", " ").replace("\n", " ").strip()
 
             return content
 
@@ -161,6 +239,7 @@ class WebpageExtractor:
             return ""
 
         except Exception as e:
-            logger.error(f"Unknown error while extracting text from HTML (lxml): {str(e)}")
+            logger.error(
+                f"Unknown error while extracting text from HTML (lxml): {str(e)}"
+            )
             return ""
-    

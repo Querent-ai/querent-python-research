@@ -2,11 +2,13 @@ from typing import List, Dict
 from pathlib import Path
 from enum import Enum
 
+
 class CollectorErrorKind(Enum):
     NotFound = "not_found"
     Unauthorized = "unauthorized"
     incompatible = "incompatible"
     NotSupported = "not_supported"
+
 
 class CollectorResolverError(Exception):
     def __init__(self, kind: CollectorErrorKind, message: str):
@@ -23,6 +25,7 @@ class CollectorError(Exception):
 class NotFoundError(CollectorError):
     def __init__(self, message: str):
         super().__init__(CollectorErrorKind.NotFound, message)
+
 
 class UnauthorizedError(CollectorError):
     def __init__(self, message: str):
