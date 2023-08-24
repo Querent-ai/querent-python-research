@@ -157,7 +157,7 @@ class WebpageExtractor:
                 self.store_content(url, content)
 
                 # Recursively crawl internal links
-                self.extract_internal_links_and_crawl(soup)
+                # self.extract_internal_links_and_crawl(soup)
                 return content
 
             elif response.status_code == 404:

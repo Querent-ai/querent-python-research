@@ -7,6 +7,7 @@ class CollectedBytes:
         self.error = error
         self.file = file
         if self.file:
+            file = str(file)
             self.extension = file.split(".")[-1]
             self.file_id = file.split("/")[-1].split(".")[0]
 
