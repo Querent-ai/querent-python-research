@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import IO
+from typing import List
 
 from querent.common.uri import Uri
 from querent.storage.payload import PutPayload
 from querent.storage.storage_result import StorageResult
+
 
 class Storage(ABC):
     @abstractmethod
@@ -36,7 +38,7 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    async def bulk_delete(self, paths: list[Path]) -> None:
+    async def bulk_delete(self, paths: List[Path]) -> None:
         pass
 
     @abstractmethod
