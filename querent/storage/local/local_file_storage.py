@@ -13,6 +13,7 @@ from querent.storage.storage_base import Storage
 from querent.storage.storage_factory import StorageFactory
 from querent.storage.storage_result import StorageResult
 
+
 class AsyncDebouncer:
     def __init__(self):
         self.cache = {}
@@ -43,9 +44,11 @@ class AsyncDebouncer:
             del self.cache[key]
             return result
 
+
 class DebouncerEntry:
     def __init__(self, future):
         self.future = future
+
 
 class DebouncedStorage:
     def __init__(self, underlying):
@@ -84,7 +87,7 @@ class DebouncedStorage:
         await self.underlying.bulk_delete(paths)
 
     async def get_all(self, path):
-        key = (path, 0, float('inf'))
+        key = (path, 0, float("inf"))
         cached_result = await self.get_slice_cache(key)
         if cached_result is None:
             result = await self.underlying.get_all(path)
@@ -98,12 +101,16 @@ class DebouncedStorage:
     def get_uri(self):
         return self.underlying.get_uri()
 
+
 class LocalFileStorage(Storage):
     def __init__(self, uri: Uri, root=None):
         self.uri = uri
         if not root:
             root = Path(uri.path)
         self.root = root
+        self.cache_lock = Lock()
+
+    async def initialize_lock(self):
         self.cache_lock = Lock()
 
     async def full_path(self, relative_path):
@@ -129,7 +136,7 @@ class LocalFileStorage(Storage):
                     f"Failed to create directories at {self.root}: {e}",
                 )
 
-    async def put(self, path: Path, payload: PutPayload)-> StorageResult:
+    async def put(self, path: Path, payload: PutPayload) -> StorageResult:
         full_path = await self.full_path(path)
         parent_dir = full_path.parent
         try:
@@ -153,18 +160,18 @@ class LocalFileStorage(Storage):
             await asyncio.to_thread(shutil.copyfileobj, file, output)
         return StorageResult.success(None)
 
-    async def get_slice(self, path, start, end)-> StorageResult:
+    async def get_slice(self, path, start, end) -> StorageResult:
         full_path = await self.full_path(path)
         with open(full_path, "rb") as file:
             file.seek(start)
             return StorageResult.success(file.read(end - start))
 
-    async def get_all(self, path)-> StorageResult:
+    async def get_all(self, path) -> StorageResult:
         full_path = await self.full_path(path)
         with open(full_path, "rb") as file:
             return StorageResult.success(file.read())
 
-    async def delete(self, path)-> StorageResult:
+    async def delete(self, path) -> StorageResult:
         full_path = await self.full_path(path)
         try:
             full_path.unlink()
@@ -181,11 +188,11 @@ class LocalFileStorage(Storage):
         for path in paths:
             await self.delete(path)
 
-    async def exists(self, path)-> StorageResult:
+    async def exists(self, path) -> StorageResult:
         full_path = await self.full_path(path)
         return StorageResult.success(full_path.exists())
 
-    async def file_num_bytes(self, path)-> StorageResult:
+    async def file_num_bytes(self, path) -> StorageResult:
         full_path = await self.full_path(path)
         try:
             return StorageResult.success(full_path.stat().st_size)
@@ -196,8 +203,9 @@ class LocalFileStorage(Storage):
             )
 
     @property
-    def get_uri(self)-> Uri:
+    def get_uri(self) -> Uri:
         return self.uri
+
 
 class LocalStorageFactory(StorageFactory):
     def backend(self) -> StorageBackend:
