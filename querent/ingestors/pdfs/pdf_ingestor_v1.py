@@ -1,49 +1,74 @@
 from typing import AsyncGenerator, List
-import fitz
-from querent.common.types.collected_bytes import CollectedBytes  # PyMuPDF
+import fitz  # PyMuPDF
+from querent.common.types.collected_bytes import CollectedBytes
 from querent.ingestors.ingestor_factory import Ingestor, IngestorFactory
+from querent.processors.async_processor import AsyncProcessor
 
 
-class PdfIngestor(IngestorFactory):
+class PdfIngestorFactory(IngestorFactory):
     SUPPORTED_EXTENSIONS = {"pdf"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
 
-    async def create(self, file_extension: str) -> Ingestor:
+    async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> Ingestor:
         if not self.supports(file_extension):
             return None
-        return PdfIngestor()
+        return PdfIngestor(processors)
 
 
 class PdfIngestor(Ingestor):
-    def __init__(self):
+    def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(Ingestor.PDF)
+        self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[List[str], None]:
         try:
-            async for collected_bytes in poll_function():
-                text = self.extract_text_from_pdf(collected_bytes)
-                # Add more processing logic here if needed
-                sentences = self.split_into_sentences(text)
-                yield sentences
+            collected_bytes = b""  # Initialize an empty byte string
+            current_file = None
+
+            async for chunk_bytes in poll_function:
+                if chunk_bytes.is_error():
+                    continue  # Skip error bytes
+
+                # If it's a new file, start collecting bytes for it
+                if chunk_bytes.file != current_file:
+                    if current_file:
+                        # Process the collected bytes of the previous file
+                        text = await self.extract_and_process_pdf(
+                            CollectedBytes(file=current_file, data=collected_bytes)
+                        )
+                        yield text
+                    collected_bytes = b""  # Reset collected bytes for the new file
+                    current_file = chunk_bytes.file
+
+                collected_bytes += chunk_bytes.data  # Collect the bytes
+
+            # Process the collected bytes of the last file
+            if current_file:
+                text = await self.extract_and_process_pdf(
+                    CollectedBytes(file=current_file, data=collected_bytes)
+                )
+                yield text
+
         except Exception as e:
             yield []
 
-    def extract_text_from_pdf(self, collected_bytes):
-        pdf_data = collected_bytes.unwrap()
-        pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
+    async def extract_and_process_pdf(self, collected_bytes: CollectedBytes) -> List[str]:
+        text = await self.extract_text_from_pdf(collected_bytes)
+        return await self.process_data(text)
+
+    async def extract_text_from_pdf(self, collected_bytes: CollectedBytes) -> str:
+        pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
         text = ""
-        for page_number in range(pdf_document.page_count):
-            page = pdf_document.load_page(page_number)
-            text += page.get_text()
-        pdf_document.close()
+        for page in pdf:
+            text += page.getText()
         return text
 
-    def split_into_sentences(self, text):
-        # Implement logic to split text into sentences
-        # You can use NLTK, spaCy, or custom regex-based logic
-        # Return a list of sentences
-        return []
+    async def process_data(self, text: str) -> List[str]:
+        processed_data = text
+        for processor in self.processors:
+            processed_data = await processor.process(processed_data)
+        return processed_data

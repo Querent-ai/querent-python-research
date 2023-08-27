@@ -2,7 +2,10 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
+
+from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory
+from querent.processors.async_processor import AsyncProcessor
 
 class Ingestor(str, Enum):
     PDF = "pdf"
@@ -33,7 +36,7 @@ class IngestorFactory(ABC):
         pass
 
     @abstractmethod
-    async def create(self, file_extension: str) -> Optional[Ingestor]:
+    async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> Ingestor:
         pass
 
 
@@ -41,7 +44,7 @@ class IngestorFactory(ABC):
 class IngestorFactoryManager:
     def __init__(self):
         self.ingestor_factories = {
-            #Ingestor.PDF.value: PdfIngestor(),
+            Ingestor.PDF.value: PdfIngestorFactory(),
             #Ingestor.TEXT.value: TextIngestor(),
             # Add more mappings as needed
         }
