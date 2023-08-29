@@ -3,7 +3,7 @@ from pathlib import Path
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
-from querent.ingestors.ingestor_factory import IngestorFactoryManager
+from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 
 async def test_collect_and_ingest_pdf():

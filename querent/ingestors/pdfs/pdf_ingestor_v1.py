@@ -1,7 +1,9 @@
 from typing import AsyncGenerator, List
 import fitz  # PyMuPDF
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.ingestors.ingestor_factory import Ingestor, IngestorFactory
+from querent.config.ingestor_config import IngestorBackend
+from querent.ingestors.base_ingestor import BaseIngestor
+from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 
 
@@ -11,15 +13,15 @@ class PdfIngestorFactory(IngestorFactory):
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
 
-    async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> Ingestor:
+    async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> BaseIngestor:
         if not self.supports(file_extension):
             return None
         return PdfIngestor(processors)
 
 
-class PdfIngestor(Ingestor):
+class PdfIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(Ingestor.PDF)
+        super().__init__(IngestorBackend.PDF)
         self.processors = processors
 
     async def ingest(
