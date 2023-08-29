@@ -9,7 +9,7 @@ from typing import Optional, Union
 class Protocol(enum.Enum):
     Azure = "azure"
     File = "file"
-    Grpc = "grpc"
+    Gcs = "gcs"
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"
@@ -21,8 +21,8 @@ class Protocol(enum.Enum):
     def is_file(self) -> bool:
         return self == Protocol.File
 
-    def is_grpc(self) -> bool:
-        return self == Protocol.Grpc
+    def is_gcs(self) -> bool:
+        return self == Protocol.Gcs
 
     def is_postgresql(self) -> bool:
         return self == Protocol.PostgreSQL

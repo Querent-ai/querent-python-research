@@ -40,7 +40,7 @@ class CollectorResolver:
             return CollectorBackend.S3
         elif protocol.is_webscraper():
             return CollectorBackend.WebScraper
-        elif protocol.is_grpc():
+        elif protocol.is_gcs():
             return CollectorBackend.Gcs
         if protocol.is_webscrapper():
             return CollectorBackend.WebScraper
