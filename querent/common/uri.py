@@ -42,19 +42,20 @@ class Protocol(enum.Enum):
     def is_database(self) -> bool:
         return self == Protocol.PostgreSQL
 
-    def is_webscraper(self) -> bool:
+    def is_webscrapper(self) -> bool:
         return self == Protocol.Webscraper
 
 
 class Uri:
     PROTOCOL_SEPARATOR = "://"
     DATABASE_URI_PATTERN = re.compile(
-        r"(?P<before>^.*://.*)(?P<password>:.*@)(?P<after>.*)")
+        r"(?P<before>^.*://.*)(?P<password>:.*@)(?P<after>.*)"
+    )
 
     def __init__(self, uri: str):
         self.uri = uri
         self.protocol_idx = uri.find(self.PROTOCOL_SEPARATOR)
-        self.protocol = Protocol(uri[:self.protocol_idx])
+        self.protocol = Protocol(uri[: self.protocol_idx])
 
     @classmethod
     def from_well_formed(cls, uri: str) -> "Uri":

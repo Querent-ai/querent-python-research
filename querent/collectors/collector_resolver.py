@@ -5,7 +5,10 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.config.collector_config import CollectConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
-from querent.collectors.collector_errors import CollectorResolverError, CollectorErrorKind
+from querent.collectors.collector_errors import (
+    CollectorResolverError,
+    CollectorErrorKind,
+)
 from querent.common.uri import Protocol, Uri
 
 
@@ -39,7 +42,9 @@ class CollectorResolver:
             return CollectorBackend.WebScraper
         elif protocol.is_grpc():
             return CollectorBackend.Gcs
+        if protocol.is_webscrapper():
+            return CollectorBackend.WebScraper
         else:
             raise CollectorResolverError(
-                CollectorErrorKind.NotSupported, "Unknown backend", "Unknown backend"
+                CollectorErrorKind.NotSupported, "Unknown backend"
             )
