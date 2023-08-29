@@ -1,34 +1,12 @@
 
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import List, Optional
+from querent.common.types.ingestor_types import Ingestor
 
 from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 
-class Ingestor(str, Enum):
-    PDF = "pdf"
-    TEXT = "txt" | "text"
-    DOCX = "docx" | "doc"
-    CSV = "csv" | "comma-separated-values" | "comma-separated"
-    XLSX = "xlsx" | "xls" | "excel"
-    JSON = "json"
-    XML = "xml"
-    HTML = "html"
-    YAML = "yaml" | "yml"
-    MARKDOWN = "markdown" | "md"
-    IMG = "image" | "img"
-    PNG = "png"
-    JPG = "jpg" | "jpeg"
-    GIF = "gif"
-    WEBRTC = "webrtc"
-    MP3 = "mp3"
-    MP4 = "mp4"
-    MOV = "mov"
-    AVI = "avi"
-    WAV = "wav"
-    Unsupported = "unsupported"
 
 class IngestorFactory(ABC):
     @abstractmethod
