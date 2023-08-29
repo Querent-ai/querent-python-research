@@ -1,4 +1,3 @@
-import PyPDF2
 import pypdf
 
 

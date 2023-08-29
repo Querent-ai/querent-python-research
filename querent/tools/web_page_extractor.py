@@ -77,7 +77,7 @@ class WebpageExtractor:
                 article.set_html(html_content)
                 article.parse()
                 content = article.text.replace(
-                    "\t", " ").replace("\n", " ").strip()
+                    '\t', ' ').replace('\n', ' ').strip()
 
             return content[:1500]
 
