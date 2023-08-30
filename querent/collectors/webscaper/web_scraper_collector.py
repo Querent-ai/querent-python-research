@@ -23,7 +23,7 @@ class WebScraperCollector(Collector):
     async def scrape_website(self, website_url: str):
         content = WebpageExtractor().extract_with_bs4(website_url)
         max_length = len(' '.join(content.split(" ")[:600]))
-        return CollectorResult({"content": content[:max_length]})
+        return CollectedBytes(file=None, data=content[:max_length], error=None)
 
 
 class WebScraperFactory(CollectorFactory):

@@ -10,7 +10,7 @@ import pytest
 def aws_config():
     return {
         "bucket": "pstreamsbucket1",
-        "region": "Asia Pacific (Mumbai) ap-south-1",
+        "region": "ap-south-1",
         "access_key": "AKIA5ZFZH6CA6LDWIPV5",
         "secret_key": "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",
     }
@@ -23,10 +23,11 @@ def test_aws_collector_factory():
 # Modify this function to test the AWS collector
 
 
+@pytest.mark.asyncio
 async def test_aws_collector(aws_config):
     uri = Uri("s3://" + aws_config["bucket"] + "/prefix/")
     resolver = CollectorResolver()
-    collector = resolver.resolve(uri)
+    collector = resolver.resolve(uri, aws_config)
     assert collector is not None
 
     await collector.connect()
@@ -45,7 +46,7 @@ async def test_aws_collector(aws_config):
     async def main():
         await asyncio.gather(add_files(), poll_and_print())
 
-    asyncio.run(main())
+    # asyncio.run(main())
 
 
 if __name__ == "__main__":

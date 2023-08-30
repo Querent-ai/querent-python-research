@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "protean-tooling-368008",
+  "private_key_id": "8b160be0bb98061457c793d26b4ba45572cfd35b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCqpxzT4BC+Kaiw\njoL+enKc5EPMaIU2QfxD/GvXlPHdjAN5VsxKvY3lZnmgl7ZOO1hyATbAGl9wYbNN\nZ5VkMoOMnOsN9x/SG17aywR1JxWp7X7zUCwq4sHa8IIscSmJKkY0nqdcC+3w9H3I\nCW3x7Zmx0Rdpq5fhP86h1/7A/xcURghRu9xoTMy72wco1JLPS/vDTrNV6WJujfP/\n+u9uyF6zm7UzPng3kNRK0eM6ePAHcV8+v0WzhsGhF2v9qNzr17J4D5xFO2EX0V/S\na2PVIJj4OhECCK9zOQfFamyb5JlPd+aq0VWxSeyR/tQUHGBtwPZZj9XVWGjU1Txe\nbeZJY8XhAgMBAAECggEASYKD5fa6b5fVXPx+i+0mCtQ/KkGJxHYHGygUMkCsMSF7\na5zKkpV1lrAeS2Geu7NPpYhFU9noa6oCSSEKFqe1x+/eRt1BXUnCAeB68pYb/F9c\nFKZf6DdWhx+cC1XRrQ7DQC5pbDqNTAKdXfpF3HVbg9/MRI4Qdgx8z3WR/QPFJstR\n5KbF7WhXHIL2sA5AAHYamQwcUqG2/1ci67uxjJb08dvPkkIrI3A/0ZDWI8p9MC/h\naptl2MEwIwZDxm03iqwqzhqhDOuIbMGPiG6qZHRkzbjAij3FcX4vYLVXV3KeOV7u\n4vuTZTWRqG1TefVNstexGMpgxKSTfMvC0HJTf0QQmwKBgQDYKuhBmdnMrxm7E5pk\nrnbTMez0HPoowX5W9T2T1NY3luTFDSWejwucyAmbLEKZEa0hv7SMVxuWUCVZeGKb\nTS7tuNEu5Bzd3vZg2m2wMSdLTyO6NcozpXwE8+t9/BCdGh2EXojwOq/ntx/ADuJ2\nzninIlM2zkmX8bXXRmiw8hHaZwKBgQDKGSxCYqA1phfdcjMaGDwrEJfgUt1a8A0Y\nOu1Vy42wunjMgEYPimRsgv1QpFb8RG2XsqREcXhcIgliTQrlaSQuuF3AgdYmUyPI\nqfBtbci/9awbb/oOytgqu6cveRWjL5kNUOhtufOXZIbkCbeL7+55zgTFA5vclhqm\ntsot7CbAdwKBgB50RQ5g73dPv+9EPr8qeSEd6oUlw/ST9gmoOUmndZqVTpuYU5F4\nE6m94OSUorlP7TVQ/c27w+40Ul69gB7jC9Z/8DCMAKkdbVaNz2BAPIn2l1D3nQoT\nqVpFRwsTxP9tG3V3oBFAI2IgwX9cWXllc0gQpOqWu3WFnxm6GKu9HtjHAoGAMPdu\ncNtCpB0NNTuBRDZRBcIsek65kVoOYiuM67e5KfPUZwBBeWx3ro8CX3KiHNdbkmDX\nSjoQBoq8qVOvayxRdvx2wrjysTB9wBXkyi7KcDBPNgqolMLzI096T5dP9c0HkWFk\nH4npimnyAPiVv1Mv/dU79JxOPGEmLfSmAgBw1zsCgYBmGUh2wnFBNXltJfDKA/fL\n+Q+yXKIiX7UO7XYRenxz/XYH3qEkDAVJsWdFEt3vs8YBJKg3gewzGbhnyWv3udSi\n8oiE0Om/tMyHmMTAlmRM79RFsmdyFRZ20ckb/EwW35L74RFTM2HybCl0ax4kuDQH\nWcy7orKon24IyeIeKpcF3A==\n-----END PRIVATE KEY-----\n",
+  "client_email": "pstreams1@protean-tooling-368008.iam.gserviceaccount.com",
+  "client_id": "108934245481292748227",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/pstreams1%40protean-tooling-368008.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -54,7 +54,7 @@ class GCSCollectorFactory(CollectorFactory):
     def backend(self) -> CollectorBackend:
         return CollectorBackend.Gcs
 
-    def resolve(self, uri: Uri) -> Collector:
+    def resolve(self, uri: Uri, config: GcsCollectConfig) -> Collector:
         config = GcsCollectConfig(
             bucket='your_bucket_name', credentials_path='path_to_your_credentials.json')
         return GCSCollector(config)

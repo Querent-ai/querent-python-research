@@ -42,7 +42,7 @@ class CollectorResolver:
             return CollectorBackend.WebScraper
         elif protocol.is_gcs():
             return CollectorBackend.Gcs
-        if protocol.is_webscrapper():
+        elif protocol.is_webscraper():
             return CollectorBackend.WebScraper
         else:
             raise CollectorResolverError(

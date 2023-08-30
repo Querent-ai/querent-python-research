@@ -42,7 +42,7 @@ class Protocol(enum.Enum):
     def is_database(self) -> bool:
         return self == Protocol.PostgreSQL
 
-    def is_webscrapper(self) -> bool:
+    def is_webscraper(self) -> bool:
         return self == Protocol.Webscraper
 
 
