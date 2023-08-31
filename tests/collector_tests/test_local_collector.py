@@ -29,46 +29,32 @@ def test_fs_collector_factory():
     assert factory.backend() == CollectorBackend.LocalFile
 
 
-def test_add_files_read_via_collector(temp_dir):
-    # add some random files to the temp dir
+async def poll_and_print(collector):
+    async for result in collector.poll():
+        assert not result.is_error()
+        chunk = result.unwrap()
+        assert chunk is not None
+
+
+async def add_files(temp_dir):
     file_path = Path(temp_dir, "test_temp.txt")
     with open(file_path, "wb") as file:
         file.write(b"test_add_files_read_via_collector")
-    uri = Uri("file://" + temp_dir)
+
+
+async def main():
+    temp_dir = tempfile.TemporaryDirectory()
+    uri = Uri("file://" + temp_dir.name)
     resolver = CollectorResolver()
     fileConfig = FSCollectorConfig(root_path=uri.path)
     collector = resolver.resolve(uri, fileConfig)
     assert collector is not None
 
-    async def poll_and_print():
-        async for result in collector.poll():
-            assert not result.is_error()
-            chunk = result.unwrap()
-            assert chunk is not None
+    await add_files(temp_dir.name)
+    await poll_and_print(collector)
 
-    # async def add_files():
-    #     file_path = Path(temp_dir, "test_temp.txt")
-    #     with open(file_path, "wb") as file:
-    #         file.write(b"test_add_files_read_via_collector")
-
-    async def add_files():
-        pdf_path = "/querent-ai/sampleTestFiles/HP6 - Harry Potter and the Half-Blood Prince.pdf"
-        file_name = "test_temp.pdf"
-        file_path = Path(temp_dir, file_name)
-
-        # Read the content of the PDF file
-        with open(pdf_path, "rb") as pdf_file:
-            pdf_content = pdf_file.read()
-
-        # Write the PDF content to the temporary directory
-        with open(file_path, "wb") as file:
-            file.write(pdf_content)
-
-    async def main():
-        await asyncio.gather(add_files(), poll_and_print())
-
-    asyncio.run(main())
+    temp_dir.cleanup()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_fs_collector())
+    asyncio.run(main())
