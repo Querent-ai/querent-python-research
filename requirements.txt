@@ -155,5 +155,7 @@ duckduckgo-search==3.8.3
 asyncio==3.4.3
 aiofiles
 pytest-asyncio
+google-cloud-storage
 google-cloud
 boto3
+pymupdf
