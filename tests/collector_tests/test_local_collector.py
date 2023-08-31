@@ -52,7 +52,7 @@ def test_add_files_read_via_collector(temp_dir):
     #         file.write(b"test_add_files_read_via_collector")
 
     async def add_files():
-        pdf_path = "/Users/ayushjunjhunwala/querent-local/querent-ai/sampleTestFiles/HP6 - Harry Potter and the Half-Blood Prince.pdf"
+        pdf_path = "/querent-ai/sampleTestFiles/HP6 - Harry Potter and the Half-Blood Prince.pdf"
         file_name = "test_temp.pdf"
         file_path = Path(temp_dir, file_name)
 
