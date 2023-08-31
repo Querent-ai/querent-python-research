@@ -156,3 +156,4 @@ asyncio==3.4.3
 aiofiles
 pytest-asyncio
 google-cloud
+boto3
