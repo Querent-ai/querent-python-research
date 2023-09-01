@@ -67,7 +67,6 @@ class TextIngestor(BaseIngestor):
 
     async def extract_text_from_file(self, collected_bytes: CollectedBytes) -> str:
         text = collected_bytes.data.decode("utf-8")
-        print(text)
         return text
 
     async def process_data(self, text: str) -> List[str]:

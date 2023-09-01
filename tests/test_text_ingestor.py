@@ -17,9 +17,7 @@ async def test_collect_and_ingest_txt():
 
     # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
-    ingestor_factory = await ingestor_factory_manager.get_factory(
-        "txt"
-    )  # Notice the use of await here
+    ingestor_factory = await ingestor_factory_manager.get_factory("txt")
     ingestor = await ingestor_factory.create("txt", [])
 
     # Collect and ingest the PDF
