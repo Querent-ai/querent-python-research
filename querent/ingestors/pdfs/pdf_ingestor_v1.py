@@ -40,7 +40,8 @@ class PdfIngestor(BaseIngestor):
                     if current_file:
                         # Process the collected bytes of the previous file
                         text = await self.extract_and_process_pdf(
-                            CollectedBytes(file=current_file, data=collected_bytes)
+                            CollectedBytes(file=current_file,
+                                           data=collected_bytes)
                         )
                         yield text
                     collected_bytes = b""  # Reset collected bytes for the new file
@@ -56,6 +57,7 @@ class PdfIngestor(BaseIngestor):
                 yield text
 
         except Exception as e:
+            print(e)
             yield []
 
     async def extract_and_process_pdf(self, collected_bytes: CollectedBytes) -> List[str]:
@@ -66,7 +68,7 @@ class PdfIngestor(BaseIngestor):
         pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
         text = ""
         for page in pdf:
-            text += page.getText()
+            text += page.get_text()
         return text
 
     async def process_data(self, text: str) -> List[str]:
