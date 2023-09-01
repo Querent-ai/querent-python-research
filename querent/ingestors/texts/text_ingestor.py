@@ -23,8 +23,8 @@ class TextIngestorFactory(IngestorFactory):
 
 class TextIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
+        super().__init__(IngestorBackend.TEXT)
         self.processors = processors
-        super.__init__(IngestorBackend.TEXT)
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -56,6 +56,7 @@ class TextIngestor(BaseIngestor):
                 yield text
 
         except Exception as e:
+            print(e)
             yield []
 
     async def extract_and_process_text(
@@ -64,8 +65,9 @@ class TextIngestor(BaseIngestor):
         text = await self.extract_text_from_file(collected_bytes)
         return await self.process_data(text=text)
 
-    async def extract_text_from_file(collected_bytes: CollectedBytes) -> str:
+    async def extract_text_from_file(self, collected_bytes: CollectedBytes) -> str:
         text = collected_bytes.data.decode("utf-8")
+        print(text)
         return text
 
     async def process_data(self, text: str) -> List[str]:
