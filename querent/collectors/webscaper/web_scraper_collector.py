@@ -6,6 +6,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.config.collector_config import CollectorBackend, WebScraperConfig
 from querent.common.uri import Uri
 from querent.tools.web_page_extractor import WebpageExtractor
+from urllib.parse import urlparse, urljoin
 
 
 class WebScraperCollector(Collector):
@@ -24,8 +25,14 @@ class WebScraperCollector(Collector):
 
     async def poll(self):
         async with self.poll_lock:
-            content = await self.scrape_website(self.website_url)
-            yield CollectedBytes(file=None, data=content.data, error=None)
+            urls_to_scrape = [self.website_url]
+            while urls_to_scrape:
+                url = urls_to_scrape.pop()
+                content = await self.scrape_website(url)
+                yield CollectedBytes(file=None, data=content.data, error=None)
+                # Find and add links from this page to the list of URLs to scrape
+                new_urls = self.extract_links(content.data, url)
+                urls_to_scrape.extend(new_urls)
 
     async def scrape_website(self, website_url: str):
         async with self.semaphore:
@@ -36,6 +43,13 @@ class WebScraperCollector(Collector):
                     return CollectedBytes(
                         data=content[:max_length], file=None, error=None
                     )
+
+    def extract_links(self, content: str, base_url: str):
+        # Use a proper HTML parser to extract links
+        extractor = WebpageExtractor()
+        links = extractor.extract_links(base_url)
+        # Join relative links with the base URL
+        return [urljoin(base_url, link) for link in links]
 
 
 class WebScraperFactory(CollectorFactory):

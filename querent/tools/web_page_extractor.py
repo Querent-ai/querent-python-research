@@ -243,3 +243,44 @@ class WebpageExtractor:
                 f"Unknown error while extracting text from HTML (lxml): {str(e)}"
             )
             return ""
+
+    def extract_links(self, url):
+        """
+        Extract internal links from a webpage.
+
+        Args:
+            url (str): The URL of the webpage to extract links from.
+
+        Returns:
+            list: A list of internal links (URLs).
+        """
+        try:
+            headers = {"User-Agent": random.choice(USER_AGENTS)}
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, "html.parser")
+                links = []
+                for link in soup.find_all("a", href=True):
+                    link_href = link.get("href")
+                    if (
+                        link_href.startswith("/")
+                        or link_href.startswith(".")
+                        or link_href.startswith("#")
+                    ):
+                        link_href = urljoin(url, link_href)
+                    if (
+                        link_href.startswith(url)
+                        and link_href not in self.crawled_urls
+                    ):
+                        links.append(link_href)
+                return links
+            else:
+                logger.error(
+                    f"Error while extracting links from HTML (bs4): {response.status_code} for url - {url}"
+                )
+                return []
+        except Exception as e:
+            logger.error(
+                f"Unknown error while extracting links from HTML (bs4): {str(e)}"
+            )
+            return []
