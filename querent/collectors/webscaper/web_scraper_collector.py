@@ -32,7 +32,7 @@ class WebScraperCollector(Collector):
             async with ClientSession(connector=TCPConnector(ssl=False)) as session:
                 async with session.get(website_url) as response:
                     content = await response.text()
-                    max_length = len(" ".join(content.split(" ")[:600]))
+                    max_length = len(content)
                     return CollectedBytes(
                         data=content[:max_length], file=None, error=None
                     )
