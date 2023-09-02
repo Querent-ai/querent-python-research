@@ -31,7 +31,7 @@ class WebScraperCollector(Collector):
                 content = await self.scrape_website(url)
                 yield CollectedBytes(file=None, data=content.data, error=None)
                 # Find and add links from this page to the list of URLs to scrape
-                new_urls = self.extract_links(content.data, url)
+                new_urls = self.extract_links(url)
                 urls_to_scrape.extend(new_urls)
 
     async def scrape_website(self, website_url: str):
@@ -44,7 +44,7 @@ class WebScraperCollector(Collector):
                         data=content[:max_length], file=None, error=None
                     )
 
-    def extract_links(self, content: str, base_url: str):
+    def extract_links(self, base_url: str):
         # Use a proper HTML parser to extract links
         extractor = WebpageExtractor()
         links = extractor.extract_links(base_url)
