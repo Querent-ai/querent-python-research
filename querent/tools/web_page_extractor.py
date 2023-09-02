@@ -271,6 +271,7 @@ class WebpageExtractor:
                     if (
                         link_href.startswith(url)
                         and link_href not in self.crawled_urls
+                        and link_href != url
                     ):
                         links.append(link_href)
                 return links
