@@ -32,14 +32,15 @@ class S3CollectConfig(BaseModel):
 
 class GcsCollectConfig(BaseModel):
     bucket: str
-    region: str
-    access_key: str
-    secret_key: str
+    credentials: str
+    # chunk: int = 1024
+
 
 class WebScraperConfig(BaseModel):
     website_url: str = Field(
         ..., description="The URL of the website to scrape."
     )
+
 
 class CollectConfigWrapper(BaseModel):
     backend: CollectorBackend

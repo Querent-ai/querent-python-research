@@ -4,15 +4,23 @@ from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend
 import pytest
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @pytest.fixture
 def aws_config():
+    aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+    aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+    aws_region = os.getenv('AWS_REGION')
+    aws_bucket_name = os.getenv('AWS_BUCKET_NAME')
     return {
-        "bucket": "pstreamsbucket1",
-        "region": "ap-south-1",
-        "access_key": "AKIA5ZFZH6CA6LDWIPV5",
-        "secret_key": "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",
+        "bucket": aws_bucket_name,
+        "region": aws_region,
+        "access_key": aws_access_key_id,
+        "secret_key": aws_secret_access_key,
     }
 
 
@@ -37,6 +45,8 @@ async def test_aws_collector(aws_config):
             assert not result.is_error()
             chunk = result.unwrap()
             assert chunk is not None
+
+    await poll_and_print()
 
     # Modify this function to add files to S3 bucket
     async def add_files():
