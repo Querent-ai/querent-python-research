@@ -4,13 +4,17 @@ from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend
 import pytest
+import os
+
+credentials_info = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+bucket_name = os.environ.get("GOOGLE_BUCKET_NAME")
 
 
 @pytest.fixture
 def gcs_config():
     return {
-        "bucket": "bucket_name",
-        "credentials_path": "/Users/ayushjunjhunwala/querent-local/querent-ai/querent/config/protean-tooling-368008-8b160be0bb98.json",
+        "bucket": bucket_name,
+        "credentials_path": credentials_info
     }
 
 
