@@ -21,6 +21,10 @@ jobs:
         with:
           python-version: 3.8
 
+      - name: Apt install dependencies
+        run: |
+          sudo apt-get tesseract-ocr
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
