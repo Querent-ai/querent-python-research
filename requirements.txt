@@ -158,4 +158,3 @@ pytest-asyncio
 pymupdf
 pytesseract
 pillow
-tesseract-ocr
