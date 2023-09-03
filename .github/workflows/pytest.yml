@@ -24,7 +24,7 @@ jobs:
 
       - name: Apt install dependencies
         run: |
-          sudo apt-get tesseract-ocr
+          sudo apt install tesseract-ocr -y
 
       - name: Install dependencies
         run: |
