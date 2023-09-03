@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - '*'
+      - main
     paths-ignore:
       - 'README.md'  # Add any paths you want to exclude
 
