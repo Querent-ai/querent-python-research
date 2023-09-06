@@ -158,3 +158,5 @@ pytest-asyncio
 pymupdf
 pydub
 SpeechRecognition
+pytesseract
+pillow
