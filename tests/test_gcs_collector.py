@@ -15,7 +15,7 @@ def gcs_config():
     credentials_info = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
     bucket_name = os.getenv("GOOGLE_BUCKET_NAME")
     return {
-        "bucket": bucket_name,
+        "bucket": "www.billbo.ai",
         "credentials_path": credentials_info
     }
 
