@@ -22,7 +22,8 @@ jobs:
         with:
           python-version: 3.8
 
-      run: |
+      - name: Apt install dependencies
+        run: |
           sudo apt-get update
           sudo apt install tesseract-ocr
           sudo apt install libtesseract-dev
