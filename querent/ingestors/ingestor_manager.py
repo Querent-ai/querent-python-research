@@ -4,6 +4,9 @@ from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory, UnsupportedIngestor
 from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory
 from querent.ingestors.texts.text_ingestor import TextIngestorFactory
+from querent.ingestors.audio.audio_ingestors import AudioIngestorFactory
+from querent.ingestors.json.json_ingestor import JsonIngestorFactory
+from querent.ingestors.images.image_ingestor import ImageIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -11,6 +14,11 @@ class IngestorFactoryManager:
         self.ingestor_factories = {
             IngestorBackend.PDF.value: PdfIngestorFactory(),
             IngestorBackend.TEXT.value: TextIngestorFactory()
+            IngestorBackend.MP3.value: AudioIngestorFactory(),
+            IngestorBackend.WAV.value: AudioIngestorFactory(),
+            IngestorBackend.JSON.value: JsonIngestorFactory(),
+            IngestorBackend.JPG.value: ImageIngestorFactory(),
+            IngestorBackend.PNG.value: ImageIngestorFactory(),
             # Ingestor.TEXT.value: TextIngestor(),
             # Add more mappings as needed
         }
