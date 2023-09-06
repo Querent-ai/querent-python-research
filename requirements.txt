@@ -156,3 +156,5 @@ asyncio==3.4.3
 aiofiles
 pytest-asyncio
 pymupdf
+pytesseract
+pillow
