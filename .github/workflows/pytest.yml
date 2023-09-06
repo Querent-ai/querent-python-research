@@ -27,6 +27,8 @@ jobs:
           sudo apt-get update
           sudo apt install tesseract-ocr
           sudo apt install libtesseract-dev
+          sudo apt-get install ffmpeg
+
 
       - name: Install dependencies
         run: |

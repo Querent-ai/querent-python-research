@@ -156,5 +156,7 @@ asyncio==3.4.3
 aiofiles
 pytest-asyncio
 pymupdf
+pydub
+SpeechRecognition
 pytesseract
 pillow
