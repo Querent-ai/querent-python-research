@@ -11,7 +11,6 @@ on:
 
 jobs:
   pytest:
-    if: ${{ github.ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     steps:
