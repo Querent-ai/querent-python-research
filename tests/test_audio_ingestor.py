@@ -1,10 +1,12 @@
-import asyncio
+"""Test cases for audio ingestors"""
 from pathlib import Path
+import pytest
+import asyncio
+
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
-import pytest
 
 
 @pytest.mark.asyncio
@@ -30,7 +32,7 @@ async def test_collect_and_ingest_audio():
             if len(ingested) == 0:
                 counter += 1
 
-        assert counter == 0
+    assert counter == 0
 
     await poll_and_print()
 

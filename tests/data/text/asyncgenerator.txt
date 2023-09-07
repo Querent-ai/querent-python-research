@@ -1,0 +1,12 @@
+Asynchronous generator functions are part of Python version 3.6, they were introduced by PEP-525. Asynchronous generator 
+functions are much like regular asynchronous functions except that they contain the yield keyword in the function body.
+Which in turn, makes them much like regular generators, except for that you can use the await keyword in there as well.
+
+When calling an asynchronous generator function, the result that is returned is an asynchronous generator object. In 
+contrast to calling regular asynchronous functions which return a coroutine object.
+Since the asynchronous generator is, no surprise, asynchronous you are allowed to use the await keyword inside the 
+asynchronous generator.
+
+You can use this, for example, to send out HTTP requests in the asynchronous generator and yielding the response.
+
+Besides asynchronous iterables you can use asynchronous generators with the async for-loop as well.
