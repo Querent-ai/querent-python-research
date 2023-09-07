@@ -3,10 +3,11 @@ name: Run Pytest on Branches
 on:
   push:
     branches:
-      - '*'
       - main
-    paths-ignore:
-      - 'README.md'  # Add any paths you want to exclude
+      - '*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   pytest:
