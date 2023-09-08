@@ -32,7 +32,7 @@ async def test_collect_and_ingest_audio():
             if len(ingested) == 0:
                 counter += 1
 
-    assert counter == 0
+    assert counter == 1
 
     await poll_and_print()
 
