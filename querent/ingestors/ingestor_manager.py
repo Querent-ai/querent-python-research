@@ -10,6 +10,7 @@ from querent.ingestors.texts.text_ingestor import TextIngestorFactory
 from querent.ingestors.audio.audio_ingestors import AudioIngestorFactory
 from querent.ingestors.json.json_ingestor import JsonIngestorFactory
 from querent.ingestors.images.image_ingestor import ImageIngestorFactory
+from querent.ingestors.csv.csv_ingestor import CsvIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -24,6 +25,7 @@ class IngestorFactoryManager:
             IngestorBackend.JSON.value: JsonIngestorFactory(),
             IngestorBackend.JPG.value: ImageIngestorFactory(),
             IngestorBackend.PNG.value: ImageIngestorFactory(),
+            IngestorBackend.CSV.value: CsvIngestorFactory(),
             # Ingestor.TEXT.value: TextIngestor(),
             # Add more mappings as needed
         }
