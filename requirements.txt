@@ -160,4 +160,4 @@ pydub
 SpeechRecognition
 pytesseract
 pillow
-
+pytextract
