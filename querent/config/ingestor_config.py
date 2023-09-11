@@ -1,12 +1,14 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field
 
 
 class IngestorBackend(str, Enum):
     PDF = "pdf"
     TEXT = "txt"
     DOCX = "docx"
+    DOC = "doc"
+    PPT = "ppt"
+    PPTX = "pptx"
     CSV = "csv"
     XLSX = "xlsx"
     JSON = "json"

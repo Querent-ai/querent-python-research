@@ -1,14 +1,18 @@
-from typing import AsyncGenerator, List
-import fitz  # PyMuPDF
-from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.ingestor_config import IngestorBackend
-from querent.ingestors.base_ingestor import BaseIngestor
-from querent.ingestors.ingestor_factory import IngestorFactory
+from typing import List, AsyncGenerator
+import pytextract
+import tempfile
+import os
+import pytextract
+
 from querent.processors.async_processor import AsyncProcessor
+from querent.ingestors.ingestor_factory import IngestorFactory
+from querent.ingestors.base_ingestor import BaseIngestor
+from querent.config.ingestor_config import IngestorBackend
+from querent.common.types.collected_bytes import CollectedBytes
 
 
-class PdfIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"pdf"}
+class DocIngestorFactory(IngestorFactory):
+    SUPPORTED_EXTENSIONS = {"doc", "docx"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -18,12 +22,12 @@ class PdfIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return PdfIngestor(processors)
+        return DocIngestor(processors)
 
 
-class PdfIngestor(BaseIngestor):
+class DocIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.PDF)
+        super().__init__(IngestorBackend.DOC)
         self.processors = processors
 
     async def ingest(
@@ -36,15 +40,14 @@ class PdfIngestor(BaseIngestor):
                 if chunk_bytes.is_error():
                     # TODO handle error
                     continue
-
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for page_text in self.extract_and_process_pdf(
+                    async for text in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield page_text
+                        yield text
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -53,20 +56,31 @@ class PdfIngestor(BaseIngestor):
             yield ""
         finally:
             # process the last file
-            async for page_text in self.extract_and_process_pdf(
+            async for text in self.extract_and_process_doc(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield page_text
+                yield text
             pass
 
-    async def extract_and_process_pdf(
+    async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
-        for page in pdf:
-            text = page.get_text()
-            processed_text = await self.process_data(text)
-            yield processed_text
+        text = await self.extract_text_from_doc(collected_bytes)
+        # print(text)
+        processed_text = await self.process_data(text)
+        yield processed_text
+
+    async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
+        suffix = "." + collected_bytes.extension
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+            temp_file.write(collected_bytes.data)
+
+        temp_file_path = temp_file.name
+        try:
+            txt = pytextract.process(temp_file_path).decode("utf-8")
+            return txt
+        finally:
+            os.remove(temp_file_path)
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
