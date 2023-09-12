@@ -15,7 +15,7 @@ class TextIngestorFactory(IngestorFactory):
     async def create(
         self, file_extension: str, processors: List[AsyncProcessor]
     ) -> BaseIngestor:
-        if not self.supports(file_extension):
+        if not await self.supports(file_extension):
             return None
 
         return TextIngestor(processors)
