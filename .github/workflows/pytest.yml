@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - '!nishant'
       - '*'
   pull_request:
     branches:
