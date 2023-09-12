@@ -26,5 +26,8 @@ Here's a breakdown of our proposed system:
 - [Entity Extraction](#entityextraction)
 
 
-**Co-reference Resolution** <a id='coreference'></a>
+ **Co-reference Resolution** <a id='coreference'></a>
 
+ ![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/coref-1.gif)
+    (copyright: https://explosion.ai/blog/coref)
+    
