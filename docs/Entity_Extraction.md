@@ -170,7 +170,6 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
     An anaphoric reference occurs when a word or phrase refers back to another word or phrase that has already been mentioned in the discourse. It's like looking back in the text to find its antecedent.
 
     - **Cataphora:**
-    
     Conversely, a cataphoric reference is when a word or phrase refers forward to another word or phrase that will be mentioned later in the discourse. It's like giving a teaser before revealing the full information.
 
 
