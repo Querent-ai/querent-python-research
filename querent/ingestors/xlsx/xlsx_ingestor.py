@@ -1,7 +1,6 @@
 """Ingestor file for xlsx files"""
 from typing import List, AsyncGenerator
 import io
-import openpyxl
 import pandas as pd
 
 from querent.ingestors.ingestor_factory import IngestorFactory
