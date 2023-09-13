@@ -161,3 +161,4 @@ SpeechRecognition
 pytesseract
 pillow
 pytextract
+pandas
