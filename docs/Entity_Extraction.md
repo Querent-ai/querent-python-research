@@ -103,4 +103,58 @@ print(' '.join(resolved_text))
 
 "Eva and Martha didn't want Eva and Martha's friend Jenny to feel lonely so Eva and Martha invited their friend Jenny to the party in Las Vegas."
 ```
-3. **Using AllenNLP for Co-refererence resolution:**
+3. **Using BERT for Co-refererence resolution:**
+
+BERT (Bidirectional Encoder Representations from Transformers) is a transformer-based model that has revolutionized the field of Natural Language Processing (NLP) due to its ability to capture deep contextual information from text. Its bidirectional nature allows it to understand the context of each word based on all its surrounding words, making it particularly powerful for tasks that require understanding relationships between different parts of a text.
+
+- Contextual Embeddings: Coreference resolution inherently requires understanding the context in which words or phrases appear. BERT's strength lies in generating embeddings that are deeply contextual, making it well-suited for identifying whether two mentions refer to the same entity.
+
+- Transfer Learning: BERT is pre-trained on a massive corpus, enabling it to understand a wide range of linguistic constructs. This pre-trained knowledge can be fine-tuned on a smaller, task-specific dataset for coreference resolution, allowing us to leverage BERT's general linguistic knowledge while tailoring it to the nuances of coreference.
+
+- End-to-End Training: Traditional coreference resolution systems often involve multiple stages, including mention detection, mention-pair classification, and clustering. With BERT, there's potential to design end-to-end models that handle all these stages in a unified manner, simplifying the pipeline and potentially improving performance.
+
+- Challenges: While BERT holds promise, it's essential to note that coreference resolution is a complex task. The model needs to handle various challenges, such as:
+
+    a. Distinguishing between pronouns and their potential antecedents.
+
+    b. Understanding long-range dependencies where the referring expression and  its antecedent are far apart.
+
+    c. Handling nested and overlapping mentions.
+
+```python
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+
+# Load pre-trained BERT model and tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)  # 2 labels: coreferent or not
+
+# Fine-tuning on coreference data (pseudo-code)
+# for sentence, mention1, mention2, label in coreference_dataset:
+#     inputs = tokenizer(mention1 + " [SEP] " + mention2, return_tensors="pt")
+#     outputs = model(**inputs, labels=label)
+#     loss = outputs.loss
+#     loss.backward()
+#     optimizer.step()
+
+# Sample sentence with two mentions
+sentence = "John is a software engineer. He works at Google."
+mention1 = "John"
+mention2 = "He"
+
+# Check if the two mentions are coreferent using the fine-tuned BERT model
+inputs = tokenizer(mention1 + " [SEP] " + mention2, return_tensors="pt")
+outputs = model(**inputs)
+predicted_label = torch.argmax(outputs.logits, dim=1).item()
+
+if predicted_label == 1:
+    print(f"'{mention1}' and '{mention2}' are coreferent.")
+else:
+    print(f"'{mention1}' and '{mention2}' are not coreferent.")
+```
+
+This code provides a basic structure for using BERT for coreference resolution. In practice, you'd need a labeled coreference dataset to fine-tune the BERT model, and you'd likely want to incorporate additional steps like mention detection and clustering of coreferent mentions.
+## Comparison and Limitations
+
+ ![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/Original%20vs%20Spacy%20vs%20AllenNLP.png)
+    (copyright: https://neurosys.com/blog/popular-frameworks-coreference-resolution#article-3)
