@@ -12,6 +12,7 @@ from querent.ingestors.json.json_ingestor import JsonIngestorFactory
 from querent.ingestors.images.image_ingestor import ImageIngestorFactory
 from querent.ingestors.doc.doc_ingestor import DocIngestorFactory
 from querent.ingestors.csv.csv_ingestor import CsvIngestorFactory
+from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -29,6 +30,8 @@ class IngestorFactoryManager:
             IngestorBackend.DOCX.value: DocIngestorFactory(),
             IngestorBackend.DOC.value: DocIngestorFactory(),
             IngestorBackend.CSV.value: CsvIngestorFactory(),
+            IngestorBackend.PPT.value: PptIngestorFactory(),
+            IngestorBackend.PPTX.value: PptIngestorFactory(),
             # Ingestor.TEXT.value: TextIngestor(),
             # Add more mappings as needed
         }
