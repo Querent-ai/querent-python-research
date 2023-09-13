@@ -155,6 +155,35 @@ else:
 
 This code provides a basic structure for using BERT for coreference resolution. In practice, you'd need a labeled coreference dataset to fine-tune the BERT model, and you'd likely want to incorporate additional steps like mention detection and clustering of coreferent mentions.
 ## Comparison and Limitations
+Here's a sample from the dataset that delves into the historical background of hot dogs.
+
+Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Huggingface" and the solution offered by the Allen Institute as "AllenNLP".
 
  ![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/Original%20vs%20Spacy%20vs%20AllenNLP.png)
     (copyright: https://neurosys.com/blog/popular-frameworks-coreference-resolution#article-3)
+
+- ***Anaphora vs. Cataphora: Understanding Referential Expressions***
+
+    In linguistics, when we discuss the relationships between different parts of a text, two terms often come up: anaphora and cataphora. Both are forms of endophora, where a word or phrase in a sentence refers to another part of the same text. However, the direction of this reference is what differentiates the two.
+
+    - **Anaphora:**
+    An anaphoric reference occurs when a word or phrase refers back to another word or phrase that has already been mentioned in the discourse. It's like looking back in the text to find its antecedent.
+
+```
+    Example:
+
+    "When John arrived at the party, he was immediately greeted by his friends."
+    In this sentence, "he" is an anaphoric reference to "John."
+
+```
+    - **Cataphora:**
+    
+    Conversely, a cataphoric reference is when a word or phrase refers forward to another word or phrase that will be mentioned later in the discourse. It's like giving a teaser before revealing the full information.
+
+```
+    Example:
+
+    "Even though he was late, John made sure to apologize to every guest."
+    Here, "he" is a cataphoric reference, as it points forward to "John," which appears later in the sentence.
+```
+
