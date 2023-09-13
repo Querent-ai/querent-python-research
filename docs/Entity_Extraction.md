@@ -169,13 +169,19 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
     - **Anaphora:**
     An anaphoric reference occurs when a word or phrase refers back to another word or phrase that has already been mentioned in the discourse. It's like looking back in the text to find its antecedent.
 
-
     - **Cataphora:**
     
     Conversely, a cataphoric reference is when a word or phrase refers forward to another word or phrase that will be mentioned later in the discourse. It's like giving a teaser before revealing the full information.
 
+
 ```
-    Example:
+    Anaphora Example:
+
+    "When John arrived at the party, he was immediately greeted by his friends."
+    In this sentence, "he" is an anaphoric reference to "John."
+
+
+    Cataphora Example:
 
     "Even though he was late, John made sure to apologize to every guest."
     Here, "he" is a cataphoric reference, as it points forward to "John," which appears later in the sentence.
