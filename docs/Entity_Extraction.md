@@ -30,4 +30,77 @@ Here's a breakdown of our proposed system:
 
  ![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/coref-1.gif)
     (copyright: https://explosion.ai/blog/coref)
-    
+
+1. **Using spaCy with NeuralCoref for Co-refererence resolution:**
+
+NeuralCoref is an extension for spaCy's named entity recognition system, adding the capability of neural network-based coreference resolution. In essence, it identifies mentions in a text that refer to the same entity, such as linking the pronoun "she" to a previously mentioned "Jane Doe".
+When integrated with spaCy, NeuralCoref leverages spaCy's tokenization and dependency parsing capabilities, while adding its own neural models to resolve coreferences. This combined approach ensures that the context around entities is preserved and understood.
+
+Here's a brief workflow of using spaCy with NeuralCoref for co-reference resolution:
+
+- Initialization: Load spaCy's language model and add the NeuralCoref component to the pipeline.
+- Tokenization and Parsing: Process the input text using spaCy's tokenizer and parser, creating a Doc object with tokens and their linguistic features.
+- Coreference Resolution: NeuralCoref identifies coreferent mentions in the Doc, linking them together. For instance, in the sentence "Jane is a data scientist. She works at TechCorp.", NeuralCoref will recognize that "She" refers to "Jane".
+
+            
+
+#### Spacy NeuralCoref Usage:
+
+```python
+
+# Import the necessary libraries
+import spacy
+import neuralcoref
+
+# Initialize the standard English model from SpaCy
+spacy_model = spacy.load('en_core_web_sm')
+
+# Integrate the neuralcoref with the loaded SpaCy model
+neuralcoref.add_to_pipe(spacy_model)
+
+# Process a complex sample text using the enhanced SpaCy model
+sample_text = u"John, who works at TechCorp, bought a new car. He said it's more fuel-efficient than his old one. Meanwhile, TechCorp is planning to provide electric charging stations for its employees."
+processed_text = spacy_model(sample_text)
+
+# Check for coreference presence and retrieve coreference clusters
+has_coreference = processed_text._.has_coref
+coreference_groups = processed_text._.coref_clusters
+
+```
+
+
+2. **Using AllenNLP for Co-refererence resolution:**
+
+AllenNLP, a product of the Allen Institute for AI, is a notable open-source library in the field of Natural Language Processing, built atop the PyTorch platform. A significant strength of AllenNLP lies in its ability to handle coreference resolution. This task, essentially about identifying words or phrases in text that reference the same entity, is crucial for a clear and contextual understanding of any narrative. By leveraging deep learning models, AllenNLP efficiently maps related mentions within a document, providing a nuanced understanding of the text. For those in the research community and developers aiming for precision, AllenNLP serves as a reliable tool, adept at connecting pronouns to their antecedents or discerning when different terms in a document refer to the same entity.
+
+
+```python
+
+# Import the necessary libraries
+from allennlp.predictors.predictor import Predictor
+import allennlp_models.coref
+
+# Load the coreference resolution model
+predictor = Predictor.from_path("https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2021.03.10.tar.gz")
+
+
+# Input text
+text = "Eva and Martha didn't want their friend Jenny to feel lonely so they invited her to the party in Las Vegas."
+
+# Get coreference resolution
+predictions = predictor.predict(document=text)
+
+# Print the resolved text
+resolved_text = predictions['document']
+for cluster in predictions['clusters']:
+    mention = cluster[0]
+    referent = cluster[-1]
+    resolved_text[mention[0]:mention[1]+1] = [resolved_text[referent[0]]]
+    for idx in range(mention[0]+1, mention[1]+1):
+        resolved_text[idx] = ""
+
+print(' '.join(resolved_text))
+
+"Eva and Martha didn't want Eva and Martha's friend Jenny to feel lonely so Eva and Martha invited their friend Jenny to the party in Las Vegas."
+```
+3. **Using AllenNLP for Co-refererence resolution:**
