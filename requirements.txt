@@ -161,5 +161,7 @@ SpeechRecognition
 pytesseract
 pillow
 pytextract
+pandas
 python-pptx
 tika
+openpyxl
