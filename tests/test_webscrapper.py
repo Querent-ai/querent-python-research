@@ -32,6 +32,5 @@ def test_scrapping_data():
     async def poll_and_print():
         async for result in collector.poll():
             assert not result.is_error()
-            print(result.unwrap())
 
     asyncio.run(poll_and_print())

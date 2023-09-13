@@ -161,4 +161,9 @@ SpeechRecognition
 pytesseract
 pillow
 pytextract
+<<<<<<< HEAD
 pandas
+=======
+python-pptx
+tika
+>>>>>>> 31f2c504bb8dcdfd7061cc5fb4fe1eb6b4429373
