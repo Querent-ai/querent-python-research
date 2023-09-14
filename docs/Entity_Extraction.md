@@ -267,12 +267,9 @@ def extract_text_from_pdf(pdf_path):
 
     return pdf_text
 
-# Replace 'Your_PDF_Name.pdf' with the name of the uploaded PDF
+# Replace 'Your_PDF_Name.pdf' with the name of the uploaded PDF (to reproduce the result access the article at https://escholarship.org/uc/item/4m56569q)
 pdf_text = extract_text_from_pdf('eScholarship UC item 4m56569q.pdf')
 print(pdf_text[:1000])  # Print the first 1000 characters to check
-
-
-
 
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 import torch
