@@ -247,7 +247,7 @@ BERT (Bidirectional Encoder Representations from Transformers) has been a game-c
 
 - **Deep Contextual Embeddings**: BERT's architecture allows it to understand words in context, making it adept at distinguishing between different usages of the same word, a crucial aspect for entity recognition.
 
-- **Transfer Learning**: BERT is pre-trained on a massive corpus, enabling it to capture general linguistic patterns. For entity extraction, this pre-trained model can be fine-tuned on labeled entity data, allowing it to specialize in recognizing specific entity types.
+- **Transfer Learning**: BERT is pre-trained on a massive corpus, enabling it to capture general linguistic patterns. For entity extraction, this pre-trained model can be fine-tuned on labeled entity data, allowing it to specialize in recognizing specific entity types. The example we use here is of GeoBERT which is fine-tuned from SciBERT on the Geoscientific Corpus dataset. The model was trained on the Labeled Geoscientific Corpus dataset (~1 million sentences) (copyright :https://huggingface.co/botryan96/GeoBERT)
 
 - **End-to-End Training**: Unlike traditional methods that might involve multiple stages, with BERT, you can design an end-to-end entity recognition system, simplifying the pipeline and potentially boosting performance.
 
