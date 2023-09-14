@@ -26,7 +26,7 @@ Here's a breakdown of our proposed system:
 - [Entity Extraction](#entityextraction)
 
 
- **Co-reference Resolution** <a id='coreference'></a>
+# **Co-reference Resolution** <a id='coreference'></a>
 
  ![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/coref-1.gif)
     (copyright: https://explosion.ai/blog/coref)
@@ -200,6 +200,37 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 | **Documentation**    | - Good documentation, but primarily through Huggingface and spaCy channels. | - Extensive documentation with examples, making it research-friendly. |
 | **Cons**             | - Might not handle extremely complex coreferences as effectively as dedicated systems. | - Steeper learning curve for those unfamiliar with its ecosystem. |
 
- **Entity Extraction** <a id='entityextraction'></a>
+# **Entity Extraction** <a id='entityextraction'></a>
+
+## Entity Extraction using spaCy
+
+Named Entity Recognition (NER) is a pivotal task in NLP, aiming to identify and categorize named entities within text, such as persons, organizations, and dates. One of the prominent libraries in the NLP realm, spaCy, offers a streamlined and potent solution for this.
+
+### How spaCy Handles Entity Extraction:
+
+- **Pre-trained Models**: spaCy comes equipped with models for various languages, adept at recognizing a plethora of entity types. These models, honed on extensive annotated datasets, exhibit a commendable generalization across diverse texts.
+
+- **Tokenization**: As a precursor to entity detection, spaCy dissects the text into tokens, encompassing words and punctuation. This granular breakdown is instrumental in discerning potential entity boundaries.
+
+- **Dependency Parsing**: In tandem with tokenization, spaCy deciphers the sentence's grammatical fabric, pinpointing inter-token relationships. This structural insight augments the context-sensitive detection of entities.
+
+- **Entity Recognition Process**: Post token and relationship establishment, spaCy's NER module trawls the text, identifying sequences resonating with its trained entity patterns. Subsequently, it categorizes these sequences into preset buckets like `PERSON`, `ORG`, and `DATE`.
+
+### Sample Code for Entity Extraction:
+
+```python
+# Import spaCy
+import spacy
+
+# Initialize the English NER model
+nlp = spacy.load("en_core_web_sm")
+
+# Sample text for processing
+text = "Apple Inc. is eyeing to inaugurate a new outlet in San Francisco come January 2024."
+doc = nlp(text)
+
+# Entity extraction and display
+for entity in doc.ents:
+    print(f"{entity.text} ({entity.label_})")
 
  
