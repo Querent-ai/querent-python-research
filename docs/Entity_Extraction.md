@@ -226,11 +226,79 @@ import spacy
 nlp = spacy.load("en_core_web_sm")
 
 # Sample text for processing
-text = "Apple Inc. is eyeing to inaugurate a new outlet in San Francisco come January 2024."
+text = """Albert Einstein was a theoretical physicist. He developed the theory of relativity. Marie Curie was a chemist and physicist.
+She discovered radium and polonium. Isaac Newton was an English mathematician, physicist, and astronomer. He is famous for his laws of motion and
+the law of universal gravitation. Galileo Galilei was an Italian astronomer. He played a major role in the scientific revolution of the seventeenth century. He discovered Jupiter's four largest satellites.
+"""
 doc = nlp(text)
 
 # Entity extraction and display
 for entity in doc.ents:
     print(f"{entity.text} ({entity.label_})")
+```
+```
+[('Albert Einstein', 'PERSON'), ('Marie Curie', 'PERSON'), ('Isaac Newton', 'PERSON'), ('English', 'LANGUAGE'), ('Galileo Galilei', 'PRODUCT'), ('Italian', 'NORP'), ('the seventeenth century', 'DATE'), ('Jupiter', 'LOC'), ('four', 'CARDINAL')]
+ ```
+## Entity Extraction using BERT
 
- 
+BERT (Bidirectional Encoder Representations from Transformers) has been a game-changer in the NLP landscape. Its bidirectional training and deep contextual embeddings make it a prime candidate for tasks like entity extraction.
+
+### How BERT Facilitates Entity Extraction:
+
+- **Deep Contextual Embeddings**: BERT's architecture allows it to understand words in context, making it adept at distinguishing between different usages of the same word, a crucial aspect for entity recognition.
+
+- **Transfer Learning**: BERT is pre-trained on a massive corpus, enabling it to capture general linguistic patterns. For entity extraction, this pre-trained model can be fine-tuned on labeled entity data, allowing it to specialize in recognizing specific entity types.
+
+- **End-to-End Training**: Unlike traditional methods that might involve multiple stages, with BERT, you can design an end-to-end entity recognition system, simplifying the pipeline and potentially boosting performance.
+
+### Sample Code for Entity Extraction using GeoBERT:
+
+```python
+#Read the PDF Content
+from PyPDF2 import PdfReader
+
+def extract_text_from_pdf(pdf_path):
+    pdf_reader = PdfReader(pdf_path)
+    pdf_text = ""
+
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
+        pdf_text += page.extract_text()
+
+    return pdf_text
+
+# Replace 'Your_PDF_Name.pdf' with the name of the uploaded PDF
+pdf_text = extract_text_from_pdf('eScholarship UC item 4m56569q.pdf')
+print(pdf_text[:1000])  # Print the first 1000 characters to check
+
+
+
+
+from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+import torch
+
+# Load pre-trained BERT model and tokenizer
+tokenizer = AutoTokenizer.from_pretrained("botryan96/GeoBERT")
+model = AutoModelForTokenClassification.from_pretrained("botryan96/GeoBERT", from_tf=True)
+ner_machine = pipeline('ner', model=model, tokenizer=tokenizer, aggregation_strategy="simple")
+
+
+# Sample text
+pdf_text = "Elon Musk is the CEO of SpaceX."
+
+# Tokenize input and get predictions
+def extract_entities(text):
+    # Split the text into chunks of 1000 characters
+    text_chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
+    entities = []
+    for chunk in text_chunks:
+        entities += ner_machine(chunk)
+    return [(entity['word'], entity['entity_group']) for entity in entities]
+
+# Decode and display entities
+entities = extract_entities(pdf_text)
+print(entities[:50])  # Print the first 50 entities to check
+```
+```
+[('velocity', 'GeoMeth'), ('glacier', 'GeoPetro'), ('##56', 'GeoLoc'), ('remote sensing', 'GeoMeth'), ('pune', 'GeoLoc'), ('remote sensing', 'GeoMeth'), ('velocity', 'GeoMeth'), ('glacier', 'GeoPetro'), ('##dar', 'GeoLoc'), ('velocity', 'GeoMeth'), ('glacier', 'GeoLoc'), ('remote sensing', 'GeoMeth'), ('remote sensing', 'GeoMeth'), ('vol', 'GeoMeth'), ('velocity', 'GeoMeth'), ('glacier', 'GeoPetro'), ('##dar', 'GeoLoc'), ('indian', 'GeoPetro'), ('india', 'GeoLoc'), ('geology', 'GeoMeth'), ('indian', 'GeoPetro'), ('india', 'GeoLoc'), ('earth', 'GeoPetro'), ('ir', 'GeoPetro'), ('##vin', 'GeoPetro'), ('usa', 'GeoLoc'), ('hydrologic', 'GeoMeth'), ('modeling', 'GeoMeth'), ('usa', 'GeoLoc'), ('usa', 'GeoLoc'), ('glacier', 'GeoPetro'), ('water cycle', 'GeoMeth'), ('himalayan', 'GeoPetro'), ('glaciers', 'GeoPetro'), ('india', 'GeoLoc'), ('glacier', 'GeoPetro'), ('aperture', 'GeoMeth'), ('radar', 'GeoMeth'), ('offset', 'GeoMeth'), ('thermal', 'GeoMeth'), ('glacier', 'GeoLoc'), ('glacier', 'GeoLoc'), ('velocity', 'GeoMeth'), ('glacier', 'GeoLoc'), ('glacier', 'GeoLoc'), ('velocity', 'GeoMeth'), ('glacier', 'GeoLoc'), ('uncertainty', 'GeoMeth'), ('glacier', 'GeoLoc'), ('climate change', 'GeoMeth')]
+```
