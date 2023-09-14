@@ -186,3 +186,16 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
     Here, "he" is a cataphoric reference, as it points forward to "John," which appears later in the sentence.
 ```
 
+
+-  **NeuralCoref (Huggingface) vs. AllenNLP: Pros and Cons**
+
+| Feature/Aspect       | NeuralCoref (Huggingface)                  | AllenNLP                               |
+|----------------------|--------------------------------------------|----------------------------------------|
+| **Integration**      | - Easily integrates with spaCy.            | - Standalone library with comprehensive NLP tools. |
+|                      | - Can be combined with other spaCy components. | - Requires separate setup from other NLP tools. |
+| **Model Architecture** | - Uses a neural network-based approach.  | - Offers deep learning models, often with more architectural variations. |
+| **Flexibility**      | - More suited for general-purpose coreference tasks. | - Highly customizable for specific research or advanced tasks. |
+| **Performance**      | - Fast and efficient for most standard use cases. | - Might be more computationally intensive but potentially more accurate for complex texts. |
+| **Community Support**| - Backed by Huggingface, a well-known entity in NLP. | - Supported by the Allen Institute, renowned for research contributions. |
+| **Documentation**    | - Good documentation, but primarily through Huggingface and spaCy channels. | - Extensive documentation with examples, making it research-friendly. |
+| **Cons**             | - Might not handle extremely complex coreferences as effectively as dedicated systems. | - Steeper learning curve for those unfamiliar with its ecosystem. |
