@@ -199,3 +199,7 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 | **Community Support**| - Backed by Huggingface, a well-known entity in NLP. | - Supported by the Allen Institute, renowned for research contributions. |
 | **Documentation**    | - Good documentation, but primarily through Huggingface and spaCy channels. | - Extensive documentation with examples, making it research-friendly. |
 | **Cons**             | - Might not handle extremely complex coreferences as effectively as dedicated systems. | - Steeper learning curve for those unfamiliar with its ecosystem. |
+
+ **Entity Extraction** <a id='entityextraction'></a>
+
+ 
