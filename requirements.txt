@@ -164,3 +164,4 @@ pytextract
 pandas
 python-pptx
 tika
+openpyxl
