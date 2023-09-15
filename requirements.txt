@@ -164,5 +164,5 @@ pytextract
 pandas
 python-pptx
 tika
-openpyxl
+openpyxl==3.1.2
 xml
