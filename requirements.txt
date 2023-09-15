@@ -164,4 +164,3 @@ pytextract
 pandas
 python-pptx
 tika
-xml
