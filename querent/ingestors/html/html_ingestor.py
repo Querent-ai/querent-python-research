@@ -1,7 +1,6 @@
-"""CSV Ingestor"""
+"""Ingestor file for html"""
 from typing import List, AsyncGenerator
-import csv
-import io
+from bs4 import BeautifulSoup
 
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
@@ -10,10 +9,10 @@ from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
 
 
-class CsvIngestorFactory(IngestorFactory):
-    """Ingestor factory for CSV"""
+class HtmlIngestorFactory(IngestorFactory):
+    """Ingestor factory for html files"""
 
-    SUPPORTED_EXTENSIONS = {"csv"}
+    SUPPORTED_EXTENSIONS = {"html"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -21,21 +20,22 @@ class CsvIngestorFactory(IngestorFactory):
     async def create(
         self, file_extension: str, processors: List[AsyncProcessor]
     ) -> BaseIngestor:
-        if not self.supports(file_extension):
+        if not await self.supports(file_extension):
             return None
-        return CsvIngestor(processors)
+        return HtmlIngestor(processors)
 
 
-class CsvIngestor(BaseIngestor):
-    """Ingestor for CSV"""
+class HtmlIngestor(BaseIngestor):
+    """Ingestor for html"""
 
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.CSV)
+        super().__init__(IngestorBackend.HTML)
         self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[str, None]:
+        """Ingesting bytes of xml file"""
         current_file = None
         collected_bytes = b""
         try:
@@ -47,7 +47,7 @@ class CsvIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for text in self.extract_and_process_csv(
+                    async for text in self.extract_and_process_html(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield text
@@ -56,28 +56,38 @@ class CsvIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            print(e)
             yield ""
         finally:
             # process the last file
-            async for text in self.extract_and_process_csv(
+            async for text in self.extract_and_process_html(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield text
 
-    async def extract_and_process_csv(
+    async def extract_and_process_html(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_csv(collected_bytes)
-        # print(text)
+        """Function to extract and process xml files"""
+        text = await self.extract_text_from_html(collected_bytes)
         processed_text = await self.process_data(text)
         yield processed_text
 
-    async def extract_text_from_csv(
-        self, collected_bytes: CollectedBytes
-    ) -> csv.reader:
-        text_data = collected_bytes.data.decode("utf-8")
-        text = csv.reader(io.StringIO(text_data))
+    async def extract_text_from_html(self, collected_bytes: CollectedBytes) -> str:
+        """Function to extract text from xml"""
+        html_content = collected_bytes.data.decode("UTF-8")
+        soup = BeautifulSoup(html_content, "html.parser")
+        text = []
+        links = []
+        tags = ["p", "h1", "h2", "h3", "h4", "h5", "a", "footer", "article"]
+        for element in soup.find_all(tags):
+            if element.name == "a":
+                link_text = element.get_text().strip()
+                link_href = element.get("href")
+                links.append((link_text, link_href))
+            else:
+                element_text = element.get_text().strip()
+                text.append(element_text)
+
         return text
 
     async def process_data(self, text: str) -> List[str]:

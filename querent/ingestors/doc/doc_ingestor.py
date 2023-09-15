@@ -60,7 +60,6 @@ class DocIngestor(BaseIngestor):
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield text
-            pass
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes

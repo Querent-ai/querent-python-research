@@ -14,6 +14,8 @@ from querent.ingestors.doc.doc_ingestor import DocIngestorFactory
 from querent.ingestors.csv.csv_ingestor import CsvIngestorFactory
 from querent.ingestors.xlsx.xlsx_ingestor import XlsxIngestorFactory
 from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
+from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
+from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -34,6 +36,8 @@ class IngestorFactoryManager:
             IngestorBackend.XLSX.value: XlsxIngestorFactory(),
             IngestorBackend.PPT.value: PptIngestorFactory(),
             IngestorBackend.PPTX.value: PptIngestorFactory(),
+            IngestorBackend.XML.value: XmlIngestorFactory(),
+            IngestorBackend.HTML.value: HtmlIngestorFactory(),
             # Ingestor.TEXT.value: TextIngestor(),
             # Add more mappings as needed
         }
