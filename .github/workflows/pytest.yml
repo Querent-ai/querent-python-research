@@ -40,3 +40,6 @@ jobs:
 
       - name: Run Pytest
         run: pytest --disable-warnings .
+
+      - name: Test Code Coverage
+        run: pytest --cov=querent
