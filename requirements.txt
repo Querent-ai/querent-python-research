@@ -165,3 +165,4 @@ pandas
 python-pptx
 tika
 openpyxl
+xml
