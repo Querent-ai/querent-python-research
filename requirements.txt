@@ -147,7 +147,7 @@ pytest-cov==4.1.0
 pytest-mock==3.11.1
 transformers==4.30.2
 pypdf==3.11.0
-python-pptx==0.6.21
+python-pptx
 Pillow==9.5.0
 EbookLib==0.18
 html2text==2020.1.16
@@ -160,3 +160,10 @@ pydub
 SpeechRecognition
 pytesseract
 pillow
+pytextract
+pandas
+python-pptx
+tika
+openpyxl
+coverage 
+pytest-cov

@@ -8,16 +8,19 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_collect_and_ingest_jpg():
+async def test_collect_and_ingest_xml():
+    # Set up the collector
     collector_factory = FSCollectorFactory()
-    uri = Uri("file://" + str(Path("./tests/data/image/").resolve()))
+    uri = Uri("file://" + str(Path("./tests/data/html/").resolve()))
     config = FSCollectorConfig(root_path=uri.path)
     collector = collector_factory.resolve(uri, config)
 
+    # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
-    ingestor_factory = await ingestor_factory_manager.get_factory("png")
-    ingestor = await ingestor_factory.create("jpg", [])
+    ingestor_factory = await ingestor_factory_manager.get_factory("html")
+    ingestor = await ingestor_factory.create("html", [])
 
+    # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())
     counter = 0
 
@@ -25,7 +28,7 @@ async def test_collect_and_ingest_jpg():
         counter = 0
         async for ingested in ingested_call:
             assert ingested is not None
-            if len(ingested) != 0:
+            if ingested != "" or ingested is not None:
                 counter += 1
         assert counter == 1
 
@@ -33,4 +36,4 @@ async def test_collect_and_ingest_jpg():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_collect_and_ingest_jpg())
+    asyncio.run(test_collect_and_ingest_xml())

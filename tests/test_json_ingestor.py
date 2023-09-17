@@ -25,9 +25,9 @@ async def test_collect_and_ingest_json_data():
         counter = 0
         async for ingested in ingested_call:
             assert ingested is not None
-            if len(ingested) == 0:
+            if len(ingested) != 0:
                 counter += 1
-        assert counter == 0
+        assert counter == 2
 
     await poll_and_print()
 

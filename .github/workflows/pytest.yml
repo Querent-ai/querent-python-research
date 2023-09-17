@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - '!nishant'
+      - '*'
   pull_request:
     branches:
       - main
@@ -19,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Apt install dependencies
         run: |
@@ -27,6 +29,8 @@ jobs:
           sudo apt install tesseract-ocr
           sudo apt install libtesseract-dev
           sudo apt-get install ffmpeg
+          sudo apt install antiword
+          sudo apt install libreoffice
 
 
       - name: Install dependencies
@@ -36,3 +40,6 @@ jobs:
 
       - name: Run Pytest
         run: pytest --disable-warnings .
+
+      - name: Test Code Coverage
+        run: pytest --cov=querent
