@@ -105,6 +105,8 @@ print(' '.join(resolved_text))
 ```
 3. **Using BERT for Co-refererence resolution:**
 
+- [] Need to implement and check
+
 BERT (Bidirectional Encoder Representations from Transformers) is a transformer-based model that has revolutionized the field of Natural Language Processing (NLP) due to its ability to capture deep contextual information from text. Its bidirectional nature allows it to understand the context of each word based on all its surrounding words, making it particularly powerful for tasks that require understanding relationships between different parts of a text.
 
 - Contextual Embeddings: Coreference resolution inherently requires understanding the context in which words or phrases appear. BERT's strength lies in generating embeddings that are deeply contextual, making it well-suited for identifying whether two mentions refer to the same entity.
@@ -164,6 +166,9 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 
 - ***Anaphora vs. Cataphora: Understanding Referential Expressions***
 
+- [] We cannot resolve this issue 100% but what are the possible ways to reduce these errors? The span of text chosen will become crucial in this case
+- [] AllenNLP and NeuroCoref need to be used in a type of intersection strategy (https://github.com/NeuroSYS-pl/coreference-resolution)
+
     In linguistics, when we discuss the relationships between different parts of a text, two terms often come up: anaphora and cataphora. Both are forms of endophora, where a word or phrase in a sentence refers to another part of the same text. However, the direction of this reference is what differentiates the two.
 
     - **Anaphora:**
@@ -201,6 +206,8 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 | **Cons**             | - Might not handle extremely complex coreferences as effectively as dedicated systems. | - Steeper learning curve for those unfamiliar with its ecosystem. |
 
 # **Entity Extraction** <a id='entityextraction'></a>
+-[] Need to try Llama2 as well. Although tried asking it for relationships and it was able to spit it out (including entities) but can add a entity extraction specific example
+-[] get LLama2 fine-tuning code from debanjan
 
 ## Entity Extraction using spaCy
 
