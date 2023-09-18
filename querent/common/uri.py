@@ -1,7 +1,5 @@
-import os
 import re
 import enum
-import functools
 from pathlib import Path
 from typing import Optional, Union
 
@@ -9,7 +7,7 @@ from typing import Optional, Union
 class Protocol(enum.Enum):
     Azure = "azure"
     File = "file"
-    Gcs = "gcs"
+    Gcs = "gs"
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"
@@ -70,7 +68,7 @@ class Uri:
 
     @property
     def path(self) -> str:
-        return self.uri[self.protocol_idx + len(self.PROTOCOL_SEPARATOR):]
+        return self.uri[self.protocol_idx + len(self.PROTOCOL_SEPARATOR) :]
 
     def as_str(self) -> str:
         return self.uri

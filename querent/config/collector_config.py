@@ -33,7 +33,7 @@ class S3CollectConfig(BaseModel):
 class GcsCollectConfig(BaseModel):
     bucket: str
     credentials: str
-    # chunk: int = 1024
+    chunk: int = 1024
 
 
 class WebScraperConfig(BaseModel):

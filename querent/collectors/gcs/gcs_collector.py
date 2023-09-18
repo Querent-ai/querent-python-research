@@ -1,6 +1,8 @@
+import json
 from typing import AsyncGenerator
 
 import aiofiles
+from querent.common.types.collected_bytes import CollectedBytes
 from querent.config.collector_config import GcsCollectConfig
 from querent.config.collector_config import CollectorBackend
 from querent.collectors.collector_base import Collector
@@ -16,13 +18,13 @@ load_dotenv()
 class GCSCollector(Collector):
     def __init__(self, config: GcsCollectConfig):
         self.bucket_name = config.bucket
-        self.credentials = config.credentials
+        self.credentials = json.loads(config.credentials)
         self.client = None
         self.chunk_size = 1024  # Set an appropriate chunk size
 
     async def connect(self):
         if not self.client:
-            self.client = storage.Client.from_service_account_json(self.credentials)
+            self.client = storage.Client.from_service_account_info(self.credentials)
 
     async def disconnect(self):
         if self.client is not None:
@@ -31,15 +33,19 @@ class GCSCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectorResult, None]:
         # Make sure to connect the client before using it
-        await self.connect()
+        if not self.client:
+            await self.connect()
 
         try:
             bucket = self.client.get_bucket(self.bucket_name)
-            blobs = bucket.list_blobs()
+            blobs = list(bucket.list_blobs())  # Convert to a list
+            print(f"Listing blobs in bucket {self.bucket_name}")
+            print("Blobs count: ", len(blobs))
             for blob in blobs:
-                async with self.download_blob(blob) as file:
-                    async for chunk in self.read_chunks(file):
-                        yield CollectorResult({"object_key": blob.name, "chunk": chunk})
+                async for chunk in self.stream_blob(blob):
+                    yield CollectorResult(
+                        CollectedBytes(file=blob.name, data=chunk, error=None)
+                    )
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             print(f"An error occurred: {e}")
@@ -47,26 +53,17 @@ class GCSCollector(Collector):
             # Disconnect the client when done
             await self.disconnect()
 
-    async def read_chunks(self, file):
-        while True:
-            chunk = await file.read(self.chunk_size)
-            if not chunk:
-                break
-            yield chunk
-
-    async def download_blob(self, blob):
+    async def stream_blob(self, blob):
         try:
-            file = await aiofiles.open(blob.name, "wb")
             with blob.open("rb") as blob_file:
-                await file.write(await blob_file.read())
-            return file
+                while True:
+                    chunk = blob_file.read(self.chunk_size)
+                    if not chunk:
+                        break
+                    yield chunk
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
-            print(f"An error occurred while downloading blob: {e}")
-        finally:
-            # Ensure file is closed even if an exception occurs
-            if file:
-                await file.close()
+            print(f"An error occurred while streaming blob: {e}")
 
 
 class GCSCollectorFactory(CollectorFactory):
@@ -74,8 +71,4 @@ class GCSCollectorFactory(CollectorFactory):
         return CollectorBackend.Gcs
 
     def resolve(self, uri: Uri, config: GcsCollectConfig) -> Collector:
-        config = GcsCollectConfig(
-            bucket=config.bucket,
-            credentials=config.credentials,
-        )
         return GCSCollector(config)
