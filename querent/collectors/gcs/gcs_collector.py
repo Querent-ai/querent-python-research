@@ -1,6 +1,3 @@
-#
-
-import asyncio
 from typing import AsyncGenerator
 
 import aiofiles
@@ -10,15 +7,10 @@ from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
-import aiohttp
 from google.cloud import storage
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
-credentials_info = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-bucket_name = os.getenv("GOOGLE_BUCKET_NAME")
 
 
 class GCSCollector(Collector):
@@ -26,11 +18,11 @@ class GCSCollector(Collector):
         self.bucket_name = config.bucket
         self.credentials = config.credentials
         self.client = None
+        self.chunk_size = 1024  # Set an appropriate chunk size
 
     async def connect(self):
         if not self.client:
-            self.client = storage.Client.from_service_account_json(
-                self.credentials)
+            self.client = storage.Client.from_service_account_json(self.credentials)
 
     async def disconnect(self):
         if self.client is not None:
@@ -48,6 +40,9 @@ class GCSCollector(Collector):
                 async with self.download_blob(blob) as file:
                     async for chunk in self.read_chunks(file):
                         yield CollectorResult({"object_key": blob.name, "chunk": chunk})
+        except Exception as e:
+            # Handle exceptions gracefully, e.g., log the error
+            print(f"An error occurred: {e}")
         finally:
             # Disconnect the client when done
             await self.disconnect()
@@ -60,11 +55,18 @@ class GCSCollector(Collector):
             yield chunk
 
     async def download_blob(self, blob):
-        file = aiofiles.open(blob.name, 'wb')
-        await file.__aenter__()
-        with blob.open("rb") as blob_file:
-            await file.write(await blob_file.read())
-        return file
+        try:
+            file = await aiofiles.open(blob.name, "wb")
+            with blob.open("rb") as blob_file:
+                await file.write(await blob_file.read())
+            return file
+        except Exception as e:
+            # Handle exceptions gracefully, e.g., log the error
+            print(f"An error occurred while downloading blob: {e}")
+        finally:
+            # Ensure file is closed even if an exception occurs
+            if file:
+                await file.close()
 
 
 class GCSCollectorFactory(CollectorFactory):
@@ -73,7 +75,7 @@ class GCSCollectorFactory(CollectorFactory):
 
     def resolve(self, uri: Uri, config: GcsCollectConfig) -> Collector:
         config = GcsCollectConfig(
-            bucket=bucket_name,
-            credentials=credentials_info
+            bucket=config.bucket,
+            credentials=config.credentials,
         )
         return GCSCollector(config)
