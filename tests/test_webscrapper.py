@@ -23,7 +23,7 @@ def test_fs_collector_factory():
 
 
 def test_scrapping_data():
-    uri = Uri("https://asecuritysite.com/")
+    uri = Uri("https://protocolstreams.xyz/")
     resolver = CollectorResolver()
     webscrapperConfig = WebScraperConfig(website_url=uri.uri)
     collector = resolver.resolve(uri, webscrapperConfig)
@@ -36,6 +36,5 @@ def test_scrapping_data():
         async for result in collector.poll():
             print("Hola...")
             assert not result.is_error()
-            print(result.unwrap())
 
     asyncio.run(poll_and_print())

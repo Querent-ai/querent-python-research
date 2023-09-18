@@ -3,13 +3,15 @@ name: Run Pytest on Branches
 on:
   push:
     branches:
+      - main
+      - '!nishant'
       - '*'
-    paths-ignore:
-      - 'README.md'  # Add any paths you want to exclude
+  pull_request:
+    branches:
+      - main
 
 jobs:
   pytest:
-    if: ${{ github.ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +21,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
+
+      - name: Apt install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install tesseract-ocr
+          sudo apt install libtesseract-dev
+          sudo apt-get install ffmpeg
+          sudo apt install antiword
+          sudo apt install libreoffice
+
 
       - name: Install dependencies
         run: |
@@ -28,3 +40,6 @@ jobs:
 
       - name: Run Pytest
         run: pytest --disable-warnings .
+
+      - name: Test Code Coverage
+        run: pytest --cov=querent

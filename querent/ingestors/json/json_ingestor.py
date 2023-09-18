@@ -1,5 +1,5 @@
 from typing import AsyncGenerator, List
-import fitz  # PyMuPDF
+import json
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -7,8 +7,8 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 
 
-class PdfIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"pdf"}
+class JsonIngestorFactory(IngestorFactory):
+    SUPPORTED_EXTENSIONS = {"json"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -18,55 +18,62 @@ class PdfIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return PdfIngestor(processors)
+        return JsonIngestor(processors)
 
 
-class PdfIngestor(BaseIngestor):
+class JsonIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.PDF)
+        super().__init__(IngestorBackend.JSON)
         self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
-        current_file = None
-        collected_bytes = b""
+    ) -> AsyncGenerator[List[str], None]:
         try:
+            collected_bytes = b""
+            current_file = None
+
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
-                    # TODO handle error
                     continue
 
-                if current_file is None:
-                    current_file = chunk_bytes.file
-                elif current_file != chunk_bytes.file:
-                    # we have a new file, process the old one
-                    async for page_text in self.extract_and_process_pdf(
-                        CollectedBytes(file=current_file, data=collected_bytes)
-                    ):
-                        yield page_text
+                if chunk_bytes.file != current_file:
+                    if current_file:
+                        text = await self.extract_and_process_json(
+                            CollectedBytes(file=current_file, data=collected_bytes)
+                        )
+                        yield text
                     collected_bytes = b""
                     current_file = chunk_bytes.file
-                collected_bytes += chunk_bytes.data
-        except Exception as e:
-            # TODO handle exception
-            yield ""
-        finally:
-            # process the last file
-            async for page_text in self.extract_and_process_pdf(
-                CollectedBytes(file=current_file, data=collected_bytes)
-            ):
-                yield page_text
-            pass
 
-    async def extract_and_process_pdf(
+                collected_bytes += chunk_bytes.data
+
+            if current_file:
+                text = await self.extract_and_process_json(
+                    CollectedBytes(file=current_file, data=collected_bytes)
+                )
+                yield text
+
+        except Exception as e:
+            print(e)
+            yield []
+
+    async def extract_and_process_json(
         self, collected_bytes: CollectedBytes
-    ) -> AsyncGenerator[str, None]:
-        pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
-        for page in pdf:
-            text = page.get_text()
-            processed_text = await self.process_data(text)
-            yield processed_text
+    ) -> List[str]:
+        text = await self.extract_text_from_json(collected_bytes)
+        return await self.process_data(text)
+
+    async def extract_text_from_json(self, collected_bytes: CollectedBytes) -> str:
+        try:
+            json_data = json.loads(collected_bytes.data.decode("utf-8"))
+            text = json_data
+
+        except json.JSONDecodeError:
+            print("Received error as ", json.JSONDecodeError, "while decoding the data")
+            text = ""
+
+        return text
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text

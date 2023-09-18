@@ -1,14 +1,18 @@
-from typing import AsyncGenerator, List
-import fitz  # PyMuPDF
-from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.ingestor_config import IngestorBackend
-from querent.ingestors.base_ingestor import BaseIngestor
-from querent.ingestors.ingestor_factory import IngestorFactory
+"""Ingestor file for html"""
+from typing import List, AsyncGenerator
+from bs4 import BeautifulSoup
+
 from querent.processors.async_processor import AsyncProcessor
+from querent.ingestors.ingestor_factory import IngestorFactory
+from querent.ingestors.base_ingestor import BaseIngestor
+from querent.config.ingestor_config import IngestorBackend
+from querent.common.types.collected_bytes import CollectedBytes
 
 
-class PdfIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"pdf"}
+class HtmlIngestorFactory(IngestorFactory):
+    """Ingestor factory for html files"""
+
+    SUPPORTED_EXTENSIONS = {"html"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -18,17 +22,20 @@ class PdfIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return PdfIngestor(processors)
+        return HtmlIngestor(processors)
 
 
-class PdfIngestor(BaseIngestor):
+class HtmlIngestor(BaseIngestor):
+    """Ingestor for html"""
+
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.PDF)
+        super().__init__(IngestorBackend.HTML)
         self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[str, None]:
+        """Ingesting bytes of xml file"""
         current_file = None
         collected_bytes = b""
         try:
@@ -36,15 +43,14 @@ class PdfIngestor(BaseIngestor):
                 if chunk_bytes.is_error():
                     # TODO handle error
                     continue
-
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for page_text in self.extract_and_process_pdf(
+                    async for text in self.extract_and_process_html(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield page_text
+                        yield text
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -53,20 +59,36 @@ class PdfIngestor(BaseIngestor):
             yield ""
         finally:
             # process the last file
-            async for page_text in self.extract_and_process_pdf(
+            async for text in self.extract_and_process_html(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield page_text
-            pass
+                yield text
 
-    async def extract_and_process_pdf(
+    async def extract_and_process_html(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
-        for page in pdf:
-            text = page.get_text()
-            processed_text = await self.process_data(text)
-            yield processed_text
+        """Function to extract and process xml files"""
+        text = await self.extract_text_from_html(collected_bytes)
+        processed_text = await self.process_data(text)
+        yield processed_text
+
+    async def extract_text_from_html(self, collected_bytes: CollectedBytes) -> str:
+        """Function to extract text from xml"""
+        html_content = collected_bytes.data.decode("UTF-8")
+        soup = BeautifulSoup(html_content, "html.parser")
+        text = []
+        links = []
+        tags = ["p", "h1", "h2", "h3", "h4", "h5", "a", "footer", "article"]
+        for element in soup.find_all(tags):
+            if element.name == "a":
+                link_text = element.get_text().strip()
+                link_href = element.get("href")
+                links.append((link_text, link_href))
+            else:
+                element_text = element.get_text().strip()
+                text.append(element_text)
+
+        return text
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
