@@ -54,7 +54,7 @@ async def test_aws_collector(aws_config):
             assert chunk is not None
             if chunk is not "" or chunk is not None:
                 counter += 1
-        assert counter > 0
+        assert counter == 797
 
     await poll_and_print()
 
