@@ -5,12 +5,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - "!nishant"
-      - "*"
-  pull_request:
+  push:
     branches:
       - main
 
