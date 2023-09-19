@@ -26,6 +26,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Check if requirements.txt has changed
+        id: check-requirements
+        run: |
+          git fetch origin main
+          git diff --quiet origin/main -- requirements.txt || echo "Requirements changed"
+        continue-on-error: true
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+        if: steps.check-requirements.outputs['check-requirements'] == 'Requirements changed'
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
