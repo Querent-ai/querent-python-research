@@ -18,12 +18,13 @@ aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 @pytest.fixture
 def aws_config():
-    return {
-        "bucket": "pstreamsbucket1",
-        "region": "ap-south-1",
-        "access_key": aws_access_key_id,
-        "secret_key": aws_secret_access_key,
-    }
+    return S3CollectConfig(
+        bucket="pstreamsbucket1",
+        region="ap-south-1",
+        access_key= aws_access_key_id
+        secret_key= aws_secret_access_key
+        chunk=1024,
+    )
 
 
 def test_aws_collector_factory():
@@ -37,7 +38,7 @@ def test_aws_collector_factory():
 @pytest.mark.asyncio
 async def test_aws_collector(aws_config):
     config = aws_config
-    uri = Uri("s3://" + config["bucket"] + "/prefix/")
+    uri = Uri("s3://" + config.bucket)
     resolver = CollectorResolver()
     collector = resolver.resolve(uri, config)
     assert collector is not None
