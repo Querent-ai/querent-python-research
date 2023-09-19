@@ -1,7 +1,5 @@
-import os
 import re
 import enum
-import functools
 from pathlib import Path
 from typing import Optional, Union
 
@@ -9,7 +7,7 @@ from typing import Optional, Union
 class Protocol(enum.Enum):
     Azure = "azure"
     File = "file"
-    Grpc = "grpc"
+    Gcs = "gs"
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"
@@ -21,8 +19,8 @@ class Protocol(enum.Enum):
     def is_file(self) -> bool:
         return self == Protocol.File
 
-    def is_grpc(self) -> bool:
-        return self == Protocol.Grpc
+    def is_gcs(self) -> bool:
+        return self == Protocol.Gcs
 
     def is_postgresql(self) -> bool:
         return self == Protocol.PostgreSQL
@@ -42,7 +40,7 @@ class Protocol(enum.Enum):
     def is_database(self) -> bool:
         return self == Protocol.PostgreSQL
 
-    def is_webscrapper(self) -> bool:
+    def is_webscraper(self) -> bool:
         return self == Protocol.Webscraper
 
 

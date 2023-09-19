@@ -76,7 +76,8 @@ class WebpageExtractor:
                 article = Article(url, config=config)
                 article.set_html(html_content)
                 article.parse()
-                content = article.text.replace("\t", " ").replace("\n", " ").strip()
+                content = article.text.replace(
+                    '\t', ' ').replace('\n', ' ').strip()
 
             return content[:1500]
 
@@ -131,7 +132,8 @@ class WebpageExtractor:
                     ["main", "article", "section", "div"]
                 )
                 if main_content_areas:
-                    main_content = max(main_content_areas, key=lambda x: len(x.text))
+                    main_content = max(main_content_areas,
+                                       key=lambda x: len(x.text))
                     content_tags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"]
                     content = " ".join(
                         [
@@ -224,18 +226,21 @@ class WebpageExtractor:
             tree = html.fromstring(html_content)
             paragraphs = tree.cssselect("p, h1, h2, h3, h4, h5, h6")
             content = " ".join(
-                [para.text_content() for para in paragraphs if para.text_content()]
+                [para.text_content()
+                 for para in paragraphs if para.text_content()]
             )
             content = content.replace("\t", " ").replace("\n", " ").strip()
 
             return content
 
         except ArticleException as ae:
-            logger.error("Error while extracting text from HTML (lxml): {str(ae)}")
+            logger.error(
+                "Error while extracting text from HTML (lxml): {str(ae)}")
             return ""
 
         except RequestException as re:
-            logger.error(f"Error while making the request to the URL (lxml): {str(re)}")
+            logger.error(
+                f"Error while making the request to the URL (lxml): {str(re)}")
             return ""
 
         except Exception as e:

@@ -1,4 +1,6 @@
 from typing import Optional
+from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
+from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.config.collector_config import CollectConfig, CollectorBackend
@@ -14,7 +16,9 @@ class CollectorResolver:
     def __init__(self):
         self.collector_factories = {
             CollectorBackend.LocalFile: FSCollectorFactory(),
+            CollectorBackend.S3: AWSCollectorFactory(),
             CollectorBackend.WebScraper: WebScraperFactory(),
+            CollectorBackend.Gcs: GCSCollectorFactory()
             # Add other collector factories as needed
         }
 
@@ -32,7 +36,13 @@ class CollectorResolver:
     def _determine_backend(self, protocol: Protocol) -> CollectorBackend:
         if protocol.is_file_storage():
             return CollectorBackend.LocalFile
-        if protocol.is_webscrapper():
+        elif protocol.is_s3():
+            return CollectorBackend.S3
+        elif protocol.is_webscraper():
+            return CollectorBackend.WebScraper
+        elif protocol.is_gcs():
+            return CollectorBackend.Gcs
+        elif protocol.is_webscraper():
             return CollectorBackend.WebScraper
         else:
             raise CollectorResolverError(
