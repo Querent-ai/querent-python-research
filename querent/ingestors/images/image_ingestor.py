@@ -5,8 +5,13 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor_config import IngestorBackend
 from querent.processors.async_processor import AsyncProcessor
+from querent.ingestors.ingestor_errors import (
+    FileNotFoundError,
+    IOError,
+    UnidentifiedImageError,
+)
 import pytesseract
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import io
 
 
@@ -66,7 +71,21 @@ class ImageIngestor(BaseIngestor):
         return await self.process_data(text)
 
     async def extract_text_from_image(self, collected_bytes: CollectedBytes) -> str:
-        image = Image.open(io.BytesIO(collected_bytes.data))
+        try:
+            image = Image.open(io.BytesIO(collected_bytes.data))
+
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"Given file with name as {collected_bytes.file} not found"
+            ) from exc
+        except IOError as exc:
+            raise IOError(
+                f"Unable to open given file with name as {collected_bytes.file}"
+            ) from exc
+        except UnidentifiedImageError as exc:
+            raise UnidentifiedImageError(
+                f"Unable to open the given file with given name {collected_bytes.file}"
+            ) from exc
 
         text = pytesseract.image_to_string(image)
 
