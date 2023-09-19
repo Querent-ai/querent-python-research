@@ -13,7 +13,8 @@ load_dotenv()
 
 @pytest.fixture
 def gcs_config():
-    credentials_info = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    cred_file = "/tmp/.config/gcloud/application_default_credentials.json"
+    credentials_info = json.load(open(cred_file))
     credential_json_str = json.dumps(credentials_info)
     return GcsCollectConfig(
         bucket="querent-test", credentials=credential_json_str, chunk=1024
