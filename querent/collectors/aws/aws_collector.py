@@ -39,7 +39,8 @@ class AWSCollector(Collector):
         pass
 
     async def poll(self) -> AsyncGenerator[CollectorResult, None]:
-        await self.connect()  # Ensure we're connected before polling
+        if not self.s3_client:
+            await self.connect()
 
         try:
             response = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
