@@ -21,6 +21,10 @@ class FSCollectorConfig(BaseModel):
     root_path: str
     chunk_size: int = 1024
 
+class AzureCollectConfig(BaseModel):
+    account_url: str
+    credential: str
+    chunk_size: int = 1024
 
 class S3CollectConfig(BaseModel):
     bucket: str

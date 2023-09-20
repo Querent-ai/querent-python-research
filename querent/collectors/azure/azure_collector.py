@@ -12,9 +12,9 @@ from querent.common.uri import Uri
 
 class AzureCollector(Collector):
     def __init__(self, config: AzureCollectConfig, container_name: str, prefix: str):
-        self.account_url = config["account_url"]
+        self.account_url = config.account_url
         self.blob_service_client = BlobServiceClient(
-            account_url=self.account_url, credential=config["credential"]
+            account_url=self.account_url, credential=config.credential
         )
         self.container_name = container_name
         self.chunk_size = 1024
