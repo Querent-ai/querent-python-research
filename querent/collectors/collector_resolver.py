@@ -1,4 +1,5 @@
 from typing import Optional
+from querent.collectors.azure.azure_collector import AzureCollectorFactory
 from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
@@ -18,7 +19,8 @@ class CollectorResolver:
             CollectorBackend.LocalFile: FSCollectorFactory(),
             CollectorBackend.S3: AWSCollectorFactory(),
             CollectorBackend.WebScraper: WebScraperFactory(),
-            CollectorBackend.Gcs: GCSCollectorFactory()
+            CollectorBackend.Gcs: GCSCollectorFactory(),
+            CollectorBackend.AzureBlobStorage: AzureCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -44,6 +46,8 @@ class CollectorResolver:
             return CollectorBackend.Gcs
         elif protocol.is_webscraper():
             return CollectorBackend.WebScraper
+        elif protocol.is_azure_blob_storage():
+            return CollectorBackend.AzureBlobStorage
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"

@@ -1,4 +1,3 @@
-import asyncio
 from typing import AsyncGenerator
 import io
 
@@ -11,30 +10,52 @@ from querent.common.uri import Uri
 
 
 class AzureCollector(Collector):
-    def __init__(self, config: AzureCollectConfig, container_name: str, prefix: str):
+    def __init__(self, config: AzureCollectConfig):
+        self.connection_string = config.connection_string
         self.account_url = config.account_url
-        self.blob_service_client = BlobServiceClient(
-            account_url=self.account_url, credential=config.credential
-        )
-        self.container_name = container_name
+        self.credentials = config.credentials
+        self.container_name = config.container
         self.chunk_size = 1024
-        self.prefix = prefix
+        self.prefix = config.prefix
+        self.blob_service_client = None
+        self.container_client = None
 
     async def connect(self):
-        pass  # No asynchronous connection needed for the Azure Blob Storage client
+        if self.connection_string:
+            self.blob_service_client = BlobServiceClient.from_connection_string(
+                conn_str=self.connection_string,
+                credential=self.credentials,
+            )
+        elif self.account_url:
+            self.blob_service_client = BlobServiceClient(
+                account_url=self.account_url,
+                credential=self.credentials,
+            )
+        self.container_client = self.blob_service_client.get_container_client(
+            self.container_name
+        )
 
     async def disconnect(self):
         pass  # No asynchronous disconnect needed for the Azure Blob Storage client
 
     async def poll(self) -> AsyncGenerator[CollectorResult, None]:
-        container_client = self.blob_service_client.get_container_client(
-            self.container_name
-        )
+        try:
+            if not self.container_client:
+                await self.connect()
 
-        async for blob in container_client.list_blobs(name_starts_with=self.prefix):
-            file = self.download_blob_as_byte_stream(container_client, blob.name)
-            async for chunk in self.read_chunks(file):
-                yield CollectorResult({"object_key": blob.name, "chunk": chunk})
+            blob_list = self.container_client.list_blobs(name_starts_with=self.prefix)
+            for blob in blob_list:
+                file = self.download_blob_as_byte_stream(
+                    self.container_client, blob.name
+                )
+                async for chunk in self.read_chunks(file):
+                    yield CollectorResult({"object_key": blob.name, "chunk": chunk})
+        except Exception as e:
+            # Handle exceptions gracefully, e.g., log the error
+            print(f"An error occurred: {e}")
+        finally:
+            # Disconnect the client when done
+            await self.disconnect()
 
     async def read_chunks(self, file):
         while True:
@@ -61,6 +82,4 @@ class AzureCollectorFactory(CollectorFactory):
         return CollectorBackend.AzureBlobStorage
 
     def resolve(self, uri: Uri, config: AzureCollectConfig) -> Collector:
-        container_name = uri.path.strip("/")
-        prefix = uri.query.get("prefix", "")
-        return AzureCollector(config, container_name, prefix)
+        return AzureCollector(config)
