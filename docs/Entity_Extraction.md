@@ -8,8 +8,6 @@ Entity extraction along with coreference resolution are pivotal in enhancing the
 
 In this document, I will introduce the workflow of our entity extraction system, which leverages data from cloud storage and employs advanced language models and tools for processing. The key components and actions of this system include:
 
-- Data Retrieval
-
 - Document-Level Coreference Resolution
 
 - Extract Entities
@@ -19,7 +17,6 @@ By the end of this document, you will have a comprehensive understanding of our 
 Our proposal presents a comprehensive system designed to handle data from diverse sources and extract entities with high accuracy. By integrating state-of-the-art tools and strategies, we aim to create a pipeline that not only extracts entities but also understands the context and relationships within the text. This foundation will be instrumental in our future endeavors, especially in constructing and analyzing entity relationship graphs.
 Here's a breakdown of our proposed system:
 
-### Data Collection
 
 ### Entity Extraction Pipeline
 - [Co-reference Resolution](#coreference)
@@ -105,7 +102,7 @@ print(' '.join(resolved_text))
 ```
 3. **Using BERT for Co-refererence resolution:**
 
-- [] Need to implement and check
+- [ ] Need to implement and check
 
 BERT (Bidirectional Encoder Representations from Transformers) is a transformer-based model that has revolutionized the field of Natural Language Processing (NLP) due to its ability to capture deep contextual information from text. Its bidirectional nature allows it to understand the context of each word based on all its surrounding words, making it particularly powerful for tasks that require understanding relationships between different parts of a text.
 
@@ -166,8 +163,8 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 
 - ***Anaphora vs. Cataphora: Understanding Referential Expressions***
 
-- [] We cannot resolve this issue 100% but what are the possible ways to reduce these errors? The span of text chosen will become crucial in this case
-- [] AllenNLP and NeuroCoref need to be used in a type of intersection strategy (https://github.com/NeuroSYS-pl/coreference-resolution)
+- [ ] We cannot resolve this issue 100% but what are the possible ways to reduce these errors? The span of text chosen will become crucial in this case
+- [ ] AllenNLP and NeuroCoref need to be used in a type of intersection strategy (https://github.com/NeuroSYS-pl/coreference-resolution)
 
     In linguistics, when we discuss the relationships between different parts of a text, two terms often come up: anaphora and cataphora. Both are forms of endophora, where a word or phrase in a sentence refers to another part of the same text. However, the direction of this reference is what differentiates the two.
 
@@ -206,8 +203,8 @@ Henceforth, we'll refer to the NeuralCoref implementation by Huggingface as "Hug
 | **Cons**             | - Might not handle extremely complex coreferences as effectively as dedicated systems. | - Steeper learning curve for those unfamiliar with its ecosystem. |
 
 # **Entity Extraction** <a id='entityextraction'></a>
--[] Need to try Llama2 as well. Although tried asking it for relationships and it was able to spit it out (including entities) but can add a entity extraction specific example
--[] get LLama2 fine-tuning code from debanjan
+- [ ] Need to try Llama2 as well. Although tried asking it for relationships and it was able to spit it out (including entities) but can add a entity extraction specific example
+- [x] get LLama2 fine-tuning code
 
 ## Entity Extraction using spaCy
 
