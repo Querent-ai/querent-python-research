@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 
 
-class IBaseLLM(ABC):
+class BaseLLM(ABC):
     def __init__(self, input_queue: asyncio.Queue, output_queue: asyncio.Queue):
         self.input_queue = input_queue
         self.output_queue = output_queue
