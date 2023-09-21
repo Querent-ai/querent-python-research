@@ -13,6 +13,9 @@ class IngestorError(Enum):
     WRONGPPTFILE = "Wrong PPt file"
     INVALIDXMLERROR = "Invalid Xml Error"
     BADZIPFILE = "BadZipFile"
+    UNICODEDECODEERROR = "UnicodeDecodeError"
+    LOOKUPERROR = "LookupError"
+    TYPEERROR = "TypeError"
 
 
 class IngestorErrorBase(Exception):
@@ -57,3 +60,18 @@ class InvalidXmlError(IngestorErrorBase):
 class BadZipFile(IngestorErrorBase):
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.BADZIPFILE, message)
+
+
+class UnicodeDecodeError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.UNICODEDECODEERROR, message)
+
+
+class LookupError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.LOOKUPERROR, message)
+
+
+class TypeError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.TYPEERROR, message)

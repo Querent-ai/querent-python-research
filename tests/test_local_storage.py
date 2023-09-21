@@ -18,7 +18,6 @@ def temp_dir():
     temp_dir.cleanup()
 
 
-@pytest.mark.asyncio
 def test_local_storage(temp_dir):
     uri = Uri("file://" + temp_dir)  # Use the temp_dir as the base URI
     storage = LocalFileStorage(uri, Path(temp_dir))  # Provide the 'uri' argument only
@@ -39,7 +38,6 @@ def test_local_storage(temp_dir):
         assert content == b"test"
 
 
-@pytest.mark.asyncio
 def test_storage_resolver(temp_dir):
     uri = Uri("file://" + temp_dir)  # Use the temp_dir as the base URI
     resolver = StorageResolver()
