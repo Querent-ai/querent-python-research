@@ -52,7 +52,7 @@ async def test_aws_collector(aws_config):
             assert not result.is_error()
             chunk = result.unwrap()
             assert chunk is not None
-            if chunk is not "" or chunk is not None:
+            if chunk != "" or chunk is not None:
                 counter += 1
         assert counter == 5392
 

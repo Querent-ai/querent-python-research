@@ -24,7 +24,7 @@ class ImageIngestorFactory(IngestorFactory):
     async def create(
         self, file_extension: str, processors: List[AsyncProcessor]
     ) -> BaseIngestor:
-        if not self.supports(file_extension):
+        if not await self.supports(file_extension):
             return None
         return ImageIngestor(processors)
 
@@ -89,7 +89,6 @@ class ImageIngestor(BaseIngestor):
 
         text = pytesseract.image_to_string(image)
 
-        print(text)
         return text
 
     async def process_data(self, text: str) -> List[str]:

@@ -10,6 +10,9 @@ class IngestorError(Enum):
     FILE_NOT_FOUND = "File Not Found"
     IOERROR = "IOError"
     UIE = "UnidentifiedImageError"
+    WRONGPPTFILE = "Wrong PPt file"
+    INVALIDXMLERROR = "Invalid Xml Error"
+    BADZIPFILE = "BadZipFile"
 
 
 class IngestorErrorBase(Exception):
@@ -37,3 +40,20 @@ class UnidentifiedImageError(IngestorErrorBase):
 
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.UIE, message)
+
+
+class WrongPptFileError(IngestorErrorBase):
+    """Error function if ppt file is not being passed into ppt ingestor"""
+
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.WRONGPPTFILE, message)
+
+
+class InvalidXmlError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.INVALIDXMLERROR, message)
+
+
+class BadZipFile(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.BADZIPFILE, message)

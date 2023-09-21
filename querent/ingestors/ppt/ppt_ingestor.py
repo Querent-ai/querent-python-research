@@ -2,13 +2,16 @@
 from typing import List, AsyncGenerator
 from io import BytesIO
 from pptx import Presentation
+from pptx.exc import InvalidXmlError
 from tika import parser
+from zipfile import BadZipFile
 
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.ingestors import ingestor_errors
 
 
 class PptIngestorFactory(IngestorFactory):
@@ -71,27 +74,44 @@ class PptIngestor(BaseIngestor):
     async def extract_and_process_ppt(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_ppt(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
+        try:
+            text = await self.extract_text_from_ppt(collected_bytes)
+            processed_text = await self.process_data(text)
+            yield processed_text
+        except Exception as exc:
+            yield ""
 
     async def extract_text_from_ppt(self, collected_bytes: CollectedBytes) -> str:
-        if collected_bytes.extension == "pptx":
-            ppt_file = BytesIO(collected_bytes.data)
-            presentation = Presentation(ppt_file)
-            text = []
+        try:
+            if collected_bytes.extension == "pptx":
+                ppt_file = BytesIO(collected_bytes.data)
+                presentation = Presentation(ppt_file)
+                text = []
 
-            for slide in presentation.slides:
-                for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text.append(shape.text)
+                for slide in presentation.slides:
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text.append(shape.text)
 
-            text = "\n".join(text)
-            return text
-        elif collected_bytes.extension == "ppt":
-            parsed = parser.from_buffer(collected_bytes.data)
-            extracted_text = parsed["content"]
-            return extracted_text
+                text = "\n".join(text)
+                return text
+            elif collected_bytes.extension == "ppt":
+                parsed = parser.from_buffer(collected_bytes.data)
+                extracted_text = parsed["content"]
+                return extracted_text
+
+            else:
+                raise ingestor_errors.WrongPptFileError(
+                    f"Given file is not ppt {collected_bytes.file}"
+                )
+        except InvalidXmlError as exc:
+            raise ingestor_errors.InvalidXmlError(
+                f"The following file is not in proper xml format {collected_bytes.file}"
+            ) from exc
+        except BadZipFile as exc:
+            raise ingestor_errors.BadZipFile(
+                f"The following file is not a zip file{collected_bytes.file}"
+            ) from exc
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
