@@ -1,6 +1,7 @@
 from typing import AsyncGenerator, List
 import fitz  # PyMuPDF
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import IngestedTokens
 from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
@@ -28,7 +29,7 @@ class PdfIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
@@ -61,12 +62,18 @@ class PdfIngestor(BaseIngestor):
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
         for page in pdf:
             text = page.get_text()
+            if not text:
+                continue
             processed_text = await self.process_data(text)
-            yield processed_text
+            yield IngestedTokens(
+                file=collected_bytes.file,
+                data=processed_text,
+                error=collected_bytes.error,
+            )
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
