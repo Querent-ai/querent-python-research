@@ -14,7 +14,6 @@ class GPT2LLM(BaseLLM):
         self.model = GPT2LMHeadModel.from_pretrained(model_name)
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
-    @abstractmethod
     async def process_data(self, data):
         try:
             input_text = data  # Assuming data is a string
