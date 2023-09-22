@@ -52,9 +52,10 @@ class AWSCollector(Collector):
                         CollectedBytes(file=obj["Key"], data=chunk, error=None)
                     )
 
-        except Exception as e:
-            # Handle exceptions gracefully, e.g., log the error
-            print(f"An error occurred: {e}")
+        except PermissionError as exc:
+            print(f"Unable to open this file {file}, getting error as {exc}")
+        except OSError as exc:
+            print(f"Getting OS Error on file {file}, as {exc}")
         finally:
             await self.disconnect()  # Disconnect when done
 

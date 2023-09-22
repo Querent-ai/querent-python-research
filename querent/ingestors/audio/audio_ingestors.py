@@ -8,6 +8,12 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.common_errors import (
+    UnknownValueError,
+    RequestError,
+    IndexErrorException,
+    UnknownError,
+)
 
 
 class AudioIngestorFactory(IngestorFactory):
@@ -64,35 +70,48 @@ class AudioIngestor(BaseIngestor):
     async def extract_and_process_audio(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_audio(collected_bytes)
-        # print(text)
-        processed_text = await self.process_data(text)
-        yield processed_text
+        try:
+            text = await self.extract_text_from_audio(collected_bytes)
+            processed_text = await self.process_data(text)
+            yield processed_text
+        except Exception as e:
+            yield ""
 
     async def extract_text_from_audio(self, collected_bytes: CollectedBytes) -> str:
-        audio_segment = AudioSegment.from_file(
-            io.BytesIO(collected_bytes.data), format=collected_bytes.extension
-        )
-        temp_wave = io.BytesIO()
-        audio_segment.export(temp_wave, format="wav")
-        # Initialize the recognizer
-        recognizer = sr.Recognizer()
-
-        temp_wave.seek(0)
-        with sr.AudioFile(temp_wave) as source:
-            recognizer.adjust_for_ambient_noise(source, duration=1)
-            audio_data = recognizer.record(source)
-
-        # Recognize the text using the recognizer
         try:
+            audio_segment = AudioSegment.from_file(
+                io.BytesIO(collected_bytes.data), format=collected_bytes.extension
+            )
+            temp_wave = io.BytesIO()
+            audio_segment.export(temp_wave, format="wav")
+            # Initialize the recognizer
+            recognizer = sr.Recognizer()
+
+            temp_wave.seek(0)
+            with sr.AudioFile(temp_wave) as source:
+                recognizer.adjust_for_ambient_noise(source, duration=1)
+                audio_data = recognizer.record(source)
+
+            # Recognize the text using the recognizer
+
             recognized_text = recognizer.recognize_google(audio_data, language="en-US")
             return recognized_text
-        except sr.UnknownValueError:
-            print("Could not understand the audio")
-        except sr.RequestError as e:
-            print(f"Could not request results; {e}")
-        except Exception as e:
-            print(e)
+        except sr.UnknownValueError as exc:
+            raise UnknownValueError(
+                f"The following file gave Unknown Value Error {collected_bytes.file}"
+            ) from exc
+        except sr.RequestError as exc:
+            raise RequestError(
+                f"The following file gave Request Error {collected_bytes.file}"
+            ) from exc
+        except IndexError as exc:
+            raise IndexErrorException(
+                f"The following file gave Request Error {collected_bytes.file}"
+            ) from exc
+        except Exception as exc:
+            raise UnknownError(
+                f"Received unknown error {exc} from the file {collected_bytes.file}"
+            ) from exc
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text

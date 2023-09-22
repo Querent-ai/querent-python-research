@@ -5,7 +5,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor_config import IngestorBackend
 from querent.processors.async_processor import AsyncProcessor
-from querent.ingestors.ingestor_errors import (
+from querent.common.common_errors import (
     FileNotFoundError,
     IOError,
     UnidentifiedImageError,

@@ -4,7 +4,7 @@ from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor_config import IngestorBackend
-from querent.ingestors import ingestor_errors
+from querent.common import common_errors
 
 
 class TextIngestorFactory(IngestorFactory):
@@ -70,18 +70,19 @@ class TextIngestor(BaseIngestor):
             return ""
 
     async def extract_text_from_file(self, collected_bytes: CollectedBytes) -> str:
+        text = ""
         try:
             text = collected_bytes.data.decode("utf-8")
         except UnicodeDecodeError as exc:
-            raise ingestor_errors.UnicodeDecodeError(
+            raise common_errors.UnicodeDecodeError(
                 f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
             ) from exc
         except LookupError as exc:
-            raise ingestor_errors.LookupError(
+            raise common_errors.LookupError(
                 f"Getting LookupError on this file {collected_bytes.file}"
             ) from exc
         except TypeError as exc:
-            raise ingestor_errors.TypeError(
+            raise common_errors.TypeError(
                 f"Getting TypeError on this file {collected_bytes.file}"
             ) from exc
         return text

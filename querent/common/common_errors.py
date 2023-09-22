@@ -16,6 +16,15 @@ class IngestorError(Enum):
     UNICODEDECODEERROR = "UnicodeDecodeError"
     LOOKUPERROR = "LookupError"
     TYPEERROR = "TypeError"
+    UNKNOWNVALUEERROR = "UnknownValueError"
+    REQUESTERROR = "RequestError"
+    INDEXERROR = "IndexError"
+    CSVERROR = "CsvError"
+    RUNTIMEERROR = "RuntimeError"
+    JSONDECODEERROR = "JsonDecodeError"
+    DOCUMENTERROR = "DocumentError"
+    SHELLERROR = "ShellError"
+    PERMISSIONERROR = "PermissionError"
 
 
 class IngestorErrorBase(Exception):
@@ -75,3 +84,53 @@ class LookupError(IngestorErrorBase):
 class TypeError(IngestorErrorBase):
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.TYPEERROR, message)
+
+
+class UnknownValueError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.UNKNOWNVALUEERROR, message)
+
+
+class RequestError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.REQUESTERROR, message)
+
+
+class IndexErrorException(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.INDEXERROR, message)
+
+
+class UnknownError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.UNKNOWN, message)
+
+
+class CsvError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.CSVERROR, message)
+
+
+class RuntimeError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.RUNTIMEERROR, message)
+
+
+class JsonDecodeError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.JSONDECODEERROR, message)
+
+
+class DocumentError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.DOCUMENTERROR, message)
+
+
+class ShellError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.SHELLERROR, message)
+
+
+class PermissionError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.PERMISSIONERROR, message)

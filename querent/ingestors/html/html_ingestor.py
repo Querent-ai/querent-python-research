@@ -7,7 +7,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.ingestors import ingestor_errors
+from querent.common import common_errors
 
 
 class HtmlIngestorFactory(IngestorFactory):
@@ -94,15 +94,15 @@ class HtmlIngestor(BaseIngestor):
                     text.append(element_text)
 
         except UnicodeDecodeError as exc:
-            raise ingestor_errors.UnicodeDecodeError(
+            raise common_errors.UnicodeDecodeError(
                 f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
             ) from exc
         except LookupError as exc:
-            raise ingestor_errors.LookupError(
+            raise common_errors.LookupError(
                 f"Getting LookupError on this file {collected_bytes.file}"
             ) from exc
         except TypeError as exc:
-            raise ingestor_errors.TypeError(
+            raise common_errors.TypeError(
                 f"Getting TypeError on this file {collected_bytes.file}"
             ) from exc
 

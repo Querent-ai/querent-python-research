@@ -9,6 +9,7 @@ from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
+from querent.common import common_errors
 from google.cloud import storage
 from dotenv import load_dotenv
 
@@ -24,7 +25,12 @@ class GCSCollector(Collector):
 
     async def connect(self):
         if not self.client:
-            self.client = storage.Client.from_service_account_info(self.credentials)
+            try:
+                self.client = storage.Client.from_service_account_info(self.credentials)
+            except FileNotFoundError as exc:
+                raise common_errors.FileNotFoundError(
+                    "Please pass the credentials file"
+                ) from exc
 
     async def disconnect(self):
         if self.client is not None:
@@ -61,9 +67,10 @@ class GCSCollector(Collector):
                     if not chunk:
                         break
                     yield chunk
-        except Exception as e:
-            # Handle exceptions gracefully, e.g., log the error
-            print(f"An error occurred while streaming blob: {e}")
+        except PermissionError as exc:
+            print(f"Unable to open this file {blob_file}, getting error as {exc}")
+        except OSError as exc:
+            print(f"Getting OS Error on file {blob_file}, as {exc}")
 
 
 class GCSCollectorFactory(CollectorFactory):

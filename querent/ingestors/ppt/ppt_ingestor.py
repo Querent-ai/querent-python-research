@@ -11,7 +11,7 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.ingestors import ingestor_errors
+from querent.common import common_errors
 
 
 class PptIngestorFactory(IngestorFactory):
@@ -101,15 +101,15 @@ class PptIngestor(BaseIngestor):
                 return extracted_text
 
             else:
-                raise ingestor_errors.WrongPptFileError(
+                raise common_errors.WrongPptFileError(
                     f"Given file is not ppt {collected_bytes.file}"
                 )
         except InvalidXmlError as exc:
-            raise ingestor_errors.InvalidXmlError(
+            raise common_errors.InvalidXmlError(
                 f"The following file is not in proper xml format {collected_bytes.file}"
             ) from exc
         except BadZipFile as exc:
-            raise ingestor_errors.BadZipFile(
+            raise common_errors.BadZipFile(
                 f"The following file is not a zip file{collected_bytes.file}"
             ) from exc
 

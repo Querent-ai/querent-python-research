@@ -9,6 +9,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common import common_errors
 
 
 class DocIngestorFactory(IngestorFactory):
@@ -64,9 +65,12 @@ class DocIngestor(BaseIngestor):
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_doc(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
+        try:
+            text = await self.extract_text_from_doc(collected_bytes)
+            processed_text = await self.process_data(text)
+            yield processed_text
+        except Exception as e:
+            yield ""
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
         suffix = "." + collected_bytes.extension
@@ -77,6 +81,26 @@ class DocIngestor(BaseIngestor):
         try:
             txt = pytextract.process(temp_file_path).decode("utf-8")
             return txt
+        except RuntimeError as exc:
+            raise common_errors.RuntimeError(
+                f"Getting ExtractionError on this file {collected_bytes.file}"
+            ) from exc
+        except UnicodeDecodeError as exc:
+            raise common_errors.UnicodeDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
+        except LookupError as exc:
+            raise common_errors.LookupError(
+                f"Getting LookupError on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting TypeError on this file {collected_bytes.file}"
+            ) from exc
+        except pytextract.exceptions.ShellError as exc:
+            raise common_errors.ShellError(
+                f"Getting ShellError on this file {collected_bytes.file}"
+            ) from exc
         finally:
             os.remove(temp_file_path)
 
