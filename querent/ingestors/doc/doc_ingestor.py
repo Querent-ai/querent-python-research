@@ -1,5 +1,4 @@
 from typing import List, AsyncGenerator
-import pytextract
 import tempfile
 import os
 import pytextract
@@ -9,6 +8,9 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class DocIngestorFactory(IngestorFactory):
@@ -32,7 +34,7 @@ class DocIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
@@ -47,19 +49,18 @@ class DocIngestor(BaseIngestor):
                     async for text in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield text
+                        yield IngestedTokens(file=current_file, data=text, error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
             async for text in self.extract_and_process_doc(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield text
+                yield IngestedTokens(file=current_file, data=text, error=None)
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
@@ -80,7 +81,7 @@ class DocIngestor(BaseIngestor):
         finally:
             os.remove(temp_file_path)
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process(processed_data)

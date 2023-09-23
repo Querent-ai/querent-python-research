@@ -4,6 +4,9 @@ from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor_config import IngestorBackend
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class TextIngestorFactory(IngestorFactory):
@@ -17,7 +20,6 @@ class TextIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-
         return TextIngestor(processors)
 
 
@@ -28,22 +30,25 @@ class TextIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[List[str], None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
+        collected_bytes = b""
+        current_file = None
         try:
-            collected_bytes = b""
-            current_file = None
-
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
                     continue
 
-                if chunk_bytes.file != current_file:
-                    if current_file:
-                        text = await self.extract_and_process_text(
-                            CollectedBytes(file=current_file, data=collected_bytes)
-                        )
-                        yield text
-
+                if current_file is None:
+                    current_file = chunk_bytes.file
+                elif current_file != chunk_bytes.file:
+                    text = await self.extract_and_process_text(
+                        CollectedBytes(file=current_file, data=collected_bytes)
+                    )
+                    yield IngestedTokens(
+                        file=current_file,
+                        data=[text],  # Wrap text in a list
+                        error=None,
+                    )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
 
@@ -53,11 +58,11 @@ class TextIngestor(BaseIngestor):
                 text = await self.extract_and_process_text(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield text
-
+                yield IngestedTokens(
+                    file=current_file, data=[text], error=None  # Wrap text in a list
+                )
         except Exception as e:
-            print(e)
-            yield []
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 
     async def extract_and_process_text(
         self, collected_bytes: CollectedBytes

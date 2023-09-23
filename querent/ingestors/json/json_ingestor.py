@@ -5,6 +5,9 @@ from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class JsonIngestorFactory(IngestorFactory):
@@ -28,7 +31,7 @@ class JsonIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[List[str], None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         try:
             collected_bytes = b""
             current_file = None
@@ -42,7 +45,7 @@ class JsonIngestor(BaseIngestor):
                         text = await self.extract_and_process_json(
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
-                        yield text
+                        yield IngestedTokens(file=current_file, data=text, error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
 
@@ -52,11 +55,10 @@ class JsonIngestor(BaseIngestor):
                 text = await self.extract_and_process_json(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield text
+                yield IngestedTokens(file=current_file, data=text, error=None)
 
         except Exception as e:
-            print(e)
-            yield []
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 
     async def extract_and_process_json(
         self, collected_bytes: CollectedBytes
