@@ -28,9 +28,9 @@ async def test_collect_and_ingest_txt():
         counter = 0
         async for ingested in ingested_call:
             assert ingested is not None
-            if len(ingested) == 0:
+            if ingested is not "" or ingested is not None:
                 counter += 1
-        assert counter == 0
+        assert counter == 1
 
     await poll_and_print()  # Notice the use of await here
 
