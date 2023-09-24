@@ -49,7 +49,7 @@ class PptIngestor(BaseIngestor):
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(
-                            file=current_file, data=page_text, error=None
+                            file=current_file, data=[page_text], error=None
                         )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
@@ -60,7 +60,7 @@ class PptIngestor(BaseIngestor):
             async for page_text in self.extract_and_process_ppt(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=page_text, error=None)
+                yield IngestedTokens(file=current_file, data=[page_text], error=None)
 
     async def extract_and_process_ppt(
         self, collected_bytes: CollectedBytes

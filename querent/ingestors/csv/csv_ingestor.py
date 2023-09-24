@@ -48,7 +48,7 @@ class CsvIngestor(BaseIngestor):
                     async for text in self.extract_and_process_csv(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(file=current_file, data=text, error=None)
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -59,7 +59,7 @@ class CsvIngestor(BaseIngestor):
             async for text in self.extract_and_process_csv(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=text, error=None)
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
     async def extract_and_process_csv(
         self, collected_bytes: CollectedBytes
