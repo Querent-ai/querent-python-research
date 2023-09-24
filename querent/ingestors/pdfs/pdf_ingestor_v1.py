@@ -33,10 +33,6 @@ class PdfIngestor(BaseIngestor):
         current_file = None
         collected_bytes = b""
 
-        async def process_and_yield(tokens):
-            for page_text in tokens:
-                yield page_text
-
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
@@ -49,11 +45,10 @@ class PdfIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    yield process_and_yield(
-                        self.extract_and_process_pdf(
-                            CollectedBytes(file=current_file, data=collected_bytes)
-                        )
-                    )
+                    async for page_text in self.extract_and_process_pdf(
+                        CollectedBytes(file=current_file, data=collected_bytes)
+                    ):
+                        yield page_text
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -62,11 +57,10 @@ class PdfIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            yield process_and_yield(
-                self.extract_and_process_pdf(
-                    CollectedBytes(file=current_file, data=collected_bytes)
-                )
-            )
+            async for page_text in self.extract_and_process_pdf(
+                CollectedBytes(file=current_file, data=collected_bytes)
+            ):
+                yield page_text
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes
