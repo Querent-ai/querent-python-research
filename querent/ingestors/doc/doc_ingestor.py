@@ -1,16 +1,16 @@
-from typing import List, AsyncGenerator
+import io
 import tempfile
+from typing import List, AsyncGenerator
 import os
-import pytextract
-
+from docx import Document
+from docx2txt import process
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
+import pytextract
 
 
 class DocIngestorFactory(IngestorFactory):
@@ -70,6 +70,23 @@ class DocIngestor(BaseIngestor):
         yield processed_text
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
+        # Determine file extension
+        file_extension = collected_bytes.extension.lower()
+        if file_extension == "docx":
+            # For DOCX files, use python-docx library
+            doc = Document(io.BytesIO(collected_bytes.data))
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text
+        elif file_extension == "doc":
+            # For DOC files, use pyextract library
+            current_doc_text = await self.temp_extract_from(collected_bytes)
+            return current_doc_text
+        else:
+            return ""
+
+    async def temp_extract_from(self, collected_bytes: CollectedBytes) -> str:
         suffix = "." + collected_bytes.extension
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
             temp_file.write(collected_bytes.data)

@@ -26,10 +26,12 @@ async def test_collect_and_ingest_csv_data():
         counter = 0
         async for ingested in ingested_call:
             assert ingested is not None
-            # we have an iterable in ingested
-            for row in ingested:
-                counter += 1
-        assert counter == 7
+            assert ingested.error is None
+            assert ingested.file is not None
+            assert ingested.data is not None
+            assert len(ingested.data) > 0
+            counter += 1
+        assert counter == 2
 
     await poll_and_print()
 
