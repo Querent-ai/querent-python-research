@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 from querent.collectors.fs.fs_collector import FSCollectorFactory
+from querent.common.types.ingested_tokens import IngestedTokens
 from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
@@ -22,12 +23,16 @@ async def test_collect_and_ingest_xlsx():
     counter = 0
 
     async def poll_and_print():
-        counter = 0
+        nonlocal counter  # Use nonlocal to modify the outer counter variable
         async for ingested in ingested_call:
             assert ingested is not None
-            for i in range(0, ingested.shape[0]):
-                counter += 1
-        assert counter == 3
+            assert isinstance(ingested, IngestedTokens)
+            assert ingested.error is None
+            assert ingested.file is not None
+            assert ingested.data is not None
+            assert len(ingested.data) > 0
+            counter += 1
+        assert counter == 1
 
     await poll_and_print()
 

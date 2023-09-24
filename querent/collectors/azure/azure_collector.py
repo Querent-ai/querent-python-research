@@ -2,10 +2,10 @@ from typing import AsyncGenerator
 import io
 
 from azure.storage.blob import BlobServiceClient
+from querent.common.types.collected_bytes import CollectedBytes
 from querent.config.collector_config import CollectorBackend, AzureCollectConfig
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
-from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
 
 
@@ -38,7 +38,7 @@ class AzureCollector(Collector):
     async def disconnect(self):
         pass  # No asynchronous disconnect needed for the Azure Blob Storage client
 
-    async def poll(self) -> AsyncGenerator[CollectorResult, None]:
+    async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
             if not self.container_client:
                 await self.connect()
@@ -49,7 +49,7 @@ class AzureCollector(Collector):
                     self.container_client, blob.name
                 )
                 async for chunk in self.read_chunks(file):
-                    yield CollectorResult({"object_key": blob.name, "chunk": chunk})
+                    yield CollectedBytes(file=blob.name, data=chunk, error=None)
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             print(f"An error occurred: {e}")

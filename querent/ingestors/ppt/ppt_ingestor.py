@@ -1,4 +1,3 @@
-"""Ingestor class for ppt files"""
 from typing import List, AsyncGenerator
 from io import BytesIO
 from pptx import Presentation
@@ -9,11 +8,12 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class PptIngestorFactory(IngestorFactory):
-    """Ingestor factory for ppts"""
-
     SUPPORTED_EXTENSIONS = {"ppt", "pptx"}
 
     async def supports(self, file_extension: str) -> bool:
@@ -28,45 +28,39 @@ class PptIngestorFactory(IngestorFactory):
 
 
 class PptIngestor(BaseIngestor):
-    """Ingestor for ppt files"""
-
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.PDF)
+        super().__init__(IngestorBackend.PPT)
         self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
-        """ "Function for ingesting the ppt stream"""
+    ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
-                    # TODO handle error
                     continue
 
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    # we have a new file, process the old one
                     async for page_text in self.extract_and_process_ppt(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield page_text
+                        yield IngestedTokens(
+                            file=current_file, data=page_text, error=None
+                        )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            # process the last file
             async for page_text in self.extract_and_process_ppt(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield page_text
-            pass
+                yield IngestedTokens(file=current_file, data=page_text, error=None)
 
     async def extract_and_process_ppt(
         self, collected_bytes: CollectedBytes
@@ -93,7 +87,7 @@ class PptIngestor(BaseIngestor):
             extracted_text = parsed["content"]
             return extracted_text
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process(processed_data)

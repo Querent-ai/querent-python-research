@@ -171,3 +171,5 @@ openpyxl
 coverage 
 pytest-cov
 azure-storage-blob
+moviepy
+python-docx
