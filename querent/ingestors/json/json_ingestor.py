@@ -80,5 +80,5 @@ class JsonIngestor(BaseIngestor):
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

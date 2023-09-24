@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
+
 class AsyncProcessor(ABC):
     @abstractmethod
-    async def process(self, data):
+    async def process_text(self, data: str) -> str:
         pass
