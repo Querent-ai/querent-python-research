@@ -8,9 +8,7 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class PptIngestorFactory(IngestorFactory):
@@ -45,11 +43,11 @@ class PptIngestor(BaseIngestor):
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    async for page_text in self.extract_and_process_ppt(
+                    async for slide_text in self.extract_and_process_ppt(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(
-                            file=current_file, data=[page_text], error=None
+                            file=current_file, data=[slide_text], error=None
                         )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
@@ -57,35 +55,29 @@ class PptIngestor(BaseIngestor):
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            async for page_text in self.extract_and_process_ppt(
+            async for slide_text in self.extract_and_process_ppt(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=[page_text], error=None)
+                yield IngestedTokens(file=current_file, data=[slide_text], error=None)
 
     async def extract_and_process_ppt(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_ppt(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
-
-    async def extract_text_from_ppt(self, collected_bytes: CollectedBytes) -> str:
         if collected_bytes.extension == "pptx":
             ppt_file = BytesIO(collected_bytes.data)
             presentation = Presentation(ppt_file)
-            text = []
-
             for slide in presentation.slides:
+                text = []
                 for shape in slide.shapes:
                     if hasattr(shape, "text"):
                         text.append(shape.text)
-
-            text = "\n".join(text)
-            return text
+                slide_text = "\n".join(text)
+                processed_slide_text = await self.process_data(slide_text)
+                yield processed_slide_text
         elif collected_bytes.extension == "ppt":
             parsed = parser.from_buffer(collected_bytes.data)
             extracted_text = parsed["content"]
-            return extracted_text
+            yield extracted_text
 
     async def process_data(self, text: str) -> str:
         processed_data = text

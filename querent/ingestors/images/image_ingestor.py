@@ -7,9 +7,7 @@ from querent.config.ingestor_config import IngestorBackend
 import pytesseract
 from PIL import Image
 import io
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class ImageIngestorFactory(IngestorFactory):
@@ -35,7 +33,6 @@ class ImageIngestor(BaseIngestor):
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
-            collected_bytes = b""
             current_file = None
 
             async for chunk_bytes in poll_function:
@@ -48,8 +45,9 @@ class ImageIngestor(BaseIngestor):
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
                         yield IngestedTokens(file=current_file, data=[text], error=None)
-                    collected_bytes = b""
+
                     current_file = chunk_bytes.file
+                    collected_bytes = b""
 
                 collected_bytes += chunk_bytes.data
 

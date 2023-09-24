@@ -8,9 +8,7 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class AudioIngestorFactory(IngestorFactory):
@@ -64,12 +62,7 @@ class AudioIngestor(BaseIngestor):
 
     async def extract_and_process_audio(
         self, collected_bytes: CollectedBytes
-    ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_audio(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
-
-    async def extract_text_from_audio(self, collected_bytes: CollectedBytes) -> str:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         audio_segment = AudioSegment.from_file(
             io.BytesIO(collected_bytes.data), format=collected_bytes.extension
         )
@@ -86,7 +79,10 @@ class AudioIngestor(BaseIngestor):
         # Recognize the text using the recognizer
         try:
             recognized_text = recognizer.recognize_google(audio_data, language="en-US")
-            return recognized_text
+            processed_text = await self.process_data(recognized_text)
+            yield IngestedTokens(
+                file=collected_bytes.file, data=[processed_text], error=None
+            )
         except sr.UnknownValueError:
             print("Could not understand the audio")
         except sr.RequestError as e:

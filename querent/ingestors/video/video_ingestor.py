@@ -68,11 +68,11 @@ class VideoIngestor(BaseIngestor):
         yield processed_text
 
     async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> str:
-        # TODO: Add your logic for video processing here
+        # Extract audio from the video
         video = mp.VideoFileClip(io.BytesIO(collected_bytes.data))
         audio = video.audio.to_soundarray()
 
-        # Use audio processor to process audio
+        # Use audio processor to process audio and obtain text
         async for text in self.audio_processor.extract_and_process_audio(
             CollectedBytes(file=collected_bytes.file, data=audio.tobytes())
         ):

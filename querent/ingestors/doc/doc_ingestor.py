@@ -46,10 +46,12 @@ class DocIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for text in self.extract_and_process_doc(
+                    async for paragraph in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(file=current_file, data=[text], error=None)
+                        yield IngestedTokens(
+                            file=current_file, data=[paragraph], error=None
+                        )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -57,17 +59,19 @@ class DocIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            async for text in self.extract_and_process_doc(
+            async for paragraph in self.extract_and_process_doc(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=[text], error=None)
+                yield IngestedTokens(file=current_file, data=[paragraph], error=None)
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
         text = await self.extract_text_from_doc(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
+        paragraphs = text.split("\n\n")  # Split by paragraphs
+        for paragraph in paragraphs:
+            processed_data = await self.process_data(paragraph)
+            yield processed_data
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
         # Determine file extension
