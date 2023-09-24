@@ -1,13 +1,16 @@
-from pydub import AudioSegment
+from typing import List, AsyncGenerator
 import io
 import speech_recognition as sr
+from pydub import AudioSegment
 
-from typing import List, AsyncGenerator
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class AudioIngestorFactory(IngestorFactory):
@@ -31,7 +34,7 @@ class AudioIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
@@ -46,26 +49,23 @@ class AudioIngestor(BaseIngestor):
                     async for text in self.extract_and_process_audio(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield text
+                        yield IngestedTokens(file=current_file, data=text, error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
             async for text in self.extract_and_process_audio(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield text
-            pass
+                yield IngestedTokens(file=current_file, data=text, error=None)
 
     async def extract_and_process_audio(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
         text = await self.extract_text_from_audio(collected_bytes)
-        # print(text)
         processed_text = await self.process_data(text)
         yield processed_text
 
@@ -94,7 +94,7 @@ class AudioIngestor(BaseIngestor):
         except Exception as e:
             print(e)
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process(processed_data)

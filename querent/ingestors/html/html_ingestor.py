@@ -1,4 +1,3 @@
-"""Ingestor file for html"""
 from typing import List, AsyncGenerator
 from bs4 import BeautifulSoup
 
@@ -7,6 +6,9 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class HtmlIngestorFactory(IngestorFactory):
@@ -34,14 +36,13 @@ class HtmlIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         """Ingesting bytes of xml file"""
         current_file = None
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
-                    # TODO handle error
                     continue
                 if current_file is None:
                     current_file = chunk_bytes.file
@@ -50,19 +51,18 @@ class HtmlIngestor(BaseIngestor):
                     async for text in self.extract_and_process_html(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield text
+                        yield IngestedTokens(file=current_file, data=text, error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
             async for text in self.extract_and_process_html(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield text
+                yield IngestedTokens(file=current_file, data=text, error=None)
 
     async def extract_and_process_html(
         self, collected_bytes: CollectedBytes
@@ -90,7 +90,7 @@ class HtmlIngestor(BaseIngestor):
 
         return text
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process(processed_data)

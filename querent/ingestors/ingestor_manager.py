@@ -12,6 +12,7 @@ from querent.ingestors.json.json_ingestor import JsonIngestorFactory
 from querent.ingestors.images.image_ingestor import ImageIngestorFactory
 from querent.ingestors.doc.doc_ingestor import DocIngestorFactory
 from querent.ingestors.csv.csv_ingestor import CsvIngestorFactory
+from querent.ingestors.video.video_ingestor import VideoIngestorFactory
 from querent.ingestors.xlsx.xlsx_ingestor import XlsxIngestorFactory
 from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
 from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
@@ -38,7 +39,7 @@ class IngestorFactoryManager:
             IngestorBackend.PPTX.value: PptIngestorFactory(),
             IngestorBackend.XML.value: XmlIngestorFactory(),
             IngestorBackend.HTML.value: HtmlIngestorFactory(),
-            # Ingestor.TEXT.value: TextIngestor(),
+            IngestorBackend.MP4.value: VideoIngestorFactory(),
             # Add more mappings as needed
         }
 

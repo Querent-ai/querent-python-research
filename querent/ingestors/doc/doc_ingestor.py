@@ -1,14 +1,16 @@
-from typing import List, AsyncGenerator
-import pytextract
+import io
 import tempfile
+from typing import List, AsyncGenerator
 import os
-import pytextract
-
+from docx import Document
+from docx2txt import process
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import IngestedTokens
+import pytextract
 
 
 class DocIngestorFactory(IngestorFactory):
@@ -32,7 +34,7 @@ class DocIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
@@ -47,19 +49,18 @@ class DocIngestor(BaseIngestor):
                     async for text in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield text
+                        yield IngestedTokens(file=current_file, data=text, error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
             async for text in self.extract_and_process_doc(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield text
+                yield IngestedTokens(file=current_file, data=text, error=None)
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
@@ -69,6 +70,23 @@ class DocIngestor(BaseIngestor):
         yield processed_text
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
+        # Determine file extension
+        file_extension = collected_bytes.extension.lower()
+        if file_extension == "docx":
+            # For DOCX files, use python-docx library
+            doc = Document(io.BytesIO(collected_bytes.data))
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text
+        elif file_extension == "doc":
+            # For DOC files, use pyextract library
+            current_doc_text = await self.temp_extract_from(collected_bytes)
+            return current_doc_text
+        else:
+            return ""
+
+    async def temp_extract_from(self, collected_bytes: CollectedBytes) -> str:
         suffix = "." + collected_bytes.extension
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
             temp_file.write(collected_bytes.data)
@@ -80,7 +98,7 @@ class DocIngestor(BaseIngestor):
         finally:
             os.remove(temp_file_path)
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process(processed_data)

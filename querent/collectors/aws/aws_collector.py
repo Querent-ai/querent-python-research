@@ -9,7 +9,6 @@ from querent.common.types.collected_bytes import (
 from querent.config.collector_config import CollectorBackend, S3CollectConfig
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
-from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
 import boto3
 
@@ -38,7 +37,7 @@ class AWSCollector(Collector):
         # No asynchronous disconnect needed for boto3
         pass
 
-    async def poll(self) -> AsyncGenerator[CollectorResult, None]:
+    async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         if not self.s3_client:
             await self.connect()
 
@@ -48,10 +47,7 @@ class AWSCollector(Collector):
             for obj in response.get("Contents", []):
                 file = self.download_object_as_byte_stream(obj["Key"])
                 async for chunk in self.read_chunks(file):
-                    yield CollectorResult(
-                        CollectedBytes(file=obj["Key"], data=chunk, error=None)
-                    )
-
+                    yield CollectedBytes(file=obj["Key"], data=chunk, error=None)
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             print(f"An error occurred: {e}")

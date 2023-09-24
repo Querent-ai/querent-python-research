@@ -32,10 +32,13 @@ class PdfIngestor(BaseIngestor):
     ) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
+
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
-                    # TODO handle error
+                    current_file = None
+                    collected_bytes = b""
+                    # report to metrics
                     continue
 
                 if current_file is None:
@@ -50,15 +53,14 @@ class PdfIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield ""
+            # at the queue level, we can sample out the error
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
             async for page_text in self.extract_and_process_pdf(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield page_text
-            pass
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes

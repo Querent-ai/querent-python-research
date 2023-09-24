@@ -1,21 +1,17 @@
+import io
 from typing import List, AsyncGenerator
-import xml.etree.ElementTree as ET
-from io import BytesIO
-
-from querent.processors.async_processor import AsyncProcessor
+from querent.ingestors.audio.audio_ingestors import AudioIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
-from querent.config.ingestor_config import IngestorBackend
+from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
+from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
+import moviepy.editor as mp
 
 
-class XmlIngestorFactory(IngestorFactory):
-    """Ingestor factory for xlsx files"""
-
-    SUPPORTED_EXTENSIONS = {"xml"}
+class VideoIngestorFactory(IngestorFactory):
+    SUPPORTED_EXTENSIONS = {"mp4"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -25,30 +21,30 @@ class XmlIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return XmlIngestor(processors)
+        return VideoIngestor(processors)
 
 
-class XmlIngestor(BaseIngestor):
-    """Ingestor for xml"""
-
+class VideoIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.XML)
+        super().__init__(IngestorBackend.MP4)
+        self.audio_processor = AudioIngestor(processors)
         self.processors = processors
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[IngestedTokens, None]:
-        """Ingesting bytes of xml file"""
         current_file = None
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
+                    # TODO handle error
                     continue
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    async for text in self.extract_and_process_xml(
+                    # we have a new file, process the old one
+                    async for text in self.extract_and_process_video(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(file=current_file, data=text, error=None)
@@ -58,23 +54,29 @@ class XmlIngestor(BaseIngestor):
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            async for text in self.extract_and_process_xml(
+            # process the last file
+            async for text in self.extract_and_process_video(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield IngestedTokens(file=current_file, data=text, error=None)
 
-    async def extract_and_process_xml(
+    async def extract_and_process_video(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        """Function to extract and process xml files"""
-        text = await self.extract_text_from_xml(collected_bytes)
+        text = await self.extract_text_from_video(collected_bytes)
         processed_text = await self.process_data(text)
         yield processed_text
 
-    async def extract_text_from_xml(self, collected_bytes: CollectedBytes) -> str:
-        """Function to extract text from xml"""
-        text = collected_bytes.data.decode("UTF-8")
-        return text
+    async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> str:
+        # TODO: Add your logic for video processing here
+        video = mp.VideoFileClip(io.BytesIO(collected_bytes.data))
+        audio = video.audio.to_soundarray()
+
+        # Use audio processor to process audio
+        async for text in self.audio_processor.extract_and_process_audio(
+            CollectedBytes(file=collected_bytes.file, data=audio.tobytes())
+        ):
+            yield text
 
     async def process_data(self, text: str) -> str:
         processed_data = text
