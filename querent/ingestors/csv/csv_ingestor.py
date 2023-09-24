@@ -7,9 +7,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class CsvIngestorFactory(IngestorFactory):
@@ -45,10 +43,10 @@ class CsvIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for text in self.extract_and_process_csv(
+                    async for row in self.extract_and_process_csv(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(file=current_file, data=text, error=None)
+                        yield IngestedTokens(file=current_file, data=[row], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -56,17 +54,19 @@ class CsvIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            async for text in self.extract_and_process_csv(
+            async for row in self.extract_and_process_csv(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=text, error=None)
+                yield IngestedTokens(file=current_file, data=[row], error=None)
 
     async def extract_and_process_csv(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
         text = await self.extract_text_from_csv(collected_bytes)
-        processed_text = await self.process_data(text)
-        yield processed_text
+        rows = text.splitlines()
+        for row in rows:
+            processed_row = await self.process_data(row)
+            yield processed_row
 
     async def extract_text_from_csv(self, collected_bytes: CollectedBytes) -> str:
         text_data = collected_bytes.data.decode("utf-8")
@@ -75,5 +75,5 @@ class CsvIngestor(BaseIngestor):
     async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

@@ -5,9 +5,7 @@ from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class JsonIngestorFactory(IngestorFactory):
@@ -33,52 +31,57 @@ class JsonIngestor(BaseIngestor):
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
-            collected_bytes = b""
             current_file = None
+            collected_bytes = b""
+            try:
+                async for chunk_bytes in poll_function:
+                    if chunk_bytes.is_error():
+                        continue
 
-            async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
-                    continue
+                    if chunk_bytes.file != current_file:
+                        if current_file:
+                            json_objects = await self.extract_and_process_json(
+                                CollectedBytes(file=current_file, data=collected_bytes)
+                            )
+                            for json_object in json_objects:
+                                yield IngestedTokens(
+                                    file=current_file, data=[json_object], error=None
+                                )
+                        collected_bytes = b""
+                        current_file = chunk_bytes.file
 
-                if chunk_bytes.file != current_file:
-                    if current_file:
-                        text = await self.extract_and_process_json(
-                            CollectedBytes(file=current_file, data=collected_bytes)
+                    collected_bytes += chunk_bytes.data
+
+                if current_file:
+                    json_objects = await self.extract_and_process_json(
+                        CollectedBytes(file=current_file, data=collected_bytes)
+                    )
+                    for json_object in json_objects:
+                        processed_json_object = await self.process_data(json_object)
+                        yield IngestedTokens(
+                            file=current_file, data=[processed_json_object], error=None
                         )
-                        yield IngestedTokens(file=current_file, data=text, error=None)
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
 
-                collected_bytes += chunk_bytes.data
-
-            if current_file:
-                text = await self.extract_and_process_json(
-                    CollectedBytes(file=current_file, data=collected_bytes)
+            except json.JSONDecodeError:
+                yield IngestedTokens(
+                    file=current_file, data=None, error="JSON Decode Error"
                 )
-                yield IngestedTokens(file=current_file, data=text, error=None)
 
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 
     async def extract_and_process_json(
         self, collected_bytes: CollectedBytes
-    ) -> List[str]:
-        text = await self.extract_text_from_json(collected_bytes)
-        return await self.process_data(text)
-
-    async def extract_text_from_json(self, collected_bytes: CollectedBytes) -> str:
+    ) -> List[dict]:
         try:
             json_data = json.loads(collected_bytes.data.decode("utf-8"))
-            text = json_data
+            return [json_data] if isinstance(json_data, dict) else []
 
         except json.JSONDecodeError:
-            print("Received error as ", json.JSONDecodeError, "while decoding the data")
-            text = ""
+            return []
 
-        return text
-
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: dict) -> dict:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

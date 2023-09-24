@@ -7,9 +7,7 @@ from querent.config.ingestor_config import IngestorBackend
 import pytesseract
 from PIL import Image
 import io
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class ImageIngestorFactory(IngestorFactory):
@@ -35,7 +33,6 @@ class ImageIngestor(BaseIngestor):
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
-            collected_bytes = b""
             current_file = None
 
             async for chunk_bytes in poll_function:
@@ -47,9 +44,10 @@ class ImageIngestor(BaseIngestor):
                         text = await self.extract_and_process_image(
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
-                        yield IngestedTokens(file=current_file, data=text, error=None)
-                    collected_bytes = b""
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
+
                     current_file = chunk_bytes.file
+                    collected_bytes = b""
 
                 collected_bytes += chunk_bytes.data
 
@@ -57,7 +55,7 @@ class ImageIngestor(BaseIngestor):
                 text = await self.extract_and_process_image(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield IngestedTokens(file=current_file, data=text, error=None)
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
@@ -74,5 +72,5 @@ class ImageIngestor(BaseIngestor):
     async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

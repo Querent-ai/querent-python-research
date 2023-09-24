@@ -47,7 +47,7 @@ class VideoIngestor(BaseIngestor):
                     async for text in self.extract_and_process_video(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(file=current_file, data=text, error=None)
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -58,7 +58,7 @@ class VideoIngestor(BaseIngestor):
             async for text in self.extract_and_process_video(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=text, error=None)
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
     async def extract_and_process_video(
         self, collected_bytes: CollectedBytes
@@ -68,11 +68,11 @@ class VideoIngestor(BaseIngestor):
         yield processed_text
 
     async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> str:
-        # TODO: Add your logic for video processing here
+        # Extract audio from the video
         video = mp.VideoFileClip(io.BytesIO(collected_bytes.data))
         audio = video.audio.to_soundarray()
 
-        # Use audio processor to process audio
+        # Use audio processor to process audio and obtain text
         async for text in self.audio_processor.extract_and_process_audio(
             CollectedBytes(file=collected_bytes.file, data=audio.tobytes())
         ):
@@ -81,5 +81,5 @@ class VideoIngestor(BaseIngestor):
     async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

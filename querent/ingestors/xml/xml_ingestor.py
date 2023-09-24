@@ -51,7 +51,7 @@ class XmlIngestor(BaseIngestor):
                     async for text in self.extract_and_process_xml(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(file=current_file, data=text, error=None)
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
@@ -61,7 +61,7 @@ class XmlIngestor(BaseIngestor):
             async for text in self.extract_and_process_xml(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=text, error=None)
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
     async def extract_and_process_xml(
         self, collected_bytes: CollectedBytes
@@ -79,5 +79,5 @@ class XmlIngestor(BaseIngestor):
     async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data
