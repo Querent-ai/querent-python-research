@@ -31,7 +31,7 @@ async def test_collect_and_ingest_csv_data():
             assert ingested.data is not None
             assert len(ingested.data) > 0
             counter += 1
-        assert counter == 2
+        assert counter == 7
 
     await poll_and_print()
 

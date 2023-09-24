@@ -4,9 +4,7 @@ from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor_config import IngestorBackend
-from querent.common.types.ingested_tokens import (
-    IngestedTokens,
-)  # Added import for the return type
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class TextIngestorFactory(IngestorFactory):
@@ -41,34 +39,39 @@ class TextIngestor(BaseIngestor):
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    text = await self.extract_and_process_text(
+                    async for line in self.extract_and_process_text(
                         CollectedBytes(file=current_file, data=collected_bytes)
-                    )
-                    yield IngestedTokens(
-                        file=current_file,
-                        data=[text],  # Wrap text in a list
-                        error=None,
-                    )
+                    ):
+                        yield IngestedTokens(
+                            file=current_file,
+                            data=[line],  # Wrap line in a list
+                            error=None,
+                        )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
 
                 collected_bytes += chunk_bytes.data
 
             if current_file:
-                text = await self.extract_and_process_text(
+                async for line in self.extract_and_process_text(
                     CollectedBytes(file=current_file, data=collected_bytes)
-                )
-                yield IngestedTokens(
-                    file=current_file, data=[text], error=None  # Wrap text in a list
-                )
+                ):
+                    yield IngestedTokens(
+                        file=current_file,
+                        data=[line],  # Wrap line in a list
+                        error=None,
+                    )
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 
     async def extract_and_process_text(
         self, collected_bytes: CollectedBytes
-    ) -> List[str]:
+    ) -> AsyncGenerator[str, None]:
         text = await self.extract_text_from_file(collected_bytes)
-        return await self.process_data(text=text)
+        processed_text = await self.process_data(text)
+        lines = processed_text.split("\n")
+        for line in lines:
+            yield line
 
     async def extract_text_from_file(self, collected_bytes: CollectedBytes) -> str:
         text = collected_bytes.data.decode("utf-8")
@@ -77,5 +80,5 @@ class TextIngestor(BaseIngestor):
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data
