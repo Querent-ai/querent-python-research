@@ -8,7 +8,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_collect_and_ingest_xml():
+async def test_collect_and_ingest_html():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/html/").resolve()))
@@ -30,10 +30,10 @@ async def test_collect_and_ingest_xml():
             assert ingested is not None
             if ingested != "" or ingested is not None:
                 counter += 1
-        assert counter == 1
+        assert counter == 16
 
     await poll_and_print()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_collect_and_ingest_xml())
+    asyncio.run(test_collect_and_ingest_html())
