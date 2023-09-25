@@ -5,7 +5,7 @@ from querent.common.types.querent_queue import QuerentQueue
 from querent.llm.base_llm import BaseLLM
 from querent.napper.resource_manager import ResourceManager
 from querent.napper.auto_scaler import AutoScaler
-from signaling import SignalHandler  # Import the SignalHandler class from signaling.py
+from querent.napper.signaling import SignalHandler
 
 # Set up logging
 logging.basicConfig(
