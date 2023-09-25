@@ -48,6 +48,7 @@ class BaseLLM(ABC):
                     ingested_token_from_list = IngestedTokens(
                         file="", data=[tokens_from_list], error=None
                     )
+                    result = await self.process_tokens(ingested_token_from_list)
                 else:
                     result = await self.process_other_data(
                         data

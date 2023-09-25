@@ -19,7 +19,7 @@ class AutoScaler:
             querenter.num_workers for querenter in self.querenters
         )
 
-        if total_requested_workers > current_total_workers:
+        if total_requested_workers >= current_total_workers:
             # Scale up querenter workers
             for querenter in self.querenters:
                 num_workers_to_scale = querenter.num_workers
@@ -35,26 +35,23 @@ class AutoScaler:
             f"Scaled querenter workers to {total_requested_workers} workers in total"
         )
 
-    async def run(self):
+    async def start(self):
         try:
-            while True:
-                # Calculate the total requested workers for all querenters
-                total_requested_workers = sum(
-                    querenter.num_workers for querenter in self.querenters
+            # Calculate the total requested workers for all querenters
+            total_requested_workers = sum(
+                querenter.num_workers for querenter in self.querenters
+            )
+
+            # Get the maximum allowed workers from the resource manager
+            max_allowed_workers = await self.resource_manager.get_max_allowed_workers()
+
+            if total_requested_workers > max_allowed_workers:
+                raise Exception(
+                    "Total requested workers exceed the maximum allowed workers."
                 )
 
-                # Get the maximum allowed workers from the resource manager
-                max_allowed_workers = (
-                    await self.resource_manager.get_max_allowed_workers()
-                )
-
-                if total_requested_workers > max_allowed_workers:
-                    raise Exception(
-                        "Total requested workers exceed the maximum allowed workers."
-                    )
-
-                # Scale the number of querenter workers
-                await self.scale_querenters(total_requested_workers)
+            # Scale the number of querenter workers
+            await self.scale_querenters(total_requested_workers)
 
         except Exception as e:
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")

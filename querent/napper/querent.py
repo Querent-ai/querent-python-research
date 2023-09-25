@@ -1,11 +1,10 @@
 import asyncio
 import logging
-from typing import List
-from querent.common.types.querent_queue import QuerentQueue
+import signal
+from typing import List, Awaitable
 from querent.llm.base_llm import BaseLLM
 from querent.napper.resource_manager import ResourceManager
 from querent.napper.auto_scaler import AutoScaler
-from querent.napper.signaling import SignalHandler
 
 # Set up logging
 logging.basicConfig(
@@ -31,18 +30,21 @@ class Querent:
             self.resource_manager, querenters, threshold=self.auto_scale_threshold
         )
 
-        # Create an instance of SignalHandler and pass the Querent instance
-        self.signal_handler = SignalHandler(self)
+        # Create an event to handle termination requests
+        self.termination_event = asyncio.Event()
 
     async def start(self):
         try:
             logger.info("Starting Querent")
 
             # Start the auto-scaler
-            asyncio.create_task(self.auto_scaler.run())
+            auto_scale_task = asyncio.create_task(self.auto_scaler.start())
 
             # Start handling signals
-            asyncio.create_task(self.signal_handler.handle_signals())
+            self.setup_signal_handlers()
+
+            # Start the tasks above and wait for them to finish
+            await asyncio.gather(auto_scale_task, self.wait_for_termination())
 
         except Exception as e:
             logger.error(f"An error occurred during Querent execution: {e}")
@@ -60,17 +62,23 @@ class Querent:
         # Stop the auto-scaler and querenters gracefully
         await self.auto_scaler.stop()
 
-        # Stop the workers
-        await asyncio.gather(
-            *(querenter.stop_workers() for querenter in self.querenters)
-        )
+        # Set the termination event to signal graceful shutdown
+        self.termination_event.set()
 
         logger.info("Querent stopped gracefully")
 
-    async def handle_shutdown(self):
+    def setup_signal_handlers(self):
+        for sig in [signal.SIGINT, signal.SIGTERM]:
+            loop = asyncio.get_event_loop()
+            loop.add_signal_handler(sig, self.handle_signal)
+
+    def handle_signal(self):
         try:
-            # Wait for a KeyboardInterrupt (Ctrl+C) or SIGTERM to initiate graceful shutdown
-            await asyncio.Event().wait()
-        except (KeyboardInterrupt, SystemExit):
-            logger.info("Received shutdown signal (Ctrl+C or SIGTERM)")
-            await self.graceful_shutdown()
+            print("Received shutdown signal. Initiating graceful shutdown...")
+            asyncio.create_task(self.graceful_shutdown())
+        except Exception as e:
+            print(f"Error during graceful shutdown: {str(e)}")
+
+    async def wait_for_termination(self) -> Awaitable[None]:
+        # Wait for the termination event to be set, indicating graceful shutdown
+        await self.termination_event.wait()
