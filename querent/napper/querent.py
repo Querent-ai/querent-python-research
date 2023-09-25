@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import signal
 from typing import List
 from querent.common.types.querent_queue import QuerentQueue
 from querent.llm.base_llm import BaseLLM
@@ -64,7 +65,8 @@ class Querent:
 
     async def handle_shutdown(self):
         try:
-            # Wait for a KeyboardInterrupt (Ctrl+C) to initiate graceful shutdown
+            # Wait for a KeyboardInterrupt (Ctrl+C) or SIGTERM to initiate graceful shutdown
             await asyncio.Event().wait()
-        except KeyboardInterrupt:
-            pass
+        except (KeyboardInterrupt, SystemExit):
+            logger.info("Received shutdown signal (Ctrl+C or SIGTERM)")
+            await self.graceful_shutdown()
