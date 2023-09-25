@@ -12,11 +12,10 @@ class BaseLLM(ABC):
         output_queue: QuerentQueue[Any],
         num_workers: int = 1,
     ):
-        self.input_queue = input_queue  # ingested tokens coming file by file
-        self.output_queue = (
-            output_queue  # any type of output, need to think about various LLM outputs
-        )
+        self.input_queue = input_queue
+        self.output_queue = output_queue
         self.num_workers = num_workers
+        self.workers = []
 
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens) -> Any:
@@ -49,10 +48,16 @@ class BaseLLM(ABC):
         return self.workers
 
     async def stop_workers(self):
-        # Signal the workers to stop by putting None into the input queue
-        await self.input_queue.close()
-        # Wait for the workers to finish processing
-        await asyncio.gather(*self.workers)
-        # Close the output queue
-        # TODO this will change depending on many output queues we have
-        await self.output_queue.close()
+        try:
+            # Signal the workers to stop by putting None into the input queue
+            for _ in range(self.num_workers):
+                await self.input_queue.put(None)
+            # Wait for the workers to finish processing
+            await asyncio.gather(*self.workers)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Stop workers error: {e}")
+        finally:
+            # Close the output queue
+            await self.output_queue.close()
