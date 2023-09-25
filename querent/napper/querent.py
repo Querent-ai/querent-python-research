@@ -20,12 +20,10 @@ class Querent:
         self,
         querenters: List[BaseLLM],
         num_workers: int,
-        max_workers: int,
         resource_manager: ResourceManager,
         auto_scale_threshold: int = 10,
     ):
         self.num_workers = num_workers
-        self.max_workers = max_workers
         self.resource_manager = resource_manager
         self.querenters = querenters
         self.auto_scale_threshold = auto_scale_threshold
