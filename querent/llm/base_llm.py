@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import asyncio
-from typing import Any
+import json
+from typing import Any, Type
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
 
@@ -8,8 +9,8 @@ from querent.common.types.querent_queue import QuerentQueue
 class BaseLLM(ABC):
     def __init__(
         self,
-        input_queue: QuerentQueue[IngestedTokens],
-        output_queue: QuerentQueue[Any],
+        input_queue: QuerentQueue,
+        output_queue: QuerentQueue,
         num_workers: int = 1,
     ):
         self.input_queue = input_queue
@@ -33,9 +34,24 @@ class BaseLLM(ABC):
             while True:
                 data = await self.input_queue.get()
                 if data is None:
-                    # Sentinel value to stop the worker
                     break
-                result = await self.process_tokens(data)
+                if isinstance(data, IngestedTokens):
+                    result = await self.process_tokens(data)
+                elif isinstance(data, str):
+                    ingested_token_from_str = IngestedTokens(
+                        file="", data=[data], error=None
+                    )
+                    result = await self.process_tokens(ingested_token_from_str)
+                elif isinstance(data, [list, tuple]):
+                    tokens_from_list = json.dumps(data)
+                    ingested_token_from_list = IngestedTokens(
+                        file="", data=[tokens_from_list], error=None
+                    )
+                    result = await self.process_tokens(ingested_token_from_list)
+                else:
+                    raise Exception(
+                        f"Invalid data type {type(data)} for {self.__class__.__name__}"
+                    )
                 await self.output_queue.put(result)
                 self.input_queue.task_done()
         except asyncio.CancelledError:
@@ -53,11 +69,12 @@ class BaseLLM(ABC):
             for _ in range(self.num_workers):
                 await self.input_queue.put(None)
             # Wait for the workers to finish processing
-            await asyncio.gather(*self.workers)
+            await asyncio.gather(*self.workers)  # Await the workers here
         except asyncio.CancelledError:
             pass
         except Exception as e:
             print(f"Stop workers error: {e}")
         finally:
             # Close the output queue
+            await self.input_queue.close()
             await self.output_queue.close()

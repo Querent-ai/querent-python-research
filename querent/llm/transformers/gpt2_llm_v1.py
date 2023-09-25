@@ -7,8 +7,8 @@ from querent.llm.base_llm import BaseLLM
 class GPT2LLM(BaseLLM):
     def __init__(
         self,
-        input_queue: QuerentQueue[IngestedTokens],
-        output_queue: QuerentQueue[IngestedTokens],
+        input_queue: QuerentQueue,
+        output_queue: QuerentQueue,
         model_name="gpt2",
         num_workers=1,
     ):
