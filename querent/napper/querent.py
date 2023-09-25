@@ -31,7 +31,7 @@ class Querent:
         )
 
         # Create an event to handle termination requests
-        self.termination_event = asyncio.Event()
+        self.querent_termination_event = resource_manager.querent_termination_event
 
     async def start(self):
         try:
@@ -50,10 +50,7 @@ class Querent:
             logger.error(f"An error occurred during Querent execution: {e}")
             await self.graceful_shutdown()
         finally:
-            # Stop the workers
-            await asyncio.gather(
-                *(querenter.stop_workers() for querenter in self.querenters)
-            )
+            await self.graceful_shutdown()
             logger.info("Querent stopped")
 
     async def graceful_shutdown(self):
@@ -61,9 +58,6 @@ class Querent:
 
         # Stop the auto-scaler and querenters gracefully
         await self.auto_scaler.stop()
-
-        # Set the termination event to signal graceful shutdown
-        self.termination_event.set()
 
         logger.info("Querent stopped gracefully")
 
@@ -75,10 +69,11 @@ class Querent:
     def handle_signal(self):
         try:
             print("Received shutdown signal. Initiating graceful shutdown...")
-            asyncio.create_task(self.graceful_shutdown())
+            shutdown_task = asyncio.create_task(self.graceful_shutdown())
+            asyncio.run(shutdown_task)
         except Exception as e:
             print(f"Error during graceful shutdown: {str(e)}")
 
     async def wait_for_termination(self) -> Awaitable[None]:
         # Wait for the termination event to be set, indicating graceful shutdown
-        await self.termination_event.wait()
+        await self.querent_termination_event.wait()

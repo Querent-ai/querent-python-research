@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 
@@ -5,6 +6,7 @@ class ResourceManager:
     def __init__(self, max_allowed_workers=100):
         self.max_allowed_workers = max_allowed_workers
         self.min_allowed_workers = 1
+        self.querent_termination_event = asyncio.Event()
         self.logger = logging.getLogger("ResourceManager")
 
     async def get_max_allowed_workers(self):

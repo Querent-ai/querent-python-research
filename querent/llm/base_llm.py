@@ -34,7 +34,6 @@ class BaseLLM(ABC):
             while True:
                 data = await self.input_queue.get()
                 if data is None:
-                    # Sentinel value to stop the worker
                     break
                 if isinstance(data, IngestedTokens):
                     result = await self.process_tokens(data)
@@ -50,9 +49,9 @@ class BaseLLM(ABC):
                     )
                     result = await self.process_tokens(ingested_token_from_list)
                 else:
-                    result = await self.process_other_data(
-                        data
-                    )  # Handle other data types
+                    raise Exception(
+                        f"Invalid data type {type(data)} for {self.__class__.__name__}"
+                    )
                 await self.output_queue.put(result)
                 self.input_queue.task_done()
         except asyncio.CancelledError:
@@ -70,11 +69,12 @@ class BaseLLM(ABC):
             for _ in range(self.num_workers):
                 await self.input_queue.put(None)
             # Wait for the workers to finish processing
-            await asyncio.gather(*self.workers)
+            await asyncio.gather(*self.workers)  # Await the workers here
         except asyncio.CancelledError:
             pass
         except Exception as e:
             print(f"Stop workers error: {e}")
         finally:
             # Close the output queue
+            await self.input_queue.close()
             await self.output_queue.close()
