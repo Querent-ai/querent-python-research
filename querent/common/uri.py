@@ -43,6 +43,9 @@ class Protocol(enum.Enum):
     def is_webscraper(self) -> bool:
         return self == Protocol.Webscraper
 
+    def is_azure_blob_storage(self) -> bool:
+        return self == Protocol.Azure
+
 
 class Uri:
     PROTOCOL_SEPARATOR = "://"

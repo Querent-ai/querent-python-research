@@ -1,4 +1,3 @@
-"""Ingestor file for xml"""
 from typing import List, AsyncGenerator
 import xml.etree.ElementTree as ET
 from io import BytesIO
@@ -8,6 +7,9 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import (
+    IngestedTokens,
+)  # Added import for the return type
 
 
 class XmlIngestorFactory(IngestorFactory):
@@ -35,35 +37,31 @@ class XmlIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         """Ingesting bytes of xml file"""
         current_file = None
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
                 if chunk_bytes.is_error():
-                    # TODO handle error
                     continue
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    # we have a new file, process the old one
                     async for text in self.extract_and_process_xml(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield text
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
-            yield None
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            # process the last file
             async for text in self.extract_and_process_xml(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield text
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
     async def extract_and_process_xml(
         self, collected_bytes: CollectedBytes
@@ -78,8 +76,8 @@ class XmlIngestor(BaseIngestor):
         text = collected_bytes.data.decode("UTF-8")
         return text
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

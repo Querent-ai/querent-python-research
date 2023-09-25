@@ -24,9 +24,9 @@ async def test_collect_and_ingest_wrong_image_bytes():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            if ingested is None:
+            if ingested.data is None:
                 continue
-            if len(ingested) != 0:
+            if len(ingested.data) != 0:
                 counter += 1
         # Counter would be zero as we are not able to open the given image file
         assert counter == 0

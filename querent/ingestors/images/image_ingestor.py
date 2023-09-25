@@ -13,6 +13,7 @@ from querent.common.common_errors import (
 import pytesseract
 from PIL import Image, UnidentifiedImageError
 import io
+from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class ImageIngestorFactory(IngestorFactory):
@@ -36,9 +37,8 @@ class ImageIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[List[str], None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         try:
-            collected_bytes = b""
             current_file = None
 
             async for chunk_bytes in poll_function:
@@ -50,9 +50,10 @@ class ImageIngestor(BaseIngestor):
                         text = await self.extract_and_process_image(
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
-                        yield text
-                    collected_bytes = b""
+                        yield IngestedTokens(file=current_file, data=[text], error=None)
+
                     current_file = chunk_bytes.file
+                    collected_bytes = b""
 
                 collected_bytes += chunk_bytes.data
 
@@ -60,11 +61,10 @@ class ImageIngestor(BaseIngestor):
                 text = await self.extract_and_process_image(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield text
+                yield IngestedTokens(file=current_file, data=[text], error=None)
 
         except Exception as e:
-            print(e)
-            yield []
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 
     async def extract_and_process_image(self, collected_bytes: CollectedBytes) -> str:
         text = await self.extract_text_from_image(collected_bytes)
@@ -88,11 +88,10 @@ class ImageIngestor(BaseIngestor):
             ) from exc
 
         text = pytesseract.image_to_string(image)
-
         return text
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         processed_data = text
         for processor in self.processors:
-            processed_data = await processor.process(processed_data)
+            processed_data = await processor.process_text(processed_data)
         return processed_data

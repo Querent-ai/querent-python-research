@@ -4,6 +4,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.common import common_errors
 import pytest
 
 
@@ -22,16 +23,12 @@ async def test_collect_and_ingest_ppt():
 
     # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())
-    counter = 0
 
     async def poll_and_print():
-        counter = 0
-        async for ingested in ingested_call:
-            if ingested is None:
-                continue
-            if ingested != "" or len(ingested) != 0:
-                counter += 1
-        assert counter == 0
+        with pytest.raises(common_errors.UnknownError):
+            async for ingested in ingested_call:
+                if ingested.data is None:
+                    continue
 
     await poll_and_print()
 

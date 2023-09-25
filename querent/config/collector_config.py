@@ -8,6 +8,7 @@ class CollectorBackend(str, Enum):
     WebScraper = "webscraper"
     S3 = "s3"
     Gcs = "gs"
+    AzureBlobStorage = "azure"
 
 
 class CollectConfig(BaseModel):
@@ -21,6 +22,13 @@ class FSCollectorConfig(BaseModel):
     root_path: str
     chunk_size: int = 1024
 
+class AzureCollectConfig(BaseModel):
+    connection_string: str
+    account_url: str
+    credentials: str
+    container: str
+    prefix: str
+    chunk_size: int = 1024
 
 class S3CollectConfig(BaseModel):
     bucket: str
@@ -59,6 +67,10 @@ class CollectConfigWrapper(BaseModel):
         elif collect_config.backend == CollectorBackend.WebScraper:
             return cls(
                 backend=CollectorBackend.WebScraper, config=WebScraperConfig()
+            )
+        elif collect_config.backend == CollectorBackend.Azure:
+            return cls(
+                backend=CollectorBackend.Azure, config=AzureCollectConfig()
             )
         else:
             raise ValueError(

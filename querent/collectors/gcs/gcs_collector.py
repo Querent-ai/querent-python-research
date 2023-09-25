@@ -7,7 +7,6 @@ from querent.config.collector_config import GcsCollectConfig
 from querent.config.collector_config import CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
-from querent.collectors.collector_result import CollectorResult
 from querent.common.uri import Uri
 from querent.common import common_errors
 from google.cloud import storage
@@ -37,7 +36,7 @@ class GCSCollector(Collector):
             self.client.close()
             self.client = None
 
-    async def poll(self) -> AsyncGenerator[CollectorResult, None]:
+    async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         # Make sure to connect the client before using it
         if not self.client:
             await self.connect()
@@ -49,9 +48,7 @@ class GCSCollector(Collector):
             print("Blobs count: ", len(blobs))
             for blob in blobs:
                 async for chunk in self.stream_blob(blob):
-                    yield CollectorResult(
-                        CollectedBytes(file=blob.name, data=chunk, error=None)
-                    )
+                    yield CollectedBytes(file=blob.name, data=chunk, error=None)
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             print(f"An error occurred: {e}")

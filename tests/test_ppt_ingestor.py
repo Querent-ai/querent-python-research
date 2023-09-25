@@ -29,7 +29,7 @@ async def test_collect_and_ingest_ppt():
         async for ingested in ingested_call:
             if ingested != "" or ingested is not None:
                 counter += 1
-        assert counter == 2
+        assert counter == 10
 
     await poll_and_print()
 

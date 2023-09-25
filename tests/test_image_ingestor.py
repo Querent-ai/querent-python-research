@@ -24,8 +24,12 @@ async def test_collect_and_ingest_jpg():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            if len(ingested) != 0:
-                counter += 1
+            assert ingested is not None
+            assert ingested.error is None
+            assert ingested.file is not None
+            assert ingested.data is not None
+            assert len(ingested.data) > 0
+            counter += 1
         assert counter == 1
 
     await poll_and_print()

@@ -4,6 +4,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.common.common_errors import UnknownError
 import pytest
 
 
@@ -19,18 +20,13 @@ async def test_collect_and_ingest_wrong_doc():
     ingestor = await ingestor_factory.create("docx", [])
 
     ingested_call = ingestor.ingest(collector.poll())
-    counter = 0
 
     async def poll_and_print():
-        counter = 0
-        async for ingested in ingested_call:
-            if ingested is None:
-                continue
-            if len(ingested) != 0:
+        with pytest.raises(UnknownError):
+            async for ingested in ingested_call:
                 print(ingested)
-                counter += 1
-        # Counter would be zero as we are not able to open the given image file
-        assert counter == 0
+                if ingested.data is None:
+                    continue
 
     await poll_and_print()
 

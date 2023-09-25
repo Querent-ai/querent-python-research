@@ -1,24 +1,17 @@
-from typing import List, AsyncGenerator
 import io
-import speech_recognition as sr
-from pydub import AudioSegment
-
+from typing import List, AsyncGenerator
+from querent.ingestors.audio.audio_ingestors import AudioIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.common.common_errors import (
-    UnknownValueError,
-    RequestError,
-    IndexErrorException,
-    UnknownError,
-)
 from querent.common.types.ingested_tokens import IngestedTokens
+import moviepy.editor as mp
 
 
-class AudioIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"mp3"}
+class VideoIngestorFactory(IngestorFactory):
+    SUPPORTED_EXTENSIONS = {"mp4"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -28,12 +21,13 @@ class AudioIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return AudioIngestor(processors)
+        return VideoIngestor(processors)
 
 
-class AudioIngestor(BaseIngestor):
+class VideoIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
-        super().__init__(IngestorBackend.MP3)
+        super().__init__(IngestorBackend.MP4)
+        self.audio_processor = AudioIngestor(processors)
         self.processors = processors
 
     async def ingest(
@@ -50,7 +44,7 @@ class AudioIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for text in self.extract_and_process_audio(
+                    async for text in self.extract_and_process_video(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(file=current_file, data=[text], error=None)
@@ -61,49 +55,28 @@ class AudioIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            async for text in self.extract_and_process_audio(
+            async for text in self.extract_and_process_video(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield IngestedTokens(file=current_file, data=[text], error=None)
 
-    async def extract_and_process_audio(
+    async def extract_and_process_video(
         self, collected_bytes: CollectedBytes
-    ) -> AsyncGenerator[IngestedTokens, None]:
-        # Recognize the text using the recognizer
-        try:
-            audio_segment = AudioSegment.from_file(
-                io.BytesIO(collected_bytes.data), format=collected_bytes.extension
-            )
-            temp_wave = io.BytesIO()
-            audio_segment.export(temp_wave, format="wav")
-            # Initialize the recognizer
-            recognizer = sr.Recognizer()
+    ) -> AsyncGenerator[str, None]:
+        text = await self.extract_text_from_video(collected_bytes)
+        processed_text = await self.process_data(text)
+        yield processed_text
 
-            temp_wave.seek(0)
-            with sr.AudioFile(temp_wave) as source:
-                recognizer.adjust_for_ambient_noise(source, duration=1)
-                audio_data = recognizer.record(source)
+    async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> str:
+        # Extract audio from the video
+        video = mp.VideoFileClip(io.BytesIO(collected_bytes.data))
+        audio = video.audio.to_soundarray()
 
-            # Recognize the text using the recognizer
-
-            recognized_text = recognizer.recognize_google(audio_data, language="en-US")
-            yield recognized_text
-        except sr.UnknownValueError as exc:
-            raise UnknownValueError(
-                f"The following file gave Unknown Value Error {collected_bytes.file}"
-            ) from exc
-        except sr.RequestError as exc:
-            raise RequestError(
-                f"The following file gave Request Error {collected_bytes.file}"
-            ) from exc
-        except IndexError as exc:
-            raise IndexErrorException(
-                f"The following file gave Request Error {collected_bytes.file}"
-            ) from exc
-        except Exception as exc:
-            raise UnknownError(
-                f"Received unknown error {exc} from the file {collected_bytes.file}"
-            ) from exc
+        # Use audio processor to process audio and obtain text
+        async for text in self.audio_processor.extract_and_process_audio(
+            CollectedBytes(file=collected_bytes.file, data=audio.tobytes())
+        ):
+            yield text
 
     async def process_data(self, text: str) -> str:
         processed_data = text
