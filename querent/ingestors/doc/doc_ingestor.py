@@ -54,7 +54,7 @@ class DocIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            yield ""
+            yield None
         finally:
             # process the last file
             async for text in self.extract_and_process_doc(
@@ -70,7 +70,7 @@ class DocIngestor(BaseIngestor):
             processed_text = await self.process_data(text)
             yield processed_text
         except Exception as e:
-            yield ""
+            yield None
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
         suffix = "." + collected_bytes.extension

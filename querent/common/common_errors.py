@@ -25,6 +25,8 @@ class IngestorError(Enum):
     DOCUMENTERROR = "DocumentError"
     SHELLERROR = "ShellError"
     PERMISSIONERROR = "PermissionError"
+    OSERROR = "OSError"
+    CONNECTIONERROR = "ConnectionError"
 
 
 class IngestorErrorBase(Exception):
@@ -134,3 +136,13 @@ class ShellError(IngestorErrorBase):
 class PermissionError(IngestorErrorBase):
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.PERMISSIONERROR, message)
+
+
+class OSError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.OSERROR, message)
+
+
+class ConnectionError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.CONNECTIONERROR, message)

@@ -24,7 +24,8 @@ async def test_collect_and_ingest_wrong_doc():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            assert ingested is not None
+            if ingested is None:
+                continue
             if len(ingested) != 0:
                 print(ingested)
                 counter += 1

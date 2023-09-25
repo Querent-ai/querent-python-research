@@ -28,7 +28,6 @@ async def test_collect_and_ingest_audio():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            assert ingested is not None
             if len(ingested) != 0:
                 counter += 1
 

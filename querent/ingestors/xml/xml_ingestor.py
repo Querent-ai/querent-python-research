@@ -57,7 +57,7 @@ class XmlIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            yield ""
+            yield None
         finally:
             # process the last file
             async for text in self.extract_and_process_xml(

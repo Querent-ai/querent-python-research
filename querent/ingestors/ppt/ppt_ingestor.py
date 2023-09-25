@@ -62,7 +62,7 @@ class PptIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            yield ""
+            yield None
         finally:
             # process the last file
             async for page_text in self.extract_and_process_ppt(
@@ -79,7 +79,7 @@ class PptIngestor(BaseIngestor):
             processed_text = await self.process_data(text)
             yield processed_text
         except Exception as exc:
-            yield ""
+            yield None
 
     async def extract_text_from_ppt(self, collected_bytes: CollectedBytes) -> str:
         try:

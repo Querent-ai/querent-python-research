@@ -57,7 +57,7 @@ class HtmlIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            yield ""
+            yield None
         finally:
             # process the last file
             async for text in self.extract_and_process_html(
@@ -74,7 +74,7 @@ class HtmlIngestor(BaseIngestor):
             processed_text = await self.process_data(text)
             yield processed_text
         except Exception as exc:
-            yield ""
+            yield None
 
     async def extract_text_from_html(self, collected_bytes: CollectedBytes) -> str:
         """Function to extract text from xml"""

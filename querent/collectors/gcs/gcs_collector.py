@@ -27,8 +27,8 @@ class GCSCollector(Collector):
         if not self.client:
             try:
                 self.client = storage.Client.from_service_account_info(self.credentials)
-            except FileNotFoundError as exc:
-                raise common_errors.FileNotFoundError(
+            except ConnectionError as exc:
+                raise common_errors.ConnectionError(
                     "Please pass the credentials file"
                 ) from exc
 
@@ -68,9 +68,17 @@ class GCSCollector(Collector):
                         break
                     yield chunk
         except PermissionError as exc:
-            print(f"Unable to open this file {blob_file}, getting error as {exc}")
+            raise common_errors.PermissionError(
+                f"Unable to open this file {blob_file}, getting error as {exc}"
+            ) from exc
         except OSError as exc:
-            print(f"Getting OS Error on file {blob_file}, as {exc}")
+            raise common_errors.OSError(
+                f"Getting OS Error on file {blob_file}, as {exc}"
+            ) from exc
+        except Exception as exc:
+            raise common_errors.UnknownError(
+                f"Getting OS Error on file {blob_file}, as {exc}"
+            ) from exc
 
 
 class GCSCollectorFactory(CollectorFactory):

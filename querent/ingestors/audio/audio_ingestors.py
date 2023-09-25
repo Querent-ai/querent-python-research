@@ -58,14 +58,13 @@ class AudioIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # TODO handle exception
-            yield ""
+            yield None
         finally:
             # process the last file
             async for text in self.extract_and_process_audio(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield text
-            pass
 
     async def extract_and_process_audio(
         self, collected_bytes: CollectedBytes
@@ -75,7 +74,7 @@ class AudioIngestor(BaseIngestor):
             processed_text = await self.process_data(text)
             yield processed_text
         except Exception as e:
-            yield ""
+            yield None
 
     async def extract_text_from_audio(self, collected_bytes: CollectedBytes) -> str:
         try:

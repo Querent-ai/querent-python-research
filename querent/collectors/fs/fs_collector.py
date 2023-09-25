@@ -30,9 +30,13 @@ class FSCollector(Collector):
                     async for chunk in self.read_chunks(file):
                         yield CollectedBytes(file=file_path, data=chunk, error=None)
             except PermissionError as exc:
-                print(f"Unable to open this file {file_path}, getting error as {exc}")
+                raise common_errors.PermissionError(
+                    f"Unable to open this file {file_path}, getting error as {exc}"
+                ) from exc
             except OSError as exc:
-                print(f"Getting OS Error on file {file_path}, as {exc}")
+                raise common_errors.OSError(
+                    f"Getting OS Error on file {file_path}, as {exc}"
+                ) from exc
 
     async def read_chunks(self, file):
         while True:

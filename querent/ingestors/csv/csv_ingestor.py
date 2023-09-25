@@ -56,9 +56,8 @@ class CsvIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            # TODO handle exception
             print(e)
-            yield ""
+            yield None
         finally:
             # process the last file
             async for text in self.extract_and_process_csv(
@@ -74,7 +73,7 @@ class CsvIngestor(BaseIngestor):
             processed_text = await self.process_data(text)
             yield processed_text
         except Exception as exc:
-            yield ""
+            yield None
 
     async def extract_text_from_csv(
         self, collected_bytes: CollectedBytes

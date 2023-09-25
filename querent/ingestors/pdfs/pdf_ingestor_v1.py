@@ -50,7 +50,7 @@ class PdfIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            yield ""
+            yield None
         finally:
             # process the last file
             try:
@@ -59,7 +59,7 @@ class PdfIngestor(BaseIngestor):
                 ):
                     yield page_text
             except Exception as exc:
-                yield ""
+                yield None
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes
