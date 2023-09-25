@@ -1,11 +1,11 @@
 import asyncio
 import logging
-import signal
 from typing import List
 from querent.common.types.querent_queue import QuerentQueue
 from querent.llm.base_llm import BaseLLM
 from querent.napper.resource_manager import ResourceManager
 from querent.napper.auto_scaler import AutoScaler
+from signaling import SignalHandler  # Import the SignalHandler class from signaling.py
 
 # Set up logging
 logging.basicConfig(
@@ -20,12 +20,10 @@ class Querent:
         self,
         querenters: List[BaseLLM],
         num_workers: int,
-        max_workers: int,
         resource_manager: ResourceManager,
         auto_scale_threshold: int = 10,
     ):
         self.num_workers = num_workers
-        self.max_workers = max_workers
         self.resource_manager = resource_manager
         self.querenters = querenters
         self.auto_scale_threshold = auto_scale_threshold
@@ -33,12 +31,18 @@ class Querent:
             self.resource_manager, querenters, threshold=self.auto_scale_threshold
         )
 
+        # Create an instance of SignalHandler and pass the Querent instance
+        self.signal_handler = SignalHandler(self)
+
     async def start(self):
         try:
             logger.info("Starting Querent")
 
             # Start the auto-scaler
             asyncio.create_task(self.auto_scaler.run())
+
+            # Start handling signals
+            asyncio.create_task(self.signal_handler.handle_signals())
 
         except Exception as e:
             logger.error(f"An error occurred during Querent execution: {e}")

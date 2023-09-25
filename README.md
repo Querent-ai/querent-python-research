@@ -4,7 +4,6 @@
 # Querent
 
 **Querent: Unleash the Power of Data and Graph Neural Networks**
-
 *Unlock Insights, Scale Asynchronously, and Forge a Knowledge-Driven Future*
 
 **Welcome to Querent!** We're not just another data framework; we're the future of knowledge discovery and insight generation. Querent is your agile and dynamic companion for collecting, processing, and harnessing data's transformative potential. Whether you're crafting knowledge graphs, training cutting-edge language models, or diving deep into data-driven insights, Querent has your back.
