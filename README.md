@@ -109,6 +109,93 @@ Querent provides a flexible framework that you can adapt to your specific data c
 
 Querent relies on configuration files to define how collectors, ingestors, and processors operate. These files are typically located in the `config` directory. Ensure that you configure the components according to your project's requirements.
 
+## Querent: an asynchronous engine for LLMs
+
+Sequence Diagram: Asynchronous Data Processing in Querent
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Collector
+    participant Ingestor
+    participant Processor
+    participant LLM
+    participant Querent
+    participant Storage
+
+    User->>Collector: Initiate Data Collection
+    Collector->>Ingestor: Collect Data
+    Ingestor->>Processor: Ingest Data
+    Processor->>LLM: Process Data
+    LLM->>Processor: Return Processed Data
+    Processor->>Storage: Store Processed Data
+    Ingestor->>Querent: Send Ingested Data
+    Querent->>Processor: Process Ingested Data
+    Processor->>LLM: Process Data
+    LLM->>Processor: Return Processed Data
+    Processor->>Storage: Store Processed Data
+    Querent->>Processor: Processed Data Available
+    Querent->>User: Return Processed Data
+
+    Note right of User: Asynchronous Flow
+```
+
+## Ease of use
+with quetent writing scalable workflows atop any llm is just few lines of code.
+
+```python
+import asyncio
+import pytest
+from querent.common.types.querent_queue import QuerentQueue
+from querent.llm.base_llm import BaseLLM
+from querent.napper.querent import Querent
+from querent.napper.resource_manager import ResourceManager
+
+# Create input and output queues
+input_queue = QuerentQueue()
+output_queue = QuerentQueue()
+resource_manager = ResourceManager()
+
+# Define a simple mock LLM class for testing
+class MockLLM(BaseLLM):
+    async def process_tokens(self, data):
+        return f"Processed: {data}"
+
+    def validate(self):
+        return True
+
+@pytest.mark.asyncio
+async def test_querent_with_base_llm():
+    # Put some input data into the input queue
+    input_data = ["Data 1", "Data 2", "Data 3", None]
+    for data in input_data:
+        await input_queue.put(data)
+    
+    # Create a list of mock LLM instances
+    num_llms = 1
+    llms = [MockLLM(input_queue, output_queue) for _ in range(num_llms)]
+
+    # Create a Querent instance
+    querent = Querent(llms, num_workers=num_llms, resource_manager=resource_manager)
+
+    # Start the Querent
+    await querent.start()
+
+    # Check the output queue for results and store them in a list
+    results = []
+    async for result in output_queue:
+        results.append(result)
+
+    # Assert that the results match the expected output
+    expected_output = [
+        "Processed: Data 1",
+        "Processed: Data 2",
+        "Processed: Data 3",
+        "Processed: None"
+    ]
+    assert results == expected_output
+```
+
 ## Contributing
 
 Contributions to Querent are welcome! Please follow our [contribution guidelines](CONTRIBUTING.md) to get started.
