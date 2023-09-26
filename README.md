@@ -109,6 +109,36 @@ Querent provides a flexible framework that you can adapt to your specific data c
 
 Querent relies on configuration files to define how collectors, ingestors, and processors operate. These files are typically located in the `config` directory. Ensure that you configure the components according to your project's requirements.
 
+## Querent: an asynchronous engine for LLMs
+
+Sequence Diagram: Asynchronous Data Processing in Querent
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Collector
+    participant Ingestor
+    participant Processor
+    participant LLM
+    participant Querent
+    participant Storage
+
+    User->>Collector: Initiate Data Collection
+    Collector->>Ingestor: Collect Data
+    Ingestor->>Processor: Ingest Data
+    Processor->>LLM: Process Data
+    LLM->>Processor: Return Processed Data
+    Processor->>Storage: Store Processed Data
+    Ingestor->>Querent: Send Ingested Data
+    Querent->>Processor: Process Ingested Data
+    Processor->>LLM: Process Data
+    LLM->>Processor: Return Processed Data
+    Processor->>Storage: Store Processed Data
+    Querent->>Processor: Processed Data Available
+    Querent->>User: Return Processed Data
+
+    Note right of User: Asynchronous Flow
+```
 
 ## Ease of use
 with quetent writing scalable workflows atop any llm is just few lines of code.
