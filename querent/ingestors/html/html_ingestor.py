@@ -6,6 +6,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
 
 
@@ -72,18 +73,31 @@ class HtmlIngestor(BaseIngestor):
         self, collected_bytes: CollectedBytes
     ) -> List[str]:
         """Function to extract text from xml"""
-        html_content = collected_bytes.data.decode("UTF-8")
-        soup = BeautifulSoup(html_content, "html.parser")
-        elements = []
-        tags = ["p", "h1", "h2", "h3", "h4", "h5", "a", "footer", "article"]
-        for element in soup.find_all(tags):
-            if element.name == "a":
-                link_text = element.get_text().strip()
-                link_href = element.get("href")
-                elements.append(f"Link: {link_text}, URL: {link_href}")
-            else:
-                element_text = element.get_text().strip()
-                elements.append(element_text)
+        try:
+            html_content = collected_bytes.data.decode("UTF-8")
+            soup = BeautifulSoup(html_content, "html.parser")
+            elements = []
+            tags = ["p", "h1", "h2", "h3", "h4", "h5", "a", "footer", "article"]
+            for element in soup.find_all(tags):
+                if element.name == "a":
+                    link_text = element.get_text().strip()
+                    link_href = element.get("href")
+                    elements.append(f"Link: {link_text}, URL: {link_href}")
+                else:
+                    element_text = element.get_text().strip()
+                    elements.append(element_text)
+        except UnicodeDecodeError as exc:
+            raise common_errors.UnicodeDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
+        except LookupError as exc:
+            raise common_errors.LookupError(
+                f"Getting LookupError on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting TypeError on this file {collected_bytes.file}"
+            ) from exc
 
         return elements
 

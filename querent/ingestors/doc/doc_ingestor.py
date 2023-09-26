@@ -9,6 +9,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
 import pytextract
 
@@ -88,7 +89,9 @@ class DocIngestor(BaseIngestor):
             current_doc_text = await self.temp_extract_from(collected_bytes)
             return current_doc_text
         else:
-            return ""
+            raise common_errors.UnknownError(
+                f"Not a doc or docx file {collected_bytes.file}"
+            )
 
     async def temp_extract_from(self, collected_bytes: CollectedBytes) -> str:
         suffix = "." + collected_bytes.extension
@@ -99,6 +102,26 @@ class DocIngestor(BaseIngestor):
         try:
             txt = pytextract.process(temp_file_path).decode("utf-8")
             return txt
+        except RuntimeError as exc:
+            raise common_errors.RuntimeError(
+                f"Getting ExtractionError on this file {collected_bytes.file}"
+            ) from exc
+        except UnicodeDecodeError as exc:
+            raise common_errors.UnicodeDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
+        except LookupError as exc:
+            raise common_errors.LookupError(
+                f"Getting LookupError on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting TypeError on this file {collected_bytes.file}"
+            ) from exc
+        except pytextract.exceptions.ShellError as exc:
+            raise common_errors.ShellError(
+                f"Getting ShellError on this file {collected_bytes.file}"
+            ) from exc
         finally:
             os.remove(temp_file_path)
 

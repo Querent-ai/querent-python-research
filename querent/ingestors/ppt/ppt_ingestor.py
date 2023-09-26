@@ -1,13 +1,16 @@
 from typing import List, AsyncGenerator
 from io import BytesIO
 from pptx import Presentation
+from pptx.exc import InvalidXmlError
 from tika import parser
+from zipfile import BadZipFile
 
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
 
 
@@ -63,21 +66,38 @@ class PptIngestor(BaseIngestor):
     async def extract_and_process_ppt(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        if collected_bytes.extension == "pptx":
-            ppt_file = BytesIO(collected_bytes.data)
-            presentation = Presentation(ppt_file)
-            for slide in presentation.slides:
-                text = []
-                for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text.append(shape.text)
-                slide_text = "\n".join(text)
-                processed_slide_text = await self.process_data(slide_text)
-                yield processed_slide_text
-        elif collected_bytes.extension == "ppt":
-            parsed = parser.from_buffer(collected_bytes.data)
-            extracted_text = parsed["content"]
-            yield extracted_text
+        try:
+            if collected_bytes.extension == "pptx":
+                ppt_file = BytesIO(collected_bytes.data)
+                presentation = Presentation(ppt_file)
+                for slide in presentation.slides:
+                    text = []
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text.append(shape.text)
+                    slide_text = "\n".join(text)
+                    processed_slide_text = await self.process_data(slide_text)
+                    yield processed_slide_text
+            elif collected_bytes.extension == "ppt":
+                parsed = parser.from_buffer(collected_bytes.data)
+                extracted_text = parsed["content"]
+                yield extracted_text
+            else:
+                raise common_errors.WrongPptFileError(
+                    f"Given file is not ppt {collected_bytes.file}"
+                )
+        except InvalidXmlError as exc:
+            raise common_errors.InvalidXmlError(
+                f"The following file is not in proper xml format {collected_bytes.file}"
+            ) from exc
+        except BadZipFile as exc:
+            raise common_errors.BadZipFile(
+                f"The following file is not a zip file{collected_bytes.file}"
+            ) from exc
+        except Exception as exc:
+            raise common_errors.UnknownError(
+                f"Received Unknown error as {exc} from file {collected_bytes.file}"
+            ) from exc
 
     async def process_data(self, text: str) -> str:
         processed_data = text

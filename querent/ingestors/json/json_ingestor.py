@@ -5,6 +5,7 @@ from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
+from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
 
 
@@ -76,9 +77,23 @@ class JsonIngestor(BaseIngestor):
         try:
             json_data = json.loads(collected_bytes.data.decode("utf-8"))
             return [json_data] if isinstance(json_data, dict) else []
+        except json.JSONDecodeError as exc:
+            raise common_errors.JsonDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
 
-        except json.JSONDecodeError:
-            return []
+        except UnicodeDecodeError as exc:
+            raise common_errors.UnicodeDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
+        except LookupError as exc:
+            raise common_errors.LookupError(
+                f"Getting LookupError on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting TypeError on this file {collected_bytes.file}"
+            ) from exc
 
     async def process_data(self, text: dict) -> dict:
         processed_data = text

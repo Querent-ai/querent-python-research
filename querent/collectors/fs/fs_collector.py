@@ -7,6 +7,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, FSCollectorConfig
 import aiofiles
+from querent.common import common_errors
 
 
 class FSCollector(Collector):
@@ -24,9 +25,18 @@ class FSCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
-            async with aiofiles.open(file_path, "rb") as file:
-                async for chunk in self.read_chunks(file):
-                    yield CollectedBytes(file=file_path, data=chunk, error=None)
+            try:
+                async with aiofiles.open(file_path, "rb") as file:
+                    async for chunk in self.read_chunks(file):
+                        yield CollectedBytes(file=file_path, data=chunk, error=None)
+            except PermissionError as exc:
+                raise common_errors.PermissionError(
+                    f"Unable to open this file {file_path}, getting error as {exc}"
+                ) from exc
+            except OSError as exc:
+                raise common_errors.OSError(
+                    f"Getting OS Error on file {file_path}, as {exc}"
+                ) from exc
 
     async def read_chunks(self, file):
         while True:

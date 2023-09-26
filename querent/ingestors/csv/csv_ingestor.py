@@ -7,6 +7,7 @@ from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.config.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
 
 
@@ -19,7 +20,7 @@ class CsvIngestorFactory(IngestorFactory):
     async def create(
         self, file_extension: str, processors: List[AsyncProcessor]
     ) -> BaseIngestor:
-        if not self.supports(file_extension):
+        if not await self.supports(file_extension):
             return None
         return CsvIngestor(processors)
 
@@ -69,8 +70,25 @@ class CsvIngestor(BaseIngestor):
             yield processed_row
 
     async def extract_text_from_csv(self, collected_bytes: CollectedBytes) -> str:
-        text_data = collected_bytes.data.decode("utf-8")
-        return text_data
+        try:
+            text_data = collected_bytes.data.decode("utf-8")
+            return text_data
+        except UnicodeDecodeError as exc:
+            raise common_errors.UnicodeDecodeError(
+                f"Getting UnicodeDecodeError on this file {collected_bytes.file}"
+            ) from exc
+        except LookupError as exc:
+            raise common_errors.LookupError(
+                f"Getting LookupError on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting TypeError on this file {collected_bytes.file}"
+            ) from exc
+        except Exception as exc:
+            raise common_errors.UnknownError(
+                f"Getting error message:- {exc} on file {collected_bytes.file}"
+            )
 
     async def process_data(self, text: str) -> str:
         processed_data = text

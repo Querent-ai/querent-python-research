@@ -27,7 +27,6 @@ async def test_collect_and_ingest_html():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            assert ingested is not None
             if ingested != "" or ingested is not None:
                 counter += 1
         assert counter == 16

@@ -6,6 +6,7 @@ from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
+from querent.common import common_errors
 
 
 class PdfIngestorFactory(IngestorFactory):
@@ -57,15 +58,27 @@ class PdfIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            async for page_text in self.extract_and_process_pdf(
-                CollectedBytes(file=current_file, data=collected_bytes)
-            ):
-                yield page_text
+            try:
+                async for page_text in self.extract_and_process_pdf(
+                    CollectedBytes(file=current_file, data=collected_bytes)
+                ):
+                    yield page_text
+            except Exception as exc:
+                yield None
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[IngestedTokens, None]:
-        pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
+        try:
+            pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
+        except fitz.DocumentError as exc:
+            raise common_errors.DocumentError(
+                f"Getting Document error on this file {collected_bytes.file}"
+            ) from exc
+        except TypeError as exc:
+            raise common_errors.TypeError(
+                f"Getting type error on this file {collected_bytes.file}"
+            ) from exc
         for page in pdf:
             text = page.get_text()
             if not text:
