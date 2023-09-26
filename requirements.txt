@@ -173,3 +173,4 @@ pytest-cov
 azure-storage-blob
 moviepy
 python-docx
+setuptools
