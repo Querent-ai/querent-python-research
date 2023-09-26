@@ -1,26 +1,23 @@
-
 ![image](https://github.com/Querent-ai/querent-ai/assets/61435908/9ea59cdc-9bad-4476-9367-c9901c560dd4)
 
-# Querent
+# Querent: The Asynchronous Data Dynamo and Graph Neural Network Catalyst 
 
-**Querent: Unleash the Power of Data and Graph Neural Networks**
-*Unlock Insights, Scale Asynchronously, and Forge a Knowledge-Driven Future*
+*Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future*
 
-**Welcome to Querent!** We're not just another data framework; we're the future of knowledge discovery and insight generation. Querent is your agile and dynamic companion for collecting, processing, and harnessing data's transformative potential. Whether you're crafting knowledge graphs, training cutting-edge language models, or diving deep into data-driven insights, Querent has your back.
 
-🚀 **Async Unleashed**: Querent thrives in an asynchronous universe. With the power of asynchronous processing, we seamlessly juggle multiple data sources, ensuring that no insight is left undiscovered. Say goodbye to bottlenecks and hello to efficiency.
+🚀 **Async at its Core**: Querent thrives in an asynchronous world. With asynchronous processing, we handle multiple data sources seamlessly, eliminating bottlenecks for utmost efficiency.
 
-💡 **Knowledge Graphs Galore**: Construct intricate knowledge graphs effortlessly. Querent's robust architecture paves the way for the creation of comprehensive knowledge graphs, empowering you to connect the dots and unveil hidden relationships within your data.
+💡 **Knowledge Graphs Made Easy**: Constructing intricate knowledge graphs is a breeze. Querent's robust architecture simplifies building comprehensive knowledge graphs, enabling you to uncover hidden data relationships.
 
-🌐 **Scalability Redefined**: Scaling your data operations has never been this smooth. Querent scales horizontally, allowing you to process a multitude of data streams without breaking a sweat. Expand your horizons, the sky's the limit.
+🌐 **Scalability Redefined**: Scaling your data operations is effortless with Querent. We scale horizontally, empowering you to process multiple data streams without breaking a sweat.
 
-🔬 **GNN and Beyond**: Querent doesn't stop at knowledge graphs. Our framework seamlessly integrates with Graph Neural Networks (GNNs), opening doors to advanced data analysis, recommendation systems, and predictive modeling.
+🔬 **GNN Integration**: Querent seamlessly integrates with Graph Neural Networks (GNNs), enabling advanced data analysis, recommendation systems, and predictive modeling.
 
-🔍 **Insights at Your Fingertips**: Dive deep into data-driven insights with ease. Querent provides tools to extract actionable insights, helping you make data-informed decisions swiftly.
+🔍 **Data-Driven Insights**: Dive deep into data-driven insights with Querent's tools. Extract actionable information and make data-informed decisions with ease.
 
-🧠 **Language Models at Work**: Leverage the power of state-of-the-art language models (LLMs) to process and understand text data. Querent fuels the future of natural language processing, empowering you to tackle complex text-based tasks.
+🧠 **Leverage Language Models**: Utilize state-of-the-art language models (LLMs) for text data. Querent empowers natural language processing, tackling complex text-based tasks.
 
-📈 **Memory-Efficient Insights**: Querent understands that memory is precious. Our framework employs efficient memory management techniques, ensuring you can handle colossal datasets without breaking the bank.
+📈 **Efficient Memory Usage**: Querent is mindful of memory constraints. Our framework uses memory-efficient techniques, ensuring you can handle large datasets economically.
 
 ## Table of Contents
 
@@ -38,13 +35,13 @@
 
 ## Introduction
 
-Querent is a project aimed at simplifying and optimizing data collection and processing workflows. Whether you need to scrape web data, ingest files, preprocess text, or create complex knowledge graphs, Querent provides a flexible framework for building and scaling these processes.
+Querent is designed to simplify and optimize data collection and processing workflows. Whether you need to scrape web data, ingest files, preprocess text, or create complex knowledge graphs, Querent offers a flexible framework for building and scaling these processes.
 
 ## Features
 
-- **Collectors:** Gather data from various sources asynchronously, including web scraping, file collection, and more.
+- **Collectors:** Gather data from various sources asynchronously, including web scraping and file collection.
 
-- **Ingestors:** Process collected data efficiently, applying custom transformations and filtering.
+- **Ingestors:** Process collected data efficiently with custom transformations and filtering.
 
 - **Processors:** Apply asynchronous data processing, including text preprocessing, cleaning, and feature extraction.
 
@@ -52,15 +49,15 @@ Querent is a project aimed at simplifying and optimizing data collection and pro
 
 - **Workflow Management:** Efficiently manage and scale data workflows with task orchestration.
 
-- **Scalability:** Querent is designed to scale horizontally, allowing you to handle large volumes of data.
+- **Scalability:** Querent is designed to scale horizontally, handling large volumes of data with ease.
 
 ## Getting Started
 
-Follow these instructions to set up and run Querent on your local machine.
+Let's get Querent up and running on your local machine.
 
 ### Prerequisites
 
-- Python 3.7+
+- Python 3.9+
 - Virtual environment (optional but recommended)
 
 ### Installation
@@ -87,23 +84,23 @@ Follow these instructions to set up and run Querent on your local machine.
 
 ## Usage
 
-Querent provides a flexible framework that you can adapt to your specific data collection and processing needs. To get started, you can follow these general steps:
+Querent provides a flexible framework that adapts to your specific data collection and processing needs. Here's how to get started:
 
-1. **Configuration:** Set up collector, ingestor, and processor configurations in the appropriate directories.
+1. **Configuration:** Set up collector, ingestor, and processor configurations as needed.
 
-2. **Collecting Data:** Implement collector classes to gather data from your chosen sources. Make sure to handle errors and edge cases gracefully.
+2. **Collecting Data:** Implement collector classes to gather data from chosen sources. Handle errors and edge cases gracefully.
 
 3. **Processing Data:** Create ingestors and processors to clean, transform, and filter collected data. Apply custom logic to meet your requirements.
 
-4. **Storage:** Choose a storage system (e.g., database) and configure the necessary connections. Store the processed data efficiently.
+4. **Storage:** Choose your storage system (e.g., databases) and configure connections. Store processed data efficiently.
 
-5. **Task Orchestration:** If handling a large number of tasks, implement a task orchestrator to manage and distribute the workload.
+5. **Task Orchestration:** For large tasks, implement a task orchestrator to manage and distribute the workload.
 
 6. **Scaling:** To handle scalability, consider running multiple instances of collectors and ingestors in parallel.
 
-7. **Monitoring:** Implement monitoring and logging to track the progress of tasks, detect errors, and ensure smooth operation.
+7. **Monitoring:** Implement monitoring and logging to track task progress, detect errors, and ensure smooth operation.
 
-8. **Documentation:** Keep your project well-documented to make it easy for others (and yourself) to understand and contribute.
+8. **Documentation:** Maintain thorough project documentation to make it easy for others (and yourself) to understand and contribute.
 
 ## Configuration
 
@@ -111,7 +108,7 @@ Querent relies on configuration files to define how collectors, ingestors, and p
 
 ## Querent: an asynchronous engine for LLMs
 
-Sequence Diagram: Asynchronous Data Processing in Querent
+**Sequence Diagram:** *Asynchronous Data Processing in Querent*
 
 ```mermaid
 sequenceDiagram
@@ -140,8 +137,9 @@ sequenceDiagram
     Note right of User: Asynchronous Flow
 ```
 
-## Ease of use
-with quetent writing scalable workflows atop any llm is just few lines of code.
+## Ease of Use
+
+With Querent, creating scalable workflows with any LLM is just a few lines of code.
 
 ```python
 import asyncio
