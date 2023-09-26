@@ -15,12 +15,4 @@ setup(
     packages=find_packages(),
     install_requires=requirements,
     license="Business Source License 1.1",
-    package_data={
-        "sample": ["sample_data.csv"],
-    },
-    entry_points={
-        "runners": [
-            "sample=sample:main",
-        ]
-    },
 )
