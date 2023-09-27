@@ -1,4 +1,4 @@
-![image](https://github.com/Querent-ai/querent-ai/assets/61435908/9ea59cdc-9bad-4476-9367-c9901c560dd4)
+![image](./docs/images/QuerentV2.svg)
 
 # Querent
 
@@ -67,7 +67,7 @@ Let's get Querent up and running on your local machine.
 1. Clone the Querent repository:
 
    ```bash
-   git clone https://github.com/your-username/querent.git
+   git clone https://github.com/querent-ai/querent-ai.git
    cd querent
    ```
 
@@ -159,7 +159,7 @@ resource_manager = ResourceManager()
 # Define a simple mock LLM class for testing
 class MockLLM(BaseLLM):
     async def process_tokens(self, data):
-        return f"Processed: {data}"
+        return f"Processed: {data.data[0]}"
 
     def validate(self):
         return True
@@ -191,7 +191,6 @@ async def test_querent_with_base_llm():
         "Processed: Data 1",
         "Processed: Data 2",
         "Processed: Data 3",
-        "Processed: None"
     ]
     assert results == expected_output
 ```
@@ -202,4 +201,4 @@ Contributions to Querent are welcome! Please follow our [contribution guidelines
 
 ## License
 
-This project is licensed under the BSL-1.1 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the BSL-1.1 License - see the [LICENSE](LICENCE) file for details.
