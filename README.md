@@ -159,7 +159,7 @@ resource_manager = ResourceManager()
 # Define a simple mock LLM class for testing
 class MockLLM(BaseLLM):
     async def process_tokens(self, data):
-        return f"Processed: {data}"
+        return f"Processed: {data.data[0]}"
 
     def validate(self):
         return True
