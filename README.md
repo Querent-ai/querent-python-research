@@ -1,4 +1,4 @@
-![image](./docs/images/IMG_20230926_223746_366.jpg)
+![image](./docs/images/QuerentV2.svg)
 
 # Querent
 
