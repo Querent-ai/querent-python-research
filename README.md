@@ -67,7 +67,7 @@ Let's get Querent up and running on your local machine.
 1. Clone the Querent repository:
 
    ```bash
-   git clone https://github.com/your-username/querent.git
+   git clone https://github.com/querent-ai/querent-ai.git
    cd querent
    ```
 
