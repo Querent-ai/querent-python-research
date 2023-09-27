@@ -18,14 +18,40 @@ from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class AudioIngestorFactory(IngestorFactory):
+    """
+    Factory class for creating AudioIngestor instances.
+
+    This class defines methods to check if a given file extension is supported
+    and to create an AudioIngestor object if the extension is supported.
+    """
+
     SUPPORTED_EXTENSIONS = {"mp3"}
 
     async def supports(self, file_extension: str) -> bool:
+        """
+        Check if the specified file extension is supported for audio ingestion.
+
+        Args:
+            file_extension (str): The file extension to check.
+
+        Returns:
+            bool: True if the extension is supported, False otherwise.
+        """
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
 
     async def create(
         self, file_extension: str, processors: List[AsyncProcessor]
     ) -> BaseIngestor:
+        """
+        Create an AudioIngestor instance if the specified extension is supported.
+
+        Args:
+            file_extension (str): The file extension to create an ingestor for.
+            processors (List[AsyncProcessor]): List of processors to apply to the ingested data.
+
+        Returns:
+            BaseIngestor: An AudioIngestor instance or None if the extension is not supported.
+        """
         if not await self.supports(file_extension):
             return None
         return AudioIngestor(processors)
