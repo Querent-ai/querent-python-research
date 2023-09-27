@@ -1,4 +1,4 @@
-![image](https://github.com/Querent-ai/querent-ai/assets/61435908/9ea59cdc-9bad-4476-9367-c9901c560dd4)
+![image](./docs/IMG_20230926_223753_508.jpg)
 
 # Querent
 
