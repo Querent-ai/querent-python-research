@@ -201,4 +201,4 @@ Contributions to Querent are welcome! Please follow our [contribution guidelines
 
 ## License
 
-This project is licensed under the BSL-1.1 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the BSL-1.1 License - see the [LICENSE](LICENCE) file for details.
