@@ -191,7 +191,6 @@ async def test_querent_with_base_llm():
         "Processed: Data 1",
         "Processed: Data 2",
         "Processed: Data 3",
-        "Processed: None"
     ]
     assert results == expected_output
 ```
