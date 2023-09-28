@@ -50,6 +50,8 @@ class CollectorResolver:
             return CollectorBackend.WebScraper
         elif protocol.is_azure_blob_storage():
             return CollectorBackend.AzureBlobStorage
+        elif protocol.is_slack():
+            return CollectorBackend.Slack
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"

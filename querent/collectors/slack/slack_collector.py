@@ -24,13 +24,14 @@ class SlackCollector(Collector):
         self.client = WebClient()
 
     async def connect(self):
-        self.client = WebClient(token=os.getenv("SLACK_ACCESS_KEY"))
+        pass
 
     async def disconnect(self):
         # Add your cleanup logic here if needed
         pass
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
+        self.client = WebClient(token=os.getenv("SLACK_ACCESS_KEY"))
         while True:
             try:
                 response = await self.client.conversations_history(

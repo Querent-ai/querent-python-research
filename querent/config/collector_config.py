@@ -48,12 +48,12 @@ class GcsCollectConfig(BaseModel):
 
 
 class SlackCollectorConfig(BaseModel):
-    cursor = None
-    include_all_metadata = 0
-    inclusive = 0
-    latest = 0
-    limit = 100
-    channel_name = "standup"
+    cursor: Optional[str]
+    include_all_metadata: int
+    inclusive: int
+    latest: int
+    limit: int
+    channel_name: str
 
 
 class WebScraperConfig(BaseModel):
