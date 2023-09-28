@@ -174,3 +174,4 @@ azure-storage-blob
 moviepy
 python-docx
 setuptools
+slack-sdk

@@ -9,6 +9,7 @@ class CollectorBackend(str, Enum):
     S3 = "s3"
     Gcs = "gs"
     AzureBlobStorage = "azure"
+    Slack = "slack"
 
 
 class CollectConfig(BaseModel):
@@ -22,6 +23,7 @@ class FSCollectorConfig(BaseModel):
     root_path: str
     chunk_size: int = 1024
 
+
 class AzureCollectConfig(BaseModel):
     connection_string: str
     account_url: str
@@ -29,6 +31,7 @@ class AzureCollectConfig(BaseModel):
     container: str
     prefix: str
     chunk_size: int = 1024
+
 
 class S3CollectConfig(BaseModel):
     bucket: str
@@ -44,10 +47,17 @@ class GcsCollectConfig(BaseModel):
     chunk: int = 1024
 
 
+class SlackCollectorConfig(BaseModel):
+    cursor = None
+    include_all_metadata = 0
+    inclusive = 0
+    latest = 0
+    limit = 100
+    channel_name = "standup"
+
+
 class WebScraperConfig(BaseModel):
-    website_url: str = Field(
-        ..., description="The URL of the website to scrape."
-    )
+    website_url: str = Field(..., description="The URL of the website to scrape.")
 
 
 class CollectConfigWrapper(BaseModel):
@@ -57,21 +67,16 @@ class CollectConfigWrapper(BaseModel):
     @classmethod
     def from_collect_config(cls, collect_config: CollectConfig):
         if collect_config.backend == CollectorBackend.LocalFile:
-            return cls(
-                backend=CollectorBackend.LocalFile, config=FSCollectorConfig()
-            )
+            return cls(backend=CollectorBackend.LocalFile, config=FSCollectorConfig())
         elif collect_config.backend == CollectorBackend.S3:
             return cls(backend=CollectorBackend.S3, config=S3CollectConfig())
         elif collect_config.backend == CollectorBackend.Gcs:
             return cls(backend=CollectorBackend.Gcs, config=GcsCollectConfig())
         elif collect_config.backend == CollectorBackend.WebScraper:
+            return cls(backend=CollectorBackend.WebScraper, config=WebScraperConfig())
+        elif collect_config.backend == CollectorBackend.AzureBlobStorage:
             return cls(
-                backend=CollectorBackend.WebScraper, config=WebScraperConfig()
-            )
-        elif collect_config.backend == CollectorBackend.Azure:
-            return cls(
-                backend=CollectorBackend.Azure, config=AzureCollectConfig()
+                backend=CollectorBackend.AzureBlobStorage, config=AzureCollectConfig()
             )
         else:
-            raise ValueError(
-                f"Unsupported collector backend: {collect_config.backend}")
+            raise ValueError(f"Unsupported collector backend: {collect_config.backend}")
