@@ -2,8 +2,8 @@ import asyncio
 import logging
 from typing import List
 
-from querent.llm.base_engine import BaseEngine
-from querent.napper.resource_manager import ResourceManager
+from querent.ai.base_engine import BaseEngine
+from querent.querent.resource_manager import ResourceManager
 
 
 class AutoScaler:

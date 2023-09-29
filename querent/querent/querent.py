@@ -2,9 +2,9 @@ import asyncio
 import logging
 import signal
 from typing import List, Awaitable
-from querent.llm.base_engine import BaseEngine
-from querent.napper.resource_manager import ResourceManager
-from querent.napper.auto_scaler import AutoScaler
+from querent.ai.base_engine import BaseEngine
+from querent.querent.resource_manager import ResourceManager
+from querent.querent.auto_scaler import AutoScaler
 
 # Set up logging
 logging.basicConfig(

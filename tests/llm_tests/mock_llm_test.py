@@ -2,9 +2,9 @@ import asyncio
 import pytest
 from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_engine import BaseEngine
-from querent.napper.querent import Querent
-from querent.napper.resource_manager import ResourceManager
+from querent.ai.base_engine import BaseEngine
+from querent.querent.querent import Querent
+from querent.querent.resource_manager import ResourceManager
 
 # Create input and output queues
 input_queue = QuerentQueue()
