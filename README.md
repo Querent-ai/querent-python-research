@@ -1,11 +1,10 @@
-![image](./docs/images/QuerentV2.svg)
-
 # Querent
 
-The Asynchronous Data Dynamo and Graph Neural Network Catalyst 
+The Asynchronous Data Dynamo and Graph Neural Network Catalyst
 
-*Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future*
+![image](./docs/images/QuerentV2.svg)
 
+## Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future
 
 🚀 **Async at its Core**: Querent thrives in an asynchronous world. With asynchronous processing, we handle multiple data sources seamlessly, eliminating bottlenecks for utmost efficiency.
 
@@ -24,6 +23,7 @@ The Asynchronous Data Dynamo and Graph Neural Network Catalyst
 ## Table of Contents
 
 - [Querent](#querent)
+  - [Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future](#unlock-insights-asynchronous-scaling-and-forge-a-knowledge-driven-future)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Features](#features)
@@ -32,6 +32,8 @@ The Asynchronous Data Dynamo and Graph Neural Network Catalyst
     - [Installation](#installation)
   - [Usage](#usage)
   - [Configuration](#configuration)
+  - [Querent: an asynchronous engine for LLMs](#querent-an-asynchronous-engine-for-llms)
+  - [Ease of Use](#ease-of-use)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -144,25 +146,39 @@ sequenceDiagram
 With Querent, creating scalable workflows with any LLM is just a few lines of code.
 
 ```python
+# Define a simple mock LLM class for testing
 import asyncio
 import pytest
+from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_llm import BaseLLM
+from querent.llm.base_engine import BaseEngine
 from querent.napper.querent import Querent
 from querent.napper.resource_manager import ResourceManager
 
 # Create input and output queues
 input_queue = QuerentQueue()
-output_queue = QuerentQueue()
 resource_manager = ResourceManager()
 
+
 # Define a simple mock LLM class for testing
-class MockLLM(BaseLLM):
+class MockLLM(BaseEngine):
     async def process_tokens(self, data):
-        return f"Processed: {data.data[0]}"
+        if data is None:
+            # the LLM developer can raise an error here or do something else
+            # the developers of Querent can customize the behavior of Querent
+            # to handle the error in a way that is appropriate for the use case
+            raise ValueError("Received None, terminating")
+        self.state = f"Processing: Data: '{data}'"
 
     def validate(self):
         return True
+
+    def set_state(self, new_state):
+        self.state = new_state
+
+    async def get_state(self):
+        return self.state
+
 
 @pytest.mark.asyncio
 async def test_querent_with_base_llm():
@@ -170,29 +186,44 @@ async def test_querent_with_base_llm():
     input_data = ["Data 1", "Data 2", "Data 3", None]
     for data in input_data:
         await input_queue.put(data)
-    
-    # Create a list of mock LLM instances
-    num_llms = 1
-    llms = [MockLLM(input_queue, output_queue) for _ in range(num_llms)]
 
-    # Create a Querent instance
-    querent = Querent(llms, num_workers=num_llms, resource_manager=resource_manager)
+    ### A Typical Use Case ###
+    # Create an engine to harness the LLM
+    llm_mocker = MockLLM(input_queue)
 
-    # Start the Querent
+    # Define a callback function to subscribe to state changes
+    def state_change_callback(new_state):
+        assert new_state.startswith("Processing: Data:")
+
+    # Subscribe to state change events
+    # This pattern is ideal as we can expose multiple events for each use case of the LLM
+    llm_mocker.subscribe(EventType._STATE_TRANSITION, state_change_callback)
+
+    ## one can also subscribe to other events, e.g. EventType.CHAT_COMPLETION ...
+
+    # Create a Querent instance with a single MockLLM
+    # here we see the simplicity of the Querent
+    # massive complexity is hidden in the Querent,
+    # while being highly configurable, extensible, and scalable
+    # async architecture helps to scale to multiple querenters
+    # How async architecture works:
+    #   1. Querent starts a worker task for each querenter
+    #   2. Querenter starts a worker task for each worker
+    #   3. Each worker task runs in a loop, waiting for input data
+    #   4. When input data is received, the worker task processes the data
+    #   5. The worker task notifies subscribers of state changes
+    #   6. The worker task repeats steps 3-5 until termination
+    querent = Querent(
+        [llm_mocker],
+        num_workers=1,
+        resource_manager=resource_manager,
+    )
+
+    # Start the querent
     await querent.start()
 
-    # Check the output queue for results and store them in a list
-    results = []
-    async for result in output_queue:
-        results.append(result)
-
-    # Assert that the results match the expected output
-    expected_output = [
-        "Processed: Data 1",
-        "Processed: Data 2",
-        "Processed: Data 3",
-    ]
-    assert results == expected_output
+if __name__ == "__main__":
+    asyncio.run(test_querent_with_base_llm())
 ```
 
 ## Contributing
