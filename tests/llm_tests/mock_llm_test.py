@@ -1,4 +1,5 @@
 import pytest
+from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue
 from querent.core.base_engine import BaseEngine
@@ -12,20 +13,18 @@ resource_manager = ResourceManager()
 
 # Define a simple mock LLM engine for testing
 class MockLLMEngine(BaseEngine):
-    async def process_tokens(self, data):
+    async def process_tokens(self, data: IngestedTokens):
         if data is None:
             # the LLM developer can raise an error here or do something else
             # the developers of Querent can customize the behavior of Querent
             # to handle the error in a way that is appropriate for the use case
             raise ValueError("Received None, terminating")
-        self.state = f"Processing: Data: '{data}'"
-
         # Set the state of the LLM
         # At any given point during the execution of the LLM, the LLM developer
         # can set the state of the LLM using the set_state method
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
-        self.set_state(EventType.TOKEN_PROCESSED, self.state)
+        self.set_state(EventType.TOKEN_PROCESSED, f"Processing: Data: '{data}'")
 
     def validate(self):
         return True

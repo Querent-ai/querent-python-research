@@ -40,7 +40,7 @@ class BaseEngine(ABC):
         self.state_queue: asyncio.Queue = asyncio.Queue(
             maxsize=max_state_transitions  # these many at a given time
         )  # Limited queue size
-        self.state = ""  # define state of the LLM
+
 
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens):
