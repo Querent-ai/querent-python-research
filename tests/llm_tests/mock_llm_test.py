@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_llm import BaseLLM
+from querent.llm.base_llm import BaseEngine
 from querent.napper.querent import Querent
 from querent.napper.resource_manager import ResourceManager
 
@@ -12,7 +12,7 @@ resource_manager = ResourceManager()
 
 
 # Define a simple mock LLM class for testing
-class MockLLM(BaseLLM):
+class MockLLM(BaseEngine):
     async def process_tokens(self, data):
         return f"Processed: {data}"
 

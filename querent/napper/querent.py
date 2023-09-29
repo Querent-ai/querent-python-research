@@ -2,7 +2,7 @@ import asyncio
 import logging
 import signal
 from typing import List, Awaitable
-from querent.llm.base_llm import BaseLLM
+from querent.llm.base_llm import BaseEngine
 from querent.napper.resource_manager import ResourceManager
 from querent.napper.auto_scaler import AutoScaler
 
@@ -17,7 +17,7 @@ logger = logging.getLogger("Querent")
 class Querent:
     def __init__(
         self,
-        querenters: List[BaseLLM],
+        querenters: List[BaseEngine],
         num_workers: int,
         resource_manager: ResourceManager,
         auto_scale_threshold: int = 10,
