@@ -3,8 +3,14 @@ import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 from querent.common.types.ingested_tokens import IngestedTokens
-from querent.common.types.querent_event import EventType
+from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 class BaseEngine(ABC):
@@ -26,24 +32,25 @@ class BaseEngine(ABC):
         self.message_throttle_delay = message_throttle_delay
         self.max_state_transitions = max_state_transitions
         self.termination_event = asyncio.Event()
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)  # Initialize logger
         self.workers = []
         self.subscribers: Dict[
             EventType, List[Callable]
         ] = {}  # Event-type to subscribers mapping
-        self.state_queue: asyncio.Queue = (
-            asyncio.LifoQueue()
-        )  # LIFO queue for state transitions
+        self.state_queue: asyncio.Queue = asyncio.Queue(
+            maxsize=max_state_transitions  # these many at a given time
+        )  # Limited queue size
         self.state = ""  # define state of the LLM
 
     @abstractmethod
-    async def process_tokens(self, data: IngestedTokens) -> Any:
+    async def process_tokens(self, data: IngestedTokens):
         """
         Process tokens asynchronously.
         Args:
             data (IngestedTokens): The input data to process.
         Returns:
-            Any: The result of processing the tokens.
+            EventState: The state of the event is set with the event type and the timestamp
+            of the event and set using `self.set_state(event_state)`.
         """
         raise NotImplementedError
 
@@ -56,35 +63,30 @@ class BaseEngine(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def set_state(self, new_state: Any):
+    async def set_state(self, new_state: EventState):
         """
         Set the state to a new value.
         Args:
-            new_state (str): The new state to set.
+            new_state (EventState): The new state.
         """
-        raise NotImplementedError
-
-    @abstractmethod
-    async def get_state(self) -> Optional[Any]:
-        """
-        Get the current state.
-        Returns:
-            Optional[str]: The current state, or None if no state is available.
-        """
-        raise NotImplementedError
+        if isinstance(new_state, EventState):
+            await self.state_queue.put(new_state)
+        else:
+            self.termination_event.set()
+            raise Exception(
+                f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
+            )
 
     async def listen_for_state_changes(self):
-        state_transitions = 0
         while not self.termination_event.is_set():
             new_state = await self.state_queue.get()
-            await self._notify_subscribers(EventType._STATE_TRANSITION, new_state)
-            state_transitions += 1
-            if state_transitions >= self.max_state_transitions:
-                self.logger.warning(
-                    f"Maximum state transitions ({self.max_state_transitions}) reached. Stopping state listener."
+            if isinstance(new_state, EventState):
+                await self._notify_subscribers(new_state.event_type, new_state)
+            else:
+                self.termination_event.set()
+                raise Exception(
+                    f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
                 )
-                break
 
     async def worker(self):
         try:
