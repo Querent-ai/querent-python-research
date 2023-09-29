@@ -2,15 +2,15 @@ import asyncio
 import logging
 from typing import List
 
-from querent.llm.base_llm import BaseLLM
-from querent.napper.resource_manager import ResourceManager
+from querent.core.base_engine import BaseEngine
+from querent.querent.resource_manager import ResourceManager
 
 
 class AutoScaler:
     def __init__(
         self,
         resource_manager: ResourceManager,
-        querenters: List[BaseLLM],
+        querenters: List[BaseEngine],
         threshold: int = 10,
     ):
         self.resource_manager = resource_manager

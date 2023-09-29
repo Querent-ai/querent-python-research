@@ -4,7 +4,7 @@ from .config import *
 from .ingestors import *
 from .controllers import *
 from .insights import *
-from .napper.querent import Querent
+from .querent.querent import Querent
 from .processors import *
 from .storage import *
-from .llm import *
+from .core import *
