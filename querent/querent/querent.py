@@ -2,7 +2,7 @@ import asyncio
 import logging
 import signal
 from typing import List, Awaitable
-from querent.ai.base_engine import BaseEngine
+from querent.core.base_engine import BaseEngine
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.auto_scaler import AutoScaler
 

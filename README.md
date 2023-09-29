@@ -149,7 +149,7 @@ With Querent, creating scalable workflows with any LLM is just a few lines of co
 import pytest
 from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue
-from querent.ai.base_engine import BaseEngine
+from querent.core.base_engine import BaseEngine
 from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 

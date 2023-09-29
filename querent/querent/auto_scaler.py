@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import List
 
-from querent.ai.base_engine import BaseEngine
+from querent.core.base_engine import BaseEngine
 from querent.querent.resource_manager import ResourceManager
 
 

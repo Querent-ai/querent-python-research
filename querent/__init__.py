@@ -7,4 +7,4 @@ from .insights import *
 from .querent.querent import Querent
 from .processors import *
 from .storage import *
-from .ai import *
+from .core import *
