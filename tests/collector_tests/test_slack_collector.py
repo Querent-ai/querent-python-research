@@ -10,7 +10,7 @@ async def test_slack_collector():
     uri = Uri("slack://")
     resolver = CollectorResolver()
     file_config = SlackCollectorConfig(
-        channel_name="standup",
+        channel_name="C05MRBR192L",
         cursor=None,
         include_all_metadata=0,
         inclusive=0,

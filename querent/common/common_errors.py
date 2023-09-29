@@ -27,6 +27,7 @@ class IngestorError(Enum):
     PERMISSIONERROR = "PermissionError"
     OSERROR = "OSError"
     CONNECTIONERROR = "ConnectionError"
+    SLACKERROR = "SlackAPIError"
 
 
 class IngestorErrorBase(Exception):
@@ -146,3 +147,8 @@ class OSError(IngestorErrorBase):
 class ConnectionError(IngestorErrorBase):
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.CONNECTIONERROR, message)
+
+
+class SlackApiError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.SLACKERROR, message)

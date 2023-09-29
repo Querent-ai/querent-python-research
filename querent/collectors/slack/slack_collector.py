@@ -8,6 +8,7 @@ from querent.config.collector_config import CollectorBackend, SlackCollectorConf
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
+from querent.common import common_errors
 
 
 class SlackCollector(Collector):
@@ -32,30 +33,43 @@ class SlackCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         self.client = WebClient(token=os.getenv("SLACK_ACCESS_KEY"))
+        try:
+            response = self.client.conversations_join(channel=self.channel)
+            if not response["ok"]:
+                print(
+                    f"Failed to join channel: {self.channel}, Error: {response['error']}"
+                )
+        except SlackApiError as exc:
+            raise common_errors.SlackApiError(
+                f"Slack API Error: {exc.response['error']}"
+            ) from exc
         while True:
             try:
-                response = await self.client.conversations_history(
+                # Get list of all the conversation history
+                response = self.client.conversations_history(
                     channel=self.channel, cursor=self.cursor, limit=self.limit
                 )
                 if response["ok"]:
                     messages = response["messages"]
                     for message in messages:
-                        print(message)
+                        # print(message["text"])
                         yield CollectedBytes(
-                            file=self.channel, data=bytes(message, "utf-8")
+                            file=self.channel, data=bytes(message["text"], "utf-8")
                         )
 
                     if not response["has_more"]:
                         break
                 else:
-                    print(f"Error: {response['error']}")
-                    break
+                    raise common_errors.SlackApiError(
+                        f"Slack API Error: {response['error']}"
+                    )
 
                 self.cursor = response["response_metadata"]["next_cursor"]
 
             except SlackApiError as exc:
-                print(f"Slack API Error: {exc.response['error']}")
-                break
+                raise common_errors.SlackApiError(
+                    f"Slack API Error: {exc.response['error']}"
+                ) from exc
 
 
 class SlackCollectorFactory(CollectorFactory):
