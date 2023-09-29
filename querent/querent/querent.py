@@ -2,9 +2,9 @@ import asyncio
 import logging
 import signal
 from typing import List, Awaitable
-from querent.llm.base_llm import BaseLLM
-from querent.napper.resource_manager import ResourceManager
-from querent.napper.auto_scaler import AutoScaler
+from querent.core.base_engine import BaseEngine
+from querent.querent.resource_manager import ResourceManager
+from querent.querent.auto_scaler import AutoScaler
 
 # Set up logging
 logging.basicConfig(
@@ -17,7 +17,7 @@ logger = logging.getLogger("Querent")
 class Querent:
     def __init__(
         self,
-        querenters: List[BaseLLM],
+        querenters: List[BaseEngine],
         num_workers: int,
         resource_manager: ResourceManager,
         auto_scale_threshold: int = 10,
