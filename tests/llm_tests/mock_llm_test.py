@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue

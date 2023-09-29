@@ -146,22 +146,20 @@ sequenceDiagram
 With Querent, creating scalable workflows with any LLM is just a few lines of code.
 
 ```python
-# Define a simple mock LLM class for testing
-import asyncio
 import pytest
 from querent.common.types.querent_event import EventType
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_engine import BaseEngine
-from querent.napper.querent import Querent
-from querent.napper.resource_manager import ResourceManager
+from querent.ai.base_engine import BaseEngine
+from querent.querent.querent import Querent
+from querent.querent.resource_manager import ResourceManager
 
 # Create input and output queues
 input_queue = QuerentQueue()
 resource_manager = ResourceManager()
 
 
-# Define a simple mock LLM class for testing
-class MockLLM(BaseEngine):
+# Define a simple mock LLM engine for testing
+class MockLLMEngine(BaseEngine):
     async def process_tokens(self, data):
         if data is None:
             # the LLM developer can raise an error here or do something else
@@ -170,14 +168,15 @@ class MockLLM(BaseEngine):
             raise ValueError("Received None, terminating")
         self.state = f"Processing: Data: '{data}'"
 
+        # Set the state of the LLM
+        # At any given point during the execution of the LLM, the LLM developer
+        # can set the state of the LLM using the set_state method
+        # The state of the LLM is stored in the state attribute of the LLM
+        # The state of the LLM is published to subscribers of the LLM
+        self.set_state(EventType.TOKEN_PROCESSED, self.state)
+
     def validate(self):
         return True
-
-    def set_state(self, new_state):
-        self.state = new_state
-
-    async def get_state(self):
-        return self.state
 
 
 @pytest.mark.asyncio
@@ -189,7 +188,7 @@ async def test_querent_with_base_llm():
 
     ### A Typical Use Case ###
     # Create an engine to harness the LLM
-    llm_mocker = MockLLM(input_queue)
+    llm_mocker = MockLLMEngine(input_queue)
 
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state):
@@ -197,7 +196,7 @@ async def test_querent_with_base_llm():
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
-    llm_mocker.subscribe(EventType._STATE_TRANSITION, state_change_callback)
+    llm_mocker.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
 
     ## one can also subscribe to other events, e.g. EventType.CHAT_COMPLETION ...
 
@@ -221,9 +220,6 @@ async def test_querent_with_base_llm():
 
     # Start the querent
     await querent.start()
-
-if __name__ == "__main__":
-    asyncio.run(test_querent_with_base_llm())
 ```
 
 ## Contributing
