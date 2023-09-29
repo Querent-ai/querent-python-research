@@ -1,6 +1,6 @@
 import pytest
 from querent.common.types.ingested_tokens import IngestedTokens
-from querent.common.types.querent_event import EventType
+from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
 from querent.core.base_engine import BaseEngine
 from querent.querent.querent import Querent
@@ -24,7 +24,8 @@ class MockLLMEngine(BaseEngine):
         # can set the state of the LLM using the set_state method
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
-        self.set_state(EventType.TOKEN_PROCESSED, f"Processing: Data: '{data}'")
+        current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, "anything")
+        self.set_state(new_state=current_state)
 
     def validate(self):
         return True

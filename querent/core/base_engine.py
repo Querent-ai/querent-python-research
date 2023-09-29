@@ -41,7 +41,6 @@ class BaseEngine(ABC):
             maxsize=max_state_transitions  # these many at a given time
         )  # Limited queue size
 
-
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens):
         """
@@ -149,13 +148,13 @@ class BaseEngine(ABC):
             self.subscribers[event_type] = []
         self.subscribers[event_type].append(callback)
 
-    async def _notify_subscribers(self, event_type: EventType, event_data: Any):
+    async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
         """
         Notify subscribers when an event occurs.
         Args:
             event_type (EventType): The type of event that occurred.
-            event_data (Any): The data associated with the event.
+            event_data (EventState): The data associated with the event.
         """
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
-                await asyncio.gather(callback(event_data))
+                await asyncio.gather(callback(event_state))
