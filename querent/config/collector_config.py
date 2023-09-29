@@ -54,6 +54,7 @@ class SlackCollectorConfig(BaseModel):
     latest: int
     limit: int
     channel_name: str
+    access_token: str
 
 
 class WebScraperConfig(BaseModel):

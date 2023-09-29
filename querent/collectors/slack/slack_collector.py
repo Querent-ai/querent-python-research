@@ -21,6 +21,7 @@ class SlackCollector(Collector):
         self.latest = config.latest if config.latest else 0
         self.limit = config.limit if config.limit else 100
         self.channel = config.channel_name
+        self.access_token = config.access_token
 
         self.client = WebClient()
 
@@ -32,8 +33,8 @@ class SlackCollector(Collector):
         pass
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
-        self.client = WebClient(token=os.getenv("SLACK_ACCESS_KEY"))
         try:
+            self.client = WebClient(token=self.access_token)
             response = self.client.conversations_join(channel=self.channel)
             if not response["ok"]:
                 print(
