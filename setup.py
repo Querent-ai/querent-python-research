@@ -1,3 +1,7 @@
+"""
+    Querent AI: The Asynchronous Data Dynamo and Graph Neural Network Catalyst
+"""
+
 from setuptools import setup, find_packages
 
 requirements = [
