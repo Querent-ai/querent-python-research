@@ -2,7 +2,7 @@ import asyncio
 import logging
 import signal
 from typing import List, Awaitable
-from querent.llm.base_llm import BaseEngine
+from querent.llm.base_engine import BaseEngine
 from querent.napper.resource_manager import ResourceManager
 from querent.napper.auto_scaler import AutoScaler
 

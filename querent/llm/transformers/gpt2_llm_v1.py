@@ -1,7 +1,7 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_llm import BaseEngine
+from querent.llm.base_engine import BaseEngine
 
 
 class GPT2LLM(BaseEngine):

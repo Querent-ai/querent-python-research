@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import List
 
-from querent.llm.base_llm import BaseEngine
+from querent.llm.base_engine import BaseEngine
 from querent.napper.resource_manager import ResourceManager
 
 

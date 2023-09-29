@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from querent.common.types.querent_queue import QuerentQueue
-from querent.llm.base_llm import BaseEngine
+from querent.llm.base_engine import BaseEngine
 from querent.napper.querent import Querent
 from querent.napper.resource_manager import ResourceManager
 
