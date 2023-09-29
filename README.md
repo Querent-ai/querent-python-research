@@ -2,7 +2,8 @@
 
 The Asynchronous Data Dynamo and Graph Neural Network Catalyst
 
-![image](./docs/images/QuerentV2.svg)
+![image](https://github.com/Querent-ai/querent-ai/assets/61435908/d2deb0da-4b22-41dd-8f31-4b4e8c6830de)
+
 
 ## Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future
 
