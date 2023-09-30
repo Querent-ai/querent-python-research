@@ -5,8 +5,8 @@ class IngestedTokens:
     def __init__(self, file: str, data: [str], error: str = None) -> None:
         self.data = data
         self.error = error
-        self.file = file
-        if self.file:
+        if file:
+            self.file = file
             file = str(file)
             self.extension = file.split(".")[-1]
             self.file_id = file.split("/")[-1].split(".")[0]
