@@ -51,18 +51,17 @@ class AutoScaler:
                 total_requested_workers = sum(
                     querenter.num_workers for querenter in self.querenters
                 )
-
                 # Get the maximum allowed workers from the resource manager
                 max_allowed_workers = (
                     await self.resource_manager.get_max_allowed_workers()
                 )
-
                 if total_requested_workers > max_allowed_workers:
                     raise Exception(
                         "Total requested workers exceed the maximum allowed workers."
                     )
 
                 # Scale querenter workers
+                
                 await self.scale_querenters(total_requested_workers)
 
                 # Wait for a while before checking again (adjust this as needed)
@@ -76,6 +75,7 @@ class AutoScaler:
             pass
         except Exception as e:
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")
+            raise e
         finally:
             self.logger.info("AutoScaler stopped")
 
