@@ -2,7 +2,7 @@ import asyncio
 import pytest
 import os
 from querent.collectors.collector_resolver import CollectorResolver
-from querent.config.collector_config import CollectorBackend, SlackCollectorConfig
+from querent.config.collector_config import SlackCollectorConfig
 from querent.common.uri import Uri
 
 

@@ -56,6 +56,8 @@ class GenericIngestor(BaseIngestor):
         processed_text = await self.process_data(text)
         lines = processed_text.split("\n")
         for line in lines:
+            if len(line) == 0:
+                continue
             yield line
 
     async def extract_text_from_bytes(self, collected_bytes: CollectedBytes) -> str:

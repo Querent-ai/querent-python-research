@@ -53,9 +53,8 @@ class SlackCollector(Collector):
                 if response["ok"]:
                     messages = response["messages"]
                     for message in messages:
-                        # print(message["text"])
                         yield CollectedBytes(
-                            file=None, data=bytes(message["text"], "utf-8")
+                            file=None, data=bytes(message["text"] + "\n\n", "utf-8")
                         )
 
                     if not response["has_more"]:

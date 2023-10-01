@@ -7,6 +7,10 @@ from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def get_collector_config():
     return SlackCollectorConfig(
@@ -25,6 +29,7 @@ async def test_collect_and_ingest_generic_bytes():
     # Set up the collector
     collector_factory = SlackCollectorFactory()
     uri = Uri("slack://")
+    print(os.getenv("SLACK_ACCESS_KEY"))
     config = get_collector_config()
     collector = collector_factory.resolve(uri, config)
 
@@ -42,8 +47,9 @@ async def test_collect_and_ingest_generic_bytes():
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested is not "" or ingested is not None:
+                print(ingested)
                 counter += 1
-        print(counter)
+        assert counter == 20
 
     await poll_and_print()  # Notice the use of await here
 
