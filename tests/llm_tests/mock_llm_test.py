@@ -25,7 +25,7 @@ class MockLLMEngine(BaseEngine):
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
         current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, "anything")
-        self.set_state(new_state=current_state)
+        await self.set_state(new_state=current_state)
 
     def validate(self):
         return True
@@ -34,7 +34,7 @@ class MockLLMEngine(BaseEngine):
 @pytest.mark.asyncio
 async def test_querent_with_base_llm():
     # Put some input data into the input queue
-    input_data = ["Data 1", "Data 2", "Data 3", None]
+    input_data = [IngestedTokens(file="", data="data1"), IngestedTokens(file="", data="data2"), IngestedTokens(file="", data="data3"),None]
     for data in input_data:
         await input_queue.put(data)
 
@@ -44,7 +44,8 @@ async def test_querent_with_base_llm():
 
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state):
-        assert new_state.startswith("Processing: Data:")
+        assert new_state.event_type == EventType.TOKEN_PROCESSED
+
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
@@ -69,6 +70,6 @@ async def test_querent_with_base_llm():
         num_workers=1,
         resource_manager=resource_manager,
     )
-
+    print("Start Querent")
     # Start the querent
     await querent.start()
