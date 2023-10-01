@@ -70,6 +70,5 @@ async def test_querent_with_base_llm():
         num_workers=1,
         resource_manager=resource_manager,
     )
-    print("Start Querent")
     # Start the querent
     await querent.start()

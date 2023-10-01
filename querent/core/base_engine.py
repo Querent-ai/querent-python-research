@@ -127,7 +127,6 @@ class BaseEngine(ABC):
             self.logger.error(f"Worker error: {e}")
 
     async def start_workers(self, number_of_workers):
-
         self.workers = [self.worker() for _ in range(number_of_workers)]
         return self.workers
 
