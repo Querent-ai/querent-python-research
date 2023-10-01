@@ -119,16 +119,17 @@ class BaseEngine(ABC):
                 # Throttle message processing to prevent overwhelming subscribers
                 await asyncio.sleep(self.message_throttle_delay)
 
-                self.input_queue.task_done()
+                await self.input_queue.task_done()
 
             await state_listener  # Wait for the state listener to finish
         except Exception as e:
             self.termination_event.set()
             self.logger.error(f"Worker error: {e}")
 
-    async def start_workers(self):
-        self.workers = [self.worker() for _ in range(self.num_workers)]
+    async def start_workers(self, number_of_workers):
+        self.workers = [self.worker() for _ in range(number_of_workers)]
         return self.workers
+
 
     async def stop_workers(self):
         try:
