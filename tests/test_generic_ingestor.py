@@ -47,7 +47,7 @@ async def test_collect_and_ingest_generic_bytes():
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested is not "" or ingested is not None:
-                print(ingested)
+                # print(ingested)
                 counter += 1
         assert counter == 20
 

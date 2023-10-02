@@ -17,7 +17,6 @@ from querent.ingestors.xlsx.xlsx_ingestor import XlsxIngestorFactory
 from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
 from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
 from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
-from querent.ingestors.generic_ingestor import GenericIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -47,7 +46,7 @@ class IngestorFactoryManager:
     async def get_factory(self, file_extension: str) -> IngestorFactory:
         """get_factory to match factory based on file extension"""
         if file_extension is None or file_extension == "":
-            return GenericIngestorFactory()
+            return TextIngestorFactory()
         return self.ingestor_factories.get(
             file_extension.lower(), UnsupportedIngestor("Unsupported file extension")
         )
