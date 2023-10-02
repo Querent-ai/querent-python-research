@@ -38,15 +38,10 @@ class TextIngestor(BaseIngestor):
                 if chunk_bytes.is_error():
                     continue
                 if self.is_token_stream:
-                    message_bytes = chunk_bytes.data
-                    message_bytes = message_bytes.decode("UTF-8")
-                    lines = message_bytes.split("\n")
-                    for line in lines:
-                        if len(line) == 0:
-                            continue
+                    async for line in self.ingest_token_stream(chunk_bytes=chunk_bytes):
                         yield IngestedTokens(
-                            file=chunk_bytes.file,
-                            data=line,
+                            file=current_file,
+                            data=[line],
                             error=None,
                             is_token_stream=True,
                         )
@@ -78,6 +73,16 @@ class TextIngestor(BaseIngestor):
                     )
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+
+    async def ingest_token_stream(
+        self, chunk_bytes: CollectedBytes
+    ) -> AsyncGenerator[IngestedTokens, None]:
+        message_bytes = chunk_bytes.data.decode("UTF-8")
+        lines = message_bytes.split("\n")
+        for line in lines:
+            if len(line) == 0:
+                continue
+            yield line
 
     async def extract_and_process_text(
         self, collected_bytes: CollectedBytes
