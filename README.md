@@ -149,7 +149,8 @@ With Querent, creating scalable workflows with any LLM is just a few lines of co
 
 ```python
 import pytest
-from querent.common.types.querent_event import EventType
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
 from querent.core.base_engine import BaseEngine
 from querent.querent.querent import Querent
@@ -162,20 +163,19 @@ resource_manager = ResourceManager()
 
 # Define a simple mock LLM engine for testing
 class MockLLMEngine(BaseEngine):
-    async def process_tokens(self, data):
+    async def process_tokens(self, data: IngestedTokens):
         if data is None:
             # the LLM developer can raise an error here or do something else
             # the developers of Querent can customize the behavior of Querent
             # to handle the error in a way that is appropriate for the use case
             raise ValueError("Received None, terminating")
-        self.state = f"Processing: Data: '{data}'"
-
         # Set the state of the LLM
         # At any given point during the execution of the LLM, the LLM developer
         # can set the state of the LLM using the set_state method
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
-        self.set_state(EventType.TOKEN_PROCESSED, self.state)
+        current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, "anything")
+        await self.set_state(new_state=current_state)
 
     def validate(self):
         return True
@@ -184,7 +184,7 @@ class MockLLMEngine(BaseEngine):
 @pytest.mark.asyncio
 async def test_querent_with_base_llm():
     # Put some input data into the input queue
-    input_data = ["Data 1", "Data 2", "Data 3", None]
+    input_data = [IngestedTokens(file="", data="data1"), IngestedTokens(file="", data="data2"), IngestedTokens(file="", data="data3"),None]
     for data in input_data:
         await input_queue.put(data)
 
@@ -194,7 +194,8 @@ async def test_querent_with_base_llm():
 
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state):
-        assert new_state.startswith("Processing: Data:")
+        assert new_state.event_type == EventType.TOKEN_PROCESSED
+
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
@@ -219,9 +220,9 @@ async def test_querent_with_base_llm():
         num_workers=1,
         resource_manager=resource_manager,
     )
-
     # Start the querent
     await querent.start()
+
 ```
 
 ## Contributing
