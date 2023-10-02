@@ -181,6 +181,7 @@ requirements = [
     "moviepy",
     "python-docx",
     "setuptools",
+    "slack-sdk",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
