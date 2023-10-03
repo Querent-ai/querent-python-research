@@ -55,7 +55,7 @@ class FSCollector(Collector):
 
 class FSCollectorFactory(CollectorFactory):
     def __init__(self):
-        raise NotImplementedError
+        pass
 
     def backend(self) -> CollectorBackend:
         return CollectorBackend.LocalFile
