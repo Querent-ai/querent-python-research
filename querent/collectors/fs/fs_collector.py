@@ -17,11 +17,11 @@ class FSCollector(Collector):
 
     async def connect(self):
         # Add your setup logic here if needed
-        pass
+        raise NotImplementedError
 
     async def disconnect(self):
         # Add your cleanup logic here if needed
-        pass
+        raise NotImplementedError
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
@@ -57,7 +57,7 @@ class FSCollector(Collector):
 
 class FSCollectorFactory(CollectorFactory):
     def __init__(self):
-        pass
+        raise NotImplementedError
 
     def backend(self) -> CollectorBackend:
         return CollectorBackend.LocalFile

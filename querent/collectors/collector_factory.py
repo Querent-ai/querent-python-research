@@ -2,18 +2,23 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from enum import Enum
 from querent.collectors.collector_base import Collector
-from querent.collectors.collector_errors import CollectorResolverError, CollectorErrorKind
+from querent.collectors.collector_errors import (
+    CollectorResolverError,
+    CollectorErrorKind,
+)
 from querent.config.collector_config import CollectConfig, CollectorBackend
 
 
 class CollectorFactory(ABC):
     @abstractmethod
     def backend(self) -> CollectorBackend:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    async def resolve(self, uri: str, config: CollectConfig) -> Optional[CollectorBackend]:
-        pass
+    async def resolve(
+        self, uri: str, config: CollectConfig
+    ) -> Optional[CollectorBackend]:
+        raise NotImplementedError
 
 
 class UnsupportedCollector(CollectorFactory):

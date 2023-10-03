@@ -73,7 +73,7 @@ class AutoScaler:
                     self.querent_termination_event.set()  # Set termination event
 
         except asyncio.CancelledError:
-            pass
+            raise NotImplementedError
         except Exception as e:
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")
         finally:

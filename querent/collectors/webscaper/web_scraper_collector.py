@@ -18,10 +18,10 @@ class WebScraperCollector(Collector):
         self.poll_lock = asyncio.Lock()  # Lock for the poll method
 
     async def connect(self):
-        pass  # Any setup logic before scraping
+        raise NotImplementedError  # Any setup logic before scraping
 
     async def disconnect(self):
-        pass  # Any cleanup logic after scraping
+        raise NotImplementedError  # Any cleanup logic after scraping
 
     async def poll(self):
         async with self.poll_lock:
@@ -54,7 +54,7 @@ class WebScraperCollector(Collector):
 
 class WebScraperFactory(CollectorFactory):
     def __init__(self):
-        pass
+        raise NotImplementedError
 
     def backend(self) -> CollectorBackend:
         return CollectorBackend.WebScraper

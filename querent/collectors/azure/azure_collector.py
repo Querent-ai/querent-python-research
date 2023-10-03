@@ -36,7 +36,7 @@ class AzureCollector(Collector):
         )
 
     async def disconnect(self):
-        pass  # No asynchronous disconnect needed for the Azure Blob Storage client
+        raise NotImplementedError  # No asynchronous disconnect needed for the Azure Blob Storage client
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:

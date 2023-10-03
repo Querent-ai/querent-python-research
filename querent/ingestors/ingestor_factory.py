@@ -10,11 +10,11 @@ from querent.processors.async_processor import AsyncProcessor
 class IngestorFactory(ABC):
     @abstractmethod
     async def supports(self, file_extension: str) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> BaseIngestor:
-        pass
+        raise NotImplementedError
 
 class UnsupportedIngestor(IngestorFactory):
     def __init__(self, message: str):

@@ -9,11 +9,11 @@ from querent.config.storage_config import StorageBackend
 class StorageFactory(ABC):
     @abstractmethod
     def backend(self) -> StorageBackend:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def resolve(self, uri: str) -> Optional[Storage]:
-        pass
+        raise NotImplementedError
 
 
 class UnsupportedStorage(StorageFactory):

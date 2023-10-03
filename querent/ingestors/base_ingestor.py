@@ -14,9 +14,9 @@ class BaseIngestor:
         self, poll_function: AsyncGenerator[CollectedBytes, None]
     ) -> AsyncGenerator[IngestedTokens, None]:
         # Your common ingestion logic here
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def process_data(self, text):
         # Your common data processing logic here
-        pass
+        raise NotImplementedError

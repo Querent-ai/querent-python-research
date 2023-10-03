@@ -62,6 +62,7 @@ class BaseEngine(ABC):
         """
         raise NotImplementedError
 
+    @classmethod
     async def set_state(self, new_state: EventState):
         """
         Set the state to a new value.
@@ -76,6 +77,7 @@ class BaseEngine(ABC):
                 f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
             )
 
+    @classmethod
     async def listen_for_state_changes(self):
         while not self.termination_event.is_set():
             new_state = await self.state_queue.get()
@@ -87,6 +89,7 @@ class BaseEngine(ABC):
                     f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
                 )
 
+    @classmethod
     async def worker(self):
         try:
             if not self.validate():
@@ -126,10 +129,12 @@ class BaseEngine(ABC):
             self.termination_event.set()
             self.logger.error(f"Worker error: {e}")
 
+    @classmethod
     async def start_workers(self):
         self.workers = [self.worker() for _ in range(self.num_workers)]
         return self.workers
 
+    @classmethod
     async def stop_workers(self):
         try:
             self.termination_event.set()
@@ -137,6 +142,7 @@ class BaseEngine(ABC):
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")
 
+    @classmethod
     def subscribe(self, event_type: EventType, callback: Callable):
         """
         Subscribe to a specific event type.
@@ -148,6 +154,7 @@ class BaseEngine(ABC):
             self.subscribers[event_type] = []
         self.subscribers[event_type].append(callback)
 
+    @classmethod
     async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
         """
         Notify subscribers when an event occurs.
