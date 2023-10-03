@@ -63,6 +63,12 @@ logging.basicConfig(
 
 
 class BaseEngine(ABC):
+    subscribers: Dict[EventType, List[Callable]] = {}
+    termination_event: asyncio.Event = asyncio.Event()
+    state_queue: asyncio.Queue = asyncio.Queue()
+    workers: List[Any] = []
+    logger: logging.Logger = logging.getLogger(__name__)
+
     def __init__(
         self,
         input_queue: QuerentQueue,
@@ -82,17 +88,6 @@ class BaseEngine(ABC):
         self.message_throttle_limit = message_throttle_limit
         self.message_throttle_delay = message_throttle_delay
         self.max_state_transitions = max_state_transitions
-        self.termination_event: asyncio.Event = asyncio.Event()
-        self.logger: logging.Logger = logging.getLogger(
-            self.__class__.__name__
-        )  # Initialize logger
-        self.workers = []
-        self.subscribers: Dict[
-            EventType, List[Callable]
-        ] = {}  # Event-type to subscribers mapping
-        self.state_queue: asyncio.Queue = asyncio.Queue(
-            maxsize=max_state_transitions  # these many at a given time
-        )  # Limited queue size
 
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens):
