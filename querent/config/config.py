@@ -34,11 +34,11 @@ class Config(BaseSettings):
         return config_data
 
     @classmethod
-    def get_full_config(self):
-        return self.config_data
+    def get_full_config(cls):
+        return cls.config_data
 
     @classmethod
-    def get(self, key: ConfigKey, default=None):
+    def get(cls, key: ConfigKey, default=None):
         """
         Get a specific configuration value by key.
         Args:
@@ -47,10 +47,10 @@ class Config(BaseSettings):
         Returns:
             The configuration value if found, otherwise the default value.
         """
-        return self.config_data.get(key, default)
+        return cls.config_data.get(key, default)
 
     @classmethod
-    def has(self, key: ConfigKey):
+    def has(cls, key: ConfigKey):
         """
         Check if a specific configuration key exists.
         Args:
@@ -58,4 +58,4 @@ class Config(BaseSettings):
         Returns:
             bool: True if the key exists, False otherwise.
         """
-        return key in self.config_data
+        return key in cls.config_data

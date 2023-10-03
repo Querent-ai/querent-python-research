@@ -72,7 +72,9 @@ class BaseEngine(ABC):
         message_throttle_limit: int = 100,
         message_throttle_delay: float = 0.1,
         max_state_transitions: int = 1000,
+        **kwargs,
     ):
+        super().__init__(**kwargs)  # Call the super constructor first
         self.input_queue = input_queue
         self.num_workers = num_workers
         self.max_retries = max_retries
@@ -80,8 +82,10 @@ class BaseEngine(ABC):
         self.message_throttle_limit = message_throttle_limit
         self.message_throttle_delay = message_throttle_delay
         self.max_state_transitions = max_state_transitions
-        self.termination_event = asyncio.Event()
-        self.logger = logging.getLogger(self.__class__.__name__)  # Initialize logger
+        self.termination_event: asyncio.Event = asyncio.Event()
+        self.logger: logging.Logger = logging.getLogger(
+            self.__class__.__name__
+        )  # Initialize logger
         self.workers = []
         self.subscribers: Dict[
             EventType, List[Callable]
@@ -111,36 +115,39 @@ class BaseEngine(ABC):
         """
         raise NotImplementedError
 
-    async def set_state(self, new_state: EventState):
+    @classmethod
+    async def set_state(cls, new_state: EventState):
         """
         Set the state to a new value.
         Args:
             new_state (EventState): The new state.
         """
         if isinstance(new_state, EventState):
-            await self.state_queue.put(new_state)
+            await cls.state_queue.put(new_state)
         else:
-            self.termination_event.set()
+            cls.termination_event.set()
             raise Exception(
-                f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
+                f"Bad state type {type(new_state)} for {cls.__class__.__name__}. Supported type: {EventState}"
             )
 
-    def subscribe(self, event_type: EventType, callback: Callable):
+    @classmethod
+    def subscribe(cls, event_type: EventType, callback: Callable):
         """
         Subscribe to a specific event type.
         Args:
             event_type (EventType): The type of event to subscribe to (e.g., "token_processed").
             callback (Callable): The callback function to be invoked when the event occurs.
         """
-        if event_type not in self.subscribers:
-            self.subscribers[event_type] = []
-        self.subscribers[event_type].append(callback)
+        if event_type not in cls.subscribers:
+            cls.subscribers[event_type] = []
+        cls.subscribers[event_type].append(callback)
 
-    def set_termination_event(self):
+    @classmethod
+    def set_termination_event(cls):
         """
         Set termination event
         """
-        self.termination_event.set()
+        cls.termination_event.set()
 
     @classmethod
     async def listen_for_state_changes(self):
@@ -155,66 +162,66 @@ class BaseEngine(ABC):
                 )
 
     @classmethod
-    async def worker(self):
+    async def worker(cls):
         try:
-            if not self.validate():
+            if not cls.validate():
                 raise Exception(
-                    f"Invalid {self.__class__.__name__} configuration. Please check the configuration."
+                    f"Invalid {cls.__class__.__name__} configuration. Please check the configuration."
                 )
-            state_listener = asyncio.create_task(self.listen_for_state_changes())
-            while not self.termination_event.is_set():
-                data = await self.input_queue.get()
+            state_listener = asyncio.create_task(cls.listen_for_state_changes())
+            while not cls.termination_event.is_set():
+                data = await cls.input_queue.get()
                 if isinstance(data, IngestedTokens):
                     retries = 0
-                    while retries <= self.max_retries:
+                    while retries <= cls.max_retries:
                         try:
-                            await self.process_tokens(data)
+                            await cls.process_tokens(data)
                             break  # Successful processing, exit retry loop
                         except Exception as e:
-                            self.logger.error(
-                                f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                            cls.logger.error(
+                                f"Error processing tokens: {e}. Retrying ({retries}/{cls.max_retries})"
                             )
                             retries += 1
-                            if retries <= self.max_retries:
-                                await asyncio.sleep(self.retry_interval)
+                            if retries <= cls.max_retries:
+                                await asyncio.sleep(cls.retry_interval)
                             else:
                                 raise e
                 else:
                     raise Exception(
-                        f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens}"
+                        f"Invalid data type {type(data)} for {cls.__class__.__name__}. Supported type: {IngestedTokens}"
                     )
 
                 # Throttle message processing to prevent overwhelming subscribers
-                await asyncio.sleep(self.message_throttle_delay)
+                await asyncio.sleep(cls.message_throttle_delay)
 
-                await self.input_queue.task_done()
+                await cls.input_queue.task_done()
 
             await state_listener  # Wait for the state listener to finish
         except Exception as e:
-            self.termination_event.set()
-            self.logger.error(f"Worker error: {e}")
+            cls.termination_event.set()
+            cls.logger.error(f"Error while processing tokens: {e}")
 
     @classmethod
-    async def start_workers(self):
-        self.workers = [self.worker() for _ in range(self.num_workers)]
-        return self.workers
+    async def start_workers(cls):
+        cls.workers = [cls.worker() for _ in range(cls.num_workers)]
+        return cls.workers
 
     @classmethod
-    async def stop_workers(self):
+    async def stop_workers(cls):
         try:
-            self.termination_event.set()
-            await asyncio.gather(*self.workers)
+            cls.termination_event.set()
+            await asyncio.gather(*cls.workers)
         except Exception as e:
-            self.logger.error(f"Error while stopping workers: {e}")
+            cls.logger.error(f"Error while stopping workers: {e}")
 
     @classmethod
-    async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
+    async def _notify_subscribers(cls, event_type: EventType, event_state: EventState):
         """
         Notify subscribers when an event occurs.
         Args:
             event_type (EventType): The type of event that occurred.
             event_data (EventState): The data associated with the event.
         """
-        if event_type in self.subscribers:
-            for callback in self.subscribers[event_type]:
+        if event_type in cls.subscribers:
+            for callback in cls.subscribers[event_type]:
                 await asyncio.gather(callback(event_state))
