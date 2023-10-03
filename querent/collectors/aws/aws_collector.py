@@ -35,7 +35,7 @@ class AWSCollector(Collector):
 
     async def disconnect(self):
         # No asynchronous disconnect needed for boto3
-        raise NotImplementedError
+        pass
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         if not self.s3_client:

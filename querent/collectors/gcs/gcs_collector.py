@@ -28,7 +28,7 @@ class GCSCollector(Collector):
                 self.client = storage.Client.from_service_account_info(self.credentials)
             except ConnectionError as exc:
                 raise common_errors.ConnectionError(
-                    "Please raise NotImplementedError the credentials file"
+                    "Please pass the credentials"
                 ) from exc
 
     async def disconnect(self):

@@ -16,12 +16,10 @@ class FSCollector(Collector):
         self.chunk_size = config.chunk_size
 
     async def connect(self):
-        # Add your setup logic here if needed
-        raise NotImplementedError
+        pass
 
     async def disconnect(self):
-        # Add your cleanup logic here if needed
-        raise NotImplementedError
+        pass
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
