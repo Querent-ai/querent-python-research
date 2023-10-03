@@ -1,0 +1,2 @@
+In Python, variables are typically passed by reference, which means that the function receives a reference to the original object, 
+and any modifications made to the object within the function will affect the original object
