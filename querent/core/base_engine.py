@@ -11,8 +11,55 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+"""
+    BaseEngine is an abstract base class that provides the foundational structure and methods 
+    for processing tokens asynchronously and managing event states in a queue-based system.
 
+    Attributes:
+        input_queue (QuerentQueue): The queue containing input data to be processed.
+        num_workers (int): Number of worker tasks to spawn for processing.
+        max_retries (int): Maximum number of retries for processing tokens in case of failure.
+        retry_interval (float): Time interval (in seconds) between retries.
+        message_throttle_limit (int): Limit for message processing to prevent overwhelming subscribers.
+        message_throttle_delay (float): Delay (in seconds) between processing messages to throttle the rate.
+        max_state_transitions (int): Maximum number of state transitions allowed in the state queue.
+        termination_event (asyncio.Event): Event to signal termination of workers and listeners.
+        logger (logging.Logger): Logger instance for logging messages and errors.
+        workers (list): List of worker tasks.
+        subscribers (dict): Mapping of event types to their respective subscriber callback functions.
+        state_queue (asyncio.Queue): Queue to store and manage event states.
 
+    Methods:
+        process_tokens(data: IngestedTokens) -> EventState:
+            Abstract method to process tokens asynchronously.
+
+        validate() -> bool:
+            Abstract method to validate the configuration of the engine.
+
+        set_state(new_state: EventState) -> None:
+            Set the state to a new value.
+
+        listen_for_state_changes() -> None:
+            Listen for changes in the state and notify subscribers.
+
+        worker() -> None:
+            Worker task to process tokens and manage retries.
+
+        start_workers(number_of_workers: int) -> list:
+            Start the specified number of worker tasks.
+
+        stop_workers() -> None:
+            Stop all worker tasks.
+
+        subscribe(event_type: EventType, callback: Callable) -> None:
+            Subscribe to a specific event type.
+
+        _notify_subscribers(event_type: EventType, event_state: EventState) -> None:
+            Notify subscribers when an event occurs.
+
+        set_termination_event() -> None:
+            Set the termination event to signal termination of workers and listeners.
+    """
 class BaseEngine(ABC):
     def __init__(
         self,
@@ -122,7 +169,7 @@ class BaseEngine(ABC):
                 # Throttle message processing to prevent overwhelming subscribers
                 await asyncio.sleep(self.message_throttle_delay)
 
-                self.input_queue.task_done()
+                await self.input_queue.task_done()
 
             await state_listener  # Wait for the state listener to finish
         except Exception as e:
@@ -165,3 +212,9 @@ class BaseEngine(ABC):
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
                 await asyncio.gather(callback(event_state))
+
+    def set_termination_event(self):
+        """
+        Set termination event
+        """
+        self.termination_event.set()

@@ -2,11 +2,14 @@ from typing import Union
 
 
 class IngestedTokens:
-    def __init__(self, file: str, data: [str], error: str = None) -> None:
+    def __init__(
+        self, file: str, data: [str], error: str = None, is_token_stream=False
+    ) -> None:
         self.data = data
         self.error = error
-        self.file = file
-        if self.file:
+        self.is_token_stream = is_token_stream
+        if file:
+            self.file = file
             file = str(file)
             self.extension = file.split(".")[-1]
             self.file_id = file.split("/")[-1].split(".")[0]
