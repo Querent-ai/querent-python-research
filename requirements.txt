@@ -65,7 +65,7 @@ json5==0.9.14
 jsonmerge==1.9.0
 jsonschema==4.17.3
 kombu==5.2.4
-llama-index==0.6.35
+llama-index==0.8.38
 log-symbols==0.0.14
 loguru==0.7.0
 lxml==4.9.2
@@ -92,7 +92,7 @@ prompt-toolkit==3.0.38
 psycopg2==2.9.6
 pycparser==2.21
 pydantic==1.10.8
-PyJWT==1.7.1
+PyJWT==2.4.0
 PyPDF2==3.0.1
 pyquery==2.0.0
 pyrsistent==0.19.3
