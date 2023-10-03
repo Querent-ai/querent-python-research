@@ -146,6 +146,7 @@ pre-commit==3.3.3
 pytest-cov==4.1.0
 pytest-mock==3.11.1
 transformers==4.30.2
+torch==2.0.1
 pypdf==3.11.0
 python-pptx
 Pillow==9.5.0
