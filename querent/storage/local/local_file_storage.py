@@ -38,7 +38,7 @@ class AsyncDebouncer:
             if key in self.cache:
                 return await self.cache[key].future
 
-            future = asyncio.create_task(build_a_future())
+            future = await asyncio.create_task(build_a_future())
             self.cache[key] = DebouncerEntry(future)
             result = await future
             del self.cache[key]

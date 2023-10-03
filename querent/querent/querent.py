@@ -37,14 +37,18 @@ class Querent:
         try:
             logger.info("Starting Querent")
 
+
             # Start the auto-scaler
             auto_scale_task = asyncio.create_task(self.auto_scaler.start())
+
 
             # Start handling signals
             self.setup_signal_handlers()
 
+
             # Start the tasks above and wait for them to finish
             await asyncio.gather(auto_scale_task, self.wait_for_termination())
+
 
         except Exception as e:
             logger.error(f"An error occurred during Querent execution: {e}")
@@ -68,7 +72,6 @@ class Querent:
 
     def handle_signal(self):
         try:
-            print("Received shutdown signal. Initiating graceful shutdown...")
             shutdown_task = asyncio.create_task(self.graceful_shutdown())
             asyncio.run(shutdown_task)
         except Exception as e:
