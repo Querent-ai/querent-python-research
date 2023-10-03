@@ -60,6 +60,8 @@ logging.basicConfig(
         set_termination_event() -> None:
             Set the termination event to signal termination of workers and listeners.
     """
+
+
 class BaseEngine(ABC):
     def __init__(
         self,
@@ -109,7 +111,6 @@ class BaseEngine(ABC):
         """
         raise NotImplementedError
 
-    @classmethod
     async def set_state(self, new_state: EventState):
         """
         Set the state to a new value.
@@ -123,6 +124,23 @@ class BaseEngine(ABC):
             raise Exception(
                 f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
             )
+
+    def subscribe(self, event_type: EventType, callback: Callable):
+        """
+        Subscribe to a specific event type.
+        Args:
+            event_type (EventType): The type of event to subscribe to (e.g., "token_processed").
+            callback (Callable): The callback function to be invoked when the event occurs.
+        """
+        if event_type not in self.subscribers:
+            self.subscribers[event_type] = []
+        self.subscribers[event_type].append(callback)
+
+    def set_termination_event(self):
+        """
+        Set termination event
+        """
+        self.termination_event.set()
 
     @classmethod
     async def listen_for_state_changes(self):
@@ -190,18 +208,6 @@ class BaseEngine(ABC):
             self.logger.error(f"Error while stopping workers: {e}")
 
     @classmethod
-    def subscribe(self, event_type: EventType, callback: Callable):
-        """
-        Subscribe to a specific event type.
-        Args:
-            event_type (EventType): The type of event to subscribe to (e.g., "token_processed").
-            callback (Callable): The callback function to be invoked when the event occurs.
-        """
-        if event_type not in self.subscribers:
-            self.subscribers[event_type] = []
-        self.subscribers[event_type].append(callback)
-
-    @classmethod
     async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
         """
         Notify subscribers when an event occurs.
@@ -212,9 +218,3 @@ class BaseEngine(ABC):
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
                 await asyncio.gather(callback(event_state))
-
-    def set_termination_event(self):
-        """
-        Set termination event
-        """
-        self.termination_event.set()
