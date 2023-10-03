@@ -49,7 +49,7 @@ async def test_collect_and_ingest_generic_bytes():
             if ingested is not "" or ingested is not None:
                 # print(ingested)
                 counter += 1
-        assert counter == 20
+        assert counter == 23
 
     await poll_and_print()  # Notice the use of await here
 

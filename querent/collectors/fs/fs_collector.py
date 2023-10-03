@@ -16,11 +16,9 @@ class FSCollector(Collector):
         self.chunk_size = config.chunk_size
 
     async def connect(self):
-        # Add your setup logic here if needed
         pass
 
     async def disconnect(self):
-        # Add your cleanup logic here if needed
         pass
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:

@@ -6,11 +6,11 @@ from typing import Optional
 class PutPayload(ABC):
     @abstractmethod
     def len(self) -> int:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def range_byte_stream(self, start: int, end: int) -> bytes:
-        pass
+        raise NotImplementedError
 
     async def byte_stream(self) -> bytes:
         total_len = self.len()
@@ -20,10 +20,11 @@ class PutPayload(ABC):
         if n is None:
             return await self.byte_stream()
         return await self.range_byte_stream(0, n)
-    
+
     async def read_all(self) -> bytes:
         total_len = self.len()
         return await self.range_byte_stream(0, total_len)
+
 
 class BytesPayload(PutPayload):
     def __init__(self, data: bytes):
@@ -45,6 +46,7 @@ class BytesPayload(PutPayload):
     async def read_all(self) -> bytes:
         return await self.byte_stream()
 
+
 class ByteStream:
     def __init__(self, data: bytes):
         self.data = data
@@ -59,7 +61,7 @@ class ByteStream:
 async def main():
     payload_data = b"test content"
     payload = BytesPayload(payload_data)
-    
+
     byte_stream = ByteStream(payload_data)
     result = await byte_stream.read(4)
     print(result)  # Output: b"test"
@@ -67,4 +69,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

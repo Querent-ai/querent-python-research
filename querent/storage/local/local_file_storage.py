@@ -75,10 +75,10 @@ class DebouncedStorage:
 
     @lru_cache(maxsize=128)
     def get_slice_cache(self, key):
-        pass
+        raise NotImplementedError
 
     async def set_slice_cache(self, key, value):
-        pass
+        raise NotImplementedError
 
     async def delete(self, path):
         await self.underlying.delete(path)
@@ -177,7 +177,7 @@ class LocalFileStorage(Storage):
             full_path.unlink()
             return StorageResult.success(None)
         except FileNotFoundError:
-            pass
+            raise NotImplementedError
         except Exception as e:
             raise StorageError(
                 StorageErrorKind.Io,

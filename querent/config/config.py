@@ -1,33 +1,31 @@
 import os
 from pydantic import BaseSettings
-from pathlib import Path
 import yaml
+from querent.common.types.config_keys import ConfigKey
 from querent.lib.logger import logger
-
-CONFIG_FILE = "querent.config.yaml"
 
 
 class Config(BaseSettings):
-    class Config:
-        env_file_encoding = "utf-8"
-        extra = "allow"  # Allow extra fields
+    def __init__(self, config_source=None, **kwargs):
+        super().__init__(**kwargs)
+        if config_source:
+            self.config_data = self.load_config(config_source)
+        else:
+            self.config_data = {}
 
     @classmethod
-    def load_config(cls, config_file: str) -> dict:
-        # If config file exists, read it
-        if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                config_data = yaml.safe_load(file)
-            if config_data is None:
-                config_data = {}
+    def load_config(cls, config_source) -> dict:
+        if isinstance(config_source, str) and not os.path.exists(config_source):
+            # If config source is a string, assume it's a YAML configuration string
+            config_data = yaml.safe_load(config_source) or {}
+        elif os.path.exists(config_source):
+            # If config source is a file path, read it
+            with open(config_source, "r") as file:
+                config_data = yaml.safe_load(file) or {}
         else:
-            # If config file doesn't exist, prompt for credentials and create new file
-            logger.info("\033[91m\033[1m"
-        + "\nConfig file not found. Enter required keys and values."
-        + "\033[0m\033[0m")
-            config_data = {}
-            with open(config_file, "w") as file:
-                yaml.dump(config_data, file, default_flow_style=False)
+            raise ValueError(
+                "Invalid config source. Must be a valid file path or YAML string."
+            )
 
         # Merge environment variables and config data
         env_vars = dict(os.environ)
@@ -35,17 +33,29 @@ class Config(BaseSettings):
 
         return config_data
 
-    def __init__(self, config_file: str, **kwargs):
-        config_data = self.load_config(config_file)
-        super().__init__(**config_data, **kwargs)
+    @classmethod
+    def get_full_config(cls):
+        return cls.config_data
 
-    def get_config(self, key: str, default: str = None) -> str:
-        return self.dict().get(key, default)
+    @classmethod
+    def get(cls, key: ConfigKey, default=None):
+        """
+        Get a specific configuration value by key.
+        Args:
+            key (ConfigKey): The key for the configuration value.
+            default: The default value to return if the key is not found.
+        Returns:
+            The configuration value if found, otherwise the default value.
+        """
+        return cls.config_data.get(key, default)
 
-
-ROOT_DIR = os.path.dirname(Path(__file__).parent.parent)
-_config_instance = Config(ROOT_DIR + "/" + CONFIG_FILE)
-
-
-def get_config(key: str, default: str = None) -> str:
-    return _config_instance.get_config(key, default)
+    @classmethod
+    def has(cls, key: ConfigKey):
+        """
+        Check if a specific configuration key exists.
+        Args:
+            key (ConfigKey): The key to check.
+        Returns:
+            bool: True if the key exists, False otherwise.
+        """
+        return key in cls.config_data
