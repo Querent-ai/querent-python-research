@@ -67,7 +67,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, model_
         assert new_state.event_type == EventType.TOKEN_PROCESSED
 
     # Subscribe to state change events
-    await llm_instance.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
+    llm_instance.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
 
 
     # Create a Querent instance with the LLM instance

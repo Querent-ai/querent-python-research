@@ -185,7 +185,7 @@ class BaseEngine(ABC):
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")
 
-    async def subscribe(self, event_type: EventType, callback: Callable):
+    def subscribe(self, event_type: EventType, callback: Callable):
         """
         Subscribe to a specific event type.
         Args:
