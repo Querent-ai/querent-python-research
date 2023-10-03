@@ -5,10 +5,38 @@ from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
-from querent.core.transformers.bert_llm_transformers import BERTLLM
+from querent.core.transformers.bert_llm_transformer import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 
+"""
+This module contains tests for the BERTLLM (BERT Language Model) tokenization and entity extraction functionalities.
+
+The tests are designed to:
+1. Create an input queue and a resource manager.
+2. Ingest data into the input queue.
+3. Instantiate the specified LLM (Language Model) class.
+4. Subscribe to state change events to monitor the token processing.
+5. Create a Querent instance with the LLM instance.
+6. Start the Querent and process the tokens to extract entities.
+7. Validate the extracted entities against the expected entities.
+
+Dependencies:
+- asyncio: For asynchronous operations.
+- pytest: For running the tests.
+- querent modules: For various functionalities related to the Querent system.
+
+Tests:
+- test_bertllm_ner_tokenization_and_entity_extraction: Tests the tokenization and Named Entity Recognition (NER) capabilities of the BERTLLM model.
+  Parameters:
+  - input_data: The input text data for testing.
+  - model_name: The name of the BERT model to be used.
+  - llm_class: The LLM class to be instantiated.
+  - expected_entities: The expected entities to be extracted from the input data.
+
+Usage:
+Run this module using pytest to execute the tests.
+"""
 
 
 
