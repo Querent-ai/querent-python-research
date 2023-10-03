@@ -34,7 +34,7 @@ async def test_slack_collector(slack_config):
             assert chunk is not None
             if chunk != "" or chunk is not None:
                 counter += 1
-        assert counter == 15
+        assert counter == 18
 
     await poll_and_print()
 
