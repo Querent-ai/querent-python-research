@@ -1,3 +1,14 @@
+"""Querent
+
+Querent is an async data dynamo and inference engine for Python. It is designed to
+be used as a library in Python applications that need to perform inference on
+data in a scalable and efficient manner. Querent is built on top of the Python
+asyncio library and is designed to be used in an async manner.
+
+Querent is the Python Asyncio Inference Engine by Querent AI.
+Copyright (c) 2023 by Querent AI.
+
+"""
 import asyncio
 import logging
 import signal

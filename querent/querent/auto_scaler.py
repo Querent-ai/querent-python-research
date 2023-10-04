@@ -29,8 +29,7 @@ class AutoScaler:
             # Scale up querenter workers
             self.worker_tasks = []
             for querenter in self.querenters:
-                num_workers_to_scale = querenter.num_workers
-                workers = await querenter.start_workers(num_workers_to_scale)
+                workers = await querenter.start_workers()
                 # Create tasks for the workers and store them
                 worker_tasks = [asyncio.create_task(worker) for worker in workers]
                 self.worker_tasks.extend(
@@ -72,7 +71,7 @@ class AutoScaler:
                     self.querent_termination_event.set()  # Set termination event
 
         except asyncio.CancelledError:
-            pass
+            raise NotImplementedError
         except Exception as e:
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")
             raise e

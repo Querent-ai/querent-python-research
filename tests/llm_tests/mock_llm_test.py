@@ -34,7 +34,12 @@ class MockLLMEngine(BaseEngine):
 @pytest.mark.asyncio
 async def test_querent_with_base_llm():
     # Put some input data into the input queue
-    input_data = [IngestedTokens(file="", data="data1"), IngestedTokens(file="", data="data2"), IngestedTokens(file="", data="data3"),None]
+    input_data = [
+        IngestedTokens(file="", data="data1"),
+        IngestedTokens(file="", data="data2"),
+        IngestedTokens(file="", data="data3"),
+        None,
+    ]
     for data in input_data:
         await input_queue.put(data)
 
@@ -45,7 +50,6 @@ async def test_querent_with_base_llm():
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state):
         assert new_state.event_type == EventType.TOKEN_PROCESSED
-
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM

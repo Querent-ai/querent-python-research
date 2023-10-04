@@ -7,12 +7,12 @@ from querent.common.types.collected_bytes import CollectedBytes
 class Collector(ABC):
     @abstractmethod
     async def connect(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def disconnect(self):
-        pass
+        raise NotImplementedError

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import psutil
 
 
 class ResourceManager:
@@ -17,15 +18,13 @@ class ResourceManager:
 
     async def get_desired_workers(self):
         # Your logic to calculate the desired number of workers based on system conditions
-        # You can implement your own logic here, e.g., monitoring system load, available resources, etc.
-        # For now, returning a constant value for demonstration purposes
-        return 10  # Replace with your logic
+        # Monitor CPU usage and memory
+        cpu_percent = psutil.cpu_percent()
+        memory_percent = psutil.virtual_memory().percent
 
-    async def get_desired_querenters(self):
-        # Your logic to calculate the desired number of querenters based on system conditions
-        # Similar to get_desired_workers, implement your own logic
-        # For now, returning a constant value for demonstration purposes
-        return 5  # Replace with your logic
+        
+
+        return desired_workers
 
     async def adjust_max_workers(self, new_max_workers):
         # Adjust the maximum allowed workers dynamically based on system conditions
@@ -36,34 +35,22 @@ class ResourceManager:
 
         self.max_allowed_workers = new_max_workers
 
-    async def adjust_min_workers(self, new_min_workers):
-        # Adjust the minimum allowed workers dynamically based on system conditions
-        if new_min_workers < self.min_allowed_workers:
-            new_min_workers = self.min_allowed_workers
-        elif new_min_workers > self.max_allowed_workers:
-            new_min_workers = self.max_allowed_workers
-
-        self.min_allowed_workers = new_min_workers
-
-    async def is_resource_available(self):
-        # Check if there are available resources for more workers
-        # Implement your own logic to check resource availability (e.g., CPU, memory)
-        # Return True if resources are available, False otherwise
-        return True  # Replace with your logic
-
     async def is_system_overloaded(self):
-        # Check if the system is overloaded and should scale down workers
-        # Implement your own logic to detect system overload (e.g., high CPU usage)
-        # Return True if the system is overloaded, False otherwise
-        return False  # Replace with your logic
+        # Check if the system is overloaded based on CPU and memory usage
+        cpu_percent = psutil.cpu_percent()
+        memory_percent = psutil.virtual_memory().percent
+
+        # Implement your own logic to detect system overload
+        if cpu_percent > 90 or memory_percent > 90:
+            return True
+        else:
+            return False
 
     async def adjust_resources_based_on_load(self):
         # Check system load and adjust resource allocation accordingly
         if await self.is_system_overloaded():
-            # Scale down workers or querenters if the system is overloaded
+            # Scale down workers if the system is overloaded
             await self.adjust_max_workers(self.max_allowed_workers // 2)
-            await self.adjust_min_workers(self.min_allowed_workers // 2)
-        elif await self.is_resource_available():
-            # Scale up workers or querenters if resources are available
+        else:
+            # Scale up workers if the system is not overloaded
             await self.adjust_max_workers(self.max_allowed_workers * 2)
-            await self.adjust_min_workers(self.min_allowed_workers * 2)
