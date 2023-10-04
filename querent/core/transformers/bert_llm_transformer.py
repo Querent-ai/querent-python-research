@@ -75,14 +75,16 @@ class BERTLLM(BaseEngine):
     def split_into_sentences(text):
         # Split text by sentence delimiters and remove empty strings
         sentences = [s.strip() for s in re.split('[.!?]', text) if s]
+        
         return sentences
 
     
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
         # Validate that the input data is not an empty string
-        if not data.data or not data.data[0].strip():
+        if not data.data or data.is_error():
             return False
+        
         return True
     
     def _tokenize_and_chunk(self, data: IngestedTokens) -> List[List[str]]:
@@ -98,16 +100,20 @@ class BERTLLM(BaseEngine):
             max_chunk_size = 510 
             token_chunks = []  
             k = 0
+
             while k < len(tokens):
                 end = min(k + max_chunk_size, len(tokens))
                 while end > k and end < len(tokens) and tokens[end].startswith('##'):
                     end -= 1
+                
                 token_chunks.append(tokens[k:end])
                 k = end
+            
             return token_chunks
 
     def _extract_entities_from_chunks(self, token_chunks: List[List[str]]) -> List[Tuple[str, str]]:
             all_entities = []
+
             for chunk in token_chunks:
                 chunk_text = self.tokenizer.convert_tokens_to_string(chunk)
                 entities = self.nlp(chunk_text)
@@ -117,13 +123,8 @@ class BERTLLM(BaseEngine):
             return all_entities
 
     async def process_tokens(self, data: IngestedTokens):
-            if data.data is None:
-                self.set_termination_event()
-                raise ValueError("Received None, terminating")
-            
             if not BERTLLM.validate_ingested_tokens(data):
                 self.set_termination_event()
-                raise ValueError("Invalid input data")
             
             token_chunks = self._tokenize_and_chunk(data)
             

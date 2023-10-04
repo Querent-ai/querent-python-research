@@ -43,8 +43,9 @@ Run this module using pytest to execute the tests.
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data,model_name,llm_class,expected_entities", [
     (["Nishant is working from Delhi"], "dslim/bert-base-NER", BERTLLM, [("Nishant", "PER"), ("Delhi", "LOC")]),
-    (["A rock is volcano and sedimentary"], "botryan96/GeoBERT", BERTLLM, [('volcano', 'GeoPetro'), ('sedimentary', 'GeoPetro')])
-])
+    (["A rock is volcano and sedimentary"], "botryan96/GeoBERT", BERTLLM, [('volcano', 'GeoPetro'), ('sedimentary', 'GeoPetro')])])
+
+
 async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, model_name, llm_class, expected_entities):
  # Create input queue and resource manager
     input_queue = QuerentQueue()
