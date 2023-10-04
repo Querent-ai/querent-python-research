@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
+from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
@@ -102,6 +103,18 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def process_messages(self, data: IngestedMessages):
+        """
+        Process chat asynchronously.
+        Args:
+            data (IngestedTokens): The input data to process.
+        Returns:
+            EventState: The state of the event is set with the event type and the timestamp
+            of the event and set using `self.set_state(event_state)`.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the LLM.
@@ -166,26 +179,26 @@ class BaseEngine(ABC):
             state_listener = asyncio.create_task(cls.listen_for_state_changes())
             while not cls.termination_event.is_set():
                 data = await cls.input_queue.get()
-                if isinstance(data, IngestedTokens):
-                    retries = 0
-                    while retries <= cls.max_retries:
-                        try:
+                retries = 0
+                while retries <= cls.max_retries:
+                    try:
+                        if isinstance(data, IngestedMessages):
+                            await cls.process_messages(data)
+                        elif isinstance(data, IngestedTokens):
                             await cls.process_tokens(data)
-                            break  # Successful processing, exit retry loop
-                        except Exception as e:
-                            cls.logger.error(
-                                f"Error processing tokens: {e}. Retrying ({retries}/{cls.max_retries})"
+                        else:
+                            raise Exception(
+                                f"Invalid data type {type(data)} for {cls.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
                             )
-                            retries += 1
-                            if retries <= cls.max_retries:
-                                await asyncio.sleep(cls.retry_interval)
-                            else:
-                                raise e
-                else:
-                    raise Exception(
-                        f"Invalid data type {type(data)} for {cls.__class__.__name__}. Supported type: {IngestedTokens}"
-                    )
-
+                    except Exception as e:
+                        cls.logger.error(
+                            f"Error processing tokens: {e}. Retrying ({retries}/{cls.max_retries})"
+                        )
+                        retries += 1
+                        if retries <= cls.max_retries:
+                            await asyncio.sleep(cls.retry_interval)
+                        else:
+                            raise e
                 # Throttle message processing to prevent overwhelming subscribers
                 await asyncio.sleep(cls.message_throttle_delay)
 
