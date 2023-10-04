@@ -107,8 +107,7 @@ jobs:
 
       - name: Publish to PyPI
         run: |
-          pip install twine
-          twine upload dist/*
+          echo "To Do - Publish to pypi"
 
         env:
           TWINE_USERNAME: __token__

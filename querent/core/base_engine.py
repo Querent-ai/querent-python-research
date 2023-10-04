@@ -23,7 +23,6 @@ logging.basicConfig(
         retry_interval (float): Time interval (in seconds) between retries.
         message_throttle_limit (int): Limit for message processing to prevent overwhelming subscribers.
         message_throttle_delay (float): Delay (in seconds) between processing messages to throttle the rate.
-        max_state_transitions (int): Maximum number of state transitions allowed in the state queue.
         termination_event (asyncio.Event): Event to signal termination of workers and listeners.
         logger (logging.Logger): Logger instance for logging messages and errors.
         workers (list): List of worker tasks.
@@ -66,7 +65,7 @@ logging.basicConfig(
 class BaseEngine(ABC):
     subscribers: Dict[EventType, List[Callable]] = {}
     termination_event: asyncio.Event = asyncio.Event()
-    state_queue: asyncio.Queue = asyncio.Queue()
+    state_queue: QuerentQueue = QuerentQueue()
     workers: List[Any] = []
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -78,7 +77,6 @@ class BaseEngine(ABC):
         retry_interval: float = 2.0,
         message_throttle_limit: int = 100,
         message_throttle_delay: float = 0.1,
-        max_state_transitions: int = 1000,
         **kwargs,
     ):
         super().__init__(**kwargs)  # Call the super constructor first
@@ -88,7 +86,6 @@ class BaseEngine(ABC):
         self.retry_interval = retry_interval
         self.message_throttle_limit = message_throttle_limit
         self.message_throttle_delay = message_throttle_delay
-        self.max_state_transitions = max_state_transitions
 
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens):
@@ -168,6 +165,7 @@ class BaseEngine(ABC):
                 raise Exception(
                     f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
                 )
+            self.state_queue.task_done()
 
     @classmethod
     async def worker(cls):
@@ -233,3 +231,4 @@ class BaseEngine(ABC):
         if event_type in cls.subscribers:
             for callback in cls.subscribers[event_type]:
                 await asyncio.gather(callback(event_state))
+
