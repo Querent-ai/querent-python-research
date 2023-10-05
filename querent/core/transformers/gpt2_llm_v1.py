@@ -1,4 +1,5 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
 from querent.core.base_engine import BaseEngine
@@ -40,6 +41,9 @@ class GPT2LLM(BaseEngine):
             error_message = f"Error in GPT2LLM: {str(e)}"
             print(error_message)
             return error_message
+
+    async def process_messages(self, data: IngestedMessages):
+        raise NotImplementedError
 
     def validate(self) -> bool:
         # You can add specific validation logic here
