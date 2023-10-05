@@ -1,6 +1,7 @@
 import asyncio
-import logging
 import psutil
+
+from querent.logging.logger import setup_logger
 
 
 class ResourceManager:
@@ -8,7 +9,7 @@ class ResourceManager:
         self.max_allowed_workers = max_allowed_workers
         self.min_allowed_workers = 1
         self.querent_termination_event = asyncio.Event()
-        self.logger = logging.getLogger("ResourceManager")
+        self.logger = setup_logger(__name__, "resource_manager")
 
     async def get_max_allowed_workers(self):
         return self.max_allowed_workers
@@ -22,9 +23,7 @@ class ResourceManager:
         cpu_percent = psutil.cpu_percent()
         memory_percent = psutil.virtual_memory().percent
 
-        
-
-        return desired_workers
+        return int((cpu_percent + memory_percent) / 2)
 
     async def adjust_max_workers(self, new_max_workers):
         # Adjust the maximum allowed workers dynamically based on system conditions
