@@ -125,22 +125,32 @@ sequenceDiagram
     participant LLM
     participant Querent
     participant Storage
+    participant Callback
 
     User->>Collector: Initiate Data Collection
     Collector->>Ingestor: Collect Data
     Ingestor->>Processor: Ingest Data
-    Processor->>LLM: Process Data
-    LLM->>Processor: Return Processed Data
-    Processor->>Storage: Store Processed Data
-    Ingestor->>Querent: Send Ingested Data
-    Querent->>Processor: Process Ingested Data
-    Processor->>LLM: Process Data
-    LLM->>Processor: Return Processed Data
-    Processor->>Storage: Store Processed Data
-    Querent->>Processor: Processed Data Available
-    Querent->>User: Return Processed Data
+    Processor->>LLM: Process Data (IngestedTokens)
+    LLM->>Processor: Processed Data (EventState)
+    Processor->>Storage: Store Processed Data (CollectedBytes)
+    Ingestor->>Querent: Send Ingested Data (IngestedTokens)
+    Querent->>Processor: Process Ingested Data (IngestedTokens)
+    Processor->>LLM: Process Data (IngestedTokens)
+    LLM->>Processor: Processed Data (EventState)
+    Callback->>Storage: Store Processed Data (EventState)
+    Querent->>Processor: Processed Data Available (EventState)
+    Processor->>Callback: Return Processed Data (EventState)
+    Callback->>User: Deliver Processed Data (CollectedBytes)
 
     Note right of User: Asynchronous Flow
+    Note right of Collector: Data Collection
+    Note right of Ingestor: Data Ingestion
+    Note right of Processor: Data Processing
+    Note right of LLM: Language Model Processing
+    Note right of Querent: Query Execution
+    Note right of Storage: Data Storage
+    Note right of Callback: Callback Invocation
+
 ```
 
 ## Ease of Use
