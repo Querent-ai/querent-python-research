@@ -5,6 +5,10 @@ from querent.collectors.collector_resolver import CollectorResolver
 from querent.config.collector_config import DropboxConfig
 from querent.common.uri import Uri
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 @pytest.fixture
 def dropbox_config():
