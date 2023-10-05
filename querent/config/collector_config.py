@@ -10,6 +10,7 @@ class CollectorBackend(str, Enum):
     Gcs = "gs"
     AzureBlobStorage = "azure"
     Slack = "slack"
+    DropBox = "dropbox"
 
 
 class CollectConfig(BaseModel):
@@ -55,6 +56,12 @@ class SlackCollectorConfig(BaseModel):
     limit: int
     channel_name: str
     access_token: str
+
+
+class DropboxConfig(BaseModel):
+    access_token: str
+    folder_path: str
+    chunk_size: int
 
 
 class WebScraperConfig(BaseModel):

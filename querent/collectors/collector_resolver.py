@@ -5,6 +5,7 @@ from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
+from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.config.collector_config import CollectConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
@@ -22,7 +23,8 @@ class CollectorResolver:
             CollectorBackend.WebScraper: WebScraperFactory(),
             CollectorBackend.Gcs: GCSCollectorFactory(),
             CollectorBackend.AzureBlobStorage: AzureCollectorFactory(),
-            CollectorBackend.Slack: SlackCollectorFactory()
+            CollectorBackend.Slack: SlackCollectorFactory(),
+            CollectorBackend.DropBox: DropBoxCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -52,6 +54,8 @@ class CollectorResolver:
             return CollectorBackend.AzureBlobStorage
         elif protocol.is_slack():
             return CollectorBackend.Slack
+        elif protocol.is_dropbox():
+            return CollectorBackend.DropBox
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"
