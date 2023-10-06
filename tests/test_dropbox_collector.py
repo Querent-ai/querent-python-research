@@ -13,7 +13,11 @@ load_dotenv()
 @pytest.fixture
 def dropbox_config():
     return DropboxConfig(
-        access_token=os.getenv("DROPBOX_ACCESS_TOKEN"), folder_path="", chunk_size=1024
+        dropbox_app_key=os.getenv("DROPBOX_APP_KEY"),
+        dropbox_app_secret=os.getenv("DROPBOX_APP_SECRET"),
+        dropbox_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
+        folder_path="",
+        chunk_size=1024,
     )
 
 

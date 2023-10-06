@@ -59,9 +59,11 @@ class SlackCollectorConfig(BaseModel):
 
 
 class DropboxConfig(BaseModel):
-    access_token: str
+    dropbox_app_key: str
+    dropbox_app_secret: str
     folder_path: str
     chunk_size: int
+    dropbox_refresh_token: str
 
 
 class WebScraperConfig(BaseModel):
