@@ -1,17 +1,12 @@
 from abc import ABC, abstractmethod
 import asyncio
-import logging
 from typing import Any, Callable, Dict, List, Optional
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
+from querent.logging.logger import setup_logger
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 """
     BaseEngine is an abstract base class that provides the foundational structure and methods 
     for processing tokens asynchronously and managing event states in a queue-based system.
@@ -67,7 +62,7 @@ class BaseEngine(ABC):
     termination_event: asyncio.Event = asyncio.Event()
     state_queue: QuerentQueue = QuerentQueue()
     workers: List[Any] = []
-    logger: logging.Logger = logging.getLogger(__name__)
+    logger = setup_logger(__name__, "resource_manager")
 
     def __init__(
         self,
@@ -231,4 +226,3 @@ class BaseEngine(ABC):
         if event_type in cls.subscribers:
             for callback in cls.subscribers[event_type]:
                 await asyncio.gather(callback(event_state))
-
