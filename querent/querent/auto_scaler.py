@@ -1,8 +1,8 @@
 import asyncio
-import logging
 from typing import List
 
 from querent.core.base_engine import BaseEngine
+from querent.logging.logger import setup_logger
 from querent.querent.resource_manager import ResourceManager
 
 
@@ -16,7 +16,7 @@ class AutoScaler:
         self.resource_manager = resource_manager
         self.querenters = querenters
         self.threshold = threshold
-        self.logger = logging.getLogger("AutoScaler")
+        self.logger = setup_logger(__name__, "auto_scaler")
         self.querent_termination_event = resource_manager.querent_termination_event
         self.worker_tasks: List[asyncio.Task] = []  # Store the worker tasks
 
@@ -60,7 +60,7 @@ class AutoScaler:
                     )
 
                 # Scale querenter workers
-                
+
                 await self.scale_querenters(total_requested_workers)
 
                 # Wait for a while before checking again (adjust this as needed)

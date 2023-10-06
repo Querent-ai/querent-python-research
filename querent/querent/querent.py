@@ -10,19 +10,12 @@ Copyright (c) 2023 by Querent AI.
 
 """
 import asyncio
-import logging
 import signal
 from typing import List, Awaitable
 from querent.core.base_engine import BaseEngine
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.auto_scaler import AutoScaler
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger("Querent")
+from querent.logging.logger import setup_logger
 
 
 class Querent:
@@ -33,6 +26,7 @@ class Querent:
         resource_manager: ResourceManager,
         auto_scale_threshold: int = 10,
     ):
+        self.logger = setup_logger(__name__, "querent")
         self.num_workers = num_workers
         self.resource_manager = resource_manager
         self.querenters = querenters
@@ -46,35 +40,31 @@ class Querent:
 
     async def start(self):
         try:
-            logger.info("Starting Querent")
-
+            self.logger.info("Starting Querent")
 
             # Start the auto-scaler
             auto_scale_task = asyncio.create_task(self.auto_scaler.start())
 
-
             # Start handling signals
             self.setup_signal_handlers()
-
 
             # Start the tasks above and wait for them to finish
             await asyncio.gather(auto_scale_task, self.wait_for_termination())
 
-
         except Exception as e:
-            logger.error(f"An error occurred during Querent execution: {e}")
+            self.logger.error(f"An error occurred during Querent execution: {e}")
             await self.graceful_shutdown()
         finally:
             await self.graceful_shutdown()
-            logger.info("Querent stopped")
+            self.logger.info("Querent stopped")
 
     async def graceful_shutdown(self):
-        logger.info("Initiating graceful shutdown of Querent")
+        self.logger.info("Initiating graceful shutdown of Querent")
 
         # Stop the auto-scaler and querenters gracefully
         await self.auto_scaler.stop()
 
-        logger.info("Querent stopped gracefully")
+        self.logger.info("Querent stopped gracefully")
 
     def setup_signal_handlers(self):
         for sig in [signal.SIGINT, signal.SIGTERM]:
