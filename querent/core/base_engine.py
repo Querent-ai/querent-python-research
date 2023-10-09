@@ -181,39 +181,46 @@ class BaseEngine(ABC):
                 raise Exception(
                     f"Invalid {self.__class__.__name__} configuration. Please check the configuration."
                 )
-            state_listener = asyncio.create_task(self._listen_for_state_changes())
-            while not self.termination_event.is_set():
-                current_message_total = 0
-                while current_message_total < self.message_throttle_limit:
-                    retries = 0
-                    data = await self.input_queue.get()
-                    while retries <= self.max_retries:
-                        try:
-                            if isinstance(data, IngestedMessages):
-                                await self.process_messages(data)
-                            elif isinstance(data, IngestedTokens):
-                                await self.process_tokens(data)
-                            else:
-                                raise Exception(
-                                    f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
-                                )
-                        except Exception as e:
-                            self.logger.error(
-                                f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
-                            )
-                            retries += 1
-                            if retries <= self.max_retries:
-                                await asyncio.sleep(self.retry_interval)
-                            else:
-                                raise e
-                        else:
-                            break
 
-                    await self.input_queue.task_done()
-                    current_message_total += 1
-                # Throttle message processing to prevent overwhelming subscribers
+            state_listener = asyncio.create_task(self._listen_for_state_changes())
+            current_message_total = 0
+
+            while not self.termination_event.is_set():
+                retries = 0
+                data = await self.input_queue.get()
+
+                try:
+                    if isinstance(data, IngestedMessages):
+                        await self.process_messages(data)
+                    elif isinstance(data, IngestedTokens):
+                        await self.process_tokens(data)
+                    else:
+                        raise Exception(
+                            f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
+                        )
+                except Exception as e:
+                    self.logger.error(
+                        f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                    )
+                    retries += 1
+
+                    if retries > self.max_retries:
+                        self.logger.error(
+                            f"Error processing tokens: {e}. Max retries reached. Terminating."
+                        )
+                        break
+
+                    await asyncio.sleep(self.retry_interval)
+
+                await self.input_queue.task_done()
+                current_message_total += 1
+
+            if current_message_total >= self.message_throttle_limit:
                 await asyncio.sleep(self.message_throttle_delay)
-            await state_listener  # Wait for the state listener to finish
+                current_message_total = 0
+
+            # Ensure the state listener task completes before exiting
+            await state_listener
         except Exception as e:
             self.termination_event.set()
             self.logger.error(f"Error while processing tokens: {e}")

@@ -24,7 +24,7 @@ class MockLLMEngine(BaseEngine):
             # the developers of Querent can customize the behavior of Querent
             # to handle the error in a way that is appropriate for the use case
             self.set_termination_event()
-            raise ValueError("Received None, terminating")
+            return
         # Set the state of the LLM
         # At any given point during the execution of the LLM, the LLM developer
         # can set the state of the LLM using the set_state method
