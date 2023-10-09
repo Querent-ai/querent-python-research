@@ -1,16 +1,16 @@
 from pydantic import BaseModel
 
 
-class PromethusAdapterConfig(BaseModel):
+class PrometheusAdapterConfig(BaseModel):
     """
-    PromethusAdapterConfig is the configuration for the prometheus adapter
+    PrometheusAdapterConfig is the configuration for the Prometheus adapter.
 
     Attributes:
-        url (str): The url of the prometheus server
-        job_name (str): The job name of the prometheus server
+        port (int): The port on which the Prometheus metrics will be exposed.
+        job_name (str): The job name associated with your application in Prometheus.
+        labels (list): List of label names for Prometheus metrics.
     """
 
-    url: str
     port: int
     job_name: str
     labels: [str]

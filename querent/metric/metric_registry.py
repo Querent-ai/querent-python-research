@@ -4,9 +4,10 @@ from querent.metric.metric_adapter import MetricAdapter
 
 class MetricRegistry:
     def __init__(self):
-        self.metrics = {}
+        self.metrics: dict[str, int] = {}
         self.metric_adapters: dict[str, MetricAdapter] = {}
 
+    @classmethod
     def register_metric_adapter(self, metric_adapter: MetricAdapter):
         """
         Register a metric adapter.
@@ -35,6 +36,13 @@ class MetricRegistry:
         :return: List of metric names.
         """
         return list(self.metrics.keys())
+
+    def list_metric_adapters(self):
+        """
+        List all registered metric adapters.
+        :return: List of metric adapter names.
+        """
+        return list(self.metric_adapters.keys())
 
     def update_metric(self, metric_name: str, value: int):
         """

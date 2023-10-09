@@ -1,12 +1,13 @@
+from abc import ABC
 from querent.common.errors.metric_errors import UnknownMetricError
 from querent.metric.metric_registry import MetricRegistry
 
 
-class MetricCollector:
+class MetricCollector(ABC):
     def __init__(self, metric_registry: MetricRegistry):
         self.metric_registry = metric_registry
 
-    def update_metric(self, metric_name, value: int):
+    def collect(self, metric_name, value: int):
         """
         Update a metric's value or create it if it doesn't exist.
         :param metric_name: Name of the metric.

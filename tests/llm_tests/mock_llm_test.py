@@ -14,12 +14,16 @@ resource_manager = ResourceManager()
 
 # Define a simple mock LLM engine for testing
 class MockLLMEngine(BaseEngine):
+    def __init__(self, input_queue: QuerentQueue):
+        super().__init__(input_queue)
+
     async def process_tokens(self, data: IngestedTokens):
         super().process_tokens(data)
-        if data is None:
+        if data is None or data.is_error():
             # the LLM developer can raise an error here or do something else
             # the developers of Querent can customize the behavior of Querent
             # to handle the error in a way that is appropriate for the use case
+            self.set_termination_event()
             raise ValueError("Received None, terminating")
         # Set the state of the LLM
         # At any given point during the execution of the LLM, the LLM developer
@@ -43,7 +47,7 @@ async def test_querent_with_base_llm():
         IngestedTokens(file="", data="data1"),
         IngestedTokens(file="", data="data2"),
         IngestedTokens(file="", data="data3"),
-        None,
+        IngestedTokens(file="", data="", error="error"),
     ]
     for data in input_data:
         await input_queue.put(data)

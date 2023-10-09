@@ -42,6 +42,19 @@ class QuerentQueue:
         """
         await self.queue.put(item)
 
+    async def put_nowait(self, item):
+        """
+        Put an item into the queue asynchronously without waiting.
+
+        Args:
+            item: The item to put into the queue.
+
+        Returns:
+            None
+
+        """
+        self.queue.put_nowait(item)
+
     async def get(self):
         """
         Get an item from the queue asynchronously.
