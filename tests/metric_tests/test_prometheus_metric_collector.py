@@ -18,6 +18,7 @@ def prometheus_adapter() -> MetricAdapter:
     return PrometheusMetricAdapter(config)
 
 
+@pytest.mark.asyncio
 def test_register_metric(
     metric_registry: MetricRegistry, prometheus_adapter: MetricAdapter
 ):
@@ -25,6 +26,7 @@ def test_register_metric(
     prometheus_adapter.register_metric("test_metric", 10)
 
 
+@pytest.mark.asyncio
 def test_update_metric(
     metric_registry: MetricRegistry, prometheus_adapter: MetricAdapter
 ):
