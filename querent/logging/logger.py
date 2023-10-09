@@ -28,4 +28,4 @@ def setup_logger(logger_name: str, log_file_id: str) -> logging.Logger:
         return logger
     except Exception as e:
         print(f"Error while setting up logger: {e}")
-        raise e
+        return None

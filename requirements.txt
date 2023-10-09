@@ -153,6 +153,15 @@ EbookLib==0.18
 html2text==2020.1.16
 duckduckgo-search==3.8.3 
 asyncio==3.4.3
+prometheus-client==0.17.1
+opentelemetry-api==1.20.0
+opentelemetry-sdk==1.20.0
+opentelemetry-instrumentation==1.20.0
+opentelemetry-exporter-jaeger==1.20.0
+opentelemetry-exporter-otlp==1.20.0
+opentelemetry-exporter-jaeger-thrift==1.20.0
+opentelemetry-exporter-prometheus==1.20.0
+opentelemetry-exporter-zipkin==1.20.0
 aiofiles
 pytest-asyncio
 google-cloud-storage
