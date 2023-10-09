@@ -11,6 +11,7 @@ class CollectorBackend(str, Enum):
     AzureBlobStorage = "azure"
     Slack = "slack"
     DropBox = "dropbox"
+    Github = "github"
 
 
 class CollectConfig(BaseModel):
@@ -64,6 +65,11 @@ class DropboxConfig(BaseModel):
     folder_path: str
     chunk_size: int
     dropbox_refresh_token: str
+
+
+class GithubConfig(BaseModel):
+    github_username: str
+    github_password: str
 
 
 class WebScraperConfig(BaseModel):

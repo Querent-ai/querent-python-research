@@ -176,3 +176,4 @@ setuptools
 slack-sdk
 psutil
 dropbox
+PyGithub

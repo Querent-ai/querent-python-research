@@ -180,6 +180,7 @@ requirements = [
     "setuptools",
     "slack-sdk",
     "dropbox",
+    "PyGithub",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
