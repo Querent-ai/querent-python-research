@@ -14,13 +14,17 @@ resource_manager = ResourceManager()
 
 # Define a simple mock LLM engine for testing
 class MockLLMEngine(BaseEngine):
+    def __init__(self, input_queue: QuerentQueue):
+        super().__init__(input_queue)
+
     async def process_tokens(self, data: IngestedTokens):
         super().process_tokens(data)
-        if data is None:
+        if data is None or data.is_error():
             # the LLM developer can raise an error here or do something else
             # the developers of Querent can customize the behavior of Querent
             # to handle the error in a way that is appropriate for the use case
-            raise ValueError("Received None, terminating")
+            self.set_termination_event()
+            return
         # Set the state of the LLM
         # At any given point during the execution of the LLM, the LLM developer
         # can set the state of the LLM using the set_state method
@@ -43,7 +47,7 @@ async def test_querent_with_base_llm():
         IngestedTokens(file="", data="data1"),
         IngestedTokens(file="", data="data2"),
         IngestedTokens(file="", data="data3"),
-        None,
+        IngestedTokens(file="", data="", error="error"),
     ]
     for data in input_data:
         await input_queue.put(data)
@@ -53,7 +57,7 @@ async def test_querent_with_base_llm():
     llm_mocker = MockLLMEngine(input_queue)
 
     # Define a callback function to subscribe to state changes
-    def state_change_callback(new_state):
+    def state_change_callback(new_state: EventState):
         assert new_state.event_type == EventType.TOKEN_PROCESSED
 
     # Subscribe to state change events
@@ -76,7 +80,6 @@ async def test_querent_with_base_llm():
     #   6. The worker task repeats steps 3-5 until termination
     querent = Querent(
         [llm_mocker],
-        num_workers=1,
         resource_manager=resource_manager,
     )
     # Start the querent
