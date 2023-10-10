@@ -169,7 +169,7 @@ class BaseEngine(ABC):
         """
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
-                await asyncio.gather(callback(event_state))
+                callback(event_state)
 
     async def _worker(self):
         try:
@@ -182,48 +182,51 @@ class BaseEngine(ABC):
                 )
 
             state_listener = asyncio.create_task(self._listen_for_state_changes())
-            current_message_total = 0
 
-            while not self.termination_event.is_set():
-                retries = 0
-                data = await self.input_queue.get()
+            async def _inner_worker():
+                current_message_total = 0
+                while not self.termination_event.is_set() or state_listener.done():
+                    retries = 0
+                    data = await self.input_queue.get()
 
-                try:
-                    if isinstance(data, IngestedMessages):
-                        await self.process_messages(data)
-                    elif isinstance(data, IngestedTokens):
-                        await self.process_tokens(data)
-                    else:
-                        raise Exception(
-                            f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
-                        )
-                except Exception as e:
-                    self.logger.error(
-                        f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
-                    )
-                    retries += 1
-
-                    if retries > self.max_retries:
+                    try:
+                        if isinstance(data, IngestedMessages):
+                            await self.process_messages(data)
+                        elif isinstance(data, IngestedTokens):
+                            await self.process_tokens(data)
+                        else:
+                            raise Exception(
+                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
+                            )
+                    except Exception as e:
                         self.logger.error(
-                            f"Error processing tokens: {e}. Max retries reached. Terminating."
+                            f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
                         )
-                        break
+                        retries += 1
 
-                    await asyncio.sleep(self.retry_interval)
+                        if retries > self.max_retries:
+                            self.logger.error(
+                                f"Error processing tokens: {e}. Max retries reached. Terminating."
+                            )
+                            break
 
-                await self.input_queue.task_done()
-                current_message_total += 1
+                        await asyncio.sleep(self.retry_interval)
 
-                if current_message_total >= self.message_throttle_limit:
-                    await asyncio.sleep(self.message_throttle_delay)
-                    current_message_total = 0
+                    await self.input_queue.task_done()
+                    current_message_total += 1
+
+                    if current_message_total >= self.message_throttle_limit:
+                        await asyncio.sleep(self.message_throttle_delay)
+                        current_message_total = 0
+
+            await asyncio.gather(state_listener, _inner_worker())
         except Exception as e:
-            self.termination_event.set()
             self.logger.error(f"Error while processing tokens: {e}")
-
         finally:
-            # wait for state listener to finish
+            self.logger.info(f"Stopping worker for {self.__class__.__name__}")
             await state_listener
+            self.logger.info(f"Stopped worker for {self.__class__.__name__}")
+            self.termination_event.set()
 
     async def _start_workers(self):
         self.workers = [self._worker() for _ in range(self.num_workers)]

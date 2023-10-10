@@ -58,6 +58,7 @@ async def test_querent_with_base_llm():
 
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state: EventState):
+        print(f"New state: {new_state}")
         assert new_state.event_type == EventType.TOKEN_PROCESSED
 
     # Subscribe to state change events
