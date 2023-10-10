@@ -187,6 +187,7 @@ class BaseEngine(ABC):
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
+                            print("inside process tokens")
                             await self.process_tokens(data)
                         else:
                             raise Exception(
