@@ -87,7 +87,12 @@ class AutoScaler:
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")
             raise e
         finally:
-            await asyncio.gather(*self.worker_tasks)
+            # check if workers are still running
+            if self.worker_tasks:
+                for task in self.worker_tasks:
+                    if not task.done():
+                        task.cancel()
+                        self.logger.info("Cancelled worker task")
 
     async def stop(self):
         self.logger.info("Stopping AutoScaler")
