@@ -15,20 +15,14 @@ from querent.logging.logger import setup_logger
 
     Attributes:
         input_queue (QuerentQueue): The queue containing input data to be processed.
-        num_workers (int): Number of worker tasks to spawn for processing.
-        max_retries (int): Maximum number of retries for processing tokens in case of failure.
-        retry_interval (float): Time interval (in seconds) between retries.
-        message_throttle_limit (int): Limit for message processing to prevent overwhelming subscribers.
-        message_throttle_delay (float): Delay (in seconds) between processing messages to throttle the rate.
-        termination_event (asyncio.Event): Event to signal termination of workers and listeners.
-        logger (logging.Logger): Logger instance for logging messages and errors.
-        workers (list): List of worker tasks.
-        subscribers (dict): Mapping of event types to their respective subscriber callback functions.
-        state_queue (asyncio.Queue): Queue to store and manage event states.
+        config (EngineConfig): The configuration for the engine.
 
     Methods:
         process_tokens(data: IngestedTokens) -> EventState:
             Abstract method to process tokens asynchronously.
+
+        process_messages(data: IngestedMessages) -> EventState:
+            Abstract method to process chat asynchronously.
 
         validate() -> bool:
             Abstract method to validate the configuration of the engine.
@@ -185,7 +179,7 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
-                while not self.termination_event.is_set() or state_listener.done():
+                while not self.termination_event.is_set():
                     retries = 0
                     data = await self.input_queue.get()
 
