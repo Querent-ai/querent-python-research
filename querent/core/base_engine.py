@@ -139,7 +139,7 @@ class BaseEngine(ABC):
             new_state (EventState): The new state.
         """
         if isinstance(new_state, EventState):
-            await self.state_queue.put_nowait(new_state)
+            await self.state_queue.put(new_state)
         else:
             raise Exception(
                 f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
@@ -150,7 +150,7 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.termination_event.is_set():
+        while not self.state_queue.empty() or not self.termination_event.is_set():
             new_state = await self.state_queue.get()
             if isinstance(new_state, EventState):
                 await self._notify_subscribers(new_state.event_type, new_state)
@@ -174,11 +174,10 @@ class BaseEngine(ABC):
     async def _worker(self):
         try:
             if not self.validate():
-                self.termination_event.set()
                 self.logger.error(
                     f"Invalid {self.__class__.__name__} configuration. Please check the configuration."
                 )
-                raise Exception(
+                raise ValueError(
                     f"Invalid {self.__class__.__name__} configuration. Please check the configuration."
                 )
 
@@ -215,15 +214,16 @@ class BaseEngine(ABC):
                 await self.input_queue.task_done()
                 current_message_total += 1
 
-            if current_message_total >= self.message_throttle_limit:
-                await asyncio.sleep(self.message_throttle_delay)
-                current_message_total = 0
-
-            # Ensure the state listener task completes before exiting
-            await state_listener
+                if current_message_total >= self.message_throttle_limit:
+                    await asyncio.sleep(self.message_throttle_delay)
+                    current_message_total = 0
         except Exception as e:
             self.termination_event.set()
             self.logger.error(f"Error while processing tokens: {e}")
+
+        finally:
+            # wait for state listener to finish
+            await state_listener
 
     async def _start_workers(self):
         self.workers = [self._worker() for _ in range(self.num_workers)]

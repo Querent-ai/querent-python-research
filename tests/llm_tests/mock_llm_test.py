@@ -57,7 +57,7 @@ async def test_querent_with_base_llm():
     llm_mocker = MockLLMEngine(input_queue)
 
     # Define a callback function to subscribe to state changes
-    def state_change_callback(new_state):
+    def state_change_callback(new_state: EventState):
         assert new_state.event_type == EventType.TOKEN_PROCESSED
 
     # Subscribe to state change events
