@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import asyncio
-import logging
-from typing import Any, Callable, Dict, List, Optional
+from querent.callback.event_callback_dispatcher import EventCallbackDispatcher
+from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
@@ -68,13 +68,13 @@ class BaseEngine(ABC):
         self.input_queue = input_queue
         self.termination_event = asyncio.Event()
         self.state_queue = QuerentQueue()
-        self.subscribers: Dict[EventType, List[Callable]] = {}
         self.num_workers = config.num_workers
         self.max_retries = config.max_retries
         self.retry_interval = config.retry_interval
         self.message_throttle_limit = config.message_throttle_limit
         self.message_throttle_delay = config.message_throttle_delay
         self.logger = setup_logger(config.logger, f"{__name__}.base_engine")
+        self.callback_dispatcher = EventCallbackDispatcher()
 
     @abstractmethod
     async def process_tokens(self, data: IngestedTokens):
@@ -115,16 +115,14 @@ class BaseEngine(ABC):
         """
         self.termination_event.set()
 
-    def subscribe(self, event_type: EventType, callback: Callable):
+    def subscribe(self, event_type: EventType, callback: EventCallbackInterface):
         """
         Subscribe to a specific event type.
         Args:
             event_type (EventType): The type of event to subscribe to (e.g., "token_processed").
             callback (Callable): The callback function to be invoked when the event occurs.
         """
-        if event_type not in self.subscribers:
-            self.subscribers[event_type] = []
-        self.subscribers[event_type].append(callback)
+        self.callback_dispatcher.register_callback(event_type, callback)
 
     async def set_state(self, new_state: EventState):
         """
@@ -161,9 +159,7 @@ class BaseEngine(ABC):
             event_type (EventType): The type of event that occurred.
             event_data (EventState): The data associated with the event.
         """
-        if event_type in self.subscribers:
-            for callback in self.subscribers[event_type]:
-                callback(event_state)
+        await self.callback_dispatcher.dispatch_event(event_type, event_state)
 
     async def _worker(self):
         try:

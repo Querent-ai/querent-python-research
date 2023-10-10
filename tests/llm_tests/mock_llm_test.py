@@ -1,4 +1,5 @@
 import pytest
+from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
@@ -57,13 +58,15 @@ async def test_querent_with_base_llm():
     llm_mocker = MockLLMEngine(input_queue)
 
     # Define a callback function to subscribe to state changes
-    def state_change_callback(new_state: EventState):
-        print(f"New state: {new_state}")
-        assert new_state.event_type == EventType.TOKEN_PROCESSED
+    class StateChangeCallback(EventCallbackInterface):
+        async def handle_event(self, event_type: EventType, event_state: EventState):
+            print(f"New state: {event_state}")
+            print(f"New state type: {event_type}")
+            assert event_state.event_type == EventType.TOKEN_PROCESSED
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
-    llm_mocker.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
+    llm_mocker.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
 
     ## one can also subscribe to other events, e.g. EventType.CHAT_COMPLETION ...
 
