@@ -51,6 +51,7 @@ class BERTLLM(BaseEngine):
         try:
             self.model = AutoModelForTokenClassification.from_pretrained(model_name)
         except OSError as e:
+            self.set_termination_event()
             # need to update gpu availability
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
             # If an OSError occurs, check if it's related to TensorFlow weights

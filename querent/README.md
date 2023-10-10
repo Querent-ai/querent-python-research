@@ -1,90 +1,126 @@
 # Querent-AI Project Structure
 
-This repository contains the Querent-AI project, organized into several folders, each serving a specific purpose in the data processing and knowledge discovery pipeline. Below is an overview of each folder:
+Welcome to the Querent-AI project! This repository is organized into several folders, each serving a specific purpose in the data processing and knowledge discovery pipeline. Below, you'll find an in-depth overview of each folder, along with examples and descriptions of their contents.
 
 ## collectors
 
-- Folder for data collection components.
-- Collect data from various sources asynchronously, including web scraping, file collection, and more.
+- **Description:** This folder contains data collection components.
+- **Purpose:** Collect data asynchronously from various sources, including web scraping, file collection, and more.
+- **Examples:**
+  - Web scraper for extracting data from websites.
+  - File collectors to gather data from local and cloud-based files.
+  - Blob storage connectors for cloud-based storage.
+  - Streaming data collectors for real-time data collection.
 
 ## common
 
-- Common utility functions and shared code.
-- Contains common types, configurations, and utilities used across the project.
+- **Description:** Common utility functions and shared code.
+- **Purpose:** House common types, configurations, and utilities used across the project.
+- **Examples:**
+  - Utility functions for data processing.
+  - Shared configurations and type definitions.
 
 ## config
 
-- Configuration files for Querent-AI.
-- Contains settings and configurations for collectors, ingestors, processors, and other components.
+- **Description:** Configuration files for Querent-AI.
+- **Purpose:** Store settings and configurations for collectors, ingestors, processors, and other components.
+- **Examples:**
+  - Collector configurations specifying sources and collection settings.
+  - Processor settings for text preprocessing.
 
 ## controllers
 
-- Controllers for managing data processing workflows.
-- Responsible for orchestrating tasks and managing the flow of data through the pipeline.
+- **Description:** Controllers for managing data processing workflows.
+- **Purpose:** Orchestrate tasks and manage the flow of data through the pipeline.
+- **Examples:**
+  - Workflow controllers that define how data moves through the system.
+  - Task schedulers for parallel processing.
 
 ## dal
 
-- Data Access Layer components.
-- Handles interactions with databases or storage systems where processed data is stored.
+- **Description:** Data Access Layer components.
+- **Purpose:** Handle interactions with databases or storage systems where processed data is stored.
+- **Examples:**
+  - Database connectors and query builders.
+  - Storage adapters for cloud-based storage.
 
 ## gnn
 
-- Components related to Graph Neural Networks (GNNs).
-- Integrates with GNNs for advanced data analysis, recommendation systems, and predictive modeling.
+- **Description:** Components related to Graph Neural Networks (GNNs).
+- **Purpose:** Integrate with GNNs for advanced data analysis, recommendation systems, and predictive modeling.
+- **Examples:**
+  - GNN-based recommendation engines.
+  - Graph algorithms for knowledge graph construction.
 
 ## ingestors
 
-- Data ingestion components.
-- Process collected data efficiently, applying custom transformations and filtering.
+- **Description:** Data ingestion components.
+- **Purpose:** Efficiently process collected data by applying custom transformations and filtering.
+- **Examples:**
+  - JSON and XML parsers for structured data.
+  - Text ingestors for natural language data.
 
 ## insights
 
-- Components for extracting insights from data.
-- Provides tools to extract actionable insights, helping make data-informed decisions.
+- **Description:** Components for extracting insights from data.
+- **Purpose:** Provide tools to extract actionable insights, enabling data-informed decision-making.
+- **Examples:**
+  - Sentiment analysis models for customer feedback.
+  - Statistical analysis tools for data trends.
 
 ## kg
 
-- Knowledge Graph components.
-- Used to construct intricate knowledge graphs, connecting data points and revealing hidden relationships.
+- **Description:** Knowledge Graph components.
+- **Purpose:** Construct intricate knowledge graphs, connecting data points and revealing hidden relationships.
+- **Examples:**
+  - Knowledge graph construction algorithms.
+  - Graph visualization tools.
 
 ## lib
 
-- External libraries and dependencies.
-- Houses external libraries used by the project.
+- **Description:** External libraries and dependencies.
+- **Purpose:** Store external libraries used by the project.
+- **Examples:**
+  - Machine learning frameworks like TensorFlow or PyTorch.
+  - Third-party libraries for data visualization.
 
-## ai
+## core
 
-- Language Model components.
-- Leverage state-of-the-art language models (LLMs) to process and understand text data.
+- **Description:** Neural Networks and Model components.
+- **Purpose:** Leverage state-of-the-art language models (LLMs), NN models to process and understand text, contextual and semantic information.
+- **Examples:**
+  - LLM-based chatbots.
+  - Text summarization models.
+  - Knowledge Graph builders
+  - Question Answering models
+  - Multimodel models and building knowledge from images and text
+  - Text classification models etc.
 
 ## querent
 
-- Components related to the Querent framework.
-- Handles asynchronous data processing and task management.
+- **Description:** Components related to the Querent framework.
+- **Purpose:** Handle asynchronous data processing and task management.
+- **Examples:**
+  - Querent engines for data processing.
+  - Task queues for job scheduling.
+  - Handles for managing asynchronous tasks.
 
 ## processors
 
-- Data processing components.
-- Applies asynchronous data processing, including text preprocessing, cleaning, and feature extraction.
+- **Description:** Data processing components.
+- **Purpose:** Apply asynchronous data processing, including text preprocessing, cleaning, and feature extraction.
+- **Examples:**
+  - Text tokenization and cleaning functions.
+  - Feature extraction models.
 
 ## search
 
-- Search-related components.
-- Handles search functionality or integration with external search engines.
+- **Description:** Search-related components.
+- **Purpose:** Handle search functionality or integration with external search engines.
+- **Examples:**
+  - **Semantic Knowledge Graph Search** - Search for entities and relationships in the knowledge graph and infer new relationships.
+  - **Full-text Search** - Search for text in the knowledge graph and return relevant results.
+  - **Widgets** - Downloadable widgets for search integration with external applications.
+  - Search integration with Elasticsearch etc.
 
-## storage
-
-- Storage-related components.
-- Responsible for storing processed data in various storage systems, such as databases or cloud storage.
-
-## tools
-
-- Tools and utilities for development and testing.
-- May include scripts, testing tools, or other development aids.
-
-## utils
-
-- Utility functions and helper modules.
-- Contains miscellaneous utility functions used throughout the project.
-
-Each folder contains specific modules and code related to its functionality. Explore these folders to dive deeper into the Querent-AI project.
+Each folder plays a crucial role in the Querent-AI project, contributing to its data processing and knowledge discovery capabilities. Explore these folders to delve deeper into the project's inner workings and functionalities.

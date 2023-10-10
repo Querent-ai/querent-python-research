@@ -22,18 +22,12 @@ class Querent:
     def __init__(
         self,
         querenters: List[BaseEngine],
-        num_workers: int,
         resource_manager: ResourceManager,
-        auto_scale_threshold: int = 10,
     ):
         self.logger = setup_logger(__name__, "querent")
-        self.num_workers = num_workers
         self.resource_manager = resource_manager
         self.querenters = querenters
-        self.auto_scale_threshold = auto_scale_threshold
-        self.auto_scaler = AutoScaler(
-            self.resource_manager, querenters, threshold=self.auto_scale_threshold
-        )
+        self.auto_scaler = AutoScaler(self.resource_manager, querenters)
 
         # Create an event to handle termination requests
         self.querent_termination_event = resource_manager.querent_termination_event

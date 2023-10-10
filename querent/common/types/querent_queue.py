@@ -42,6 +42,19 @@ class QuerentQueue:
         """
         await self.queue.put(item)
 
+    async def put_nowait(self, item):
+        """
+        Put an item into the queue asynchronously without waiting.
+
+        Args:
+            item: The item to put into the queue.
+
+        Returns:
+            None
+
+        """
+        self.queue.put_nowait(item)
+
     async def get(self):
         """
         Get an item from the queue asynchronously.
@@ -51,6 +64,16 @@ class QuerentQueue:
 
         """
         return await self.queue.get()
+
+    async def get_nowait(self):
+        """
+        Get an item from the queue asynchronously without waiting.
+
+        Returns:
+            Any: The item retrieved from the queue.
+
+        """
+        return self.queue.get_nowait()
 
     async def join(self):
         """
@@ -81,6 +104,16 @@ class QuerentQueue:
 
         """
         await self.queue.put(None)  # Sentinel value to signal worker exit
+
+    def empty(self):
+        """
+        Check if the queue is empty.
+
+        Returns:
+            bool: True if the queue is empty, False otherwise.
+
+        """
+        return self.queue.empty()
 
     def __aiter__(self):
         return self
