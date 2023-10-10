@@ -9,7 +9,6 @@ class LoggingMetricHandler(logging.Handler):
     def __init__(self, metric_registry: MetricRegistry, level=logging.INFO):
         super().__init__(level)
         self.metric_registry = metric_registry
-        self.metrics_list = self.metric_registry.list_metrics()
 
     def emit(self, record: LogRecord) -> None:
         # Split the log message to extract metric-related information.
@@ -29,8 +28,8 @@ class LoggingMetricHandler(logging.Handler):
         # Check if metric information was found in the log message.
         if metric_name is not None and metric_value is not None:
             # Check if the metric is registered.
-            if metric_name not in self.metrics_list:
-                raise UnknownMetricError(f"Unknown metric: {metric_name}")
+            if metric_name not in self.metric_registry.list_metric_adapters():
+                self.logger.error(f"Metric {metric_name} is not registered.")
             # Update the metric value.
             self.metric_registry.update_metric(metric_name, metric_value)
         else:

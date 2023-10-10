@@ -1,4 +1,11 @@
+from enum import Enum
 from pydantic import BaseModel
+
+
+class SupportedMetricType(str, Enum):
+    GAUGE = "gauge"
+    COUNTER = "counter"
+    HISTOGRAM = "histogram"
 
 
 class PrometheusAdapterConfig(BaseModel):
@@ -11,6 +18,6 @@ class PrometheusAdapterConfig(BaseModel):
         labels (list): List of label names for Prometheus metrics.
     """
 
-    port: int
     job_name: str
-    labels: [str]
+    labels: list
+    metric_type: SupportedMetricType

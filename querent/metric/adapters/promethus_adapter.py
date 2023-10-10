@@ -1,34 +1,55 @@
-from prometheus_client import CollectorRegistry, Gauge, generate_latest
-from querent.config.metric.prometheus import PrometheusAdapterConfig
-from querent.metric.metric_adapter import MetricAdapter
+from collections import Counter
+from typing import Iterable
+from prometheus_client import (
+    CollectorRegistry,
+    Gauge,
+    Histogram,
+    Metric,
+)
+from querent.config.metric.prometheus import (
+    PrometheusAdapterConfig,
+    SupportedMetricType,
+)
+from querent.metric.base_metric_adapter import MetricAdapter
 
 
 class PrometheusMetricAdapter(MetricAdapter):
     def __init__(self, config: PrometheusAdapterConfig):
         self.job_name = config.job_name
-        self.port = config.port
         self.labels = config.labels
-        # Initialize Prometheus CollectorRegistry and set job_name and port.
+        self.metric_type = config.metric_type
         self.registry = CollectorRegistry()
-        self.registry._namespace = self.job_name
         self.metric = None
+        self._set_metric(config.metric_type)
 
-    def register_metric(self, metric_name: str, initial_value=0):
-        # Register a Prometheus Gauge metric with the given metric_name.
-        # Gauge metrics represent values that can go up and down.
-        metric = Gauge(
-            metric_name,
-            f"Metric: {metric_name}",
-            labelnames=self.labels,
-            registry=self.registry,
-        )
-        metric.labels(job_name=self.job_name).set(initial_value)
-        self.metric = metric
+    def get_labels(self) -> list:
+        return self.labels
 
-    def update_metric(self, metric_name: str, value):
-        if self.metric is not None:
-            self.metric.labels(job_name=self.job_name).set(value)
+    def get_metric(self) -> Iterable[Metric]:
+        return self.registry.collect()
 
-    def get_prometheus_metrics(self) -> bytes:
-        # Generate Prometheus metrics in text format.
-        return generate_latest(registry=self.registry)
+    def update_metric(self, metric_value: int):
+        if self.metric_type == SupportedMetricType.GAUGE:
+            self.metric.labels(self.labels).set(metric_value)
+        elif self.metric_type == SupportedMetricType.COUNTER:
+            self.metric.labels(self.labels).inc(metric_value)
+        elif self.metric_type == SupportedMetricType.HISTOGRAM:
+            self.metric.labels(self.labels).observe(metric_value)
+        else:
+            raise ValueError(f"Metric type {self.metric_type} is not supported.")
+
+    def _set_metric(self, metric_type: str):
+        if metric_type == SupportedMetricType.GAUGE:
+            self.metric = Gauge(
+                self.job_name, "Metric", self.labels, registry=self.registry
+            )
+        elif metric_type == SupportedMetricType.COUNTER:
+            self.metric = Counter(
+                self.job_name, "Metric", self.labels, registry=self.registry
+            )
+        elif metric_type == SupportedMetricType.HISTOGRAM:
+            self.metric = Histogram(
+                self.job_name, "Metric", self.labels, registry=self.registry
+            )
+        else:
+            raise ValueError(f"Metric type {metric_type} is not supported.")
