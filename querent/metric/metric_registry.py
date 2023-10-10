@@ -14,7 +14,7 @@ class MetricRegistry:
         Register a metric adapter.
         :param metric_adapter: Metric adapter instance.
         """
-        self.metric_adapters[metric_name] = metric_adapter
+        self.metric_adapters[metric_name.lower()] = metric_adapter
 
     def list_metric_adapters(self):
         """
@@ -30,7 +30,7 @@ class MetricRegistry:
         :param value: New value for the metric.
         """
         try:
-            self.metric_adapters[metric_name].update_metric(value)
+            self.metric_adapters[metric_name.lower()].update_metric(value)
         except Exception as e:
             raise UpdateMetricError(f"Metric {metric_name} is not registered.") from e
 
@@ -41,6 +41,6 @@ class MetricRegistry:
         :return: Value of the metric.
         """
         try:
-            return self.metric_adapters[metric_name].get_metric()
+            return self.metric_adapters[metric_name.lower()].get_metric()
         except KeyError:
             raise UnknownMetricError(f"Metric {metric_name} is not registered.")
