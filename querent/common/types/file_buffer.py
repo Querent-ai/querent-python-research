@@ -25,5 +25,6 @@ class FileBuffer:
         self._cache.cache_clear()  # Clear the cache for the processed file
 
     def get_content(self, filename):
+        print("inside get content")
         """Retrieve the full content for a given filename."""
         return ''.join(self._cache(filename))

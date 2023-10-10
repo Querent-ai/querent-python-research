@@ -4,13 +4,14 @@ from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_messages import IngestedMessages
+from querent.common.types.querent_queue import QuerentQueue
 from typing import Any, List, Tuple
 from querent.common.types.file_buffer import FileBuffer
 import os, re
 
 
 class BERTLLM(BaseEngine):
-    def __init__(self, input_queue,  
+    def __init__(self, input_queue = QuerentQueue ,  
                  ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english", 
                  rel_model_name="deepset/roberta-base-squad2",
                  ):
@@ -18,19 +19,19 @@ class BERTLLM(BaseEngine):
         super().__init__(input_queue)
 
         self.file_buffer = FileBuffer()
-        print("steppppppp111111")
+
 # Initialize NER model and tokenizer
         self.ner_tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
         self.ner_model = self._load_model(ner_model_name, "NER")
-        print("steppppppp1112222")
+
         # Initialize Relationship model and tokenizer
         self.rel_tokenizer = AutoTokenizer.from_pretrained(rel_model_name)
         self.rel_model = self._load_model(rel_model_name, "Relationship")
-        print("steppppppp3333333")
+
         # Create pipelines for NER and Relationship extraction
         self.nlp_ner = pipeline("ner", model=self.ner_model, tokenizer=self.ner_tokenizer, aggregation_strategy="simple")
         self.nlp_rel = pipeline('question-answering', model=self.rel_model, tokenizer=self.rel_tokenizer)
-        print("steppppppp14444444")
+
     def _load_model(self, model_name, model_type):
         """Load the model, handling potential TensorFlow weights."""
         try:
@@ -62,6 +63,7 @@ class BERTLLM(BaseEngine):
 
     @staticmethod
     def split_into_sentences(text):
+        print("into sentence printing", text)
         # Split text by sentence delimiters and remove empty strings
         sentences = [s.strip() for s in re.split('[.!?]', text) if s]
         
@@ -128,7 +130,7 @@ class BERTLLM(BaseEngine):
         return token_chunks
 
     def _extract_entities_from_chunks(self, token_chunks: List[List[str]]) -> List[Tuple[str, str]]:
-            print("token_chunks", token_chunks)
+
          
 
             all_entities = []
@@ -157,14 +159,14 @@ class BERTLLM(BaseEngine):
 
         # For simplicity, we're assuming the answer is a list of relationships. 
         # This can be adjusted based on the actual structure of the returned answer.
-        print("questionssss", question)
-        print("relationshipssssss", res)
+
         relationships = [res['answer']]  # Convert the answer to a list
         return relationships
 
     async def process_tokens(self, data: IngestedTokens):
-            print("step55555555")
+
             self.file_buffer.add_chunk(data.get_file_path(), data.data[0])
+            print("what is goinside file byuffer ", data.data[0])
             if not BERTLLM.validate_ingested_tokens(data):
                 self.set_termination_event()
             
@@ -187,9 +189,10 @@ class BERTLLM(BaseEngine):
             for entities, rel_list in relationships_dict.items():
                 print(f"Relationships between {entities[0]} and {entities[1]}: {', '.join(rel_list)}")
 
-            #print("file path", data.get_file_path())
+            print("file path", data.get_file_path())
             full_content = self.file_buffer.get_content(data.get_file_path())
-            #print("full content", full_content)
+            print("full content", full_content)
             current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, all_entities)
             
             await self.set_state(new_state=current_state)
+            print("finish")

@@ -182,12 +182,12 @@ class BaseEngine(ABC):
                 while not self.termination_event.is_set():
                     retries = 0
                     data = await self.input_queue.get()
+                    print("printing chunk",data.data)
 
                     try:
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
-                            print("inside process tokens")
                             await self.process_tokens(data)
                         else:
                             raise Exception(
