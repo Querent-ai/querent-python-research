@@ -11,11 +11,9 @@ class AutoScaler:
         self,
         resource_manager: ResourceManager,
         querenters: List[BaseEngine],
-        threshold: int = 10,
     ):
         self.resource_manager = resource_manager
         self.querenters = querenters
-        self.threshold = threshold
         self.logger = setup_logger(__name__, "auto_scaler")
         self.querent_termination_event = resource_manager.querent_termination_event
         self.worker_tasks: List[asyncio.Task] = []  # Store the worker tasks

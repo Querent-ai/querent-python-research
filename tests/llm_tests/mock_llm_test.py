@@ -80,7 +80,6 @@ async def test_querent_with_base_llm():
     #   6. The worker task repeats steps 3-5 until termination
     querent = Querent(
         [llm_mocker],
-        num_workers=1,
         resource_manager=resource_manager,
     )
     # Start the querent
