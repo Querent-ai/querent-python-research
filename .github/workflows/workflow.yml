@@ -11,6 +11,13 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+  repository-projects: read
+  statuses: read
+  pages: write
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
