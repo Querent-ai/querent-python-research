@@ -13,19 +13,18 @@ class CollectorBackend(str, Enum):
     DropBox = "dropbox"
 
 
-class CollectConfig(BaseModel):
+class CollectorConfig(BaseModel):
     backend: CollectorBackend
 
-    class Config:
-        use_enum_values = True
 
-
-class FSCollectorConfig(BaseModel):
+class FSCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.LocalFile
     root_path: str
     chunk_size: int = 1024
 
 
-class AzureCollectConfig(BaseModel):
+class AzureCollectConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.AzureBlobStorage
     connection_string: str
     account_url: str
     credentials: str
@@ -34,7 +33,8 @@ class AzureCollectConfig(BaseModel):
     chunk_size: int = 1024
 
 
-class S3CollectConfig(BaseModel):
+class S3CollectConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.S3
     bucket: str
     region: str
     access_key: str
@@ -42,13 +42,15 @@ class S3CollectConfig(BaseModel):
     chunk: int = 1024
 
 
-class GcsCollectConfig(BaseModel):
+class GcsCollectConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.Gcs
     bucket: str
     credentials: str
     chunk: int = 1024
 
 
-class SlackCollectorConfig(BaseModel):
+class SlackCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.Slack
     cursor: Optional[str]
     include_all_metadata: int
     inclusive: int
@@ -58,7 +60,8 @@ class SlackCollectorConfig(BaseModel):
     access_token: str
 
 
-class DropboxConfig(BaseModel):
+class DropboxConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.DropBox
     dropbox_app_key: str
     dropbox_app_secret: str
     folder_path: str
@@ -66,27 +69,6 @@ class DropboxConfig(BaseModel):
     dropbox_refresh_token: str
 
 
-class WebScraperConfig(BaseModel):
+class WebScraperConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.WebScraper
     website_url: str = Field(..., description="The URL of the website to scrape.")
-
-
-class CollectConfigWrapper(BaseModel):
-    backend: CollectorBackend
-    config: Optional[BaseModel] = None
-
-    @classmethod
-    def from_collect_config(cls, collect_config: CollectConfig):
-        if collect_config.backend == CollectorBackend.LocalFile:
-            return cls(backend=CollectorBackend.LocalFile, config=FSCollectorConfig())
-        elif collect_config.backend == CollectorBackend.S3:
-            return cls(backend=CollectorBackend.S3, config=S3CollectConfig())
-        elif collect_config.backend == CollectorBackend.Gcs:
-            return cls(backend=CollectorBackend.Gcs, config=GcsCollectConfig())
-        elif collect_config.backend == CollectorBackend.WebScraper:
-            return cls(backend=CollectorBackend.WebScraper, config=WebScraperConfig())
-        elif collect_config.backend == CollectorBackend.AzureBlobStorage:
-            return cls(
-                backend=CollectorBackend.AzureBlobStorage, config=AzureCollectConfig()
-            )
-        else:
-            raise ValueError(f"Unsupported collector backend: {collect_config.backend}")
