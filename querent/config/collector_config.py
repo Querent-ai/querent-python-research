@@ -69,7 +69,8 @@ class DropboxConfig(BaseModel):
 
 class GithubConfig(BaseModel):
     github_username: str
-    github_password: str
+    github_access_token: str
+    repository: str
 
 
 class WebScraperConfig(BaseModel):
