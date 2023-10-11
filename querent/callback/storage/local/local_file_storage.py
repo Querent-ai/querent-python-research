@@ -6,12 +6,12 @@ import tempfile
 import shutil
 from querent.common.uri import Protocol, Uri
 from querent.config.storage_config import StorageBackend
-from querent.storage.payload import PutPayload
+from querent.callback.storage.payload import PutPayload
 
-from querent.storage.storage_errors import StorageError, StorageErrorKind
-from querent.storage.storage_base import Storage
-from querent.storage.storage_factory import StorageFactory
-from querent.storage.storage_result import StorageResult
+from querent.callback.storage.storage_errors import StorageError, StorageErrorKind
+from querent.callback.storage.storage_base import Storage
+from querent.callback.storage.storage_factory import StorageFactory
+from querent.callback.storage.storage_result import StorageResult
 
 
 class AsyncDebouncer:

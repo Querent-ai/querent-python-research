@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 from enum import Enum
-from querent.storage.storage_base import Storage
-from querent.storage.storage_errors import StorageResolverError, StorageErrorKind
+from querent.callback.storage.storage_base import Storage
+from querent.callback.storage.storage_errors import (
+    StorageResolverError,
+    StorageErrorKind,
+)
 from querent.config.storage_config import StorageBackend
 
 

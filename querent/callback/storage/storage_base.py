@@ -4,8 +4,8 @@ from typing import IO
 from typing import List
 
 from querent.common.uri import Uri
-from querent.storage.payload import PutPayload
-from querent.storage.storage_result import StorageResult
+from querent.callback.storage.payload import PutPayload
+from querent.callback.storage.storage_result import StorageResult
 
 
 class Storage(ABC):
