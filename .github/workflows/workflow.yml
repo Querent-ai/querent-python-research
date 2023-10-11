@@ -12,7 +12,7 @@ on:
     branches:
       - main
 permissions:
-  contents: read
+  contents: write
   packages: write
   pull-requests: read
   repository-projects: read
