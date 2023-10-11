@@ -136,12 +136,9 @@ jobs:
 
       - name: Generate documentation
         run: |
-          pip install sphinx
-          sphinx-apidoc -f -o docs/source querent
-          sphinx-build -b html docs/source docs/build
-
+          make html
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/build
+          publish_dir: ./_build/html
