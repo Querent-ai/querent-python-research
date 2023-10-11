@@ -12,9 +12,9 @@ load_dotenv()
 @pytest.fixture
 def github_config():
     return GithubConfig(
-        github_username=os.getenv("GITHUB_USERNAME"),
-        repository=os.getenv("GITHUB_REPOSITORY_NAME"),
-        github_access_token=os.getenv("GITHUB_ACCESS_TOKEN"),
+        github_username=os.getenv("USERNAME_GITHUB"),
+        repository=os.getenv("REPOSITORY_NAME_GITHUB"),
+        github_access_token=os.getenv("ACCESS_TOKEN_GITHUB"),
     )
 
 
