@@ -136,6 +136,7 @@ jobs:
 
       - name: Generate documentation
         run: |
+          pip install sphinx
           make html
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
