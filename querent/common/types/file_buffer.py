@@ -29,33 +29,45 @@ class FileBuffer:
     """
 
     # Neeed to discuss maxsize with sir
-    def __init__(self, maxsize=10000):
+    def __init__(self, maxsize=1000):
         self.current_filename = None
-        self._cache = lru_cache(maxsize)(self._get_file_content)
+        self._cache = lru_cache(maxsize, typed=False)(self._get_file_content)
 
     def _get_file_content(self, filename):
-        """Private method to be used by the LRU cache."""
+
         return []
 
     def add_chunk(self, filename, chunk):
-        """Add a chunk of data to the buffer for a given filename."""
+        try:
+                if self.current_filename and self.current_filename != filename:
+                    return self.end_file()
 
-        if self.current_filename and self.current_filename != filename:
-
-            return self.end_file()  # Process the end of the previous file        
-        self.current_filename = filename
-        content = self._cache(filename)
-        content.append(chunk)
+                self.current_filename = filename
+                content = self._cache(filename)
+                content.append(chunk)
+        except Exception as e:
+            self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Unable to add data to cache. {e}"
+                )
+            raise Exception(f"An error occurred while adding a chunk: {e}")   
+             
 
     def end_file(self):
-        
-        """Process the end of a file and clear its content from the buffer."""
-        full_content = ''.join(self._cache(self.current_filename))
-        # You can process the full_content here or return it for external processing
-        self._cache.cache_clear()  # Clear the cache for the processed file
-        print("going to challenge:", full_content)
-        return full_content
+        try:
+            full_content = ''.join(self._cache(self.current_filename))
+            self._cache.cache_clear()
+            return full_content
+        except Exception as e:
+            self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Unable to end file cache. {e}"
+                )
+            raise Exception(f"An error occurred while ending the file: {e}")
 
     def get_content(self, filename):
-        """Retrieve the full content for a given filename."""
-        return ''.join(self._cache(filename))
+        try:
+            return ''.join(self._cache(filename))
+        except Exception as e:
+            self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Unable to get contents from cache. {e}"
+                )
+            raise Exception(f"An error occurred while getting content for {filename}: {e}")

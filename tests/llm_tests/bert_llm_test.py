@@ -39,54 +39,35 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             - Asserts that the event type is TOKEN_PROCESSED during state changes.
         """
 
-
- # Create input queue and resource manager
     input_queue = QuerentQueue()
     resource_manager = ResourceManager()
 
-    # Put the input data into the input queue
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_1_file.txt", data="Puneet is working from Houston."))
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
     
-
-    # Create an instance of the provided LLM class
     llm_instance = llm_class(input_queue, ner_model_name, rel_model_name)
 
-
-    # Define a callback function to subscribe to state changes
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             print(f"New state: {event_state}")
             print(f"New state type: {event_type}")
             assert event_state.event_type == EventType.TOKEN_PROCESSED
 
-    # Subscribe to state change events
+
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
 
-
-    # Create a Querent instance with the LLM instance
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
     )
 
-        
-    # Process the tokens and extract entities
-
-
-    #await llm_instance.process_tokens(ingested_data)
-
-    # #Validate the entity extraction
     entities = llm_instance._extract_entities_from_chunks(llm_instance._tokenize_and_chunk(ingested_data.data))
-    print(entities)
     
     for entity in expected_entities:
         assert entity in entities
 
-
-    # Start the querent
     await querent.start()
 
