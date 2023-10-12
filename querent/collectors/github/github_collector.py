@@ -45,7 +45,7 @@ class GithubCollector(Collector):
                             file_url, timeout=5, headers=headers
                         )
                         file_response.raise_for_status()
-                        file_contents = file_response.text
+                        file_contents = (file_response.text).encode("utf-8")
                         yield CollectedBytes(file=item["name"], data=file_contents)
                     except requests.exceptions.RequestException as file_error:
                         print(f"Error fetching file contents: {file_error}")

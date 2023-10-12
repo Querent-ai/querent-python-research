@@ -26,4 +26,5 @@ class IngestorBackend(str, Enum):
     MOV = "mov"
     AVI = "avi"
     WAV = "wav"
+    GITHUB = "github"
     Unsupported = "unsupported"
