@@ -11,6 +11,7 @@ class EventType:
     """
 
     _STATE_TRANSITION = "state_transition"
+    RDF_GRAPH_UPDATE = "rdf_graph_update"
     TOKEN_PROCESSED = "token_processed"
     CHAT_COMPLETED = "chat_completed"
 
