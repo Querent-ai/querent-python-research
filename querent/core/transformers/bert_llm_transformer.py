@@ -94,7 +94,7 @@ class BERTLLM(BaseEngine):
 
     def _load_model(self, model_name, model_type):
         """Load the model, handling potential TensorFlow weights."""
-        try:
+        try: 
             if model_type == "NER":
                 return AutoModelForTokenClassification.from_pretrained(model_name)
             return AutoModelForQuestionAnswering.from_pretrained(model_name)
