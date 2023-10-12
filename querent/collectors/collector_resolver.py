@@ -7,7 +7,7 @@ from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.collectors.github.github_collector import GithubCollectorFactory
-from querent.config.collector_config import CollectConfig, CollectorBackend
+from querent.config.collector_config import CollectorConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
     CollectorResolverError,
@@ -30,8 +30,15 @@ class CollectorResolver:
             # Add other collector factories as needed
         }
 
-    def resolve(self, uri: Uri, config: CollectConfig) -> Optional[Collector]:
-        backend = self._determine_backend(uri.protocol)
+    def resolve(self, uri: Uri, config: CollectorConfig) -> Optional[Collector]:
+        backend = config.backend
+        backendFromUri = self._determine_backend(uri.protocol)
+
+        if backend != backendFromUri:
+            raise CollectorResolverError(
+                CollectorErrorKind.NotSupported,
+                "Backend in the config does not match the backend the protocol",
+            )
 
         if backend in self.collector_factories:
             factory = self.collector_factories[backend]

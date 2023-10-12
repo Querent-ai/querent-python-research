@@ -1,103 +1,73 @@
-# import pytest
-# from querent.common.types.querent_queue import QuerentQueue
-# from querent.common.types.querent_event import EventType
-# from querent.common.types.querent_queue import QuerentQueue
-# from querent.common.types.ingested_tokens import IngestedTokens
-# from querent.common.types.querent_queue import QuerentQueue
-# from querent.core.transformers.bert_llm_transformer import BERTLLM
-# from querent.querent.resource_manager import ResourceManager
-# from querent.querent.querent import Querent
-
-# """
-# This module contains tests for the BERTLLM (BERT Language Model) tokenization and entity extraction functionalities.
-
-# The tests are designed to:
-# 1. Create an input queue and a resource manager.
-# 2. Ingest data into the input queue.
-# 3. Instantiate the specified LLM (Language Model) class.
-# 4. Subscribe to state change events to monitor the token processing.
-# 5. Create a Querent instance with the LLM instance.
-# 6. Start the Querent and process the tokens to extract entities.
-# 7. Validate the extracted entities against the expected entities.
-
-# Dependencies:
-# - asyncio: For asynchronous operations.
-# - pytest: For running the tests.
-# - querent modules: For various functionalities related to the Querent system.
-
-# Tests:
-# - test_bertllm_ner_tokenization_and_entity_extraction: Tests the tokenization and Named Entity Recognition (NER) capabilities of the BERTLLM model.
-#   Parameters:
-#   - input_data: The input text data for testing.
-#   - model_name: The name of the BERT model to be used.
-#   - llm_class: The LLM class to be instantiated.
-#   - expected_entities: The expected entities to be extracted from the input data.
-
-# Usage:
-# Run this module using pytest to execute the tests.
-# """
+import asyncio
+import pytest
+from querent.callback.event_callback_interface import EventCallbackInterface
+from querent.common.types.querent_queue import QuerentQueue
+from querent.common.types.querent_event import EventState, EventType
+from querent.common.types.querent_queue import QuerentQueue
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.querent_queue import QuerentQueue
+from querent.core.transformers.bert_llm_transformer import BERTLLM
+from querent.querent.resource_manager import ResourceManager
+from querent.querent.querent import Querent
 
 
-# @pytest.mark.asyncio
-# @pytest.mark.parametrize(
-#     "input_data,model_name,llm_class,expected_entities",
-#     [
-#         (
-#             ["Nishant is working from Delhi"],
-#             "dslim/bert-base-NER",
-#             BERTLLM,
-#             [("Nishant", "PER"), ("Delhi", "LOC")],
-#         ),
-#         (
-#             ["A rock is volcano and sedimentary"],
-#             "botryan96/GeoBERT",
-#             BERTLLM,
-#             [("volcano", "GeoPetro"), ("sedimentary", "GeoPetro")],
-#         ),
-#     ],
-# )
-# async def test_bertllm_ner_tokenization_and_entity_extraction(
-#     input_data, model_name, llm_class, expected_entities
-# ):
-#     # Create input queue and resource manager
-#     input_queue = QuerentQueue()
-#     resource_manager = ResourceManager()
 
-#     # Put the input data into the input queue
-#     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
-#     await input_queue.put(ingested_data)
+@pytest.mark.asyncio
+@pytest.mark.parametrize("input_data,ner_model_name,rel_model_name,llm_class,expected_entities", [
+    ("Nishant is working from Delhi. Ansh is working from Punjab.", "dslim/bert-base-NER", "deepset/roberta-base-squad2", BERTLLM, [("Nishant", "PER"), ("Delhi", "LOC")]),
+    ("A rock is volcano and sedimentary.", "botryan96/GeoBERT", "deepset/roberta-base-squad2", BERTLLM, [('volcano', 'GeoPetro'), ('sedimentary', 'GeoPetro')])])
 
-#     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None))
 
-#     # Create an instance of the provided LLM class
-#     llm_instance = llm_class(input_queue, model_name)
 
-#     # Define a callback function to subscribe to state changes
+async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, rel_model_name,  llm_class, expected_entities):
+    """
+        Test the BERTLLM class for NER tokenization and entity extraction.
 
-#     async def state_change_callback(new_state):
-#         assert new_state.event_type == EventType.TOKEN_PROCESSED
+        This test function evaluates the ability of the BERTLLM class to tokenize input data and extract named entities 
+        using specified NER and Relationship models. The test ensures that the extracted entities match the expected 
+        entities provided in the test parameters.
 
-#     # Subscribe to state change events
-#     llm_instance.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
+        Parameters:
+            input_data (str): The input text data for tokenization and entity extraction.
+            ner_model_name (str): The name of the NER model to be used for entity extraction.
+            rel_model_name (str): The name of the Relationship model to be used.
+            llm_class (class): The LLM class to be instantiated and tested.
+            expected_entities (List[Tuple[str, str]]): A list of expected entities in the format (entity, entity_type).
 
-#     # Create a Querent instance with the LLM instance
-#     querent = Querent(
-#         [llm_instance],
-#         num_workers=1,
-#         resource_manager=resource_manager,
-#     )
+        Assertions:
+            - Asserts that the extracted entities match the expected entities.
+            - Asserts that the event type is TOKEN_PROCESSED during state changes.
+        """
 
-#     # Start the querent
-#     await querent.start()
+    input_queue = QuerentQueue()
+    resource_manager = ResourceManager()
 
-#     # Process the tokens and extract entities
+    ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
+    await input_queue.put(ingested_data)
+    await input_queue.put(IngestedTokens(file="dummy_1_file.txt", data="Puneet is working from Houston."))
+    await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
+    await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
+    
+    llm_instance = llm_class(input_queue, ner_model_name, rel_model_name)
 
-#     await llm_instance.process_tokens(ingested_data)
+    class StateChangeCallback(EventCallbackInterface):
+        async def handle_event(self, event_type: EventType, event_state: EventState):
+            print(f"New state: {event_state}")
+            print(f"New state type: {event_type}")
+            assert event_state.event_type == EventType.TOKEN_PROCESSED
 
-#     # Validate the entity extraction
-#     entities = llm_instance._extract_entities_from_chunks(
-#         llm_instance._tokenize_and_chunk(ingested_data)
-#     )
 
-#     for entity in expected_entities:
-#         assert entity in entities
+    llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
+
+    querent = Querent(
+        [llm_instance],
+        resource_manager=resource_manager,
+    )
+
+    entities = llm_instance._extract_entities_from_chunks(llm_instance._tokenize_and_chunk(ingested_data.data))
+    
+    for entity in expected_entities:
+        assert entity in entities
+
+    await querent.start()
+

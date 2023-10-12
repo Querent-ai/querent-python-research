@@ -6,7 +6,7 @@ from querent.collectors.collector_errors import (
     CollectorResolverError,
     CollectorErrorKind,
 )
-from querent.config.collector_config import CollectConfig, CollectorBackend
+from querent.config.collector_config import CollectorConfig, CollectorBackend
 
 
 class CollectorFactory(ABC):
@@ -16,7 +16,7 @@ class CollectorFactory(ABC):
 
     @abstractmethod
     async def resolve(
-        self, uri: str, config: CollectConfig
+        self, uri: str, config: CollectorConfig
     ) -> Optional[CollectorBackend]:
         raise NotImplementedError
 
@@ -26,7 +26,7 @@ class UnsupportedCollector(CollectorFactory):
         self.backend = backend
         self.message = message
 
-    async def resolve(self, uri: str, config: CollectConfig) -> Optional[Collector]:
+    async def resolve(self, uri: str, config: CollectorConfig) -> Optional[Collector]:
         raise CollectorResolverError(
             CollectorErrorKind.NotSupported, self.backend, self.message
         )
