@@ -111,7 +111,6 @@ requirements = [
     "qdrant-client==1.3.1",
     "redis==4.5.5",
     "regex==2023.5.5",
-    "requests==2.31.0",
     "requests-file==1.5.1",
     "requests-html==0.10.0",
     "requests-oauthlib==1.3.1",
@@ -180,6 +179,7 @@ requirements = [
     "setuptools",
     "slack-sdk",
     "dropbox",
+    "requests",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
