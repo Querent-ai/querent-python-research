@@ -31,12 +31,18 @@ class QuerentKG(QuerentGraph):
                 types.append(o)
         return types
 
-    def add_subject_knowledge(self, subject):
+    def add_subject_knowledge(self, subjects):
+        """
+        Add subject knowledge to the graph
+        :param subjects: list of subjects
+        :return:
+        """
+
         try:
             # TODO do some schema validation for the subject
-            self.add_subject(subject)
+            self.add_subjects(subjects)
         except Exception as e:
-            self.logger.error(f"Error adding quad {subject} to graph: {e}")
+            self.logger.error(f"Error adding quad {subjects} to graph: {e}")
             raise e
 
     @property

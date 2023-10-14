@@ -14,6 +14,14 @@ class GraphOntology(QuerentGraph):
         """
         return True
 
+    def add_subject_ontologies(self, subjects):
+        """
+        Add a list of subjects to the graph
+        :param subjects: List[Subject]
+        :return:
+        """
+        self.add_subjects(subjects)
+
     @property
     def object_properties(self):
         """

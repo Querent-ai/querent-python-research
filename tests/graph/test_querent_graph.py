@@ -40,7 +40,7 @@ def test_add_knowledge(querent_kg: QuerentKG):
     alice.add_property(URI("http://example.org/hasLocation"), Literal("Paris"))
 
     # Add Alice's data to the knowledge graph
-    querent_kg.add_subject_knowledge(alice)
+    querent_kg.add_subject_knowledge([alice])
 
     # Ensure that the knowledge graph is not empty
     serialized_data = querent_kg.serialize()
@@ -49,3 +49,7 @@ def test_add_knowledge(querent_kg: QuerentKG):
     # Verify that the correct data has been added
     triples = querent_kg.graph.triples((None, None, None))
     assert len(list(triples)) == 1
+
+    # check the memory of graph
+    expect_bytes = 119
+    assert querent_kg.get_current_memory_usage == expect_bytes

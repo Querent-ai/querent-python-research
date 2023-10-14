@@ -1,4 +1,5 @@
 from functools import lru_cache
+import threading
 from typing import Any
 from rdflib import Graph
 from rdflib.term import URIRef as RDFLibURIRef
@@ -37,41 +38,44 @@ class QuerentGraph(object):
         self.memory_threshold = graph_config.memory_threshold
         self.format = graph_config.graph_format
         self.flush_on_serialize = graph_config.flush_on_serialize
-        self.current_memory_usage = 0
         self.current_timestamp = time.time()
         self.logger = setup_logger(
             self.__class__.__name__, graph_config.graph_identifier
         )
         self._ns = NamespaceManager(self.graph)
-
-    @property
-    def get_current_memory_usage(self):
-        return self.current_memory_usage
+        self.memory_cache = dict()
+        self.lock = threading.Lock()
 
     def bind(self, prefix, namespace, override=True, replace=False):
         self._ns.bind(prefix, namespace, override, replace)
 
-    def add_subject(self, subjects, local_context=None):
+    def __add_subject(self, subjects, local_context=None):
         try:
             if not local_context:
                 local_context = set()
-
             for t in subjects:
                 s, p, o = t
                 if isinstance(o, Subject) and o not in local_context:
                     local_context.add(o)
-                    self.add_subject(o, local_context)
+                    self.__add_subject(o, local_context)
                     o = o.subject
-
-                # convert triple to RDFLib recognizable format
-                triple = self._convert_to_rdflib((s, p, o))
-                self.graph.add(triple)
+            # convert triple to RDFLib recognizable format
+            triple = self._convert_to_rdflib((s, p, o))
+            self.graph.add(triple)
         except Exception as e:
             self.logger.error(f"Failed to add subject: {subjects}")
             raise e
+
+    def add_subjects(self, subjects):
+        try:
+            with self.lock:
+                for s in subjects:
+                    self.__add_subject(s)
+        except Exception as e:
+            self.logger.error(f"Failed to add subjects: {subjects}")
+            raise e
         finally:
             self.graph.commit()
-            
 
     def serialize(self):
         """
@@ -100,9 +104,11 @@ class QuerentGraph(object):
 
             if self.flush_on_serialize:
                 self.graph.remove((None, None, None))
-                self.current_memory_usage = 0
+
             return b_string
         except Exception as e:
+            self.logger.error("Failed to serialize graph")
+            self.logger.error(e)
             raise e
 
     def parse(self, content):
@@ -161,4 +167,19 @@ class QuerentGraph(object):
 
     def clear(self):
         self.graph.remove((None, None, None))
-        self.current_memory_usage = 0
+
+    @property
+    def get_current_memory_usage(self):
+        # Calculate the current memory usage
+        return self.calculate_memory_usage()
+
+    @lru_cache()
+    def calculate_memory_usage(self):
+        # Calculate and store the memory usage
+        memory_usage = self.calculate_actual_memory_usage()
+        self.memory_cache["memory_usage"] = memory_usage
+        return memory_usage
+
+    def calculate_actual_memory_usage(self):
+        # Calculate the actual memory usage
+        return self.graph.serialize(format="nt").__sizeof__()

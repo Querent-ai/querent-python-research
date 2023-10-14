@@ -76,7 +76,7 @@ class KGSchema(object):
                         URI("rdf:comment"),
                         URI(schema["fields"][field]["description"]),
                     )
-                self.ontology.add_subject(t, BNode("schema"))
+                self.ontology.add_subject_ontologies([t])
         except Exception as e:
             self.logger.error(f"Error adding schema config: {e}")
 
