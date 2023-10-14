@@ -4,7 +4,6 @@ from rdflib import Graph
 from rdflib.term import URIRef as RDFLibURIRef
 from rdflib.term import BNode as RDFLibBNode
 from rdflib.term import Literal as RDFLibLiteral
-from querent.common.types.querent_quad import QuerentQuad
 from querent.config.graph_config import GraphConfig
 import time
 from querent.graph.graph_namespace import NamespaceManager
@@ -52,38 +51,7 @@ class QuerentGraph(object):
     def bind(self, prefix, namespace, override=True, replace=False):
         self._ns.bind(prefix, namespace, override, replace)
 
-    def _add_quad(self, quad: QuerentQuad) -> bool:
-        """
-        Add knowledge to the graph.
-
-        Args:
-            quad (QuerentQuad): The quad to add to the graph.
-
-        """
-        try:
-            if (
-                self.current_memory_usage
-                + self.__calculate_memory_usage(
-                    quad.subject, quad.predicate, quad.object, quad.context
-                )
-                > self.memory_threshold
-            ):
-                self.logger.error("Memory threshold exceeded.")
-                return False
-
-            knowlege_seed = Subject(quad.subject)
-            knowlege_seed.add_property(quad.predicate, quad.object)
-
-            self.add_subject(knowlege_seed, quad.context)
-
-            return True
-        except Exception as e:
-            raise e
-        finally:
-            self.current_timestamp = time.time()
-            self.graph.commit()
-
-    def add_subject(self, subjects, context, local_context=None):
+    def add_subject(self, subjects, local_context=None):
         try:
             if not local_context:
                 local_context = set()
@@ -96,85 +64,14 @@ class QuerentGraph(object):
                     o = o.subject
 
                 # convert triple to RDFLib recognizable format
-                quad = self._convert_quad_to_rdflib((s, p, o), context)
-                self.graph.add((quad[0], quad[1], quad[2]))
-                self.current_memory_usage += self.__calculate_memory_usage(
-                    s, p, o, context
-                )
+                triple = self._convert_to_rdflib((s, p, o))
+                self.graph.add(triple)
         except Exception as e:
             self.logger.error(f"Failed to add subject: {subjects}")
             raise e
-
-    def remove_quad(self, quad: QuerentQuad):
-        """
-        Remove knowledge from the graph.
-
-        Args:
-            quad (QuerentQuad): The quad to remove from the graph.
-
-        """
-        try:
-            self.graph.remove((quad.subject, quad.predicate, quad.object))
-            self.current_memory_usage -= self.__calculate_memory_usage(
-                quad.subject, quad.predicate, quad.object, quad.context
-            )
-        except Exception as e:
-            raise e
-
-    def remove_quads(self, quads: list[QuerentQuad]):
-        """
-        Remove knowledge from the graph.
-
-        Args:
-            quads (list[QuerentQuad]): The quads to remove from the graph.
-
-        """
-        try:
-            self.graph.remove(quad for quad in quads)
-            for quad in quads:
-                self.current_memory_usage -= self.__calculate_memory_usage(
-                    quad.subject, quad.predicate, quad.object, quad.context
-                )
-        except Exception as e:
-            raise e
-
-    def __calculate_memory_usage(self, subject, predicate, obj, context):
-        """
-        Calculate the memory usage of a quad.
-
-        Args:
-            subject: The subject of the quad.
-            predicate: The predicate of the quad.
-            obj: The object of the quad.
-            context: The context or named graph associated with the quad.
-        Returns:
-            int: The memory usage of the quad.
-        """
-        return (
-            self.__calculate_memory_usage_of_term(subject)
-            + self.__calculate_memory_usage_of_term(predicate)
-            + self.__calculate_memory_usage_of_term(obj)
-            + self.__calculate_memory_usage_of_term(context)
-        )
-
-    def __calculate_memory_usage_of_term(self, term):
-        """
-        Calculate the memory usage of a term.
-
-        Args:
-            term: A term in the quad.
-
-        Returns:
-            int: The memory usage of the term.
-        """
-        if isinstance(term, URI):
-            return 2 * len(term.value)
-        elif isinstance(term, BNode):
-            return 2 * len(term.value)
-        elif isinstance(term, Literal):
-            return 2 * len(term.value)
-        else:
-            return 0
+        finally:
+            self.graph.commit()
+            
 
     def serialize(self):
         """
@@ -239,12 +136,11 @@ class QuerentGraph(object):
             self.logger.error(f"Failed to resolve URI: {uri.value}")
             raise e
 
-    def _convert_quad_to_rdflib(self, triple, context):
+    def _convert_to_rdflib(self, triple):
         """
         Convert a Node Quad to RDFLib Quad
         """
         s, p, o = triple
-        c = context
         sub = self._resolve_uri(s) if isinstance(s, URI) else RDFLibBNode(s.value)
         pred = self._resolve_uri(p)
         if isinstance(o, URI):
@@ -261,18 +157,7 @@ class QuerentGraph(object):
         else:
             raise Exception("Object must be URI, BNode or Literal")
 
-        if isinstance(c, URI):
-            con = self._resolve_uri(c)
-        elif isinstance(c, Subject):
-            if isinstance(c.subject, URI):
-                con = self._resolve_uri(c.subject)
-            else:
-                con = RDFLibBNode(c.subject.value)
-        elif isinstance(c, BNode):
-            con = RDFLibBNode(c.value)
-        else:
-            raise Exception("Context must be URI or BNode")
-        return (sub, pred, obj, con)
+        return (sub, pred, obj)
 
     def clear(self):
         self.graph.remove((None, None, None))

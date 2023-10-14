@@ -1,5 +1,4 @@
 from typing import Dict
-from querent.common.types.querent_quad import QuerentQuad
 from querent.config.graph_config import GraphConfig
 from querent.graph.graph import QuerentGraph
 from querent.graph.schema import KGSchema
@@ -32,31 +31,13 @@ class QuerentKG(QuerentGraph):
                 types.append(o)
         return types
 
-    def add_knowledge(self, subject, context: BNode | URI, local_context=None):
+    def add_subject_knowledge(self, subject):
         try:
-            if not local_context:
-                local_context = set([])
-            s_types = self._find_types(subject)
-            for t in subject:
-                s, p, o = t
-                o_types = []
-                if isinstance(o, Subject) and o not in local_context:
-                    local_context.add(o)
-                    self.add_knowledge(o, local_context)
-                    o_types = self._find_types(o)
-
-                # TODO Enforce schema check
-                if self.schema.is_valid(s_types, p, o_types):
-                    quad = self._create_quad(t, context)
-                    self._add_quad(quad)
+            # TODO do some schema validation for the subject
+            self.add_subject(subject)
         except Exception as e:
             self.logger.error(f"Error adding quad {subject} to graph: {e}")
             raise e
-
-    def _create_quad(self, triple, context):
-        s, p, o = triple
-        quad = QuerentQuad(s, p, o, context)
-        return quad
 
     @property
     def value(self) -> Dict:

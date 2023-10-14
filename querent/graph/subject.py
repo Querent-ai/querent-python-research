@@ -8,6 +8,7 @@ class Subject:
             raise InvalidParameter("Subject needs to be URI or BNode")
         self._resource = dict()
         self._s = s
+        self._size_len = 0
 
     def add_property(self, p, o, reify=None):
         """
@@ -77,6 +78,20 @@ class Subject:
 
     def __next__(self):
         return self.__iter__()
+
+    def _calculate_memory_usage(self):
+        return sum(
+            [
+                len(str(self._s)),
+                sum(
+                    [
+                        len(str(p)) + len(str(o))
+                        for p, os in self._resource.items()
+                        for o in os
+                    ]
+                ),
+            ]
+        )
 
 
 class Reification(Subject):
