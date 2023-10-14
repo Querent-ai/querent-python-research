@@ -17,6 +17,7 @@ from querent.ingestors.xlsx.xlsx_ingestor import XlsxIngestorFactory
 from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
 from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
 from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
+from querent.ingestors.github.github_ingestor import GithubIngestorFactory
 
 
 class IngestorFactoryManager:
@@ -40,6 +41,7 @@ class IngestorFactoryManager:
             IngestorBackend.XML.value: XmlIngestorFactory(),
             IngestorBackend.HTML.value: HtmlIngestorFactory(),
             IngestorBackend.MP4.value: VideoIngestorFactory(),
+            IngestorBackend.GITHUB.value: GithubIngestorFactory(),
             # Add more mappings as needed
         }
 
