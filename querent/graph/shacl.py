@@ -1,17 +1,19 @@
 from pyshacl import validate
 from typing import Dict, Union
-from rdflib import RDF, RDFS, BNode, Graph, Literal, Namespace, XSD
+from rdflib import RDF, RDFS, Namespace, XSD
 import rdflib
+from querent.config.graph_config import GraphConfig
+from querent.graph.graph import QuerentGraph
 from querent.graph.subject import Subject
 
-from querent.graph.utils import URI, LiteralType
+from querent.graph.utils import URI, BNode, Literal, LiteralType
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-class SHACL(Graph):
-    def __init__(self):
-        super().__init__()
+class SHACL(QuerentGraph):
+    def __init__(self, config: GraphConfig):
+        super().__init__(config)
         self._class_nodes: Dict[str, Union[URI, BNode]] = {}
         self.bind("sh", SH)
 
@@ -21,9 +23,9 @@ class SHACL(Graph):
         self._class_nodes.update(converter.class_nodes)
 
     def validate(self, data_graph, onto_graph=None, inference=None):
-        if isinstance(data_graph, Graph):
+        if isinstance(data_graph, QuerentGraph):
             data_graph = data_graph._g
-        if isinstance(onto_graph, Graph):
+        if isinstance(onto_graph, QuerentGraph):
             onto_graph = onto_graph._g
         if onto_graph and inference:
             conforms, results_graph, results_text = validate(
@@ -33,15 +35,15 @@ class SHACL(Graph):
             conforms, results_graph, results_text = validate(
                 data_graph, shacl_graph=self.graph
             )
-        results_graph = Graph(results_graph)
+        results_graph = QuerentGraph(results_graph)
         return conforms, results_graph
 
 
 class SHACLOntoConverter:
     def __init__(self, class_nodes: Dict[str, Union[URI, BNode]] = None):
         super().__init__()
-        self.onto_graph: rdflib.Graph = None
-        self.graph = Graph()
+        self.onto_graph: rdflib.QuerentGraph = None
+        self.graph = QuerentGraph()
         self._class_nodes = class_nodes if class_nodes else {}
         self.graph.bind("sh", SH)
 
@@ -55,8 +57,10 @@ class SHACLOntoConverter:
     def class_nodes(self):
         return self._class_nodes
 
-    def convert_ontology(self, onto_graph: Graph) -> Graph:
-        self.onto_graph = onto_graph._g if isinstance(onto_graph, Graph) else onto_graph
+    def convert_ontology(self, onto_graph: QuerentGraph) -> QuerentGraph:
+        self.onto_graph = (
+            onto_graph._g if isinstance(onto_graph, QuerentGraph) else onto_graph
+        )
         # build shacl property-based NodeShape for non-domain-referenced properties
         self._convert_ontology_non_referenced_property()
         # build shacl class-based NodeShape

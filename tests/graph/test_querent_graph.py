@@ -1,44 +1,52 @@
+import json
 import pytest
 from querent.common.types.querent_quad import QuerentQuad
 from querent.config.graph_config import GraphConfig
+from querent.graph.subject import Subject
 from querent.kg.querent_kg import QuerentKG
+from querent.graph.utils import URI, BNode, Literal
 
 
 @pytest.fixture
-def querent_kg():
+def schema():
+    # Set up a sample ontology schema
+    return json.dumps(
+        {
+            "fields": {
+                "name": {"type": "string", "description": "Name of the person"},
+                "location": {"type": "string", "description": "Location of the person"},
+            }
+        }
+    )
+
+
+@pytest.fixture
+def querent_kg(schema):
     # Set up a QuerentKG instance for testing
     config = GraphConfig(
-        graph_identifier="test_graph",
+        identifier="test_kg",
+        format="nt",
         store="default",
-        memory_threshold=10,
+        schema=schema,
         flush_on_serialize=False,
-        graph_format="nt",
     )
     return QuerentKG(config)
 
 
 def test_add_knowledge(querent_kg: QuerentKG):
-    # Test adding knowledge to the graph
-    quad = QuerentQuad(
-        subject="http://example.org/subject",
-        predicate="http://example.org/predicate",
-        object="Value",
-        context="http://example.org/context",
-    )
-    querent_kg.add_quad(quad)
-    dict_value = querent_kg.value
-    assert len(dict_value) > 0  # Check if the graph is populated
+    # Create a Subject instance to represent knowledge about Alice
+    alice = Subject(URI("http://example.org/Alice"))
 
+    # Define properties for Alice
+    alice.add_property(URI("http://example.org/hasLocation"), Literal("Paris"))
 
-def test_stream_graph(querent_kg: QuerentKG):
-    # Test streaming the graph
-    quad = QuerentQuad(
-        subject="http://example.org/subject",
-        predicate="http://example.org/predicate",
-        object="Value",
-        context="http://example.org/context",
-    )
-    querent_kg.add_quad(quad)
+    # Add Alice's data to the knowledge graph
+    querent_kg.add_knowledge(alice, BNode("data"))
 
-    serialized_graph = querent_kg.serialize()
-    assert len(serialized_graph) > 0  # Check if the graph is serialized
+    # Ensure that the knowledge graph is not empty
+    serialized_data = querent_kg.serialize()
+    assert serialized_data != ""
+
+    # Verify that the correct data has been added
+    triples = querent_kg.graph.triples((None, None, None))
+    assert len(list(triples)) == 1

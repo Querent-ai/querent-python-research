@@ -1,13 +1,10 @@
-from rdflib import BNode, Literal
-
-from querent.common.uri import Uri
 from querent.graph.errors import InvalidParameter
-from querent.graph.utils import URI
+from querent.graph.utils import URI, BNode, Literal
 
 
 class Subject:
     def __init__(self, s):
-        if not isinstance(s, (Uri, BNode)):
+        if not isinstance(s, (URI, BNode)):
             raise InvalidParameter("Subject needs to be URI or BNode")
         self._resource = dict()
         self._s = s

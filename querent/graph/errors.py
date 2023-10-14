@@ -30,3 +30,9 @@ class InvalidParameter(Exception):
 class SplitURIWithUnknownPrefix(Exception):
     def __init__(self):
         super().__init__()
+
+
+class BadSchemaException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+        super().__init__(self.msg)

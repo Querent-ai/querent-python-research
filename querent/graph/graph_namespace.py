@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Union
 import rdflib.namespace
-from rdflib.namespace import Namespace, OWL, RDF, XSD
+from rdflib.namespace import Namespace, OWL
 from rdflib import URIRef
 import warnings
 from querent.graph.errors import (

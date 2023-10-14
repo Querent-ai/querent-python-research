@@ -1,17 +1,20 @@
 from functools import lru_cache
-from rdflib import RDF, Graph, URIRef, Literal
-from rdflib.plugins.sparql.processor import SPARQLResult
+from typing import Any
+from rdflib import Graph
+from rdflib.term import URIRef as RDFLibURIRef
+from rdflib.term import BNode as RDFLibBNode
+from rdflib.term import Literal as RDFLibLiteral
 from querent.common.types.querent_quad import QuerentQuad
 from querent.config.graph_config import GraphConfig
 import time
 from querent.graph.graph_namespace import NamespaceManager
 from querent.graph.subject import Subject
-from querent.graph.utils import URI, BNode
+from querent.graph.utils import URI, BNode, Literal
 
 from querent.logging.logger import setup_logger
 
 
-class QuerentGraph:
+class QuerentGraph(object):
     """
     A class for managing and manipulating an RDF graph with memory management features.
     """
@@ -28,7 +31,8 @@ class QuerentGraph:
             memory_threshold_percent (float, optional): Memory threshold as a percentage of max_chunk_size. Default is None.
         """
         self.graph = Graph(
-            identifier=URIRef(graph_config.graph_identifier), store=graph_config.store
+            identifier=RDFLibURIRef(graph_config.graph_identifier),
+            store=graph_config.store,
         )
 
         self.memory_threshold = graph_config.memory_threshold
@@ -41,10 +45,14 @@ class QuerentGraph:
         )
         self._ns = NamespaceManager(self.graph)
 
+    @property
+    def get_current_memory_usage(self):
+        return self.current_memory_usage
+
     def bind(self, prefix, namespace, override=True, replace=False):
         self._ns.bind(prefix, namespace, override, replace)
 
-    def add_quad(self, quad: QuerentQuad) -> bool:
+    def _add_quad(self, quad: QuerentQuad) -> bool:
         """
         Add knowledge to the graph.
 
@@ -66,11 +74,8 @@ class QuerentGraph:
             knowlege_seed = Subject(quad.subject)
             knowlege_seed.add_property(quad.predicate, quad.object)
 
-            self.add_subject([knowlege_seed], quad.context)
+            self.add_subject(knowlege_seed, quad.context)
 
-            self.current_memory_usage += self.__calculate_memory_usage(
-                quad.subject, quad.predicate, quad.object, quad.context
-            )
             return True
         except Exception as e:
             raise e
@@ -91,50 +96,14 @@ class QuerentGraph:
                     o = o.subject
 
                 # convert triple to RDFLib recognizable format
-                quad = self._convert_quad_to_rdflib((s, p, o, context))
-                self.graph.addN(quads=[quad])
+                quad = self._convert_quad_to_rdflib((s, p, o), context)
+                self.graph.add((quad[0], quad[1], quad[2]))
                 self.current_memory_usage += self.__calculate_memory_usage(
                     s, p, o, context
                 )
         except Exception as e:
             self.logger.error(f"Failed to add subject: {subjects}")
             raise e
-
-    def add_quads(self, quads: list[QuerentQuad]):
-        """
-        Add knowledge to the graph.
-
-        Args:
-            quads (list[QuerentQuad]): The quads to add to the graph.
-
-        """
-        try:
-            if (
-                self.current_memory_usage
-                + sum(
-                    [
-                        self.__calculate_memory_usage(
-                            quad.subject, quad.predicate, quad.object, quad.context
-                        )
-                        for quad in quads
-                    ]
-                )
-                > self.memory_threshold
-            ):
-                self.logger.error("Memory threshold exceeded.")
-                return False
-
-            for quad in quads:
-                self.add_subject([quad], quad.context)
-                self.current_memory_usage += self.__calculate_memory_usage(
-                    quad.subject, quad.predicate, quad.object, quad.context
-                )
-        except Exception as e:
-            raise e
-
-        finally:
-            self.current_timestamp = time.time()
-            self.graph.commit()
 
     def remove_quad(self, quad: QuerentQuad):
         """
@@ -198,10 +167,12 @@ class QuerentGraph:
         Returns:
             int: The memory usage of the term.
         """
-        if isinstance(term, URIRef):
-            return len(str(term)) * 2
+        if isinstance(term, URI):
+            return 2 * len(term.value)
+        elif isinstance(term, BNode):
+            return 2 * len(term.value)
         elif isinstance(term, Literal):
-            return len(str(term)) * 2
+            return 2 * len(term.value)
         else:
             return 0
 
@@ -243,13 +214,19 @@ class QuerentGraph:
         except Exception as e:
             raise e
 
-    def _is_rdf_type(self, uri: URI) -> bool:
-        if not isinstance(uri, URI):
+    def _is_rdf_type(self, uri: Any) -> bool:
+        try:
+            return (
+                isinstance(self._resolve_uri(uri), RDFLibURIRef)
+                or isinstance(self._resolve_uri(uri), RDFLibBNode)
+                or isinstance(self._resolve_uri(uri), RDFLibLiteral)
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to resolve URI: {uri.value}")
             return False
-        return self._resolve_uri(uri) == RDF.type
 
     @lru_cache()
-    def _resolve_uri(self, uri: URI) -> URIRef:
+    def _resolve_uri(self, uri: URI) -> RDFLibURIRef:
         """
         Convert a URI object into a RDFLib URIRef, including resolve its context
 
@@ -262,12 +239,13 @@ class QuerentGraph:
             self.logger.error(f"Failed to resolve URI: {uri.value}")
             raise e
 
-    def _convert_quad_to_rdflib(self, quad: QuerentQuad):
+    def _convert_quad_to_rdflib(self, triple, context):
         """
         Convert a Node Quad to RDFLib Quad
         """
-        s, p, o, c = quad
-        sub = self._resolve_uri(s) if isinstance(s, URI) else BNode(s.value)
+        s, p, o = triple
+        c = context
+        sub = self._resolve_uri(s) if isinstance(s, URI) else RDFLibBNode(s.value)
         pred = self._resolve_uri(p)
         if isinstance(o, URI):
             obj = self._resolve_uri(o)
@@ -275,11 +253,13 @@ class QuerentGraph:
             if isinstance(o.subject, URI):
                 obj = self._resolve_uri(o.subject)
             else:
-                obj = BNode(o.subject.value)
+                obj = RDFLibBNode(o.subject.value)
         elif isinstance(o, BNode):
-            obj = BNode(o.value)
+            obj = RDFLibBNode(o.value)
+        elif isinstance(o, Literal):
+            obj = RDFLibLiteral(o.value, o.lang, o.raw_type)
         else:
-            obj = Literal(o.value, o.lang, o.raw_type)
+            raise Exception("Object must be URI, BNode or Literal")
 
         if isinstance(c, URI):
             con = self._resolve_uri(c)
@@ -287,12 +267,12 @@ class QuerentGraph:
             if isinstance(c.subject, URI):
                 con = self._resolve_uri(c.subject)
             else:
-                con = BNode(c.subject.value)
+                con = RDFLibBNode(c.subject.value)
         elif isinstance(c, BNode):
-            con = BNode(c.value)
+            con = RDFLibBNode(c.value)
         else:
             raise Exception("Context must be URI or BNode")
-        return sub, pred, obj, con
+        return (sub, pred, obj, con)
 
     def clear(self):
         self.graph.remove((None, None, None))

@@ -1,42 +1,47 @@
 from typing import List, Union
 import json
-
-from rdflib import Literal
+from querent.config.graph_config import GraphConfig
+from querent.graph.errors import BadSchemaException
 
 from querent.graph.ontology import GraphOntology
 from querent.graph.shacl import SHACL
 from querent.graph.subject import Subject
-from querent.graph.utils import URI
+from querent.graph.utils import URI, BNode, Literal
+from querent.logging.logger import setup_logger
 
 
 class KGSchema(object):
-    def __init__(self, content=None):
-        self.ontology = GraphOntology()
-        self.shacl = SHACL()
-        self.need_convert = False
-        if content:
-            self.add_schema(content, "querent_default")
+    def __init__(self, config: GraphConfig):
+        self.ontology = GraphOntology(config)
+        self.shacl = SHACL(config)
+        self.schema_enabled = False
+        self.logger = setup_logger("schema", config.schema.encode())
+        if config.schema:
+            self.add_schema(config.schema, "querent_default")
 
-    def add_schema(self, content: str, format: str):
-        self.need_convert = True
-        if format == "querent_default":
-            if isinstance(content, dict):
-                config = content
+    def add_schema(self, schema: str, format: str):
+        try:
+            self.schema_enabled = True
+            if format == "querent_default":
+                if isinstance(schema, dict):
+                    schema = schema
+                else:
+                    schema = json.loads(schema)
+                self._add_schema_config(schema)
             else:
-                config = json.loads(content)
-            self._add_schema_config(config)
-        else:
-            self.ontology.parse(content, format)
+                self.ontology.parse(schema, format)
+        except Exception as e:
+            raise BadSchemaException(e)
 
     def add_shacl(self, content: str, format: str):
         self.shacl.parse(content, format)
 
     def _merge_ontology(self):
         self.shacl.add_ontology(self.ontology)
-        self.need_convert = False
+        self.schema_enabled = False
 
     def validate(self, data_graph, inference=None):
-        if self.need_convert:
+        if self.schema_enabled:
             self._merge_ontology()
         if inference:
             conforms, results_graph = self.shacl.validate(
@@ -46,34 +51,34 @@ class KGSchema(object):
             conforms, results_graph = self.shacl.validate(data_graph)
         return conforms, results_graph
 
-    def _add_schema_config(self, config):
+    def _add_schema_config(self, schema):
         self.ontology._ns.bind_for_schema_config()
         try:
-            for field in config["fields"]:
+            for field in schema["fields"]:
                 t = Subject(URI(field))
-                if config["fields"][field]["type"] == "kg_id":
+                if schema["fields"][field]["type"] == "id":
                     t.add_property(URI("rdf:type"), URI("owl:ObjectProperty"))
-                elif config["fields"][field]["type"] == "number":
+                elif schema["fields"][field]["type"] == "number":
                     t.add_property(URI("rdf:type"), URI("owl:DatatypeProperty"))
-                elif config["fields"][field]["type"] == "date":
+                elif schema["fields"][field]["type"] == "date":
                     t.add_property(URI("rdf:type"), URI("owl:DatatypeProperty"))
-                elif config["fields"][field]["type"] == "location":
+                elif schema["fields"][field]["type"] == "location":
                     t.add_property(URI("rdf:type"), URI("owl:DatatypeProperty"))
                     t.add_property(URI("rdf:range"), URI("xsd:string"))
                 else:
                     t.add_property(URI("rdf:type"), URI("owl:DatatypeProperty"))
                     t.add_property(URI("rdf:range"), URI("xsd:string"))
                 if (
-                    "description" in config["fields"][field]
-                    and config["fields"][field]["description"]
+                    "description" in schema["fields"][field]
+                    and schema["fields"][field]["description"]
                 ):
                     t.add_property(
                         URI("rdf:comment"),
-                        Literal(config["fields"][field]["description"]),
+                        URI(schema["fields"][field]["description"]),
                     )
-                self.ontology.add_subject(t)
-        except KeyError as key:
-            print(str(key) + " not in config")
+                self.ontology.add_subject(t, BNode("schema"))
+        except Exception as e:
+            self.logger.error(f"Error adding schema config: {e}")
 
     def is_valid(self, s_types: List[URI], p: URI, o_types: List[URI]) -> bool:
         """

@@ -1,11 +1,10 @@
 from typing import Dict
-
-from rdflib import Literal
+from querent.common.types.querent_quad import QuerentQuad
 from querent.config.graph_config import GraphConfig
 from querent.graph.graph import QuerentGraph
 from querent.graph.schema import KGSchema
 from querent.graph.subject import Subject
-from querent.graph.utils import URI
+from querent.graph.utils import URI, BNode, Literal
 
 
 class QuerentKG(QuerentGraph):
@@ -14,8 +13,8 @@ class QuerentKG(QuerentGraph):
     """
 
     def __init__(self, config: GraphConfig):
-        super().__init__()
-        self.schema = KGSchema(config.schema)
+        super().__init__(config)
+        self.schema = KGSchema(config)
         self._fork_namespace_manager()
 
     def _find_types(self, triples):
@@ -33,19 +32,31 @@ class QuerentKG(QuerentGraph):
                 types.append(o)
         return types
 
-    def add_quad(self, subject, context, local_context=None):
-        if not local_context:
-            local_context = set([])
-        s_types = self._find_types(subject, context)
-        s, p, o = subject
-        o_types = []
-        if isinstance(o, Subject) and o not in local_context:
-            local_context.add(o)
-            self.add_quad(o, context, local_context)
-            o_types = self._find_types(o)
-        if self.schema.is_valid(s_types, p, o_types):
-            quad = self._convert_quad_to_rdflib((s, p, o))
-            self.graph.add(quad)
+    def add_knowledge(self, subject, context: BNode | URI, local_context=None):
+        try:
+            if not local_context:
+                local_context = set([])
+            s_types = self._find_types(subject)
+            for t in subject:
+                s, p, o = t
+                o_types = []
+                if isinstance(o, Subject) and o not in local_context:
+                    local_context.add(o)
+                    self.add_knowledge(o, local_context)
+                    o_types = self._find_types(o)
+
+                # TODO Enforce schema check
+                if self.schema.is_valid(s_types, p, o_types):
+                    quad = self._create_quad(t, context)
+                    self._add_quad(quad)
+        except Exception as e:
+            self.logger.error(f"Error adding quad {subject} to graph: {e}")
+            raise e
+
+    def _create_quad(self, triple, context):
+        s, p, o = triple
+        quad = QuerentQuad(s, p, o, context)
+        return quad
 
     @property
     def value(self) -> Dict:
@@ -71,7 +82,7 @@ class QuerentKG(QuerentGraph):
         return key
 
     def serialize(self):
-        return super().serialize(format, self._ns)
+        return super().serialize()
 
     def _fork_namespace_manager(self):
         for prefix, ns in self.schema.ontology._ns.namespaces():
