@@ -49,3 +49,6 @@ def test_add_knowledge(querent_kg: QuerentKG):
     # Verify that the correct data has been added
     triples = querent_kg.graph.triples((None, None, None))
     assert len(list(triples)) == 1
+
+    # check the memory of graph
+    assert querent_kg.get_current_memory_usage > 0
