@@ -43,7 +43,6 @@ class QuerentGraph(object):
         )
         self._ns = NamespaceManager(self.graph)
         self.memory_cache = dict()
-        self.serialized_graph = None
 
     def bind(self, prefix, namespace, override=True, replace=False):
         self._ns.bind(prefix, namespace, override, replace)
@@ -67,7 +66,6 @@ class QuerentGraph(object):
             self.logger.error(f"Failed to add subject: {subjects}")
             raise e
         finally:
-            self.serialized_graph = None
             self.graph.commit()
 
     def add_subjects(self, subjects):
@@ -78,10 +76,8 @@ class QuerentGraph(object):
             self.logger.error(f"Failed to add subjects: {subjects}")
             raise e
         finally:
-            self.serialized_graph = None
             self.graph.commit()
 
-    @lru_cache()
     def serialize(self):
         """
         Serialize the graph.
@@ -90,8 +86,6 @@ class QuerentGraph(object):
             str: Serialized RDF data.
         """
         try:
-            if self.serialized_graph:
-                return self.serialized_graph
             if self.format.lower() in ("ttl", "turtle"):
                 b_string = self.graph.serialize(
                     format=self.format,
@@ -112,7 +106,6 @@ class QuerentGraph(object):
             if self.flush_on_serialize:
                 self.graph.remove((None, None, None))
 
-            self.serialized_graph = b_string
             return b_string
         except Exception as e:
             self.logger.error("Failed to serialize graph")
