@@ -1,4 +1,5 @@
 from functools import lru_cache
+import threading
 from typing import Any
 from rdflib import Graph
 from rdflib.term import URIRef as RDFLibURIRef
@@ -43,35 +44,33 @@ class QuerentGraph(object):
         )
         self._ns = NamespaceManager(self.graph)
         self.memory_cache = dict()
+        self.lock = threading.Lock()
 
     def bind(self, prefix, namespace, override=True, replace=False):
         self._ns.bind(prefix, namespace, override, replace)
 
-    def add_subject(self, subjects, local_context=None):
+    def __add_subject(self, subjects, local_context=None):
         try:
             if not local_context:
                 local_context = set()
-
             for t in subjects:
                 s, p, o = t
                 if isinstance(o, Subject) and o not in local_context:
                     local_context.add(o)
-                    self.add_subject(o, local_context)
+                    self.__add_subject(o, local_context)
                     o = o.subject
-
-                # convert triple to RDFLib recognizable format
-                triple = self._convert_to_rdflib((s, p, o))
-                self.graph.add(triple)
+            # convert triple to RDFLib recognizable format
+            triple = self._convert_to_rdflib((s, p, o))
+            self.graph.add(triple)
         except Exception as e:
             self.logger.error(f"Failed to add subject: {subjects}")
             raise e
-        finally:
-            self.graph.commit()
 
     def add_subjects(self, subjects):
         try:
-            for s in subjects:
-                self.add_subject(s)
+            with self.lock:
+                for s in subjects:
+                    self.__add_subject(s)
         except Exception as e:
             self.logger.error(f"Failed to add subjects: {subjects}")
             raise e

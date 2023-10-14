@@ -40,7 +40,7 @@ def test_add_knowledge(querent_kg: QuerentKG):
     alice.add_property(URI("http://example.org/hasLocation"), Literal("Paris"))
 
     # Add Alice's data to the knowledge graph
-    querent_kg.add_subject_knowledge(alice)
+    querent_kg.add_subject_knowledge([alice])
 
     # Ensure that the knowledge graph is not empty
     serialized_data = querent_kg.serialize()
