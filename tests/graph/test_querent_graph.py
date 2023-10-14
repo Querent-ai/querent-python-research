@@ -51,4 +51,5 @@ def test_add_knowledge(querent_kg: QuerentKG):
     assert len(list(triples)) == 1
 
     # check the memory of graph
-    assert querent_kg.get_current_memory_usage > 0
+    expect_bytes = 119
+    assert querent_kg.get_current_memory_usage == expect_bytes
