@@ -36,11 +36,9 @@ class Subject:
         self._resource[p].add(o)
 
         if reify:
-            if not isinstance(reify, Reification):
-                # legacy format
-                reify = Reification.parse_legacy_format(reify)
             self.add_property(reify.p1, reify)
-            reify.add_property(reify.p2, o)
+            if isinstance(reify, Reification):
+                reify.add_property(reify.p2, o)
             return reify
 
     def remove_property(self, p, o=None):
@@ -130,17 +128,3 @@ class Reification(Subject):
                 "Reification statement term needs to be a valid URI or BNode or None"
             )
         super().__init__(self.statement)
-
-    @classmethod
-    def parse_legacy_format(cls, seq):
-        if not isinstance(seq, (list, tuple)):
-            return cls(seq)
-        if len(seq) == 1:
-            return cls(seq[0], None, None)
-        if len(seq) == 2:
-            return cls(seq[0], None, seq[1])
-        if len(seq) == 3:
-            return cls(*seq)
-        raise InvalidParameter(
-            "Reification legacy format takes a tuple with length between [1,3]"
-        )
