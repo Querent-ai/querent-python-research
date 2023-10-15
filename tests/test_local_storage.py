@@ -2,13 +2,13 @@ import asyncio
 import tempfile
 from pathlib import Path
 import pytest
-from querent.storage.local.local_file_storage import (
+from querent.callback.storage.local.local_file_storage import (
     LocalFileStorage,
     LocalStorageFactory,
 )
 from querent.common.uri import Uri
-import querent.storage.payload as querent_payload
-from querent.storage.storage_resolver import StorageResolver
+import querent.callback.storage.payload as querent_payload
+from querent.callback.storage.storage_resolver import StorageResolver
 
 
 @pytest.fixture
