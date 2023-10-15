@@ -18,10 +18,51 @@ from querent.ingestors.ppt.ppt_ingestor import PptIngestorFactory
 from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
 from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
 from querent.ingestors.github.github_ingestor import GithubIngestorFactory
+from querent.ingestors.code.code_ingestor import CodeIngestorFactory
 
 
 class IngestorFactoryManager:
     """Factory manager"""
+
+    PROGRAMMING_LANGUAGES = [
+        "py",
+        "pyw",
+        "pyp",
+        "pyc",
+        "js",
+        "mjs",
+        "java",
+        "cpp",
+        "h",
+        "hpp",
+        "c",
+        "h",
+        "cs",
+        "rb",
+        "swift",
+        "php",
+        "php3",
+        "php4",
+        "php5",
+        "css",
+        "go",
+        "rs",
+        "kt",
+        "ts",
+        "pl",
+        "sql",
+        "r",
+        "m",
+        "sh",
+        "bash",
+        "zsh",
+        "dart",
+        "scala",
+        "groovy",
+        "lua",
+        "m",
+        "vb",
+    ]
 
     def __init__(self):
         self.ingestor_factories = {
@@ -49,6 +90,8 @@ class IngestorFactoryManager:
         """get_factory to match factory based on file extension"""
         if file_extension is None or file_extension == "":
             return TextIngestorFactory()
+        if file_extension in self.PROGRAMMING_LANGUAGES:
+            return CodeIngestorFactory()
         return self.ingestor_factories.get(
             file_extension.lower(), UnsupportedIngestor("Unsupported file extension")
         )
