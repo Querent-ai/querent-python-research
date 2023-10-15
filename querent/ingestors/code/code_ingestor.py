@@ -92,8 +92,8 @@ class CodeIngestor(BaseIngestor):
                         data=[line],
                         error=None,
                     )
-        except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+        except Exception as exc:
+            raise Exception from exc
 
     async def extract_code_from_bytes(
         self, chunk_bytes: CollectedBytes
