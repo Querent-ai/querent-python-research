@@ -102,7 +102,7 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def process_code(self, data: IngestedTokens):
+    async def process_code(self, data: IngestedCode):
         """
         Process coding files asynchronously.
         Args:
