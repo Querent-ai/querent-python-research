@@ -28,7 +28,6 @@ class IngestorFactoryManager:
         "py",
         "pyw",
         "pyp",
-        "pyc",
         "js",
         "mjs",
         "java",
