@@ -8,8 +8,6 @@ logger = setup_logger(__name__, "EventCallbackInterface")
 
 
 class EventCallbackInterface(ABC):
-    # lets define a asbtract property for adapater from bindings that will convert event state to a respective type like Neo4JBindings for example will be used in Neo4JCallback
-    # so create the required property below with dummy implementation
     @property
     async def adapter(self) -> Any:
         """
