@@ -1,5 +1,6 @@
 import pytest
 from querent.callback.event_callback_interface import EventCallbackInterface
+from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
@@ -33,6 +34,9 @@ class MockLLMEngine(BaseEngine):
         # The state of the LLM is published to subscribers of the LLM
         current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, "anything")
         await self.set_state(new_state=current_state)
+
+    async def process_code(self, data: IngestedCode):
+        pass
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)

@@ -4,6 +4,7 @@ from querent.callback.event_callback_dispatcher import EventCallbackDispatcher
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
 from querent.config.engine_config import EngineConfig
@@ -101,6 +102,18 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def process_code(self, data: IngestedCode):
+        """
+        Process coding files asynchronously.
+        Args:
+            data (IngestedCode): The input data to process.
+        Returns:
+            EventState: The state of the event is set with the event type and the timestamp
+            of the event and set using `self.set_state(event_state)`.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the LLM.
@@ -184,6 +197,8 @@ class BaseEngine(ABC):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
                             await self.process_tokens(data)
+                        elif isinstance(data, IngestedCode):
+                            await self.process_code(data)
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
