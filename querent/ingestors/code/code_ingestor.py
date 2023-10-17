@@ -10,7 +10,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 
 class CodeIngestorFactory(IngestorFactory):
     PROGRAMMING_LANGUAGES = {
-        "Python": ["py", "pyw", "pyp", "pyc"],
+        "Python": ["py", "pyw", "pyp"],
         "JavaScript": ["js", "mjs"],
         "Java": ["java"],
         "C++": ["cpp", "h", "hpp"],
@@ -82,7 +82,6 @@ class CodeIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
 
                 collected_bytes += chunk_bytes.data
-
             if current_file:
                 async for line in self.extract_code_from_bytes(
                     CollectedBytes(file=current_file, data=collected_bytes)

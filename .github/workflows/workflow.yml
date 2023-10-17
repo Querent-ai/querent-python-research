@@ -86,7 +86,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pytest
-        run: pytest --disable-warnings .
+        run: python -B -m pytest --disable-warnings .
 
       - name: Test Code Coverage
         run: pytest --cov=querent

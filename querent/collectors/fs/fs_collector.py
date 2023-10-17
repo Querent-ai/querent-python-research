@@ -1,4 +1,6 @@
 import asyncio
+import fnmatch
+import re
 from pathlib import Path
 from typing import AsyncGenerator
 from querent.collectors.collector_base import Collector
@@ -13,6 +15,7 @@ from querent.common import common_errors
 class FSCollector(Collector):
     def __init__(self, config: FSCollectorConfig):
         self.root_dir = Path(config.root_path)
+        self.items_to_ignore = []
         self.chunk_size = config.chunk_size
 
     async def connect(self):
@@ -20,6 +23,8 @@ class FSCollector(Collector):
 
     async def disconnect(self):
         pass
+
+    # collect those files
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
@@ -45,12 +50,36 @@ class FSCollector(Collector):
         await file.close()
 
     async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
+        with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
+            self.items_to_ignore = gitignore_file.read().splitlines()
+
+        gitignore_regex = self.build_gitignore_regex(self.items_to_ignore)
+        print(
+            "gitignore_regex ghvf   ",
+            bool(
+                gitignore_regex.search(
+                    "/home/ansh/Desktop/Querrent/querent/tests/data/image/IvV2y.png"
+                )
+            ),
+        )
         for item in root.iterdir():
+            print("item   ", item)
+            print(
+                "gitignore_regex.search(item)    ", bool(gitignore_regex.search(item))
+            )
+            if bool(gitignore_regex.search(item)):
+                continue
             if item.is_file():
                 yield item
             elif item.is_dir():
                 async for file_path in self.walk_files(item):
                     yield file_path
+
+    def build_gitignore_regex(self, gitignore_patterns):
+        combined_pattern = "|".join(
+            fnmatch.translate(pattern) for pattern in gitignore_patterns
+        )
+        return re.compile(f"({combined_pattern})")
 
 
 class FSCollectorFactory(CollectorFactory):
