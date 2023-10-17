@@ -95,7 +95,7 @@ class BERTLLM(BaseEngine):
 
     def _load_model(self, model_name, model_type):
         """Load the model, handling potential TensorFlow weights."""
-        try: 
+        try:
             if model_type == "NER":
                 return AutoModelForTokenClassification.from_pretrained(model_name)
             return AutoModelForQuestionAnswering.from_pretrained(model_name)
@@ -284,9 +284,6 @@ class BERTLLM(BaseEngine):
             raise Exception(
                 f"An unexpected error occurred while processing tokens: {e}"
             )
-<<<<<<< Updated upstream
 
     async def process_code(self, data: IngestedCode):
         pass
-=======
->>>>>>> Stashed changes

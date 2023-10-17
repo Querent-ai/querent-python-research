@@ -55,6 +55,8 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             print(f"New state: {event_state}")
             print(f"New state type: {event_type}")
             assert event_state.event_type == EventType.TOKEN_PROCESSED
+        async def adapter(self):
+            return None
 
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
