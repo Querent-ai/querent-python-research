@@ -54,20 +54,16 @@ class FSCollector(Collector):
             self.items_to_ignore = gitignore_file.read().splitlines()
 
         gitignore_regex = self.build_gitignore_regex(self.items_to_ignore)
-        print(
-            "gitignore_regex ghvf   ",
-            bool(
-                gitignore_regex.search(
-                    "/home/ansh/Desktop/Querrent/querent/tests/data/image/IvV2y.png"
-                )
-            ),
-        )
         for item in root.iterdir():
-            print("item   ", item)
-            print(
-                "gitignore_regex.search(item)    ", bool(gitignore_regex.search(item))
-            )
-            if bool(gitignore_regex.search(item)):
+            # print("item   ", item, "    ", type(item))
+            # try:
+            #     print(
+            #         "gitignore_regex.search(item)    ",
+            #         bool(gitignore_regex.search(str(item))),
+            #     )
+            # except Exception as e:
+            #     print(e)
+            if bool(gitignore_regex.search(str(item))):
                 continue
             if item.is_file():
                 yield item
@@ -76,6 +72,9 @@ class FSCollector(Collector):
                     yield file_path
 
     def build_gitignore_regex(self, gitignore_patterns):
+        gitignore_patterns = [
+            pattern for pattern in gitignore_patterns if pattern != "*.py"
+        ]
         combined_pattern = "|".join(
             fnmatch.translate(pattern) for pattern in gitignore_patterns
         )
