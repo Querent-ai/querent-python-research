@@ -67,8 +67,6 @@ async def test_querent_with_base_llm():
             print(f"New state: {event_state}")
             print(f"New state type: {event_type}")
             assert event_state.event_type == EventType.TOKEN_PROCESSED
-        async def adapter(self):
-            return None
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
