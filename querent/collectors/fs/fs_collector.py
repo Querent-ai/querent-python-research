@@ -53,18 +53,10 @@ class FSCollector(Collector):
         with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
             self.items_to_ignore = gitignore_file.read().splitlines()
 
-        gitignore_regex = self.build_gitignore_regex(self.items_to_ignore)
         for item in root.iterdir():
-            # print("item   ", item, "    ", type(item))
-            # try:
-            #     print(
-            #         "gitignore_regex.search(item)    ",
-            #         bool(gitignore_regex.search(str(item))),
-            #     )
-            # except Exception as e:
-            #     print(e)
-            if bool(gitignore_regex.search(str(item))):
-                continue
+            for pattern in self.items_to_ignore:
+                if fnmatch.fnmatch(item, pattern):
+                    continue
             if item.is_file():
                 yield item
             elif item.is_dir():

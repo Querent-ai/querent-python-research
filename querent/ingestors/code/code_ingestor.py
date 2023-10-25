@@ -92,6 +92,7 @@ class CodeIngestor(BaseIngestor):
                         error=None,
                     )
         except Exception as exc:
+            print(exc)
             raise Exception from exc
 
     async def extract_code_from_bytes(
