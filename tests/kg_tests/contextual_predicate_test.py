@@ -18,11 +18,11 @@ from typing import List, Tuple, Dict
 
 def test_contextual_predicate():
     sample_data = [
-        ('eocene', 'ABSTRACT In this study...', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.99, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico'}),
-        ('eocene', 'ABSTRACT In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'organic', {'entity1_score': 1.0, 'entity2_score': 0.98, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoMeth, B-GeoPetro', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'organic carbon stable isotopes'}),
+        ('eocene', 'ABSTRACT In this study...', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.99, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico'}, "dummy1.pdf"),
+        ('eocene', 'ABSTRACT In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'organic', {'entity1_score': 1.0, 'entity2_score': 0.98, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoMeth, B-GeoPetro', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'organic carbon stable isotopes'}, 'dummy2.pdf'),
     ]
     result_list = convert_tuples_to_json(sample_data)
     result_string = result_list[0] if result_list else ""
-    expected_string = '{"context": "ABSTRACT In this study...", "entity1_score": 1.0, "entity2_score": 0.99, "entity1_label": "B-GeoTime, B-GeoMeth", "entity2_label": "B-GeoLoc", "entity1_nn_chunk": "Eocene Thermal Maximum (PETM) record", "entity2_nn_chunk": "Mexico"}'    
+    expected_string = '{"context": "ABSTRACT In this study...", "entity1_score": 1.0, "entity2_score": 0.99, "entity1_label": "B-GeoTime, B-GeoMeth", "entity2_label": "B-GeoLoc", "entity1_nn_chunk": "Eocene Thermal Maximum (PETM) record", "entity2_nn_chunk": "Mexico", "file_path": "dummy1.pdf"}'    
     assert result_string == expected_string, f"Expected {expected_string}, but got {result_string}"
 

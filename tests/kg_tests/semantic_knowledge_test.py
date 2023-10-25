@@ -36,10 +36,10 @@ def test_semantic_knowledge():
 
     knowledge1 = SemanticKnowledge(s1)
 
-    knowledge1.add_property(p1, o1)
-    knowledge1.add_property(p2, o1)
-    knowledge1.add_property(p_common, o1)
-    knowledge1.add_property(p_literal, o1)
+    knowledge1.add_semantics(p1, o1)
+    knowledge1.add_semantics(p2, o1)
+    knowledge1.add_semantics(p_common, o1)
+    knowledge1.add_semantics(p_literal, o1)
 
     assert (s1, p1, o1) in knowledge1
     assert (s1, p2, o1) in knowledge1
@@ -48,19 +48,19 @@ def test_semantic_knowledge():
 
     knowledge2 = SemanticKnowledge(s2)
 
-    knowledge2.add_property(p_common, o2)
+    knowledge2.add_semantics(p_common, o2)
 
     assert (s2, p_common, o2) in knowledge2
 
-    knowledge1.remove_property(p1, o1)
+    knowledge1.remove_semantics(p1, o1)
     assert (s1, p1, o1) not in knowledge1
 
 
     with pytest.raises(InvalidParameter):
-        knowledge1.add_property("invalid_predicate", o1)
+        knowledge1.add_semantics("invalid_predicate", o1)
 
     with pytest.raises(InvalidParameter):
-        knowledge1.add_property(p1, "invalid_object")
+        knowledge1.add_semantics(p1, "invalid_object")
 
 
     assert isinstance(knowledge1._calculate_memory_usage(), int)

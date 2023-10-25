@@ -16,8 +16,8 @@ from querent.graph.subject import Reification, Subject
         _size_len (int): A size length variable (its purpose needs to be defined further).
 
     Methods:
-        add_property(p, o, reify=None): Adds a property (predicate-object pair) to the resource.
-        remove_property(p, o=None): Removes a property (predicate-object pair) from the resource.
+        add_context(p, o, reify=None): Adds a property (predicate-object pair) to the resource.
+        remove_context(p, o=None): Removes a property (predicate-object pair) from the resource.
         subject: Returns the subject of the RDF triple.
         __is_valid_object(o): Checks if the object is valid (either URI, BNode, Literal, or Subject).
         __iter__(): Returns an iterator over the RDF triples.
@@ -37,7 +37,7 @@ class ContextualKnowledge(Subject):
         self._s = s
         self._size_len = 0
 
-    def add_property(self, p, o, reify=None):
+    def add_context(self, p, o, reify=None):
         if not isinstance(o, URI):
             raise InvalidParameter("Object needs to be a URI.")
         if not isinstance(p, BNode):
@@ -47,12 +47,12 @@ class ContextualKnowledge(Subject):
         self._resource[p].add(o)
 
         if reify:
-            self.add_property(reify.p1, reify)
+            self.add_context(reify.p1, reify)
             if isinstance(reify, Reification):
                 reify.add_property(reify.p2, o)
             return reify
 
-    def remove_property(self, p, o=None):
+    def remove_context(self, p, o=None):
         if not isinstance(p, BNode):
             raise InvalidParameter("Predicate needs to be a BNode.")
         if o and not isinstance(o, URI):

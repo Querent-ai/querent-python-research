@@ -25,9 +25,10 @@ class ContextualPredicate(BaseModel):
     entity2_label: str
     entity1_nn_chunk: str
     entity2_nn_chunk: str
+    file_path: str
 
     @classmethod
-    def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str]]) -> 'ContextualPredicate':
+    def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
         return cls(
             context=data[1],
             entity1_score=data[3]['entity1_score'],
@@ -35,7 +36,9 @@ class ContextualPredicate(BaseModel):
             entity1_label=data[3]['entity1_label'],
             entity2_label=data[3]['entity2_label'],
             entity1_nn_chunk=data[3]['entity1_nn_chunk'],
-            entity2_nn_chunk=data[3]['entity2_nn_chunk']
+            entity2_nn_chunk=data[3]['entity2_nn_chunk'],
+            file_path=data[4]
+            
         )
 
 
@@ -52,12 +55,12 @@ class ContextualPredicate(BaseModel):
     This function is useful for converting raw data tuples into a structured JSON format using the ContextualPredicate model.
     """
     
-def convert_tuples_to_json(tuples_list: List[Tuple[str, str, str, Dict[str, str]]]) -> List[str]:
+def convert_tuples_to_json(tuples_list: List[Tuple[str, str, str, Dict[str, str], str]]) -> List[str]:
     return [ContextualPredicate.from_tuple(t).json() for t in tuples_list]
 
 if __name__ == '__main__':
     sample_data = [
-        ('eocene', 'ABSTRACT In this study...', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.99, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico'}),
+        ('eocene', 'ABSTRACT In this study...', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.99, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico'},'dummy.txt'),
 
     ]
     json_list = convert_tuples_to_json(sample_data)

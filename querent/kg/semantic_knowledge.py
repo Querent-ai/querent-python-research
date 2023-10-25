@@ -14,8 +14,8 @@ from querent.graph.subject import Reification, Subject
         _s (URI): The subject represented as a URI.
 
     Methods:
-        add_property(p, o, reify=None): Adds a property (predicate-object relationship) to the subject.
-        remove_property(p, o=None): Removes a property from the subject.
+        add_semantics(p, o, reify=None): Adds a property (predicate-object relationship) to the subject.
+        remove_semantics(p, o=None): Removes a property from the subject.
         get_properties(): Returns a list of all predicates associated with the subject.
         get_objects(p): Returns a list of all objects associated with a given predicate.
         _calculate_memory_usage(): Calculates the memory usage of the stored data.
@@ -27,7 +27,7 @@ class SemanticKnowledge(Subject):
         self._resource = dict()
         self._s = s
 
-    def add_property(self, p, o, reify=None):
+    def add_semantics(self, p, o, reify=None):
         if not isinstance(o, URI):
             raise InvalidParameter("Object needs to be a URI.")
         if not isinstance(p, (Literal, URI)):
@@ -38,12 +38,12 @@ class SemanticKnowledge(Subject):
         self._resource[p].add(o)
 
         if reify:
-            self.add_property(reify.p1, reify)
+            self.add_semantics(reify.p1, reify)
             if isinstance(reify, Reification):
                 reify.add_property(reify.p2, o)
             return reify
 
-    def remove_property(self, p, o=None):
+    def remove_semantics(self, p, o=None):
         if not isinstance(p, (Literal, URI)):
             raise InvalidParameter("Predicate needs to be either a Literal or a URI.")
         if o and not isinstance(o, URI):

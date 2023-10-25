@@ -28,18 +28,18 @@ def test_contextual_knowledge():
     p = BNode(data_for_p)
     
     knowledge = ContextualKnowledge(s)
-    knowledge.add_property(p, o)
+    knowledge.add_context(p, o)
 
     assert (s, p, o) in knowledge
 
-    knowledge.remove_property(p, o)
+    knowledge.remove_context(p, o)
     assert (s, p, o) not in knowledge
 
     with pytest.raises(InvalidParameter):
-        knowledge.add_property("invalid_predicate", o)
+        knowledge.add_context("invalid_predicate", o)
 
     with pytest.raises(InvalidParameter):
-        knowledge.add_property(p, "invalid_object")
+        knowledge.add_context(p, "invalid_object")
 
     assert isinstance(knowledge._calculate_memory_usage(), int)
 
