@@ -132,7 +132,7 @@ requirements = [
     "tweepy==4.14.0",
     "typing-inspect==0.8.0",
     "ujson==5.7.0",
-    "urllib3==1.26.16",
+    "urllib3==1.26.18",
     "uvicorn==0.22.0",
     "vine==5.0.0",
     "w3lib==2.1.1",

@@ -2,7 +2,6 @@ import os
 from pydantic import BaseSettings
 import yaml
 from querent.common.types.config_keys import ConfigKey
-from querent.lib.logger import logger
 
 
 class Config(BaseSettings):

@@ -1,5 +1,4 @@
 from io import BytesIO
-from PyPDF2 import PdfFileReader
 from PyPDF2 import PdfReader
 import requests
 import re
@@ -7,10 +6,12 @@ from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 from newspaper import Article, ArticleException, Config
 from requests_html import HTMLSession
-import time
 import random
 from lxml import html
-from querent.lib.logger import logger
+
+from querent.logging.logger import setup_logger
+
+logger = setup_logger(__name__, "webpage_extractor.log")
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
