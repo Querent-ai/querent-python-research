@@ -86,10 +86,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pytest
-        run: pytest --disable-warnings .
+        run: python -B -m pytest --disable-warnings .
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
 
       - name: Test Code Coverage
         run: pytest --cov=querent
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
 
   package:
     runs-on: ubuntu-latest

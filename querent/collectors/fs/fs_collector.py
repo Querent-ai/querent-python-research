@@ -1,4 +1,6 @@
 import asyncio
+import fnmatch
+import re
 from pathlib import Path
 from typing import AsyncGenerator
 from querent.collectors.collector_base import Collector
@@ -13,13 +15,23 @@ from querent.common import common_errors
 class FSCollector(Collector):
     def __init__(self, config: FSCollectorConfig):
         self.root_dir = Path(config.root_path)
+        self.items_to_ignore = []
         self.chunk_size = config.chunk_size
+        try:
+            with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
+                self.items_to_ignore = set(
+                    gitignore_file.read().replace("/", "").replace("*", "").splitlines()
+                )
+        except Exception as e:
+            self.items_to_ignore = []
 
     async def connect(self):
         pass
 
     async def disconnect(self):
         pass
+
+    # collect those files
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         async for file_path in self.walk_files(self.root_dir):
@@ -46,6 +58,11 @@ class FSCollector(Collector):
 
     async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
         for item in root.iterdir():
+            item_split = set(str(item).split("/"))
+            item_split.remove("")
+            if item_split.intersection(self.items_to_ignore):
+                print(item_split, "\n\n", self.items_to_ignore)
+                continue
             if item.is_file():
                 yield item
             elif item.is_dir():
