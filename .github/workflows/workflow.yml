@@ -92,6 +92,8 @@ jobs:
 
       - name: Test Code Coverage
         run: pytest --cov=querent
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
 
   package:
     runs-on: ubuntu-latest
