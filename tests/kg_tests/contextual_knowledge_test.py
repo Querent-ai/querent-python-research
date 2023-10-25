@@ -1,5 +1,5 @@
 from querent.graph.errors import InvalidParameter
-from querent.kg.contextual_knowledge_kg import ContextualKnowledge
+from querent.kg.contextual_knowledge import ContextualKnowledge
 import pytest
 from querent.graph.utils import URI, BNode
 
