@@ -12,6 +12,7 @@ from typing import List, Tuple, Dict
     - entity2_label (str): The label or category of the second entity.
     - entity1_nn_chunk (str): The named entity recognition chunk for the first entity.
     - entity2_nn_chunk (str): The named entity recognition chunk for the second entity.
+    - file_path (str): The path to the file containing the data.
 
     Methods:
     - from_tuple: A class method that constructs a ContextualPredicate object from a given tuple of data.
