@@ -1,7 +1,7 @@
 import pytest
 from querent.graph.errors import InvalidParameter
 from querent.graph.utils import URI, Literal
-from querent.kg.semantic_knowledge_kg import SemanticKnowledge
+from querent.kg.semantic_knowledge import SemanticKnowledge
 
 """
     Test the functionality of the SemanticKnowledge class.
