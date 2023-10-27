@@ -5,9 +5,9 @@ class GraphConfig:
     def __init__(
         self,
         identifier: str,
-        format: str,
-        schema: str,
-        flush_on_serialize: bool,
+        format: str = "ttl",
+        schema: str = "",
+        flush_on_serialize: bool = False,
         store=SimpleMemory(),
         memory_threshold: int = 1024,
     ):
