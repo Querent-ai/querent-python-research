@@ -1,11 +1,14 @@
+from rdflib.plugins.stores.memory import SimpleMemory
+
+
 class GraphConfig:
     def __init__(
         self,
         identifier: str,
-        format: str,
-        schema: str,
-        flush_on_serialize: bool,
-        store: str = "IOMemory",
+        format: str = "ttl",
+        schema: str = "",
+        flush_on_serialize: bool = False,
+        store=SimpleMemory(),
         memory_threshold: int = 1024,
     ):
         """
