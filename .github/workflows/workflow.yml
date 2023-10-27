@@ -85,11 +85,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
-  
-        # Cache NLTK punkt
       - name: Cache NLTK punkt
         id: cache-nltk
         uses: actions/cache@v2
@@ -97,15 +92,11 @@ jobs:
           path: ~/nltk_data/tokenizers/punkt
           key: nltk-punkt-${{ runner.os }}
           restore-keys: |
-            nltk-punkt-${{ runner.os }}
-  
-        # Download NLTK punkt if not cached
+            nltk-punkt-${{ runner.os }}  
       - name: Download NLTK punkt
         if: steps.cache-nltk.outputs.cache-hit != 'true'
         run: |
           python -m nltk.downloader punkt
-  
-        # Cache spaCy large model
       - name: Cache spaCy large model
         id: cache-spacy
         uses: actions/cache@v2
@@ -114,8 +105,6 @@ jobs:
             key: spacy-large-${{ runner.os }}
             restore-keys: |
               spacy-large-${{ runner.os }}
-  
-        # Download spaCy large model if not cached
       - name: Download spaCy large model
         if: steps.cache-spacy.outputs.cache-hit != 'true'
         run: |
