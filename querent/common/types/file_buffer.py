@@ -40,11 +40,15 @@ class FileBuffer:
     def add_chunk(self, filename, chunk):
         try:
                 if self.current_filename and self.current_filename != filename:
+                    
                     return self.end_file()
 
                 self.current_filename = filename
                 content = self._cache(filename)
                 content.append(chunk)
+                
+                return self.current_filename, None
+            
         except Exception as e:
             self.logger.error(
                     f"Invalid {self.__class__.__name__} configuration. Unable to add data to cache. {e}"
@@ -56,7 +60,7 @@ class FileBuffer:
         try:
             full_content = ''.join(self._cache(self.current_filename))
             self._cache.cache_clear()
-            return full_content
+            return self.current_filename,full_content
         except Exception as e:
             self.logger.error(
                     f"Invalid {self.__class__.__name__} configuration. Unable to end file cache. {e}"
