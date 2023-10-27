@@ -1,3 +1,6 @@
+from rdflib.plugins.stores.memory import SimpleMemory
+
+
 class GraphConfig:
     def __init__(
         self,
@@ -5,7 +8,7 @@ class GraphConfig:
         format: str,
         schema: str,
         flush_on_serialize: bool,
-        store: str = "IOMemory",
+        store=SimpleMemory(),
         memory_threshold: int = 1024,
     ):
         """
