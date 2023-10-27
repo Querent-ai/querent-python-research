@@ -3,8 +3,7 @@ from querent.logging.logger import setup_logger
 import torch
 import umap
 
-class EntityEmbeddingExtractor:
-    """
+"""
     EntityEmbeddingExtractor: A class designed to extract embeddings for entities within a given context.
 
     Attributes:
@@ -26,6 +25,8 @@ class EntityEmbeddingExtractor:
         extract_and_append_entity_embeddings(doc_entity_pairs: List[Tuple[str, str, str, Dict[str, Any]]]) -> List[List[Tuple[str, str, str, Dict[str, Any]]]]:
             Extracts embeddings for entities in the provided document-entity pairs and appends them to the pairs.
     """
+
+class EntityEmbeddingExtractor:
 
     def __init__(self, model, tokenizer, number_entity_pairs):
         self.logger = setup_logger(__name__, "EntityEmbeddingExtractor")
@@ -55,67 +56,99 @@ class EntityEmbeddingExtractor:
         except Exception as e:
             self.logger.error(f"Error extracting entity embedding: {e}")
             raise   Exception("Error extracting entity embedding: {}".format(e))
+    
+    def get_embedding(self, entity, context, task_type="average"):
+        try:
+            inputs = self.tokenizer(context, return_tensors="pt", truncation=True, padding=True, max_length=512)
+            with torch.no_grad():
+                outputs = self.model(**inputs, output_hidden_states=True, output_attentions=(task_type == "max_pooling"))
+                all_hidden_states = outputs.hidden_states
+                last_hidden_state = all_hidden_states[-1][0]
+
+            entity_token_ids = self.tokenizer.encode(entity, add_special_tokens=False)
+            entity_positions = [i for i, token_id in enumerate(inputs["input_ids"][0]) if token_id in entity_token_ids]
+
+            #Bad Results
+            if task_type == "average":
+                return last_hidden_state[entity_positions].mean(dim=0)
+
+            # Bad Results 
+            elif task_type == "layerwise_average":
+                layers = [-1, -2, -3, -4]
+                return torch.stack([all_hidden_states[layer][0][entity_positions].mean(dim=0) for layer in layers]).mean(dim=0)
+            
+            #not good for geobert
+            elif task_type == "concatenate":
+                layers = [-1, -2]
+                return torch.cat([all_hidden_states[layer][0][entity_positions].mean(dim=0) for layer in layers], dim=0)
+            
+            #not good for geobert
+            elif task_type == "max_pooling":
+                return last_hidden_state[entity_positions].max(dim=0)[0]
+
+            #not good for geobert but best for colln model
+            elif task_type == "difference":
+                sentence_embedding = last_hidden_state.mean(dim=0)
+                entity_embedding = last_hidden_state[entity_positions].mean(dim=0)
+                return entity_embedding - sentence_embedding
+
+            else:
+                raise ValueError(f"Unsupported task_type: {task_type}")
         
-            return None
+        except Exception as e:
+            self.logger.error(f"Error extracting entity embedding: {e}")
+            raise   Exception("Error extracting entity embedding: {}".format(e))
+
 
     def fit_umap(self, all_embeddings):
         """Fit UMAP on all embeddings."""
         try:
             self.reducer.fit(all_embeddings)
         except Exception as e:
+            self.logger.error(f"Error fitting UMAP: {e}")
             raise Exception (f"Error fitting UMAP: {e}")
+    
+    def _get_relevant_context(self, entity1, entity2, full_context):
+        sentences = NER_LLM.split_into_sentences(full_context)
+        for sentence in sentences:
+            if entity1.lower() in sentence.lower() and entity2.lower() in sentence.lower():
+                return sentence
+        return full_context
+
+    def _update_pairs_with_embeddings(self, doc_entity_pairs):
+        updated_pairs = []
+        for inner_list in doc_entity_pairs:
+            updated_inner_list = []
+            for pair in inner_list:
+                entity1, full_context, entity2, pair_dict = pair
+                context = self._get_relevant_context(entity1, entity2, full_context)
+                entity1_embedding = self.extract_entity_embedding(entity1, context)
+                entity2_embedding = self.extract_entity_embedding(entity2, context)
+                pair_dict['entity1_embedding'] = self.reducer.transform([entity1_embedding.tolist()])[0]
+                pair_dict['entity2_embedding'] = self.reducer.transform([entity2_embedding.tolist()])[0]
+                updated_inner_list.append((entity1, full_context, entity2, pair_dict))
+            updated_pairs.append(updated_inner_list)
+        #print("updated pairs with embeddings", updated_pairs)    
+        return updated_pairs
 
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
         all_embeddings = []
         try:
-            # First, collect all embeddings without reducing dimensions
             for inner_list in doc_entity_pairs:
                 for pair in inner_list:
-                    full_context = pair[1]
-                    entity1 = pair[0]
-                    entity2 = pair[2]
-                    sentences = NER_LLM.split_into_sentences(full_context)
-                    context = None
-                    for sentence in sentences:
-                        if entity1.lower() in sentence.lower() and entity2.lower() in sentence.lower():
-                            context = sentence
-                            break
-                    if not context:
-                        context = full_context
+                    entity1, full_context, entity2, _ = pair
+                    context = self._get_relevant_context(entity1, entity2, full_context)
                     entity1_embedding = self.extract_entity_embedding(entity1, context)
                     entity2_embedding = self.extract_entity_embedding(entity2, context)
-                    all_embeddings.append(entity1_embedding.tolist())
-                    all_embeddings.append(entity2_embedding.tolist())
+                    all_embeddings.extend([entity1_embedding.tolist(), entity2_embedding.tolist()])
 
-            # Fit UMAP on all collected embeddings
-            self.fit_umap(all_embeddings)        
-            updated_pairs = []
-            for inner_list in doc_entity_pairs:
-                updated_inner_list = []
-                for pair in inner_list:
-                    full_context = pair[1]
-                    entity1 = pair[0]
-                    entity2 = pair[2]
-                    sentences = NER_LLM.split_into_sentences(full_context)
-                    context = None
-                    for sentence in sentences:
-                        if entity1.lower() in sentence.lower() and entity2.lower() in sentence.lower():
-                            context = sentence
-                            break
-                    if not context:
-                        context = full_context
-                    entity1_embedding = self.extract_entity_embedding(entity1, context)
-                    entity2_embedding = self.extract_entity_embedding(entity2, context)
-                    pair_dict = pair[3]
-                    pair_dict['entity1_embedding'] = self.reducer.transform([entity1_embedding.tolist()])[0]
-                    pair_dict['entity2_embedding'] = self.reducer.transform([entity2_embedding.tolist()])[0]
-                    updated_inner_list.append((entity1, full_context, entity2, pair_dict))
-                updated_pairs.append(updated_inner_list)
-                
-            return updated_pairs
+            self.fit_umap(all_embeddings)
+            return self._update_pairs_with_embeddings(doc_entity_pairs)
         
         except Exception as e:
             self.logger.error(f"Error extracting and appending entity embedding: {e}")
-            raise Exception("Error extracting and appending entity embedding: {}".format(e))
+            raise Exception(f"Error extracting and appending entity embedding: {e}")
+
+    
 
 
