@@ -124,7 +124,9 @@ class BERTLLM(BaseEngine):
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
+                print("data as        predicates.............", pairs_with_predicates)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(pairs_with_predicates)
                 print(kgm.retrieve_triples())
