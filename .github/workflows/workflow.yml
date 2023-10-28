@@ -110,7 +110,7 @@ jobs:
             python -m spacy download en_core_web_lg
         
       - name: Run Pytest
-        run: python -B -m pytest --disable-warnings .
+        run: python -B -m pytest -v --disable-warnings .
         env:
           PYTHONDONTWRITEBYTECODE: 1
 
