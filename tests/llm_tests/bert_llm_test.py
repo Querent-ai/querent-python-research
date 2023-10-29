@@ -21,6 +21,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     input_queue = QuerentQueue()
     resource_manager = ResourceManager()
     
+    
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
