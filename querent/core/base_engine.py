@@ -173,6 +173,7 @@ class BaseEngine(ABC):
             event_data (EventState): The data associated with the event.
         """
         await self.callback_dispatcher.dispatch_event(event_type, event_state)
+        await self.callback_dispatcher.dispatch_webhook(event_type, event_state)
 
     async def _worker(self):
         try:
