@@ -7,12 +7,13 @@ from querent.common.types.querent_event import EventState, EventType
 
 
 class EventCallbackDispatcher:
-    def __init__(self):
+    def __init__(self, retries=3):
         self.callbacks: dict[EventType, List[EventCallbackInterface]] = defaultdict(
             list
         )
 
         self.webhooks: dict[EventType, List[str]] = defaultdict(list)
+        self.retries = retries
 
     def register_callback(
         self, event_type: EventType, callback: EventCallbackInterface
@@ -50,12 +51,16 @@ class EventCallbackDispatcher:
         for webhook_url in self.webhooks[event_type]:
             # Assuming event_data is a dictionary that you want to send as JSON
             try:
-                response = requests.post(webhook_url, json=event_data)
-                if response.status_code == 200:
-                    print(f"Webhook to {webhook_url} was successfully dispatched.")
-                else:
-                    print(
-                        f"Failed to dispatch webhook to {webhook_url}. Status code: {response.status_code}"
-                    )
+                attempt = 0
+                while attempt <= self.retries:
+                    response = requests.post(webhook_url, json=event_data)
+                    if response.status_code == 200:
+                        print(f"Webhook to {webhook_url} was successfully dispatched.")
+                        break
+                    else:
+                        print(
+                            f"Failed to dispatch webhook to {webhook_url}. Status code: {response.status_code}"
+                        )
+                        attempt += 1
             except Exception as e:
                 print(f"Error when sending webhook to {webhook_url}: {str(e)}")
