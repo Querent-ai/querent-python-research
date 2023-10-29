@@ -93,7 +93,6 @@ jobs:
           restore-keys: |
             nltk-punkt-${{ runner.os }}  
       - name: Download NLTK punkt
-        if: steps.cache-nltk.outputs.cache-hit != 'true'
         run: |
           python -m nltk.downloader punkt
       - name: Cache spaCy large model
@@ -105,7 +104,6 @@ jobs:
             restore-keys: |
               spacy-large-${{ runner.os }}
       - name: Download spaCy large model
-        if: steps.cache-spacy.outputs.cache-hit != 'true'
         run: |
             python -m spacy download en_core_web_lg
         
