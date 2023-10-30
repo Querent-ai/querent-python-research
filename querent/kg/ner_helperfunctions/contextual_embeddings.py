@@ -57,11 +57,11 @@ class EntityEmbeddingExtractor:
             self.logger.error(f"Error extracting entity embedding: {e}")
             raise   Exception("Error extracting entity embedding: {}".format(e))
     
-    def get_embedding(self, entity, context, task_type="average"):
+    def get_embedding(self, entity, context, task_type="cls_embedding"):
         try:
             inputs = self.tokenizer(context, return_tensors="pt", truncation=True, padding=True, max_length=512)
             with torch.no_grad():
-                outputs = self.model(**inputs, output_hidden_states=True, output_attentions=(task_type == "max_pooling"))
+                outputs = self.model(**inputs, output_hidden_states=True)
                 all_hidden_states = outputs.hidden_states
                 last_hidden_state = all_hidden_states[-1][0]
 
@@ -91,6 +91,21 @@ class EntityEmbeddingExtractor:
                 sentence_embedding = last_hidden_state.mean(dim=0)
                 entity_embedding = last_hidden_state[entity_positions].mean(dim=0)
                 return entity_embedding - sentence_embedding
+            
+            #only pass the entity and get the embeddings on the cls token or the embedding itself
+            elif task_type == "cls_embedding":
+                print("entity :", entity)
+                self.model.eval()
+                inputs1 = self.tokenizer(entity, return_tensors="pt", truncation=True, padding=True, max_length=512)
+                tokenized_text = self.tokenizer.tokenize(entity)
+                print(tokenized_text)
+
+                with torch.no_grad():
+                    outputs1 = self.model(**inputs1, output_hidden_states=True)
+                last_hidden_state = outputs1['hidden_states'][-1]
+                cls_embedding = last_hidden_state[0, 0, :]
+                return cls_embedding
+                  
 
             else:
                 raise ValueError(f"Unsupported task_type: {task_type}")

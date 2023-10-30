@@ -36,8 +36,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
 
             # Extracting subjects and objects from the triples
             subjects = [triple[0].value for triple in triples]
-            objects = [triple[2].value for triple in triples]
-
+            objects = [triple[2].value for triple in triples]  
             assert expected_entities[0] in subjects
             assert expected_entities[1] in objects
 

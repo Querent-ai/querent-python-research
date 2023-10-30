@@ -69,7 +69,6 @@ class NER_LLM:
             return AutoModelForTokenClassification.from_pretrained(model_name, output_attentions=True)
         except OSError as e:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU if there's an issue
-            ##print("GPU turned offffffffff")
             if "file named pytorch_model.bin" in str(e) and "file for TensorFlow weights" in str(e):
                 return AutoModelForTokenClassification.from_pretrained(model_name, from_tf=True)
             raise OSError(
@@ -108,7 +107,7 @@ class NER_LLM:
                 tokenized_sentences.append((sentence_tokens, sentence, idx))
         except Exception as e:
             raise Exception(f"An error occurred while tokenizing: {e}")
-
+        print("tokenized Sentencesss",tokenized_sentences)
         return tokenized_sentences
 
     def _token_distance(self, tokens, start_idx1, start_idx2, noun_chunk1, noun_chunk2):
@@ -261,15 +260,20 @@ class NER_LLM:
     def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str]):
         try:
             tokens = self.tokenize_sentence(sentence)
+            #print("tokenized sentence", tokens)
             chunks = self.get_chunks(tokens)
+            #print("chunks", chunks)
             all_entities = []
             for chunk in chunks:
                 entities = self.extract_entities_from_chunk(chunk)
                 all_entities.extend(entities)
+            #print("all_entities", all_entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
             #final_entities = self.combine_entities_byteencoding(all_entities, tokens)
             parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence)
+            #print("parsed_entities", parsed_entities.entities)
             binary_pairs = self.extract_binary_pairs(parsed_entities.entities, tokens, all_sentences, sentence_idx)
+            #print("binary_pairs", binary_pairs)
             return parsed_entities.entities, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")

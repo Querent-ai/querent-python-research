@@ -1,8 +1,6 @@
 from transformers import AutoTokenizer
 from querent.kg.contextual_predicate import process_data
-from querent.kg.ner_helperfunctions.contextual_embeddings import (
-    EntityEmbeddingExtractor,
-)
+from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
 from querent.kg.ner_helperfunctions.graph_manager import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
@@ -122,9 +120,10 @@ class BERTLLM(BaseEngine):
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
+            #print("entity pairs after nerllm parsing", doc_entity_pairs, tokens)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                #print("updated_doc_entity_pairs_1", pairs_withattn)
+                #print("attention_doc_entity_pairs_1", pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn))
                 else :
@@ -132,10 +131,10 @@ class BERTLLM(BaseEngine):
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 #print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                print("data as        predicates.............", pairs_with_predicates)
+                #print("data as        predicates.............", pairs_with_predicates)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(pairs_with_predicates)
-                #print(kgm.retrieve_triples())
+                print("final triples: ",kgm.retrieve_triples())
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
         except Exception as e:
