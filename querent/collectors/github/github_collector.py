@@ -49,6 +49,9 @@ class GithubCollector(Collector):
                         yield CollectedBytes(file=item["name"], data=file_contents)
                     except requests.exceptions.RequestException as file_error:
                         print(f"Error fetching file contents: {file_error}")
+                        yield CollectedBytes(
+                            file=item["name"], data=None, error=file_error
+                        )
                 elif item["type"] == "dir":
                     # Recursively fetch files in subfolders
                     async for sub_item in self.fetch_files_in_folder(item["url"]):
