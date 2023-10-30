@@ -107,7 +107,7 @@ class NER_LLM:
                 tokenized_sentences.append((sentence_tokens, sentence, idx))
         except Exception as e:
             raise Exception(f"An error occurred while tokenizing: {e}")
-        print("tokenized Sentencesss",tokenized_sentences)
+        #print("tokenized Sentencesss",tokenized_sentences)
         return tokenized_sentences
 
     def _token_distance(self, tokens, start_idx1, start_idx2, noun_chunk1, noun_chunk2):

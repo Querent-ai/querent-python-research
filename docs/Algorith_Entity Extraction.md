@@ -1,25 +1,28 @@
-# NER-LLM Extraction Algorithm (BERT)
+# NER-LLM Extraction Algorithm (BERT)<br />
 
 ## Example Text:
 
-"In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints."
+"In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints."<br /><br />
 
 ## 1. NER-LLM-Transfomer:
 
-The code waits for the entire text of the document to come through  and then passes it through the below algorithm :
+The code waits for the entire text of the document to come through  and then passes it through the below algorithm :<br /><br />
 
-### _tokenize_and_chunk (output below -> tokenized_sentence, original_sentence, sentence_idx)
+### I. _tokenize_and_chunk (output below -> tokenized_sentence, original_sentence, sentence_idx)<br />
 
 ```python
 
 Output : [(['in', 'this', 'study', ',', 'we', 'present', 'evidence', 'of', 'a', 'paleocene', '–', 'eocene', 'thermal', 'maximum', '(', 'pet', '##m', ')', 'record', 'within', 'a', '54', '##3', '-', 'm', '-', 'thick', '(', '17', '##80', 'ft', ')', 'deep', '-', 'marine', 'section', 'in', 'the', 'gulf', 'of', 'mexico', '(', 'gom', ')', 'using', 'organic', 'carbon', 'stable', 'isotopes', 'and', 'bio', '##stratigraph', '##ic', 'constraints', '.'], 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 0)] 
 
 ```
-### We iterate over the above output and produce binary entity pairs using the following:
+<br /><br />
 
-#### a. We use the tokenized represtation of a sentence to aggregate chunks (## happens due to the wordpiece tokenizer of BERT). This step is to ensure that in one go we only send a string of max 512 tokens to BERT which is its maximum size. It also takes care of the boundary scenarios where a word may just be split at the end of 510 tokens
+### II. We iterate over the above output and produce binary entity pairs using the following:<br /><br />
 
+#### a.) We use the tokenized represtation of a sentence to aggregate chunks (## happens due to the wordpiece tokenizer of BERT). This step is to ensure that in one go we only send a string of max 512 tokens to BERT which is its maximum size. It also takes care of the boundary scenarios where a word may just be split at the end of 510 tokens
+<br />
 Example
+<br />
 
 ```python
 tokens = ["Dummy", "world", "##!", "This", "is", "a", "test", "##ing", "function", "##ality", "."]
@@ -38,31 +41,34 @@ Actual output :
 
 ```
 
-#### b. extract entities from each chunk and append them to the output using LLM
+<br />
+
+#### b.) extract entities from each chunk and append them to the output using LLM<br />
 
 ```python
 [{'entity': 'eocene', 'label': 'B-GeoTime', 'score': 0.9998507499694824, 'start_idx': 11}, {'entity': 'thermal', 'label': 'B-GeoMeth', 'score': 0.9903227686882019, 'start_idx': 12}, {'entity': 'ft', 'label': 'B-GeoMeth', 'score': 0.6936133503913879, 'start_idx': 30}, {'entity': 'mexico', 'label': 'B-GeoLoc', 'score': 0.9209132790565491, 'start_idx': 40}, {'entity': 'organic', 'label': 'B-GeoPetro', 'score': 0.9996106028556824, 'start_idx': 45}, {'entity': 'carbon', 'label': 'B-GeoPetro', 'score': 0.997830331325531, 'start_idx': 46}, {'entity': 'isotopes', 'label': 'B-GeoMeth', 'score': 0.956226646900177, 'start_idx': 48}]
 
 ```
+<br />
 
-#### c. Implement Dependency Parsing 
+#### c.) Implement Dependency Parsing <br />
 
-performs dependency parsing on a given sentence using the SpaCy library. 
+performs dependency parsing on a given sentence using the SpaCy library. <br />
 
-1. extract noun chunks from the sentence
-2. filter noun chunks to ensure their root word is a noun and not a stop word
-3. we merge the overlapping noun chunks into single chunks
-4. we then compare individual entities with the noun chunks and check for their presence in noun_chunks
-5. we finally group entities by their associated noun chunks and then process these grouped entities to generate a final list of entities
-        a. If there's only one entity associated with a noun chunk:
-              - we round the score of the entity to two decimal places.
-              - set default values for 'noun_chunk' and 'noun_chunk_length'
-              - appends the entity to the processed_entities list.
-        b. If there are multiple entities associated with a noun chunk, it:
-              - computes the set of unique labels from the entities.
-              - calculates the average score of the entities.
-              - constructs a new processed_entity dictionary with combined information from the grouped entities.
-              - append the processed_entity to the processed_entities list.
+1. extract noun chunks from the sentence<br />
+2. filter noun chunks to ensure their root word is a noun and not a stop word<br />
+3. we merge the overlapping noun chunks into single chunks<br />
+4. we then compare individual entities with the noun chunks and check for their presence in noun_chunks<br />
+5. we finally group entities by their associated noun chunks and then process these grouped entities to generate a final list of entities<br />
+        a. If there's only one entity associated with a noun chunk:<br />
+              - we round the score of the entity to two decimal places.<br />
+              - set default values for 'noun_chunk' and 'noun_chunk_length'<br />
+              - appends the entity to the processed_entities list.<br /><br />
+        b. If there are multiple entities associated with a noun chunk, it:<br />
+              - computes the set of unique labels from the entities.<br />
+              - calculates the average score of the entities.<br />
+              - constructs a new processed_entity dictionary with combined information from the grouped entities.<br />
+              - append the processed_entity to the processed_entities list.<br /><br />
 ```python
 [    {'entity': 'red', 'label': 'color', 'score': 0.9, 'noun_chunk': 'red apple', 'start_idx': 1},    {'entity': 'apple', 'label': 'fruit', 'score': 0.8, 'noun_chunk': 'red apple', 'start_idx': 1}]
 
@@ -70,18 +76,23 @@ performs dependency parsing on a given sentence using the SpaCy library.
 [    {'entity': 'red', 'label': 'color, fruit', 'score': 0.85, 'noun_chunk': 'red apple', 'noun_chunk_length': 2, 'start_idx': 1}]
 
 ```
+<br />
+
 Actual output :
 
 ```python
 [{'entity': 'eocene', 'label': 'B-GeoMeth, B-GeoTime', 'score': 1.0, 'noun_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'noun_chunk_length': 6, 'start_idx': 11}, {'entity': 'ft', 'label': 'B-GeoMeth', 'score': 0.69, 'start_idx': 30, 'noun_chunk': 'a 543-m-thick (1780 ft) deep-marine section', 'noun_chunk_length': 6}, {'entity': 'mexico', 'label': 'B-GeoLoc', 'score': 0.92, 'start_idx': 40, 'noun_chunk': 'Mexico', 'noun_chunk_length': 1}, {'entity': 'organic', 'label': 'B-GeoMeth, B-GeoPetro', 'score': 0.98, 'noun_chunk': 'organic carbon stable isotopes', 'noun_chunk_length': 4, 'start_idx': 45}]
 ```
+<br />
 
-#### d. Now that we have individual entities identified, now is the time to start finding binary entity pairs. Below is the algorith:
-1. if 2 entities lie next to each other without any words or tokens in between them, it is rejected as a binary entity pair
-2. 2 entities should be from the same sentence
-3. the maximum distance between 2 entities after remoiving stop words should be less than 10 (changeable) tokens
-4. if all the above criterias are fullfilled, we create an entity pair
-5. finally we format these entity pairs into desirable format 
+#### d.) Now that we have individual entities identified, now is the time to start finding binary entity pairs. Below is the algorith:<br />
+1. if 2 entities lie next to each other without any words or tokens in between them, it is rejected as a binary entity pair<br />
+2. 2 entities should be from the same sentence<br />
+3. the maximum distance between 2 entities after remoiving stop words should be less than 10 (changeable) tokens<br />
+4. if all the above criterias are fullfilled, we create an entity pair<br />
+5. finally we format these entity pairs into desirable format <br />
+
+<br />
 
 output :
 
@@ -94,14 +105,15 @@ output :
 
 ]]
 ```
+<br />
 
 ### Add attention weights to the entity pairs
 
-1. we want to know how much attention the model pays to the entities "eocene" and "ft" in the sentence.
-2. we find the sentence containing both entities. If no such sentence is found, the full context is used.
-3. tokenize the sentence and pass it through the model to get attention outputs
-4. identify the positions of the entity tokens within the context.
-5. extracts the maximum attention weight for the entity tokens ('eo', '##cene') -> if ##cene has a higher attention weight we will choose this
+1. we want to know how much attention the model pays to the entities "eocene" and "ft" in the sentence.<br />
+2. we find the sentence containing both entities. If no such sentence is found, the full context is used.<br />
+3. tokenize the sentence and pass it through the model to get attention outputs<br />
+4. identify the positions of the entity tokens within the context.<br />
+5. extracts the maximum attention weight for the entity tokens ('eo', '##cene') -> if ##cene has a higher attention weight we will choose this <br />
 
 ```python
     ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'ft', {'entity1_score': 1.0, 'entity2_score': 0.69, 'entity1_label': 'B-GeoMeth, B-GeoTime', 'entity2_label': 'B-GeoMeth', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'a 543-m-thick (1780 ft) deep-marine section', 'entity1_attnscore': 0.46, 'entity2_attnscore': 0.21}), 
@@ -109,14 +121,16 @@ output :
     ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.92, 'entity1_label': 'B-GeoMeth, B-GeoTime', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico', 'entity1_attnscore': 0.46, 'entity2_attnscore': 0.17})
 
 ```
+<br />
 
-### Add contextual embeddings to the entity pairs
-1. returns the contextual embedding vector for the entity in the given context
-2. the context is the sentence in which the entity is found
-3. the embedding vector of the entity could be of a very large dimension like 768, 1024 so we need to apply the dimensionality reduction UMAP
-4. we first extract the embeddings of all the entity pairs and then use these embeddings to fit the UMAP model
-5. we then pass the entity embedding vector to reduce its dimensions to 10 (changeable but tested and works well)
-6. finally append these embedding vectors to their respective entity pairs 
+### Add contextual embeddings to the entity pairs<br />
+1. returns the contextual embedding vector for the entity in the given context<br />
+2. the context is the sentence in which the entity is found<br />
+3. the embedding vector of the entity could be of a very large dimension like 768, 1024 so we need to apply the dimensionality reduction UMAP<br />
+4. we first extract the embeddings of all the entity pairs and then use these embeddings to fit the UMAP model<br />
+5. we then pass the entity embedding vector to reduce its dimensions to 10 (changeable but tested and works well)<br />
+6. finally append these embedding vectors to their respective entity pairs <br />
+
 
 
 ```python
@@ -138,10 +152,13 @@ output :
 
 ```
 
-### 2. Convert the above output into the format (subject: str, predicate: str, object: str) pairs
-1. it accepts a nested list of tuples named data and a file_path string as inputs.
-2. extends the tuple with the file_path in which the entity pairs were found in.
-3. converts the extended tuple to a ContextualPredicate object and then to a JSON string.
+<br />
+
+### 2. Convert the above output into the format (subject: str, predicate: str, object: str) pairs <br />
+1. it accepts a nested list of tuples named data and a file_path string as inputs.<br />
+2. extends the tuple with the file_path in which the entity pairs were found in.<br />
+3. converts the extended tuple to a ContextualPredicate object and then to a JSON string.<br />
+
 
 ```python
 [
@@ -150,14 +167,21 @@ output :
 ]
 ```
 
-### 3. Convert the extracted triples above to contextualknowledge triples (subject: URI, predicate: BNODE, object: URI) pairs
-1. subject string ('entity1') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity1')
-2. object string ('entity2') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity2')
-3. predicate, represented as a dictionary with key-value pairs, is transformed into a BNode (a blank node) using its string representation.
-4. distinct list of subjects is generated, to which objects and predicates are appended as attributes.
-5. these step produces contextual knwoledge triplets for the entire document
-6. finally we raise an event type of Token Processed with payload as the triplest produced above.
+<br />
+
+### 3. Convert the extracted triples above to contextualknowledge triples (subject: URI, predicate: BNODE, object: URI) pairs<br />
+1. subject string ('entity1') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity1')<br />
+2. object string ('entity2') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity2')<br />
+3. predicate, represented as a dictionary with key-value pairs, is transformed into a BNode (a blank node) using its string representation.<br />
+4. distinct list of subjects is generated, to which objects and predicates are appended as attributes.<br />
+5. these step produces contextual knwoledge triplets for the entire document<br />
+6. finally we raise an event type of Token Processed with payload as the triplest produced above.<br />
 
 
-
-[(<querent.graph.utils.URI object at 0x7fe912d1bd00>, <querent.graph.utils.BNode object at 0x7fe96017bc40>, <querent.graph.utils.URI object at 0x7fe9a46527d0>), (<querent.graph.utils.URI object at 0x7fe912d1bd00>, <querent.graph.utils.BNode object at 0x7fe913171a80>, <querent.graph.utils.URI object at 0x7fe913add6c0>), (<querent.graph.utils.URI object at 0x7fe912d1bd00>, <querent.graph.utils.BNode object at 0x7fe960115660>, <querent.graph.utils.URI object at 0x7fe960115600>), (<querent.graph.utils.URI object at 0x7fe9a4f4d480>, <querent.graph.utils.BNode object at 0x7fe960114820>, <querent.graph.utils.URI object at 0x7fe912d62b00>), (<querent.graph.utils.URI object at 0x7fe9a4f4d480>, <querent.graph.utils.BNode object at 0x7fe912d61900>, <querent.graph.utils.URI object at 0x7fe912d60820>), (<querent.graph.utils.URI object at 0x7fe912d613f0>, <querent.graph.utils.BNode object at 0x7fe912d63880>, <querent.graph.utils.URI object at 0x7fe912d60ca0>)]
+```python
+[
+    (<querent.graph.utils.URI object at 0x7fe912d1bd00>, <querent.graph.utils.BNode object at 0x7fe96017bc40>, <querent.graph.utils.URI object at 0x7fe9a46527d0>),
+    (<querent.graph.utils.URI object at 0x7fe912d613f0>, <querent.graph.utils.BNode object at 0x7fe912d63880>, <querent.graph.utils.URI object at 0x7fe912d60ca0>)
+    
+]
+```

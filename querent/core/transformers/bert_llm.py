@@ -134,7 +134,7 @@ class BERTLLM(BaseEngine):
                 #print("data as        predicates.............", pairs_with_predicates)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(pairs_with_predicates)
-                print("final triples: ",kgm.retrieve_triples())
+                #print("final triples: ",kgm.retrieve_triples())
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
         except Exception as e:
