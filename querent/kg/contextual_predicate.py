@@ -2,20 +2,29 @@ from pydantic import BaseModel
 from typing import List, Tuple, Dict
 
 """
-    Represents a contextual predicate model that captures the relationship between two entities within a specific context.
+    A model representing contextual information about a predicate in a knowledge graph.
 
     Attributes:
-    - context (str): The context in which the relationship between the two entities is defined.
-    - entity1_score (float): The confidence score of the first entity.
-    - entity2_score (float): The confidence score of the second entity.
-    - entity1_label (str): The label or category of the first entity.
-    - entity2_label (str): The label or category of the second entity.
-    - entity1_nn_chunk (str): The named entity recognition chunk for the first entity.
-    - entity2_nn_chunk (str): The named entity recognition chunk for the second entity.
-    - file_path (str): The path to the file containing the data.
+    -----------
+    context : str
+        The context in which the predicate is used.
+    entity1_score, entity2_score : float
+        Scores associated with the two entities involved in the predicate.
+    entity1_label, entity2_label : str
+        Labels associated with the two entities.
+    entity1_nn_chunk, entity2_nn_chunk : str
+        Nearest neighbor chunks for the two entities.
+    file_path : str
+        Path to the file where the predicate information is stored.
+    entity1_attnscore, entity2_attnscore : float
+        Attention scores for the two entities.
+    entity1_embedding, entity2_embedding : List[float]
+        Embeddings for the two entities.
 
     Methods:
-    - from_tuple: A class method that constructs a ContextualPredicate object from a given tuple of data.
+    --------
+    from_tuple(data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
+        Class method to create an instance of ContextualPredicate from a tuple.
     """
 
 class ContextualPredicate(BaseModel):
@@ -27,44 +36,48 @@ class ContextualPredicate(BaseModel):
     entity1_nn_chunk: str
     entity2_nn_chunk: str
     file_path: str
-
+    entity1_attnscore: float
+    entity2_attnscore: float
+    entity1_embedding: List[float]
+    entity2_embedding: List[float]
+    
+    
     @classmethod
     def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
-        return cls(
-            context=data[1],
-            entity1_score=data[3]['entity1_score'],
-            entity2_score=data[3]['entity2_score'],
-            entity1_label=data[3]['entity1_label'],
-            entity2_label=data[3]['entity2_label'],
-            entity1_nn_chunk=data[3]['entity1_nn_chunk'],
-            entity2_nn_chunk=data[3]['entity2_nn_chunk'],
-            file_path=data[4]
-            
-        )
+        try:
+            return cls(
+                context=data[1],
+                entity1_score=data[3]['entity1_score'],
+                entity2_score=data[3]['entity2_score'],
+                entity1_label=data[3]['entity1_label'],
+                entity2_label=data[3]['entity2_label'],
+                entity1_nn_chunk=data[3]['entity1_nn_chunk'],
+                entity2_nn_chunk=data[3]['entity2_nn_chunk'],
+                entity1_attnscore=data[3]['entity1_attnscore'],
+                entity2_attnscore=data[3]['entity2_attnscore'],
+                entity1_embedding=data[3]['entity1_embedding'].tolist(),
+                entity2_embedding=data[3]['entity2_embedding'].tolist(),
+                file_path=data[4]
+                
+            )
+        except Exception as e:
+            raise ValueError(f"Error creating ContextualPredicate from tuple: {e}")
 
 
-    """
-    Converts a list of tuples representing contextual predicates into a list of JSON strings.
 
-    Args:
-    - tuples_list (List[Tuple[str, str, str, Dict[str, str]]]): A list of tuples where each tuple contains entities, context, and associated metadata.
-
-    Returns:
-    - List[str]: A list of JSON strings representing the contextual predicates.
-
-    Usage:
-    This function is useful for converting raw data tuples into a structured JSON format using the ContextualPredicate model.
-    """
+def process_data(data: List[List[Tuple[str, str, str, Dict[str, float], str]]], file_path: str) -> List[Tuple[str, str, str]]:
+    result = []
+    try:
+        for inner_list in data:
+            for tup in inner_list:
+                if tup:  # Check if tuple is not empty
+                    extended_tup = (*tup, file_path)
+                    # Convert extended tuple to ContextualPredicate object and then to JSON string
+                    context_metadata_str = ContextualPredicate.from_tuple(extended_tup).json()
+                    result.append((tup[0], context_metadata_str, tup[2]))
+                    
+        return result
     
-def convert_tuples_to_json(tuples_list: List[Tuple[str, str, str, Dict[str, str], str]]) -> List[str]:
-    return [ContextualPredicate.from_tuple(t).json() for t in tuples_list]
+    except Exception as e:
+        raise ValueError(f"Error processing data: {e}")
 
-if __name__ == '__main__':
-    sample_data = [
-        ('eocene', 'ABSTRACT In this study...', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.99, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico'},'dummy.txt'),
-
-    ]
-    json_list = convert_tuples_to_json(sample_data)
-    for json_str in json_list:
-        print(json_str)
-        print(type(json_str))

@@ -163,7 +163,7 @@ class BaseEngine(ABC):
                 raise Exception(
                     f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
                 )
-            self.state_queue.task_done()
+            await self.state_queue.task_done()
 
     async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
         """
@@ -241,6 +241,6 @@ class BaseEngine(ABC):
     async def _stop_workers(self):
         try:
             self.termination_event.set()
-            await asyncio.gather(*self.workers)
+            asyncio.gather(*self.workers)
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")

@@ -84,9 +84,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+      - name: Cache NLTK punkt
+        id: cache-nltk
+        uses: actions/cache@v2
+        with:
+          path: ~/nltk_data/tokenizers/punkt
+          key: nltk-punkt-${{ runner.os }}
+          restore-keys: |
+            nltk-punkt-${{ runner.os }}  
+      - name: Download NLTK punkt
+        run: |
+          python -m nltk.downloader punkt
+      - name: Cache spaCy large model
+        id: cache-spacy
+        uses: actions/cache@v2
+        with:
+            path: ~/.cache/spacy
+            key: spacy-large-${{ runner.os }}
+            restore-keys: |
+              spacy-large-${{ runner.os }}
+      - name: Download spaCy large model
+        run: |
+            python -m spacy download en_core_web_lg
+        
       - name: Run Pytest
-        run: python -B -m pytest --disable-warnings .
+        run: python -B -m pytest -v --disable-warnings .
         env:
           PYTHONDONTWRITEBYTECODE: 1
 
