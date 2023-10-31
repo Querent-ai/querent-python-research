@@ -148,7 +148,7 @@ pytest-mock==3.11.1
 tensorflow==2.14.0
 transformers==4.30.2
 torch==2.0.1
-pypdf==3.11.0
+pypdf==3.17.0
 python-pptx
 EbookLib==0.18
 html2text==2020.1.16
