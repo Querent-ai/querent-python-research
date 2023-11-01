@@ -7,6 +7,7 @@ from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.collectors.github.github_collector import GithubCollectorFactory
+from querent.collectors.drive.google_drive_collector import DriveCollectorFactory
 from querent.config.collector_config import CollectorConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
@@ -27,6 +28,7 @@ class CollectorResolver:
             CollectorBackend.Slack: SlackCollectorFactory(),
             CollectorBackend.DropBox: DropBoxCollectorFactory(),
             CollectorBackend.Github: GithubCollectorFactory(),
+            CollectorBackend.Drive: DriveCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -67,6 +69,8 @@ class CollectorResolver:
             return CollectorBackend.DropBox
         elif protocol.is_github():
             return CollectorBackend.Github
+        elif protocol.is_drive():
+            return CollectorBackend.Drive
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"
