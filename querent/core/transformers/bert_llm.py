@@ -17,6 +17,8 @@ from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 
+
+
 """
     BERT-based Named Entity Recognition (NER) and Linking Language Model (LLM) for extracting entities and relationships from text.
 
@@ -68,9 +70,9 @@ class BERTLLM(BaseEngine):
         self.ner_llm_instance = NER_LLM(
             provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
         )
-        self.attn_scores_instance = EntityAttentionExtractor(
-            model=self.ner_model, tokenizer=self.ner_tokenizer
-        )
+        self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
+       
+
 
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
@@ -117,13 +119,15 @@ class BERTLLM(BaseEngine):
                     doc_entity_pairs.append(
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
+
+
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
             #print("entity pairs after nerllm parsing", doc_entity_pairs, tokens)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                #print("attention_doc_entity_pairs_1", pairs_withattn)
+                print("attention_doc_entity_pairs_1", pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn))
                 else :

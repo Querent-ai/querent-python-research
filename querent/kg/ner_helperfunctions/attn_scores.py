@@ -1,6 +1,8 @@
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.logging.logger import setup_logger
 import torch
+import torch.nn.functional as F
+
 
 """
 EntityAttentionExtractor Class:
@@ -52,11 +54,25 @@ class EntityAttentionExtractor:
                 attentions = outputs.attentions[-1][0] 
             entity_token_ids = self.tokenizer.encode(entity, add_special_tokens=False)
             entity_positions = [i for i, token_id in enumerate(inputs["input_ids"][0]) if token_id in entity_token_ids]
+            
+            non_zero_attentions = []
+            # Iterate over each head's attentions
+            for head in range(attentions.size(0)):
+                # Extract the attention weights for the entity tokens
+                head_attentions = attentions[head, :, :][:, entity_positions]
+                # Flatten the attention weights and filter out zeros
+                head_attentions = head_attentions.flatten().tolist()
+                non_zero_attentions.extend([att for att in head_attentions if att > 0])
 
-            # # Get the average attention weight for the entity tokens
-            # attention_weight = attentions[0, entity_positions].mean().item()
+            # Convert to a tensor for further computation
+            non_zero_attentions = torch.tensor(non_zero_attentions)
 
-            attention_weight = attentions[0, entity_positions].max().item()
+            # Calculate the weighted mean of non-zero attention weights
+            if len(non_zero_attentions) > 0:
+                weighted_mean_attention = (non_zero_attentions * non_zero_attentions).sum() / non_zero_attentions.sum()
+                attention_weight = weighted_mean_attention.item()
+            else:
+                attention_weight = 0
             
             return attention_weight
         
@@ -86,6 +102,13 @@ class EntityAttentionExtractor:
                     pair_dict = pair[3]
                     pair_dict['entity1_attnscore'] = round(entity1_attnscore,2)
                     pair_dict['entity2_attnscore'] = round(entity2_attnscore,2)
+                    # harmonic mean for a pair- useful to penalize entity pairs where one entity has a much lower score than the other.
+                    if entity1_attnscore > 0 and entity2_attnscore > 0:
+                        pair_dict['pair_attnscore'] = round(2.0 * (entity1_attnscore * entity2_attnscore) / 
+                                                            (entity1_attnscore + entity2_attnscore), 2)
+                    else:
+                        pair_dict['pair_attnscore'] = 0
+
                     updated_inner_list.append((entity1, full_context, entity2, pair_dict))
                 updated_pairs.append(updated_inner_list)
                 

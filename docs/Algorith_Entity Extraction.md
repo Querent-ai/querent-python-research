@@ -111,14 +111,42 @@ output :
 
 1. we want to know how much attention the model pays to the entities "eocene" and "ft" in the sentence.<br />
 2. we find the sentence containing both entities. If no such sentence is found, the full context is used.<br />
-3. tokenize the sentence and pass it through the model to get attention outputs<br />
-4. identify the positions of the entity tokens within the context.<br />
-5. extracts the maximum attention weight for the entity tokens ('eo', '##cene') -> if ##cene has a higher attention weight we will choose this <br />
+3. tokenize the sentence and forward pass through the model to get attention outputs<br />
+4. the entity is also tokenized to find the corresponding token IDs that the model uses to represent the entity.<br />
+5. the positions of these entity tokens within the input sequence are identified<br />
+6. collect all non-zero attention weights<br />
+   a. for each attention head in the last layer of the model, the attention weights corresponding to the entity token positions are collected.<br />
+   b. only non-zero attention weights are considered. This is because zero attention weights indicate no attention being paid to those tokens, and including 
+      them would not contribute to understanding the model's focus on the entity <br />
+   c. the non-zero attention weights are then used to calculate a weighted mean. This is done by squaring the attention weights (to give more weight to higher 
+      attention scores) and summing them up.<br />
+   d. this sum is then divided by the sum of the non-zero attention weights to normalize it<br />
+   e. the result is a single scalar value that represents the weighted mean attention that the model pays to the entity token<br />
+   f. If there are no non-zero attention weights (highly unusual), the function returns an attention weight of 0, indicating no attention paid to the
+      <br />entity<br />
+
+7. advantage of this approach:<br />
+  a. focus on Relevant Weights:by considering only non-zero attention weights, the algorithm focuses on parts of the model's attention that are actually active.<br /> 
+     This avoids diluting the attention measure with zeros, which would otherwise lower the average attention score. Remember different heads focus on differs <br />
+     parts of the input sentence<br />
+  b. emphasis on Stronger Signals:squaring the attention weights before calculating the mean gives more importance to higher attention scores. This is based on <br />
+     the assumption that higher attention weights are more significant and should therefore have a greater impact on the final score.<br />
+  c. normalization:dividing by the sum of the non-zero attention weights normalizes the weighted mean, ensuring that the result is not skewed by the number oF    non-zero weights. <br />
+
+8. Potential Limitations:<br />
+  a. last Layer Focus:the algorithm only considers the attention weights from the last layer of the transformer model. While the last layer is often the most <br />
+     relevant for many tasks, earlier layers can also provide valuable insights, especially in multi-layer transformers where lower layers capture different <br />
+     aspects of the input.<br />
+  b. head Averaging: the algorithm averages across all heads, which might mask the fact that different heads can learn to attend to different types of <br />
+     information.<br />
+  c. squaring Weights:squaring the attention weights before averaging them is a design choice but could overemphasize outliers.<br />
+ 
+
 
 ```python
-    ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'ft', {'entity1_score': 1.0, 'entity2_score': 0.69, 'entity1_label': 'B-GeoMeth, B-GeoTime', 'entity2_label': 'B-GeoMeth', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'a 543-m-thick (1780 ft) deep-marine section', 'entity1_attnscore': 0.46, 'entity2_attnscore': 0.21}), 
-    
-    ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.92, 'entity1_label': 'B-GeoMeth, B-GeoTime', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico', 'entity1_attnscore': 0.46, 'entity2_attnscore': 0.17})
+      ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'ft', {'entity1_score': 1.0, 'entity2_score': 0.69, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoMeth', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'a 543-m-thick (1780 ft) deep-marine section', 'entity1_attnscore': 0.2, 'entity2_attnscore': 0.09}), 
+      ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'mexico', {'entity1_score': 1.0, 'entity2_score': 0.92, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoLoc', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'Mexico', 'entity1_attnscore': 0.2, 'entity2_attnscore': 0.09}), 
+      ('eocene', 'In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.', 'organic', {'entity1_score': 1.0, 'entity2_score': 0.98, 'entity1_label': 'B-GeoTime, B-GeoMeth', 'entity2_label': 'B-GeoPetro, B-GeoMeth', 'entity1_nn_chunk': 'a Paleocene–Eocene Thermal Maximum (PETM) record', 'entity2_nn_chunk': 'organic carbon stable isotopes', 'entity1_attnscore': 0.2, 'entity2_attnscore': 0.21})
 
 ```
 <br />
