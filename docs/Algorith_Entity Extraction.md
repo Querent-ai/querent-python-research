@@ -131,7 +131,8 @@ output :
      parts of the input sentence<br />
   b. emphasis on Stronger Signals:squaring the attention weights before calculating the mean gives more importance to higher attention scores. This is based on <br />
      the assumption that higher attention weights are more significant and should therefore have a greater impact on the final score.<br />
-  c. normalization:dividing by the sum of the non-zero attention weights normalizes the weighted mean, ensuring that the result is not skewed by the number oF    non-zero weights. <br />
+  c. normalization:dividing by the sum of the non-zero attention weights normalizes the weighted mean, ensuring that the result is not skewed by the number oF    
+     non-zero weights. <br />
 
 8. Potential Limitations:<br />
   a. last Layer Focus:the algorithm only considers the attention weights from the last layer of the transformer model. While the last layer is often the most <br />
@@ -140,6 +141,8 @@ output :
   b. head Averaging: the algorithm averages across all heads, which might mask the fact that different heads can learn to attend to different types of <br />
      information.<br />
   c. squaring Weights:squaring the attention weights before averaging them is a design choice but could overemphasize outliers.<br />
+
+9. Extract a combined attention score for the binary pair using harmonic mean to penalize entity pairs where one entity has a much lower score than the other<br />
  
 
 
