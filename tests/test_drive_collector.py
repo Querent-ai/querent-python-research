@@ -25,7 +25,7 @@ async def test_google_drive_collector(drive_config):
     resolver = CollectorResolver()
     collector = resolver.resolve(uri, drive_config)
     assert collector is not None
-    collector.connect()
+    await collector.connect()
 
     async def poll_and_print():
         counter = 0

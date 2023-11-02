@@ -16,7 +16,6 @@ from querent.config.collector_config import CollectorBackend, DriveCollectorConf
 from querent.common import common_errors
 
 
-# AIzaSyCjrL7jYQFJuxhmaYRCdgqADQXj3ugPIAs
 class DriveCollector(Collector):
     def __init__(self, config: DriveCollectorConfig):
         self.items_to_ignore = []
@@ -37,7 +36,10 @@ class DriveCollector(Collector):
 
     async def connect(self):
         self.creds = Credentials(
-            token=self.token, refresh_token=self.refresh_token, scopes=self.scopes
+            token=self.token,
+            refresh_token=self.refresh_token,
+            scopes=self.scopes,
+            token_uri="https://oauth2.googleapis.com/token",
         )
         if self.creds and self.creds.expired and self.creds.refresh_token:
             self.creds.refresh(Request())
