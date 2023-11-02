@@ -127,7 +127,7 @@ class BERTLLM(BaseEngine):
             #print("entity pairs after nerllm parsing", doc_entity_pairs, tokens)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                print("attention_doc_entity_pairs_1", pairs_withattn)
+                #print("attention_doc_entity_pairs_1", pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn))
                 else :
@@ -135,7 +135,7 @@ class BERTLLM(BaseEngine):
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 #print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                #print("data as        predicates.............", pairs_with_predicates)
+                print("data as        predicates.............", pairs_with_predicates)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(pairs_with_predicates)
                 #print("final triples: ",kgm.retrieve_triples())
