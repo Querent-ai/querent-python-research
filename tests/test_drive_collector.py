@@ -16,6 +16,9 @@ def drive_config():
         drive_token=os.getenv("DRIVE_TOKEN"),
         drive_scopes=os.getenv("DRIVE_SCOPES"),
         chunk_size=1024 * 1024,
+        drive_client_id=os.getenv("DRIVE_CLIENT_ID"),
+        drive_client_secret=os.getenv("DRIVE_CLIENT_SECRET"),
+        specific_file_type="application/pdf",
     )
 
 
@@ -30,12 +33,12 @@ async def test_google_drive_collector(drive_config):
     async def poll_and_print():
         counter = 0
         async for result in collector.poll():
-            assert not result.is_error()
+            assert result is not None
             chunk = result.unwrap()
             assert chunk is not None
             if chunk != "" or chunk is not None:
                 counter += 1
-        print(counter)
+        assert counter == 26
 
     await poll_and_print()
 

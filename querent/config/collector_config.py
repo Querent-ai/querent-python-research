@@ -88,4 +88,7 @@ class DriveCollectorConfig(CollectorConfig):
     drive_refresh_token: str
     drive_token: str
     drive_scopes: str
+    drive_client_id: str
+    drive_client_secret: str
     chunk_size: int
+    specific_file_type: str

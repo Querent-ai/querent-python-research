@@ -2,11 +2,13 @@ import asyncio
 import re
 from pathlib import Path
 from typing import AsyncGenerator
+import io
 import aiofiles
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
 
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
@@ -23,9 +25,12 @@ class DriveCollector(Collector):
         self.refresh_token = config.drive_refresh_token
         self.token = config.drive_token
         self.scopes = config.drive_scopes
+        self.client_id = config.drive_client_id
+        self.client_secret = config.drive_client_secret
         self.creds = None
         self.drive_service = None
         self.chunk_size = config.chunk_size
+        self.specific_file_type = config.specific_file_type
         try:
             with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
                 self.items_to_ignore = set(
@@ -38,8 +43,10 @@ class DriveCollector(Collector):
         self.creds = Credentials(
             token=self.token,
             refresh_token=self.refresh_token,
-            scopes=self.scopes,
+            scopes=["https://www.googleapis.com/auth/drive"],
             token_uri="https://oauth2.googleapis.com/token",
+            client_id=self.client_id,
+            client_secret=self.client_secret,
         )
         if self.creds and self.creds.expired and self.creds.refresh_token:
             self.creds.refresh(Request())
@@ -52,20 +59,50 @@ class DriveCollector(Collector):
     # collect those files
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
-        results = self.drive_service.files().list().execute()
+        query = ""
+        if self.specific_file_type:
+            query = f"mimeType='{self.specific_file_type}'"
+        results = self.drive_service.files().list(q=query).execute()
         files = results.get("files", [])
         if not files:
             print("No files found.")
         for file in files:
-            yield self.read_chunks(file["id"])
+            async for chunk in self.read_chunks(file["id"]):
+                yield CollectedBytes(data=chunk, file=file["name"])
 
     async def read_chunks(self, file_id):
-        request = self.drive_service.files().get_media(fileId=file_id)
+        file_metadata = (
+            self.drive_service.files().get(fileId=file_id, fields="mimeType").execute()
+        )
+        mime_type = file_metadata.get("mimeType")
 
-        downloader = request.get(downloader_options={"chunk_size": self.chunk_size})
-        for chunk in downloader:
-            if chunk:
-                yield chunk
+        if mime_type.startswith("application/vnd.google-apps."):
+            if mime_type == "application/vnd.google-apps.document":
+                export_mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif mime_type == "application/vnd.google-apps.folder":
+                return
+
+            else:
+                raise Exception(f"Unsupported Google Docs file type: {mime_type}")
+
+            request = self.drive_service.files().export_media(
+                fileId=file_id, mimeType=export_mime_type
+            )
+        else:
+            # It's a binary file, we can proceed with normal download
+            request = self.drive_service.files().get_media(fileId=file_id)
+
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request, chunksize=self.chunk_size)
+        done = False
+        while not done:
+            status, done = await asyncio.get_event_loop().run_in_executor(
+                None, downloader.next_chunk
+            )
+            if status:
+                yield fh.getvalue()
+                fh.seek(0)
+                fh.truncate(0)
 
     async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
         for item in root.iterdir():
