@@ -38,8 +38,10 @@ class ContextualPredicate(BaseModel):
     file_path: str
     entity1_attnscore: float
     entity2_attnscore: float
+    pair_attnscore: float
     entity1_embedding: List[float]
     entity2_embedding: List[float]
+    sentence_embedding: List[float]
     
     
     @classmethod
@@ -55,8 +57,10 @@ class ContextualPredicate(BaseModel):
                 entity2_nn_chunk=data[3]['entity2_nn_chunk'],
                 entity1_attnscore=data[3]['entity1_attnscore'],
                 entity2_attnscore=data[3]['entity2_attnscore'],
+                pair_attnscore=data[3]['pair_attnscore'],
                 entity1_embedding=data[3]['entity1_embedding'].tolist(),
                 entity2_embedding=data[3]['entity2_embedding'].tolist(),
+                sentence_embedding=data[3]['sentence_embedding'].tolist(),
                 file_path=data[4]
                 
             )

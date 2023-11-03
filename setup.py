@@ -148,7 +148,7 @@ requirements = [
     "pytest-cov==4.1.0",
     "pytest-mock==3.11.1",
     "transformers==4.30.2",
-    "pypdf==3.11.0",
+    "pypdf==3.17.0",
     "python-pptx",
     "EbookLib==0.18",
     "html2text==2020.1.16",
