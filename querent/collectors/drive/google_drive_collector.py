@@ -43,7 +43,7 @@ class DriveCollector(Collector):
         self.creds = Credentials(
             token=self.token,
             refresh_token=self.refresh_token,
-            scopes=["https://www.googleapis.com/auth/drive"],
+            scopes=[self.scopes],
             token_uri="https://oauth2.googleapis.com/token",
             client_id=self.client_id,
             client_secret=self.client_secret,
