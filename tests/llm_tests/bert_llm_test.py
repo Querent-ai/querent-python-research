@@ -12,8 +12,20 @@ from querent.querent.querent import Querent
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities", [
-    ("Nishant is working from Delhi. Ansh is working from Punjab.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"]),
-    ("In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/eocene","http://geodata.org/mexico"])])
+    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"]),
+    ("""In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
+record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
+using organic carbon stable isotopes and biostratigraphic constraints. We suggest that
+climate and tectonic perturbations in the upstream North American catchments can induce
+a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately
+in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom-
+modation and deposition of a shale interval when coarse-grained terrigenous material
+was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi-
+ment supply during the PETM, which is archived as a particularly thick sedimentary
+section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being
+observed elsewhere in the world, the one described in this study links with a continental-
+scale paleo-drainage, which makes it of particular interest for paleoclimate and source-
+to-sink reconstructions.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/eocene","http://geodata.org/mexico"])])
 
 
 

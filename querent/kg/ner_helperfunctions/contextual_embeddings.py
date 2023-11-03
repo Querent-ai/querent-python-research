@@ -2,6 +2,7 @@ from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.logging.logger import setup_logger
 import torch
 import umap
+import numpy as np
 
 """
     EntityEmbeddingExtractor: A class designed to extract embeddings for entities within a given context.
@@ -28,11 +29,12 @@ import umap
 
 class EntityEmbeddingExtractor:
 
-    def __init__(self, model, tokenizer, number_entity_pairs):
+    def __init__(self, model, tokenizer, number_entity_pairs, number_sentences):
         self.logger = setup_logger(__name__, "EntityEmbeddingExtractor")
         self.model = model
         self.tokenizer = tokenizer
         self.reducer = umap.UMAP(n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
+        self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
 
 
     def extract_entity_embedding(self, entity, context):
@@ -51,7 +53,7 @@ class EntityEmbeddingExtractor:
             sentence_embedding = last_hidden_state.mean(dim=0)
             combined_embedding = torch.cat((entity_embedding, sentence_embedding), dim=0)
             
-            return combined_embedding
+            return combined_embedding, sentence_embedding
         
         except Exception as e:
             self.logger.error(f"Error extracting entity embedding: {e}")
@@ -115,13 +117,25 @@ class EntityEmbeddingExtractor:
             raise   Exception("Error extracting entity embedding: {}".format(e))
 
 
-    def fit_umap(self, all_embeddings):
+    def fit_umap(self, all_embeddings, sentence_embeddings):
         """Fit UMAP on all embeddings."""
         try:
-            self.reducer.fit(all_embeddings)
+            # Check if the embedding lists are non-empty and have valid data
+            if not all_embeddings or not sentence_embeddings:
+                raise ValueError("Embedding lists are empty or contain invalid data.")
+
+            # Fit entity embeddings
+            #print(f"Fitting entity UMAP on {len(all_embeddings)} embeddings.")
+            self.reducer.fit(np.array(all_embeddings))
+
+            # Fit sentence embeddings
+            #print(f"Fitting sentence UMAP on {len(sentence_embeddings)} embeddings.")
+            self.sentence_reducer.fit(np.array(sentence_embeddings))
+
         except Exception as e:
             self.logger.error(f"Error fitting UMAP: {e}")
-            raise Exception (f"Error fitting UMAP: {e}")
+            raise Exception(f"Error fitting UMAP: {e}")
+
     
     def _get_relevant_context(self, entity1, entity2, full_context):
         sentences = NER_LLM.split_into_sentences(full_context)
@@ -137,10 +151,11 @@ class EntityEmbeddingExtractor:
             for pair in inner_list:
                 entity1, full_context, entity2, pair_dict = pair
                 context = self._get_relevant_context(entity1, entity2, full_context)
-                entity1_embedding = self.extract_entity_embedding(entity1, context)
-                entity2_embedding = self.extract_entity_embedding(entity2, context)
+                entity1_embedding, _ = self.extract_entity_embedding(entity1, context)
+                entity2_embedding, sentence_embedding = self.extract_entity_embedding(entity2, context)
                 pair_dict['entity1_embedding'] = self.reducer.transform([entity1_embedding.tolist()])[0]
                 pair_dict['entity2_embedding'] = self.reducer.transform([entity2_embedding.tolist()])[0]
+                pair_dict['sentence_embedding'] = self.sentence_reducer.transform([sentence_embedding.tolist()])[0]
                 updated_inner_list.append((entity1, full_context, entity2, pair_dict))
             updated_pairs.append(updated_inner_list)
         #print("updated pairs with embeddings", updated_pairs)    
@@ -148,16 +163,24 @@ class EntityEmbeddingExtractor:
 
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
         all_embeddings = []
+        all_sentences = []
+        all_sentence_embeddings = []
         try:
             for inner_list in doc_entity_pairs:
                 for pair in inner_list:
                     entity1, full_context, entity2, _ = pair
                     context = self._get_relevant_context(entity1, entity2, full_context)
-                    entity1_embedding = self.extract_entity_embedding(entity1, context)
-                    entity2_embedding = self.extract_entity_embedding(entity2, context)
+                    entity1_embedding, sentence_embedding = self.extract_entity_embedding(entity1, context)
+                    entity2_embedding, _ = self.extract_entity_embedding(entity2, context)
                     all_embeddings.extend([entity1_embedding.tolist(), entity2_embedding.tolist()])
+                    if context not in all_sentences:
+                        all_sentences.append(context)
+                        #print("all_sentences:", all_sentences)
+                        #print(sentence_embedding)
+                        #print(np.array(sentence_embedding).shape)
+                        all_sentence_embeddings.append(sentence_embedding.tolist())
 
-            self.fit_umap(all_embeddings)
+            self.fit_umap(all_embeddings=all_embeddings, sentence_embeddings=all_sentence_embeddings)
             return self._update_pairs_with_embeddings(doc_entity_pairs)
         
         except Exception as e:
