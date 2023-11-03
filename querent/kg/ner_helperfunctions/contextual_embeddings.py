@@ -125,11 +125,11 @@ class EntityEmbeddingExtractor:
                 raise ValueError("Embedding lists are empty or contain invalid data.")
 
             # Fit entity embeddings
-            #print(f"Fitting entity UMAP on {len(all_embeddings)} embeddings.")
+            print(f"Fitting entity UMAP on {len(all_embeddings)} embeddings.")
             self.reducer.fit(np.array(all_embeddings))
 
             # Fit sentence embeddings
-            #print(f"Fitting sentence UMAP on {len(sentence_embeddings)} embeddings.")
+            print(f"Fitting sentence UMAP on {len(sentence_embeddings)} embeddings.")
             self.sentence_reducer.fit(np.array(sentence_embeddings))
 
         except Exception as e:
@@ -143,6 +143,11 @@ class EntityEmbeddingExtractor:
             if entity1.lower() in sentence.lower() and entity2.lower() in sentence.lower():
                 return sentence
         return full_context
+    
+    def append_if_not_present(self,item, item_embedding, all_items, all_embeddings):
+        if item not in all_items:
+            all_items.append(item)
+            all_embeddings.append(item_embedding.tolist())
 
     def _update_pairs_with_embeddings(self, doc_entity_pairs):
         updated_pairs = []
@@ -164,6 +169,7 @@ class EntityEmbeddingExtractor:
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
         all_embeddings = []
         all_sentences = []
+        all_entities = []
         all_sentence_embeddings = []
         try:
             for inner_list in doc_entity_pairs:
@@ -172,14 +178,11 @@ class EntityEmbeddingExtractor:
                     context = self._get_relevant_context(entity1, entity2, full_context)
                     entity1_embedding, sentence_embedding = self.extract_entity_embedding(entity1, context)
                     entity2_embedding, _ = self.extract_entity_embedding(entity2, context)
-                    all_embeddings.extend([entity1_embedding.tolist(), entity2_embedding.tolist()])
-                    if context not in all_sentences:
-                        all_sentences.append(context)
-                        #print("all_sentences:", all_sentences)
-                        #print(sentence_embedding)
-                        #print(np.array(sentence_embedding).shape)
-                        all_sentence_embeddings.append(sentence_embedding.tolist())
+                    self.append_if_not_present(entity1, entity1_embedding, all_entities, all_embeddings)
+                    self.append_if_not_present(entity2, entity2_embedding, all_entities, all_embeddings)
+                    self.append_if_not_present(context, sentence_embedding, all_sentences, all_sentence_embeddings)
 
+            print("all entity embeddings ...............", all_entities)
             self.fit_umap(all_embeddings=all_embeddings, sentence_embeddings=all_sentence_embeddings)
             return self._update_pairs_with_embeddings(doc_entity_pairs)
         
