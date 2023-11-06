@@ -53,5 +53,4 @@ async def test_triple_filter(triples, score_threshold, attention_score_threshold
     assert cluster_reduction_count == expected_clustered_count
     assert len(clustered_triples) == len(triples) - expected_clustered_count
 
-    # Here you can add more assertions as needed to check the contents of the filtered and clustered triples
 
