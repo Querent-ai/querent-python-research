@@ -116,30 +116,21 @@ output :
 5. the positions of these entity tokens within the input sequence are identified<br />
 6. collect all non-zero attention weights<br />
    a. for each attention head in the last layer of the model, the attention weights corresponding to the entity token positions are collected.<br />
-   b. only non-zero attention weights are considered. This is because zero attention weights indicate no attention being paid to those tokens, and including 
-      them would not contribute to understanding the model's focus on the entity <br />
-   c. the non-zero attention weights are then used to calculate a weighted mean. This is done by squaring the attention weights (to give more weight to higher 
-      attention scores) and summing them up.<br />
+   b. only non-zero attention weights are considered. This is because zero attention weights indicate no attention being paid to those tokens, and including them would not contribute to understanding the model's focus on the entity <br />
+   c. the non-zero attention weights are then used to calculate a weighted mean. This is done by squaring the attention weights (to give more weight to higher attention scores) and summing them up.<br />
    d. this sum is then divided by the sum of the non-zero attention weights to normalize it<br />
    e. the result is a single scalar value that represents the weighted mean attention that the model pays to the entity token<br />
    f. If there are no non-zero attention weights (highly unusual), the function returns an attention weight of 0, indicating no attention paid to the
-      <br />entity<br />
+   entity<br />
 
 7. advantage of this approach:<br />
-  a. focus on Relevant Weights:by considering only non-zero attention weights, the algorithm focuses on parts of the model's attention that are actually active.<br /> 
-     This avoids diluting the attention measure with zeros, which would otherwise lower the average attention score. Remember different heads focus on differs <br />
-     parts of the input sentence<br />
-  b. emphasis on Stronger Signals:squaring the attention weights before calculating the mean gives more importance to higher attention scores. This is based on <br />
-     the assumption that higher attention weights are more significant and should therefore have a greater impact on the final score.<br />
-  c. normalization:dividing by the sum of the non-zero attention weights normalizes the weighted mean, ensuring that the result is not skewed by the number oF    
-     non-zero weights. <br />
+  a. focus on Relevant Weights:by considering only non-zero attention weights, the algorithm focuses on parts of the model's attention that are actually active.This avoids diluting the attention measure with zeros, which would otherwise lower the average attention score. Remember different heads focus on differs parts of the input sentence<br />
+  b. emphasis on Stronger Signals:squaring the attention weights before calculating the mean gives more importance to higher attention scores. This is based on the assumption that higher attention weights are more significant and should therefore have a greater impact on the final score.<br />
+  c. normalization:dividing by the sum of the non-zero attention weights normalizes the weighted mean, ensuring that the result is not skewed by the number of non-zero weights. <br />
 
 8. Potential Limitations:<br />
-  a. last Layer Focus:the algorithm only considers the attention weights from the last layer of the transformer model. While the last layer is often the most <br />
-     relevant for many tasks, earlier layers can also provide valuable insights, especially in multi-layer transformers where lower layers capture different <br />
-     aspects of the input.<br />
-  b. head Averaging: the algorithm averages across all heads, which might mask the fact that different heads can learn to attend to different types of <br />
-     information.<br />
+  a. last Layer Focus:the algorithm only considers the attention weights from the last layer of the transformer model. While the last layer is often the most relevant for many tasks, earlier layers can also provide valuable insights, especially in multi-layer transformers where lower layers capture different aspects of the input.<br />
+  b. head Averaging: the algorithm averages across all heads, which might mask the fact that different heads can learn to attend to different types of  information.<br />
   c. squaring Weights:squaring the attention weights before averaging them is a design choice but could overemphasize outliers.<br />
 
 9. Extract a combined attention score for the binary pair using harmonic mean to penalize entity pairs where one entity has a much lower score than the other<br />
@@ -218,7 +209,7 @@ similarity threshold.<br />
 
 <br />
 
-### 3. Convert the extracted triples above to contextualknowledge triples (subject: URI, predicate: BNODE, object: URI) pairs<br />
+### 4. Convert the extracted triples above to contextualknowledge triples (subject: URI, predicate: BNODE, object: URI) pairs<br />
 1. subject string ('entity1') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity1')<br />
 2. object string ('entity2') is concatenated was a base uri('http://geodata.org') and converted to a URI -> ('http://geodata.org/entity2')<br />
 3. predicate, represented as a dictionary with key-value pairs, is transformed into a BNode (a blank node) using its string representation.<br />
