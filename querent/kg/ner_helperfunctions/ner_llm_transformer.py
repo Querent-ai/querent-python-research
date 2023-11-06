@@ -280,7 +280,7 @@ class NER_LLM:
             raise
 
 
-ner_llm = NER_LLM(ner_model_name="botryan96/GeoBERT")
+#ner_llm = NER_LLM(ner_model_name="botryan96/GeoBERT")
 
 
 

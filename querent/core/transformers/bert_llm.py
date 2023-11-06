@@ -19,6 +19,7 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 
 
 
+
 """
     BERT-based Named Entity Recognition (NER) and Linking Language Model (LLM) for extracting entities and relationships from text.
 
@@ -117,6 +118,8 @@ class BERTLLM(BaseEngine):
                     ) = self.ner_llm_instance.extract_entities_from_sentence(
                         original_sentence, sentence_idx, [s[1] for s in tokens]
                     )
+                    #print("starting entities ", entities)
+                    #print("starting entity pairs", entity_pairs)
                     doc_entity_pairs.append(
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
@@ -127,7 +130,7 @@ class BERTLLM(BaseEngine):
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
-            #print("entity pairs after nerllm parsing", doc_entity_pairs, tokens)
+            #print("entity pairs after nerllm parsing", doc_entity_pairs)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 #print("attention_doc_entity_pairs_1", pairs_withattn)

@@ -33,7 +33,7 @@ class EntityEmbeddingExtractor:
         self.logger = setup_logger(__name__, "EntityEmbeddingExtractor")
         self.model = model
         self.tokenizer = tokenizer
-        self.reducer = umap.UMAP(n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
+        self.reducer = umap.UMAP(init='random',n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
         self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
 
 
