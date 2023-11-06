@@ -12,8 +12,8 @@ import os
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities", [
-    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"]),
+@pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities,filter_entities", [
+    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
     ("""In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
 record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
 using organic carbon stable isotopes and biostratigraphic constraints. We suggest that
@@ -26,11 +26,11 @@ ment supply during the PETM, which is archived as a particularly thick sedimenta
 section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being
 observed elsewhere in the world, the one described in this study links with a continental-
 scale paleo-drainage, which makes it of particular interest for paleoclimate and source-
-to-sink reconstructions.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/eocene","http://geodata.org/mexico"])])
+to-sink reconstructions.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/eocene","http://geodata.org/mexico"], True)])
 
 
 
-async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, llm_class, expected_entities):
+async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, llm_class, expected_entities, filter_entities):
     input_queue = QuerentQueue()
     resource_manager = ResourceManager()
     
@@ -38,7 +38,13 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
-    llm_instance = llm_class(input_queue, ner_model_name)
+    llm_instance = llm_class(input_queue, ner_model_name, enable_filtering=filter_entities,
+                            filter_params={
+                                'score_threshold':0.5,
+                                'attention_score_threshold':0.1,
+                                'similarity_threshold':0.6,
+                                'min_cluster_size':6,
+                                'min_samples':3,})
 
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):

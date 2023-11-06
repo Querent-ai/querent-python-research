@@ -16,6 +16,7 @@ from querent.kg.querent_kg import QuerentKG
 from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
+from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 
 
 
@@ -59,6 +60,8 @@ class BERTLLM(BaseEngine):
         self,
         input_queue=QuerentQueue,
         ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+        enable_filtering=False,
+        filter_params=None, 
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
@@ -72,8 +75,14 @@ class BERTLLM(BaseEngine):
             provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
         )
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
-       
-
+        self.enable_filtering = enable_filtering
+        self.filter_params = filter_params or {}
+        self.triple_filter = None
+        
+        if self.enable_filtering:
+            # Initialize the TripleFilter with the provided parameters
+            self.triple_filter = TripleFilter(**self.filter_params)
+ 
 
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
@@ -96,6 +105,23 @@ class BERTLLM(BaseEngine):
         for inner_list in doc_entity_pairs:
             total_pairs += len(inner_list)
         return total_pairs
+    
+    def set_filter_params(self, **kwargs):
+        # Method to update filter parameters
+        self.filter_params = kwargs
+        if self.triple_filter:
+            # Update the TripleFilter instance if it's already created
+            self.triple_filter.set_params(**kwargs)
+        else:
+            # Create a new TripleFilter instance with the new parameters
+            self.triple_filter = TripleFilter(**kwargs)
+
+    def filter_triples(self, triples):
+        # Method to filter triples if filtering is enabled
+        if self.enable_filtering and self.triple_filter:
+            return self.triple_filter.filter_triples(triples)
+        return triples  # Return the original triples if filtering is not enabled
+
 
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
@@ -141,9 +167,15 @@ class BERTLLM(BaseEngine):
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 #print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                print("data as        predicates.............", pairs_with_predicates)
+                #print("data as        predicates.............", pairs_with_predicates)
+                if self.enable_filtering == True:
+                    clustered_triples, cluster_reduction_count, clusterer = self.triple_filter.cluster_triples(pairs_with_predicates)
+                    filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
+                else:
+                    filtered_triples = pairs_with_predicates
+                #print("final triples: ",filtered_triples, len(filtered_triples))
                 kgm = KnowledgeGraphManager()
-                kgm.feed_input(pairs_with_predicates)
+                kgm.feed_input(filtered_triples)
                 #print("final triples: ",kgm.retrieve_triples())
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)

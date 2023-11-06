@@ -202,6 +202,19 @@ output :
    ('eocene', '{"context": "In this study, we present evidence of a Paleocene\\u2013Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints. We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM.", "entity1_score": 1.0, "entity2_score": 0.92, "entity1_label": "B-GeoTime, B-GeoMeth", "entity2_label": "B-GeoLoc", "entity1_nn_chunk": "a Paleocene\\u2013Eocene Thermal Maximum (PETM) record", "entity2_nn_chunk": "Mexico", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.2, "entity2_attnscore": 0.09, "pair_attnscore": 0.13, "entity1_embedding": [8.69924545288086, -2.979280471801758, 6.972227096557617, 3.501229763031006, 3.0274736881256104, 13.416812896728516, 2.4797191619873047, 2.8480584621429443, 5.319562911987305, 3.032069444656372], "entity2_embedding": [8.64617919921875, -4.001160144805908, 6.817051410675049, 3.2022833824157715, 1.746004343032837, 13.622705459594727, 1.8317079544067383, 3.2205424308776855, 4.623369216918945, 3.7013437747955322], "sentence_embedding": [15.925633430480957, 15.26292610168457, 14.921666145324707, 10.1509428024292, 6.217123508453369, 9.1832914352417, 6.5722455978393555, 6.715585231781006, 7.898133754730225, 1.311438798904419]}', 'mexico')
 ]
 ```
+<br />
+
+### 3. Filtering entity pairs<br />
+1.  expects triples in the form of (entity1, context, entity2), where 'context' is a JSON string containing various attributes including the embeddings<br />
+2.  calculate the cosine similarity between two entity embeddings and filters triples by checking if the cosine similarity between entity embeddings meets the 
+similarity threshold.<br />
+3.  filters triples by checking if the entity scores meet the score threshold.<br />
+4.  filters triples by checking if the pair attention score meets the attention score threshold.<br />
+5.  combine_embeddings(entity1_embedding, entity2_embedding) and then clusters the filtered triples from step 4 by using the HDBSCAN algorithm on combined
+ embeddings and returns the clusters removing the noise<br />
+6. user can configure the following parameter for hbdscan : score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size, min_samples<br />
+7. user can even turn on/off the filtering step<br />
+
 
 <br />
 
