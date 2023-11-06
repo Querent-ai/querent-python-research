@@ -3,6 +3,30 @@ import pytest
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.common.types.ingested_tokens import IngestedTokens
 
+"""
+    Asynchronous test function to validate the filtering and clustering of triples.
+
+    This test initializes a TripleFilter with specified thresholds, filters the input triples,
+    and then clusters the remaining triples. It asserts that the number of triples filtered
+    and clustered matches the expected counts.
+
+    Parameters:
+    - triples (list of tuples): The input triples to be filtered and clustered.
+    - score_threshold (float): The threshold for filtering based on entity scores.
+    - attention_score_threshold (float): The threshold for filtering based on attention scores.
+    - similarity_threshold (float): The threshold for filtering based on embedding similarity.
+    - min_cluster_size (int): The minimum size of clusters to be formed.
+    - min_samples (int): The number of samples in a neighborhood for a point to be considered a core point.
+    - expected_filtered_count (int): The expected number of triples to be filtered out.
+    - expected_clustered_count (int): The expected number of triples to be clustered.
+
+    Assertions:
+    - The number of triples filtered out matches the expected_filtered_count.
+    - The number of triples after filtering matches the original count minus expected_filtered_count.
+    - The number of triples clustered out matches the expected_clustered_count.
+    - The number of triples after clustering matches the original count minus expected_clustered_count.
+"""
+
 # Define the test data and expected results
 @pytest.mark.parametrize("triples, score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size, min_samples, expected_filtered_count, expected_clustered_count", 
                         [([('eocene', '{"context": "In this study, we present evidence of a Paleocene\\u2013Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints. We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM.", "entity1_score": 1.0, "entity2_score": 0.69, "entity1_label": "B-GeoTime, B-GeoMeth", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "a Paleocene\\u2013Eocene Thermal Maximum (PETM) record", "entity2_nn_chunk": "a 543-m-thick (1780 ft) deep-marine section", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.2, "entity2_attnscore": 0.09, "pair_attnscore": 0.12, "entity1_embedding": [2.7497622966766357, -0.5454338788986206, 6.291350364685059, 8.717966079711914, 3.0895700454711914, 2.3901493549346924, 2.462153673171997, 2.4761993885040283, 3.185384511947632, 12.142127990722656], "entity2_embedding": [3.7323296070098877, -1.4545331001281738, 6.134968280792236, 8.18924331665039, 2.7829885482788086, 4.156617164611816, 1.9409900903701782, 2.868553876876831, 4.041325569152832, 13.211334228515625], "sentence_embedding": [8.273744583129883, 2.051804780960083, 9.59654426574707, -2.3267648220062256, 9.436607360839844, 10.587993621826172, -7.340267181396484, 4.733699321746826, 5.80666971206665, 5.723113536834717]}', 'ft'), 
