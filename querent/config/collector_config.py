@@ -91,4 +91,5 @@ class DriveCollectorConfig(CollectorConfig):
     drive_client_id: str
     drive_client_secret: str
     chunk_size: int
-    specific_file_type: str
+    specific_file_type: Optional[str] = None
+    folder_to_crawl: Optional[str] = None

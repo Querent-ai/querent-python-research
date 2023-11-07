@@ -31,6 +31,7 @@ class DriveCollector(Collector):
         self.drive_service = None
         self.chunk_size = config.chunk_size
         self.specific_file_type = config.specific_file_type
+        self.folder_to_crawl = config.folder_to_crawl
         try:
             with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
                 self.items_to_ignore = set(
@@ -62,6 +63,10 @@ class DriveCollector(Collector):
         query = ""
         if self.specific_file_type:
             query = f"mimeType='{self.specific_file_type}'"
+        if self.folder_to_crawl:
+            if self.specific_file_type:
+                query += " and "
+            query = f"'{self.folder_to_crawl}' in parents"
         results = self.drive_service.files().list(q=query).execute()
         files = results.get("files", [])
         if not files:

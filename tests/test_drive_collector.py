@@ -19,6 +19,8 @@ def drive_config():
         drive_client_id=os.getenv("DRIVE_CLIENT_ID"),
         drive_client_secret=os.getenv("DRIVE_CLIENT_SECRET"),
         specific_file_type="application/pdf",
+        # Remember to put id of the folder you want to crawl
+        folder_to_crawl="1-5ISYohLL0BT9H9hncxYd11gcpWZIegM",
     )
 
 
@@ -38,7 +40,7 @@ async def test_google_drive_collector(drive_config):
             assert chunk is not None
             if chunk != "" or chunk is not None:
                 counter += 1
-        assert counter == 26
+        assert counter == 19
 
     await poll_and_print()
 
