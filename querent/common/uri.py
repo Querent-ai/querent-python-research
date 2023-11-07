@@ -15,6 +15,7 @@ class Protocol(enum.Enum):
     Slack = "slack"
     DropBox = "dropbox"
     Github = "github"
+    Drive = "drive"
 
     def is_azure(self) -> bool:
         return self == Protocol.Azure
@@ -57,6 +58,9 @@ class Protocol(enum.Enum):
 
     def is_github(self) -> bool:
         return self == Protocol.Github
+
+    def is_drive(self) -> bool:
+        return self == Protocol.Drive
 
 
 class Uri:

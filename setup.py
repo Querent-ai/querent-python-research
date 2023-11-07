@@ -48,7 +48,6 @@ requirements = [
     "google-search-results==2.4.2",
     "google-serp-api==1.0.3",
     "google-api-core==2.11.0",
-    "google-api-python-client==2.88.0",
     "google-auth==2.19.1",
     "google-auth-httplib2==0.1.0",
     "google-auth-oauthlib==1.0.0",
@@ -180,6 +179,7 @@ requirements = [
     "slack-sdk",
     "dropbox",
     "requests",
+    "google-api-python-client==2.105.0",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:

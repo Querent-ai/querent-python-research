@@ -12,6 +12,7 @@ class CollectorBackend(str, Enum):
     Slack = "slack"
     DropBox = "dropbox"
     Github = "github"
+    Drive = "drive"
 
 
 class CollectorConfig(BaseModel):
@@ -80,3 +81,15 @@ class GithubConfig(CollectorConfig):
 class WebScraperConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.WebScraper
     website_url: str = Field(..., description="The URL of the website to scrape.")
+
+
+class DriveCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.Drive
+    drive_refresh_token: str
+    drive_token: str
+    drive_scopes: str
+    drive_client_id: str
+    drive_client_secret: str
+    chunk_size: int
+    specific_file_type: Optional[str] = None
+    folder_to_crawl: Optional[str] = None
