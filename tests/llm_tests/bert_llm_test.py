@@ -5,6 +5,7 @@ from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
+from querent.config.bert_llm_config import BERTLLMConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
@@ -38,13 +39,18 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
-    llm_instance = llm_class(input_queue, ner_model_name, enable_filtering=filter_entities,
-                            filter_params={
-                                'score_threshold':0.5,
-                                'attention_score_threshold':0.1,
-                                'similarity_threshold':0.6,
-                                'min_cluster_size':6,
-                                'min_samples':3,})
+    bert_llm_config = BERTLLMConfig(
+        ner_model_name=ner_model_name,
+        enable_filtering=filter_entities,
+        filter_params={
+            'score_threshold': 0.5,
+            'attention_score_threshold': 0.1,
+            'similarity_threshold': 0.6,
+            'min_cluster_size': 6,
+            'min_samples': 3,
+        }
+    )
+    llm_instance = llm_class(input_queue, bert_llm_config)
 
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):

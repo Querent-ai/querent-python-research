@@ -17,6 +17,7 @@ from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
+from querent.config.bert_llm_config import BERTLLMConfig
 
 
 
@@ -59,25 +60,23 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 class BERTLLM(BaseEngine):
     def __init__(
         self,
-        input_queue=QuerentQueue,
-        ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
-        enable_filtering=False,
-        filter_params=None, 
+        input_queue:QuerentQueue,
+        config: BERTLLMConfig
     ):  
-        self.logger = setup_logger(__name__, "BERTLLM")
+        self.logger = setup_logger(config.logger, "BERTLLM")
         super().__init__(input_queue)
-        self.graph_config = GraphConfig(identifier=ner_model_name)
+        self.graph_config = GraphConfig(identifier=config.ner_model_name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
-        self.ner_tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
-        self.ner_model = NER_LLM.load_model(ner_model_name, "NER")
+        self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
+        self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
         self.ner_llm_instance = NER_LLM(
             provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
         )
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
-        self.enable_filtering = enable_filtering
-        self.filter_params = filter_params or {}
+        self.enable_filtering = config.enable_filtering
+        self.filter_params = config.filter_params or {}
         self.triple_filter = None
         if self.enable_filtering:
             self.triple_filter = TripleFilter(**self.filter_params)
