@@ -106,8 +106,8 @@ class NER_LLM:
                 sentence_tokens = self.tokenize_sentence(sentence)
                 tokenized_sentences.append((sentence_tokens, sentence, idx))
         except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to tokenize and chunk {e}")
             raise Exception(f"An error occurred while tokenizing: {e}")
-        #print("tokenized Sentencesss",tokenized_sentences)
         return tokenized_sentences
 
     def _token_distance(self, tokens, start_idx1, start_idx2, noun_chunk1, noun_chunk2):
@@ -184,7 +184,7 @@ class NER_LLM:
                     results.append(entity_info)
         except Exception as e:
             self.logger.error(f"Error extracting entities from chunk: {e}")
-            raise
+            raise(f"Error extracting entities from chunk: {e}")
         return results
 
     def combine_entities_wordpiece(self, entities: List[dict], tokens: List[str]):
@@ -254,83 +254,23 @@ class NER_LLM:
                             binary_pairs.append((pair, metadata))
         except Exception as e:
             self.logger.error(f"Error extracting binary pairs: {e}")
-            raise
+            raise(f"Error extracting binary pairs: {e}")
         return binary_pairs
 
     def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str]):
         try:
             tokens = self.tokenize_sentence(sentence)
-            #print("tokenized sentence", tokens)
             chunks = self.get_chunks(tokens)
-            #print("chunks", chunks)
             all_entities = []
             for chunk in chunks:
                 entities = self.extract_entities_from_chunk(chunk)
                 all_entities.extend(entities)
-            #print("all_entities", all_entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
-            #final_entities = self.combine_entities_byteencoding(all_entities, tokens)
             parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence)
-            #print("parsed_entities", parsed_entities.entities)
             binary_pairs = self.extract_binary_pairs(parsed_entities.entities, tokens, all_sentences, sentence_idx)
-            #print("binary_pairs", binary_pairs)
             return parsed_entities.entities, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
-            raise
+            raise(f"Error extracting entities from sentence: {e}")
 
-
-ner_llm = NER_LLM(ner_model_name="botryan96/GeoBERT")
-
-
-
-# is_valid = ner_llm.validate()
-# print(f"Model and tokenizer validation: {is_valid}")
-# document = """ABSTRACT
-# In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
-# record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
-# using organic carbon stable isotopes and biostratigraphic constraints."""
-
-# tokens = ner_llm._tokenize_and_chunk(document)
-# print("Tokens List:", tokens)
-# for tokenized_sentence, original_sentence, sentence_idx in tokens:
-# #   print(tokenized_sentence)
-# #   print(original_sentence)
-# #   print(sentence_idx)
-# #   print("[s[1] for s in tokens]", [s[1] for s in tokens] )
-#     entities, entity_pairs = ner_llm.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens])
-#     #print("entity pairs : ", entity_pairs)
-#     transformed_pairs = ner_llm.transform_entity_pairs(entity_pairs)
-#     print(transformed_pairs)
-#     # for tup in transformed_pairs:
-#     #     entity1 = tup[0]
-#     #     entity2 = tup[2]
-#     #     print(f"Entity1: {entity1}")
-#     #     print(f"Entity2: {entity2}")
-#     #     print("------")
-
-#document = "Nishant is working from Delhi. Ansh is working from Punjab."
-# # Initialize the tokenizer and model outside the NER_LLM class
-# tokenizer = AutoTokenizer.from_pretrained("dbmdz/bert-large-cased-finetuned-conll03-english")
-# model = AutoModelForTokenClassification.from_pretrained("dbmdz/bert-large-cased-finetuned-conll03-english")
-
-# tokenizer = AutoTokenizer.from_pretrained("botryan96/GeoBERT")
-# #model = AutoModelForTokenClassification.from_pretrained("botryan96/GeoBERT")
-
-# # Pass the initialized tokenizer and model to the NER_LLM class
-# ner_llm = NER_LLM(provided_tokenizer=tokenizer, ner_model_name="botryan96/GeoBERT")
-
-
-
-#More models to try 
-# "spacy"
-# "dslim/bert-base-NER" 
-# "botryan96/GeoBERT" 
-# "QCRI/bert-base-multilingual-cased-pos-english" ## POS - need to determine its use case
-# "xlm-roberta-large-finetuned-conll03-english"
-# "Jean-Baptiste/roberta-large-ner-english"
-# implement https://huggingface.co/tner/roberta-large-ontonotes5
-# allenai/scibert_scivocab_uncased
-# LSTM and Bi-LSTM ?
- # dbmdz/bert-large-cased-finetuned-conll03-english
 

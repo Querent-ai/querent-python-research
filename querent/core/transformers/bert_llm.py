@@ -16,6 +16,9 @@ from querent.kg.querent_kg import QuerentKG
 from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
+from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
+from querent.config.core.bert_llm_config import BERTLLMConfig
+
 
 
 
@@ -34,6 +37,7 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
         ner_llm_instance (NER_LLM): Instance of the NER_LLM class.
         attn_scores_instance (EntityAttentionExtractor): Instance for extracting attention scores.
         entity_embedding_extractor (EntityEmbeddingExtractor, optional): Instance for extracting entity embeddings.
+        triple_filter_instance (EntityTripleFilter
 
     Methods:
         validate() -> bool:
@@ -56,23 +60,27 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 class BERTLLM(BaseEngine):
     def __init__(
         self,
-        input_queue=QuerentQueue,
-        ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+        input_queue:QuerentQueue,
+        config: BERTLLMConfig
     ):  
-        self.logger = setup_logger(__name__, "BERTLLM")
+        self.logger = setup_logger(config.logger, "BERTLLM")
         super().__init__(input_queue)
-        self.graph_config = GraphConfig(identifier=ner_model_name)
+        self.graph_config = GraphConfig(identifier=config.ner_model_name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
-        self.ner_tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
-        self.ner_model = NER_LLM.load_model(ner_model_name, "NER")
+        self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
+        self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
         self.ner_llm_instance = NER_LLM(
             provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
         )
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
-       
-
+        self.enable_filtering = config.enable_filtering
+        self.filter_params = config.filter_params or {}
+        self.triple_filter = None
+        if self.enable_filtering:
+            self.triple_filter = TripleFilter(**self.filter_params)
+ 
 
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
@@ -86,6 +94,7 @@ class BERTLLM(BaseEngine):
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
         if not data.data or data.is_error():
+            
             return False
 
         return True
@@ -94,7 +103,15 @@ class BERTLLM(BaseEngine):
         total_pairs = 0
         for inner_list in doc_entity_pairs:
             total_pairs += len(inner_list)
+            
         return total_pairs
+    
+    def set_filter_params(self, **kwargs):
+        self.filter_params = kwargs
+        if self.triple_filter:
+            self.triple_filter.set_params(**kwargs)
+        else:
+            self.triple_filter = TripleFilter(**kwargs)
 
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
@@ -120,28 +137,27 @@ class BERTLLM(BaseEngine):
                     doc_entity_pairs.append(
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
-                    #print("original_sentence" , original_sentence)
                     number_sentences = number_sentences + 1
 
 
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
-            #print("entity pairs after nerllm parsing", doc_entity_pairs, tokens)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                #print("attention_doc_entity_pairs_1", pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                #print("data as        predicates.............", pairs_with_predicates)
+                if self.enable_filtering == True:
+                    clustered_triples, cluster_reduction_count, clusterer = self.triple_filter.cluster_triples(pairs_with_predicates)
+                    filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
+                else:
+                    filtered_triples = pairs_with_predicates
                 kgm = KnowledgeGraphManager()
-                kgm.feed_input(pairs_with_predicates)
-                #print("final triples: ",kgm.retrieve_triples())
+                kgm.feed_input(filtered_triples)
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
         except Exception as e:
