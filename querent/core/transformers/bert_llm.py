@@ -17,7 +17,7 @@ from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
-from querent.config.bert_llm_config import BERTLLMConfig
+from querent.config.core.bert_llm_config import BERTLLMConfig
 
 
 

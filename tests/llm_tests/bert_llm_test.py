@@ -5,7 +5,7 @@ from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
-from querent.config.bert_llm_config import BERTLLMConfig
+from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
