@@ -44,11 +44,8 @@ class EntityEmbeddingExtractor:
                 outputs = self.model(**inputs, output_hidden_states=True)
                 all_hidden_states = outputs.hidden_states  # Tuple of hidden states at each layer
                 last_hidden_state = all_hidden_states[-1][0]  # Take the last layer's hidden state
-
             entity_token_ids = self.tokenizer.encode(entity, add_special_tokens=False)
             entity_positions = [i for i, token_id in enumerate(inputs["input_ids"][0]) if token_id in entity_token_ids]
-
-            # Get the average embedding for the entity tokens
             entity_embedding = last_hidden_state[entity_positions].mean(dim=0)
             sentence_embedding = last_hidden_state.mean(dim=0)
             combined_embedding = torch.cat((entity_embedding, sentence_embedding), dim=0)

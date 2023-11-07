@@ -4,6 +4,7 @@ import hdbscan
 from scipy.spatial.distance import cosine
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
+from querent.logging.logger import setup_logger
 
 """
     A class used to filter and cluster triples of (entity1, context, entity2) based on various scoring metrics and embedding similarities.
@@ -57,6 +58,7 @@ class TripleFilter:
         self.attention_score_threshold = attention_score_threshold
         self.similarity_threshold = similarity_threshold
         self.min_cluster_size = min_cluster_size
+        self.logger = setup_logger(__name__, "TripleFilter")
         self.min_samples = min_samples if min_samples is not None else self.min_cluster_size
 
     @staticmethod
@@ -83,7 +85,7 @@ class TripleFilter:
                     data['entity2_score'] >= self.score_threshold)
             
         except KeyError as e:
-            raise(f"Missing score in data: {e}")
+            raise(f"Missing entity score in data: {e}")
 
 
     def filter_by_attention_score(self, data):
@@ -91,7 +93,7 @@ class TripleFilter:
             return (data['pair_attnscore'] >= self.attention_score_threshold)
         
         except KeyError as e:
-            raise(f"Missing attention score in data: {e}")
+            raise(f"Missing pair attention score in data: {e}")
             
     def filter_by_embedding_similarity(self, data):
         try:
@@ -123,7 +125,8 @@ class TripleFilter:
                 
                 relevant_triples.append(triple)
             except (json.JSONDecodeError, KeyError) as e:
-                raise(f"Error processing triple: {e}")
+                self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to filter triples {e}")
+                raise(f"Unable to filter triples: {e}")
         reduction_count = initial_count - len(relevant_triples)
         
         return relevant_triples, reduction_count
@@ -156,5 +159,6 @@ class TripleFilter:
             return filtered_triples, reduction_count, clusterer
         
         except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to apply clustering on triples {e}")
             raise(f"Error during clustering: {e}")
 

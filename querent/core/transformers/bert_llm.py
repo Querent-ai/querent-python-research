@@ -36,6 +36,7 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
         ner_llm_instance (NER_LLM): Instance of the NER_LLM class.
         attn_scores_instance (EntityAttentionExtractor): Instance for extracting attention scores.
         entity_embedding_extractor (EntityEmbeddingExtractor, optional): Instance for extracting entity embeddings.
+        triple_filter_instance (EntityTripleFilter
 
     Methods:
         validate() -> bool:
@@ -78,7 +79,6 @@ class BERTLLM(BaseEngine):
         self.enable_filtering = enable_filtering
         self.filter_params = filter_params or {}
         self.triple_filter = None
-        
         if self.enable_filtering:
             self.triple_filter = TripleFilter(**self.filter_params)
  

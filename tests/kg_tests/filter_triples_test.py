@@ -1,7 +1,7 @@
 
 import pytest
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
-from querent.common.types.ingested_tokens import IngestedTokens
+
 
 """
     Asynchronous test function to validate the filtering and clustering of triples.

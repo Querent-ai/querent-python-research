@@ -106,6 +106,7 @@ class NER_LLM:
                 sentence_tokens = self.tokenize_sentence(sentence)
                 tokenized_sentences.append((sentence_tokens, sentence, idx))
         except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to tokenize and chunk {e}")
             raise Exception(f"An error occurred while tokenizing: {e}")
         return tokenized_sentences
 
@@ -183,7 +184,7 @@ class NER_LLM:
                     results.append(entity_info)
         except Exception as e:
             self.logger.error(f"Error extracting entities from chunk: {e}")
-            raise
+            raise(f"Error extracting entities from chunk: {e}")
         return results
 
     def combine_entities_wordpiece(self, entities: List[dict], tokens: List[str]):
@@ -253,7 +254,7 @@ class NER_LLM:
                             binary_pairs.append((pair, metadata))
         except Exception as e:
             self.logger.error(f"Error extracting binary pairs: {e}")
-            raise
+            raise(f"Error extracting binary pairs: {e}")
         return binary_pairs
 
     def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str]):
@@ -270,6 +271,6 @@ class NER_LLM:
             return parsed_entities.entities, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
-            raise
+            raise(f"Error extracting entities from sentence: {e}")
 
 
