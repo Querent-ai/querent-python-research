@@ -49,10 +49,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.TOKEN_PROCESSED
-            # Accessing the data (triples) from the event_state
             triples = event_state.payload
-
-            # Extracting subjects and objects from the triples
             subjects = [triple[0].value for triple in triples]
             objects = [triple[2].value for triple in triples]  
             assert expected_entities[0] in subjects

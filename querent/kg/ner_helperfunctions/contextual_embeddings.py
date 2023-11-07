@@ -96,12 +96,9 @@ class EntityEmbeddingExtractor:
             
             #only pass the entity and get the embeddings on the cls token or the embedding itself
             elif task_type == "cls_embedding":
-                print("entity :", entity)
                 self.model.eval()
                 inputs1 = self.tokenizer(entity, return_tensors="pt", truncation=True, padding=True, max_length=512)
                 tokenized_text = self.tokenizer.tokenize(entity)
-                print(tokenized_text)
-
                 with torch.no_grad():
                     outputs1 = self.model(**inputs1, output_hidden_states=True)
                 last_hidden_state = outputs1['hidden_states'][-1]
@@ -118,18 +115,10 @@ class EntityEmbeddingExtractor:
 
 
     def fit_umap(self, all_embeddings, sentence_embeddings):
-        """Fit UMAP on all embeddings."""
         try:
-            # Check if the embedding lists are non-empty and have valid data
             if not all_embeddings or not sentence_embeddings:
                 raise ValueError("Embedding lists are empty or contain invalid data.")
-
-            # Fit entity embeddings
-            print(f"Fitting entity UMAP on {len(all_embeddings)} embeddings.")
             self.reducer.fit(np.array(all_embeddings))
-
-            # Fit sentence embeddings
-            print(f"Fitting sentence UMAP on {len(sentence_embeddings)} embeddings.")
             self.sentence_reducer.fit(np.array(sentence_embeddings))
 
         except Exception as e:
@@ -163,7 +152,6 @@ class EntityEmbeddingExtractor:
                 pair_dict['sentence_embedding'] = self.sentence_reducer.transform([sentence_embedding.tolist()])[0]
                 updated_inner_list.append((entity1, full_context, entity2, pair_dict))
             updated_pairs.append(updated_inner_list)
-        #print("updated pairs with embeddings", updated_pairs)    
         return updated_pairs
 
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
@@ -182,7 +170,6 @@ class EntityEmbeddingExtractor:
                     self.append_if_not_present(entity2, entity2_embedding, all_entities, all_embeddings)
                     self.append_if_not_present(context, sentence_embedding, all_sentences, all_sentence_embeddings)
 
-            print("all entity embeddings ...............", all_entities)
             self.fit_umap(all_embeddings=all_embeddings, sentence_embeddings=all_sentence_embeddings)
             return self._update_pairs_with_embeddings(doc_entity_pairs)
         

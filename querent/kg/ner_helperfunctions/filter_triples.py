@@ -112,7 +112,6 @@ class TripleFilter:
         for triple in triples:
             try:
                 entity1, json_data, entity2 = triple
-                #print(entity1, entity2)
                 data = json.loads(json_data)
                 
                 if not self.filter_by_score(data):

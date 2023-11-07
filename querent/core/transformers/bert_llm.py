@@ -80,7 +80,6 @@ class BERTLLM(BaseEngine):
         self.triple_filter = None
         
         if self.enable_filtering:
-            # Initialize the TripleFilter with the provided parameters
             self.triple_filter = TripleFilter(**self.filter_params)
  
 
@@ -96,6 +95,7 @@ class BERTLLM(BaseEngine):
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
         if not data.data or data.is_error():
+            
             return False
 
         return True
@@ -104,24 +104,15 @@ class BERTLLM(BaseEngine):
         total_pairs = 0
         for inner_list in doc_entity_pairs:
             total_pairs += len(inner_list)
+            
         return total_pairs
     
     def set_filter_params(self, **kwargs):
-        # Method to update filter parameters
         self.filter_params = kwargs
         if self.triple_filter:
-            # Update the TripleFilter instance if it's already created
             self.triple_filter.set_params(**kwargs)
         else:
-            # Create a new TripleFilter instance with the new parameters
             self.triple_filter = TripleFilter(**kwargs)
-
-    def filter_triples(self, triples):
-        # Method to filter triples if filtering is enabled
-        if self.enable_filtering and self.triple_filter:
-            return self.triple_filter.filter_triples(triples)
-        return triples  # Return the original triples if filtering is not enabled
-
 
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
@@ -144,39 +135,30 @@ class BERTLLM(BaseEngine):
                     ) = self.ner_llm_instance.extract_entities_from_sentence(
                         original_sentence, sentence_idx, [s[1] for s in tokens]
                     )
-                    #print("starting entities ", entities)
-                    #print("starting entity pairs", entity_pairs)
                     doc_entity_pairs.append(
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
-                    #print("original_sentence" , original_sentence)
                     number_sentences = number_sentences + 1
 
 
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
-            #print("entity pairs after nerllm parsing", doc_entity_pairs)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                #print("attention_doc_entity_pairs_1", pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                #print("data into predicates", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                #print("data as        predicates.............", pairs_with_predicates)
                 if self.enable_filtering == True:
                     clustered_triples, cluster_reduction_count, clusterer = self.triple_filter.cluster_triples(pairs_with_predicates)
                     filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
                 else:
                     filtered_triples = pairs_with_predicates
-                #print("final triples: ",filtered_triples, len(filtered_triples))
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
-                #print("final triples: ",kgm.retrieve_triples())
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
         except Exception as e:
