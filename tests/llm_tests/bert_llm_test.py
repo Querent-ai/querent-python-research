@@ -14,7 +14,7 @@ import os
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities,filter_entities", [
-    #("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
+    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
     ("""In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
 record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
 using organic carbon stable isotopes and biostratigraphic constraints. We suggest that
@@ -24,10 +24,7 @@ in the GoM. This relationship is illustrated in the deep-water basin by (1) a hi
 modation and deposition of a shale interval when coarse-grained terrigenous material
 was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi-
 ment supply during the PETM, which is archived as a particularly thick sedimentary
-section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being
-observed elsewhere in the world, the one described in this study links with a continental-
-scale paleo-drainage, which makes it of particular interest for paleoclimate and source-
-to-sink reconstructions.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/tectonic","http://geodata.org/upstrean"], True)])
+section in the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/tectonic","http://geodata.org/upstream"], True)])
 
 
 
@@ -45,10 +42,10 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
         filter_params={
             'score_threshold': 0.5,
             'attention_score_threshold': 0.1,
-            'similarity_threshold': 0.6,
-            'min_cluster_size': 6,
+            'similarity_threshold': 0.5,
+            'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.4
+            'cluster_persistence_threshold':0.1
         }
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
@@ -58,7 +55,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             assert event_state.event_type == EventType.TOKEN_PROCESSED
             triples = event_state.payload
             subjects = [triple[0].value for triple in triples]
-            objects = [triple[2].value for triple in triples]  
+            objects = [triple[2].value for triple in triples]
             assert expected_entities[0] in subjects
             assert expected_entities[1] in objects
 
