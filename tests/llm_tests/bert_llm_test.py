@@ -49,7 +49,6 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
         }
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
-
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.TOKEN_PROCESSED
@@ -58,7 +57,6 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             objects = [triple[2].value for triple in triples]
             assert expected_entities[0] in subjects
             assert expected_entities[1] in objects
-
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
 
