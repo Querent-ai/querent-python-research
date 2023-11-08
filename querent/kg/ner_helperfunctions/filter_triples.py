@@ -45,7 +45,10 @@ from typing import List, Tuple, Dict
 
     cluster_triples(triples):
         Clusters the filtered triples using the HDBSCAN algorithm and returns the clusters along with the reduction count and the clusterer instance.
-
+    
+    filter_by_cluster_persistence:
+        Filter triples by cluster persistence to retain only those belonging to clusters with high persistence values.
+        
     Notes
     -----
     - The class expects triples in the form of (entity1, context, entity2), where 'context' is a JSON string containing various attributes including the embeddings.
@@ -154,5 +157,5 @@ class TripleFilter:
         
         else:
             
-                return triples
+                return None
         
