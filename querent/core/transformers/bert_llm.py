@@ -152,8 +152,15 @@ class BERTLLM(BaseEngine):
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
                 if self.enable_filtering == True:
-                    clustered_triples, cluster_reduction_count, clusterer = self.triple_filter.cluster_triples(pairs_with_predicates)
-                    filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
+                    cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
+                    clustered_triples = cluster_output['filtered_triples']
+                    cluster_labels = cluster_output['cluster_labels']
+                    cluster_persistence = cluster_output['cluster_persistence']
+                    final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
+                    if final_clustered_triples is not None:
+                        filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
+                    else:
+                        filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                 else:
                     filtered_triples = pairs_with_predicates
                 kgm = KnowledgeGraphManager()

@@ -203,8 +203,9 @@ similarity threshold.<br />
 4.  filters triples by checking if the pair attention score meets the attention score threshold.<br />
 5.  combine_embeddings(entity1_embedding, entity2_embedding) and then clusters the filtered triples from step 4 by using the HDBSCAN algorithm on combined
  embeddings and returns the clusters removing the noise<br />
-6. user can configure the following parameter for hbdscan : score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size, min_samples<br />
-7. user can even turn on/off the filtering step<br />
+6. user can configure the following parameter for hbdscan : score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size, min_samples<br/>
+7. further selects triples that are part of clusters with a persistence value greater than a specified threshold.Clusters with high persistence are considered to be more stable and potentially more meaningful, hence their associated triples are selected <br/>
+8. user can even turn on/off the filtering step<br />
 
 
 <br />

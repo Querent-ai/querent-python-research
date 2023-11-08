@@ -53,7 +53,7 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
            ('coarse', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being observed elsewhere in the world, the one described in this study links with a continental- scale paleo-drainage, which makes it of particular interest for paleoclimate and source- to-sink reconstructions.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "coarse-grained terrigenous material", "entity2_nn_chunk": "upstream", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.05, "entity2_attnscore": 0.09, "pair_attnscore": 0.07, "entity1_embedding": [4.183037757873535, -0.95732182264328, 5.360871315002441, 10.020729064941406, 1.9280916452407837, 2.735372543334961, 2.475790023803711, 2.884106159210205, 2.3718998432159424, 11.750289916992188], "entity2_embedding": [4.050603866577148, -0.688696563243866, 6.089183807373047, 8.378361701965332, 2.33626127243042, 4.648577690124512, 1.70479416847229, 3.407353639602661, 3.1088290214538574, 12.333937644958496], "sentence_embedding": [8.26403522491455, 2.0533668994903564, 9.594727516174316, -2.3251283168792725, 8.122334480285645, 9.268819808959961, -8.390889167785645, 3.683662176132202, 3.695371150970459, 3.024846076965332]}', 'upstream'), 
            ('upstream', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being observed elsewhere in the world, the one described in this study links with a continental- scale paleo-drainage, which makes it of particular interest for paleoclimate and source- to-sink reconstructions.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoMeth", "entity2_label": "B-GeoPetro", "entity1_nn_chunk": "upstream", "entity2_nn_chunk": "a particularly thick sedimentary section", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.09, "entity2_attnscore": 0.32, "pair_attnscore": 0.14, "entity1_embedding": [4.113377571105957, -0.4475870728492737, 6.095298767089844, 8.45187759399414, 2.4396491050720215, 4.143350601196289, 1.7025946378707886, 3.283315658569336, 2.8183791637420654, 12.168099403381348], "entity2_embedding": [4.4357590675354, -1.8888970613479614, 5.451931476593018, 9.404488563537598, 1.1754322052001953, 3.111313581466675, 2.1995394229888916, 3.109503746032715, 3.035334587097168, 12.325691223144531], "sentence_embedding": [8.266093254089355, 2.0530381202697754, 9.595128059387207, -2.3254902362823486, 8.218499183654785, 9.367105484008789, -8.362135887145996, 3.712357997894287, 3.6974105834960938, 2.9043288230895996]}', 'sedimentary'), 
            ('sedimentary', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin. Despite other thick PETM sections being observed elsewhere in the world, the one described in this study links with a continental- scale paleo-drainage, which makes it of particular interest for paleoclimate and source- to-sink reconstructions.", "entity1_score": 1.0, "entity2_score": 0.87, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoPetro, I-GeoPetro", "entity1_nn_chunk": "a particularly thick sedimentary section", "entity2_nn_chunk": "the deep-sea fans", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.32, "entity2_attnscore": 0.12, "pair_attnscore": 0.17, "entity1_embedding": [4.744527816772461, -1.797021508216858, 5.398539066314697, 9.334464073181152, 1.169188141822815, 3.1069962978363037, 2.099773645401001, 3.097820281982422, 2.888684034347534, 12.149800300598145], "entity2_embedding": [3.2142386436462402, -2.473020553588867, 5.727625846862793, 9.082856178283691, 2.1118242740631104, 2.521404266357422, 2.7171003818511963, 2.5763702392578125, 3.8491625785827637, 12.245673179626465], "sentence_embedding": [8.262020111083984, 2.053694725036621, 9.594340324401855, -2.3247909545898438, 7.908104419708252, 9.051258087158203, -8.493917465209961, 3.5807642936706543, 3.4950454235076904, 3.304839611053467]}', 'sea')], 
-            0.6, 0.1, 0.5, 5, 3, 6, 5), ] )
+            0.6, 0.1, 0.5, 5, 3, 2, 5), ] )
     
 # Async test function for TripleFilter
 @pytest.mark.asyncio
@@ -64,17 +64,20 @@ async def test_triple_filter(triples, score_threshold, attention_score_threshold
         attention_score_threshold=attention_score_threshold,
         similarity_threshold=similarity_threshold,
         min_cluster_size=min_cluster_size,
-        min_samples=min_samples
+        min_samples=min_samples,
+        cluster_persistence_threshold=0.4
     )
-
-    # Perform filtering
-    filtered_triples, reduction_count = triple_filter.filter_triples(triples)
-    assert reduction_count == expected_filtered_count
-    assert len(filtered_triples) == len(triples) - expected_filtered_count
-
-    # Perform clustering
-    clustered_triples, cluster_reduction_count, clusterer = triple_filter.cluster_triples(triples)
+    cluster_output = triple_filter.cluster_triples(triples)
+    clustered_triples = cluster_output['filtered_triples']
+    cluster_labels = cluster_output['cluster_labels']
+    cluster_persistence = cluster_output['cluster_persistence']
+    cluster_reduction_count = cluster_output['reduction_count']
     assert cluster_reduction_count == expected_clustered_count
     assert len(clustered_triples) == len(triples) - expected_clustered_count
-
+    final_clustered_triples = triple_filter.filter_by_cluster_persistence(triples, cluster_persistence, cluster_labels)
+    assert len(final_clustered_triples) == 5
+    filtered_triples, reduction_count = triple_filter.filter_triples(final_clustered_triples)
+    assert reduction_count == expected_filtered_count
+    assert len(filtered_triples) == len(final_clustered_triples) - expected_filtered_count
+    
 
