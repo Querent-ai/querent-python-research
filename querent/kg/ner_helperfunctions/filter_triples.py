@@ -157,5 +157,5 @@ class TripleFilter:
         
         else:
             
-                return None
+            return None
         
