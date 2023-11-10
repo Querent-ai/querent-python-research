@@ -5,6 +5,7 @@ from scipy.spatial.distance import cosine
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from querent.logging.logger import setup_logger
+from typing import List, Tuple, Dict
 
 """
     A class used to filter and cluster triples of (entity1, context, entity2) based on various scoring metrics and embedding similarities.
@@ -44,7 +45,10 @@ from querent.logging.logger import setup_logger
 
     cluster_triples(triples):
         Clusters the filtered triples using the HDBSCAN algorithm and returns the clusters along with the reduction count and the clusterer instance.
-
+    
+    filter_by_cluster_persistence:
+        Filter triples by cluster persistence to retain only those belonging to clusters with high persistence values.
+        
     Notes
     -----
     - The class expects triples in the form of (entity1, context, entity2), where 'context' is a JSON string containing various attributes including the embeddings.
@@ -53,93 +57,59 @@ from querent.logging.logger import setup_logger
 """
 
 class TripleFilter:
-    def __init__(self, score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size=2, min_samples=None):
+    def __init__(self, score_threshold, attention_score_threshold, similarity_threshold, min_cluster_size=2, min_samples=None, cluster_persistence_threshold=-1):
         self.score_threshold = score_threshold
         self.attention_score_threshold = attention_score_threshold
         self.similarity_threshold = similarity_threshold
         self.min_cluster_size = min_cluster_size
         self.logger = setup_logger(__name__, "TripleFilter")
         self.min_samples = min_samples if min_samples is not None else self.min_cluster_size
+        self.cluster_persistence_threshold = cluster_persistence_threshold
 
     @staticmethod
-    def calculate_cosine_similarity(embedding1, embedding2):
-        try:
-            embedding1 = np.asarray(embedding1)
-            embedding2 = np.asarray(embedding2)
-            if embedding1.ndim == 1:
-                embedding1 = embedding1.reshape(1, -1)
-            if embedding2.ndim == 1:
-                embedding2 = embedding2.reshape(1, -1)
-            if embedding1.shape[1] != embedding2.shape[1]:
-                raise ValueError("Embeddings must have the same length")
-            
-            return cosine_similarity(embedding1, embedding2)[0, 0]
+    def calculate_cosine_similarity(embedding1: np.ndarray, embedding2: np.ndarray) -> float:
+        embedding1 = np.array(embedding1)
+        embedding2 = np.array(embedding2)
         
-        except Exception as e:
-            raise(f"Error calculating cosine similarity: {e}")
+        return cosine_similarity(embedding1.reshape(1, -1), embedding2.reshape(1, -1))[0, 0]
 
-
-    def filter_by_score(self, data):
-        try:
-            return (data['entity1_score'] >= self.score_threshold and
-                    data['entity2_score'] >= self.score_threshold)
-            
-        except KeyError as e:
-            raise(f"Missing entity score in data: {e}")
-
-
-    def filter_by_attention_score(self, data):
-        try:
-            return (data['pair_attnscore'] >= self.attention_score_threshold)
+    def filter_by_score(self, data: dict) -> bool:
         
-        except KeyError as e:
-            raise(f"Missing pair attention score in data: {e}")
-            
-    def filter_by_embedding_similarity(self, data):
-        try:
-            similarity = self.calculate_cosine_similarity(data['entity1_embedding'], data['entity2_embedding'])
-            
-            return similarity >= self.similarity_threshold
-        
-        except Exception as e:
-            raise(f"Error filtering by embedding similarity: {e}")
+        return data['entity1_score'] >= self.score_threshold and data['entity2_score'] >= self.score_threshold
 
-    def cosine_distance(u, v):
-    
-        return cosine(u, v)
-    
-    def filter_triples(self, triples):
+    def filter_by_attention_score(self, data: dict) -> bool:
+        
+        return data['pair_attnscore'] >= self.attention_score_threshold
+
+    def filter_by_embedding_similarity(self, data: dict) -> bool:
+        similarity = self.calculate_cosine_similarity(data['entity1_embedding'], data['entity2_embedding'])
+        
+        return similarity >= self.similarity_threshold
+
+    def filter_triples(self, triples: List[Tuple[str, str, str]]) -> Tuple[List[Tuple[str, str, str]], int]:
         relevant_triples = []
         initial_count = len(triples)
         for triple in triples:
             try:
                 entity1, json_data, entity2 = triple
                 data = json.loads(json_data)
-                
-                if not self.filter_by_score(data):
+
+                if not self.filter_by_score(data) or not self.filter_by_attention_score(data) or not self.filter_by_embedding_similarity(data):
                     continue
-                if not self.filter_by_attention_score(data):
-                    continue
-                if not self.filter_by_embedding_similarity(data):
-                    continue
-                
+
                 relevant_triples.append(triple)
             except (json.JSONDecodeError, KeyError) as e:
                 self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to filter triples {e}")
-                raise(f"Unable to filter triples: {e}")
+                raise Exception(f"Unable to filter triples: {e}")
         reduction_count = initial_count - len(relevant_triples)
         
         return relevant_triples, reduction_count
 
-    def combine_embeddings(self, entity1_embedding, entity2_embedding):
-        try:
-        
-            return np.concatenate((entity1_embedding, entity2_embedding))
-        
-        except Exception as e:
-            raise(f"Error combining embeddings: {e}")
-            
-    def cluster_triples(self, triples):
+    @staticmethod
+    def combine_embeddings(entity1_embedding: np.ndarray, entity2_embedding: np.ndarray) -> np.ndarray:
+        return np.concatenate((entity1_embedding, entity2_embedding))
+
+    def cluster_triples(self, triples: List[Tuple[str, str, str]]) -> Dict[str, any]:
         try:
             combined_embeddings = np.array([
                 self.combine_embeddings(
@@ -149,16 +119,43 @@ class TripleFilter:
             ])
             scaler = StandardScaler()
             normalized_embeddings = scaler.fit_transform(combined_embeddings)
-            clusterer = hdbscan.HDBSCAN(metric=TripleFilter.cosine_distance, min_cluster_size=self.min_cluster_size, min_samples=self.min_samples, cluster_selection_method="leaf")
-            cluster_labels = clusterer.fit_predict(normalized_embeddings)
-            initial_count = len(triples)
-            clustered_triples = list(zip(triples, cluster_labels))
-            filtered_triples = [triple for triple, label in clustered_triples if label != -1]
-            reduction_count = initial_count - len(filtered_triples)
-            
-            return filtered_triples, reduction_count, clusterer
-        
+            distance_matrix = 1 - cosine_similarity(normalized_embeddings)
+            clusterer = hdbscan.HDBSCAN(
+                metric='precomputed',
+                min_cluster_size=self.min_cluster_size,
+                min_samples=self.min_samples,
+                cluster_selection_method="leaf"
+            )
+
+            cluster_labels = clusterer.fit_predict(distance_matrix)
+            cluster_persistence = clusterer.cluster_persistence_
+
+            filtered_triples = [triples[index] for index, label in enumerate(cluster_labels) if label != -1]
+
+            cluster_output = {
+                'filtered_triples': filtered_triples,
+                'reduction_count': len(triples) - len(filtered_triples),
+                'cluster_labels': cluster_labels,
+                'cluster_persistence': cluster_persistence
+            }
+
+            return cluster_output
+
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to apply clustering on triples {e}")
-            raise(f"Error during clustering: {e}")
+            raise Exception(f"Error during clustering: {e}")
 
+    def filter_by_cluster_persistence(self, triples: List[Tuple[str, str,str]], cluster_persistence, cluster_labels) -> List[Tuple[str, str, str]]:
+        if self.cluster_persistence_threshold != -1:
+            high_persistence_triples = []
+            high_persistence_clusters = [index for index, persistence in enumerate(cluster_persistence) if persistence > self.cluster_persistence_threshold]
+            for i, (triple, label) in enumerate(zip(triples, cluster_labels)):
+                if label in high_persistence_clusters:
+                    high_persistence_triples.append(triple)
+                    
+            return high_persistence_triples
+        
+        else:
+            
+            return None
+        
