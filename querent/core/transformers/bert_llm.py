@@ -156,6 +156,7 @@ class BERTLLM(BaseEngine):
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
+                    print(cluster_persistence, 'cluster_persistence, ',cluster_labels, 'cluster_labels')
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples is not None:
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
@@ -163,6 +164,7 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                 else:
                     filtered_triples = pairs_with_predicates
+                print("length of filetered_triples", len(filtered_triples))
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())

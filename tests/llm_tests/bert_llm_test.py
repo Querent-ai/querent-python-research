@@ -45,7 +45,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
