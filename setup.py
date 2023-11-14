@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    "aiohttp==3.8.5",
+    "aiohttp==3.8.6",
     "aiosignal==1.3.1",
     "alembic==1.11.1",
     "amqp==5.1.1",
