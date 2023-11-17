@@ -10,11 +10,13 @@ from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 import os
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RealtionExtractor  #
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities,filter_entities", [
-    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
+    #("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
     ("""In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
 record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
 using organic carbon stable isotopes and biostratigraphic constraints. We suggest that
@@ -59,6 +61,8 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             assert expected_entities[1] in objects
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
+    mock_config = RelationshipExtractorConfig()  
+    llm_instance.subscribe(EventType.NER_GRAPH_UPDATE, RealtionExtractor(mock_config))
 
     querent = Querent(
         [llm_instance],

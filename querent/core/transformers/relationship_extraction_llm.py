@@ -1,69 +1,120 @@
+import json
+from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.querent_event import EventState, EventType
-from querent.common.types.querent_queue import QuerentQueue
 from typing import Any, List, Tuple
+from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
+from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
+from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
-from querent.kg.querent_kg import QuerentKG
-from querent.common.types.ingested_tokens import IngestedTokens
-from querent.common.types.ingested_messages import IngestedMessages
-from querent.common.types.ingested_code import IngestedCode
-
 from querent.config.core.relation_config import RelationshipExtractorConfig
 
 
-class RealtionExtractor(BaseEngine):
+class RelationExtractor(EventCallbackInterface):
     def __init__(self, config: RelationshipExtractorConfig):  
         super().__init__()
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
-        self.semantic_graph = QuerentKG(config.graph_config)
         self.config = config
-        # Subscribe to TOKEN_PROCESSED event
-        self.subscribe(EventType.TOKEN_PROCESSED, self.handle_event)
-
-    def validate(self) -> bool:
-        pass
-
-    def process_messages(self, data: IngestedMessages):
-        return super().process_messages(data)
-
-    async def process_code(self, data: IngestedCode):
-        return super().process_messages(data)
+        self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
+        self.template = config.qa_template
+        self.qa_system = QASystem(
+        rel_model_path=config.rel_model_path,
+        rel_model_type='llama',
+        emb_model_name=config.emb_model_name,
+        faiss_index_path=config.faiss_index_path,
+        template=self.template
+    )
+    
     
     async def handle_event(self, event_type: EventType, event_state: EventState):
-        # This method is called when a TOKEN_PROCESSED event occurs
-        if event_type == EventType.TOKEN_PROCESSED:
+        if event_type == EventType.NER_GRAPH_UPDATE:
             await self.process_event(event_state)
 
+    def validate(self, data) -> bool:
+        if not data:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Empty List Error")
+            return False
+
+        if not isinstance(data, list):
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Not a list")
+            return False
+
+        item = data[0]
+        if not isinstance(item, tuple) or len(item) != 3:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Item is not a triple")
+            return False
+
+        if not (isinstance(item[0], str) and isinstance(item[2], str) and isinstance(item[1], str)):
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Incorrect item format")
+            return False
+            
+        return True
+
+
     async def process_event(self, event_state: EventState):
-        # Asynchronous processing of the event
         triples = event_state.payload
-        # Extract relationships here (placeholder for your logic)
-        relationships = self.extract_relationships(triples)
-        # Emit a relationship_extracted signal with the extracted relationships
-        current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, relationships)
-        await self.set_state(new_state=current_state)
+        trimmed_triples = self.normalizetriples_buildindex(triples)
+        relationships = self.extract_relationships(trimmed_triples)
         
+        return relationships
+        
+    def normalizetriples_buildindex(self, triples):
+        if not self.validate(triples):
+            self.logger.error("invalid triples for relationship extractor")
+            raise ValueError("Invalid triples for relationship extractor")
+        normalizer = TextNormalizer()
+        normalized_triples = normalizer.normalize_triples(triples)
+        trimmed_triples = self.trim_triples(normalized_triples)
+        self.build_faiss_index(trimmed_triples)
+
+        return trimmed_triples
+    
     def extract_relationships(self, triples):
-        # Actual extraction logic goes here
-        # This is a placeholder for your relationship extraction method
-        # For the sake of example, let's just return the triples
-        return triples
+        question_entities_validate = "I would like to define a knowledge graph triple, do {entity1} and {entity2} show relationship ? Just give a yes or no answer."
+        question_entities_relation = "Please find possible relationships between {entity1} and {entity2}"
+        updated_triples = []
+        for entity1, predicate_str, entity2 in triples:
+            predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)
+            # Ask the first question
+            validation_prompt = question_entities_validate.format(entity1=entity1, entity2=entity2)
+            answer_validate = self.qa_system.ask_question(prompt=validation_prompt, search_kwargs={'k': 3})
+
+            if "yes" in answer_validate.lower():
+                # Ask the second question
+                relation_prompt = question_entities_relation.format(entity1=entity1, entity2=entity2)
+                answer_relation = self.qa_system.ask_question(prompt=relation_prompt, search_kwargs={'k': 3})
+                predicate['relationship'] = answer_relation
+            updated_predicate_str = json.dumps(predicate)
+            updated_triples.append((entity1, updated_predicate_str, entity2))
+
+        return updated_triples
+            
+    
+    
+    def trim_triples(self, data):
+        trimmed_data = []
+        for entity1, predicate, entity2 in data:
+            predicate_dict = json.loads(predicate)
+            trimmed_predicate = {
+                'context': predicate_dict.get('context', ''),
+                'entity1_nn_chunk': predicate_dict.get('entity1_nn_chunk', ''),
+                'entity2_nn_chunk': predicate_dict.get('entity2_nn_chunk', ''),
+                'entity1_label': predicate_dict.get('entity1_label', ''),
+                'entity2_label': predicate_dict.get('entity2_label', '')
+            }
+            trimmed_data.append((entity1, trimmed_predicate, entity2))
+
+        return trimmed_data
+    
+    def build_faiss_index(self, data):
+        contexts = set()
+        for _, predicate, _ in data:
+            context = predicate.get('context', '')
+            context = context.encode().decode('unicode_escape')
+            contexts.add(context)
+        self.create_emb.create_index(texts=contexts, verbose=False)
+        self.create_emb.save_index('my_FAISS_index')
 
 
 
-
- 
-
-
-
-
-
-
-
-
-[
-  ('tectonic', '{"context": "In this study, we present evidence of a Paleocene\\u2013Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints. We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "tectonic perturbations", "entity2_nn_chunk": "the upstream North American catchments", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.25, "entity2_attnscore": 0.11, "pair_attnscore": 0.15, "entity1_embedding": [4.785828113555908, 4.2147417068481445, 4.608402729034424, 7.86382532119751, -3.119875907897949, 6.4056620597839355, 4.736032962799072, 0.40054139494895935, -1.7422124147415161, 9.150322914123535], "entity2_embedding": [4.749422073364258, 3.777057647705078, 6.303576946258545, 8.151358604431152, -2.55820369720459, 5.3259968757629395, 6.484385967254639, 0.4279687702655792, -0.9084129333496094, 7.9470624923706055], "sentence_embedding": [-0.4015790522098541, 3.746861696243286, 6.176400661468506, 5.342568397521973, -0.9461199641227722, -6.17316198348999, -4.8703389167785645, 13.388699531555176, 8.222224235534668, 14.191060066223145]}', 'upstream'), 
-  ('basin', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "the GoM basin", "entity2_nn_chunk": "upstream", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.26, "entity2_attnscore": 0.09, "pair_attnscore": 0.13, "entity1_embedding": [4.75761604309082, 3.4331743717193604, 4.266805171966553, 8.083751678466797, -3.261979103088379, 5.861548900604248, 5.962497234344482, 0.6605709195137024, -1.374169945716858, 10.495802879333496], "entity2_embedding": [4.707525253295898, 3.565460205078125, 6.727005958557129, 7.980961322784424, -2.6597471237182617, 5.267481327056885, 6.5619893074035645, 0.22673408687114716, -0.8828330039978027, 8.61778736114502], "sentence_embedding": [0.15698224306106567, 3.8285863399505615, 6.090454578399658, 4.998751163482666, -2.00986647605896, -6.002192497253418, -4.941530704498291, 13.459432601928711, 8.741031646728516, 11.845033645629883]}', 'upstream'),
-  ('deposition', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "deposition", "entity2_nn_chunk": "upstream", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.26, "entity2_attnscore": 0.09, "pair_attnscore": 0.13, "entity1_embedding": [4.505099773406982, 4.15098762512207, 4.646312713623047, 7.436164379119873, -3.1875975131988525, 6.197781085968018, 4.853282451629639, 0.5896610617637634, -0.9382550120353699, 9.722227096557617], "entity2_embedding": [4.713261127471924, 3.442910671234131, 6.62761926651001, 8.26006031036377, -2.7525744438171387, 5.223714351654053, 6.508554935455322, 0.2672390639781952, -1.0225239992141724, 8.644356727600098], "sentence_embedding": [0.1906796097755432, 3.833495616912842, 6.085261344909668, 4.97797966003418, -2.1924057006835938, -5.993052005767822, -4.952077865600586, 13.469947814941406, 8.780710220336914, 11.937219619750977]}', 'upstream')
-]
