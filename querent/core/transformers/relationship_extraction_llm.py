@@ -128,7 +128,7 @@ class RelationExtractor(EventCallbackInterface):
                     predicate['relationship'] = answer_relation
                 updated_predicate_str = json.dumps(predicate)
                 updated_triples.append((entity1, updated_predicate_str, entity2))
-
+            print('updated_triples', updated_triples)
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")

@@ -162,8 +162,7 @@ class BERTLLM(BaseEngine):
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                 else:
-                    filtered_triples = pairs_with_predicates
-                print(filtered_triples)
+                    filtered_triples = pairs_with_predicates         
                 current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
                 await self.set_state(new_state=current_state)
                 kgm = KnowledgeGraphManager()

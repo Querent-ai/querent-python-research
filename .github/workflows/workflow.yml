@@ -116,7 +116,9 @@ jobs:
       
       - name: Download AI Model from Google Drive
         run: |
-             curl -L -o .tests/ https://drive.google.com/file/d/uc?export=download&id=1eou4KhGcU87p291ZqrN9tNzbujeGASCR
+            pip install gdown
+            gdown https://drive.google.com/uc?id=1eou4KhGcU87p291ZqrN9tNzbujeGASCR -O ./tests/llama-2-7b-chat.Q4_K_M.gguf
+        
         
       - name: Run Pytest
         run: python -B -m pytest -v --disable-warnings .

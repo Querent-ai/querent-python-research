@@ -11,7 +11,7 @@ from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 import os
 from querent.config.core.relation_config import RelationshipExtractorConfig
-from querent.core.transformers.relationship_extraction_llm import RealtionExtractor  #
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 
 
 @pytest.mark.asyncio
@@ -62,7 +62,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
     mock_config = RelationshipExtractorConfig()  
-    llm_instance.subscribe(EventType.NER_GRAPH_UPDATE, RealtionExtractor(mock_config))
+    llm_instance.subscribe(EventType.NER_GRAPH_UPDATE, RelationExtractor(mock_config))
 
     querent = Querent(
         [llm_instance],
