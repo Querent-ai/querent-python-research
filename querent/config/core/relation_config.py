@@ -6,7 +6,7 @@ class RelationshipExtractorConfig(BaseModel):
     version: str = "0.0.1"
     logger: str = "RelationshipExtractor.engine_config"
     vector_store_path: str = "./querent/kg/rel_helperfunctions/vectorstores/"
-    rel_model_path: str = './dev-env/llama-2-7b-chat.Q4_K_M.gguf'
+    rel_model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
     faiss_index_path: str = "./querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index"
     qa_template: str = """Use the following pieces of information to answer the user's question.

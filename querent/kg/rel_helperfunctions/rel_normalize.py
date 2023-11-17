@@ -5,11 +5,6 @@ from nltk.tokenize import word_tokenize
 import json
 from querent.logging.logger import setup_logger
 
-# Make sure to download the required NLTK data:
-# nltk.download('punkt')
-# nltk.download('wordnet')
-# nltk.download('stopwords')
-
 """
     A utility class for normalizing text data using various natural language processing (NLP) techniques.
 

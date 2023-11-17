@@ -100,6 +100,8 @@ jobs:
       - name: Download NLTK punkt
         run: |
           python -m nltk.downloader punkt
+          python -m nltk.downloader wordnet
+          python -m nltk.downloader stopwords
       - name: Cache spaCy large model
         id: cache-spacy
         uses: actions/cache@v2
@@ -111,6 +113,10 @@ jobs:
       - name: Download spaCy large model
         run: |
             python -m spacy download en_core_web_lg
+      
+      - name: Download AI Model from Google Drive
+        run: |
+             curl -L -o .tests/ https://drive.google.com/file/d/uc?export=download&id=1eou4KhGcU87p291ZqrN9tNzbujeGASCR
         
       - name: Run Pytest
         run: python -B -m pytest -v --disable-warnings .
