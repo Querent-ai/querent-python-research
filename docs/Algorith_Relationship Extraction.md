@@ -82,6 +82,7 @@ This is a comprehensive solution for embedding-based text processing and retriev
 1. The method iterates through each triple, comprising entity1, entity2, and predicate_str. It checks if predicate_str is a dictionary; if not, it parses predicate_str from JSON format.<br />
 2. Implements a method ask_question to handle custom question-answering. It checks if search parameters have changed and updates the retriever accordingly.
 Retrieves relevant documents based on the input prompt and reorders them for context relevance.
+Why reordering ? No matter the architecture of the model, there is a substantial performance degradation when 10+ documents are retrieved. In brief: When models must access relevant information in the middle of long contexts, they tend to ignore the provided documents. So we reorder the queried vectordb documents to have most important documents at the top and bottom of the context.  
 3. For each triple, the method formulates a validation question to ascertain if entity1 and entity2 have a relationship. This question is sent to a question-answering system (self.qa_system). If the answer suggests a relationship exists (contains "yes"), the method then asks a second question to determine the nature of the relationship.
 4. Utilizes a custom chain (custom_stuff_chain) to process the reordered documents with the input query and the template, generating the final output (relationships).
 5. The method updates the triples with relationship information.

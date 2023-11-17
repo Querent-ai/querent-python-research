@@ -20,8 +20,6 @@ from querent.core.transformers.relationship_extraction_llm import RelationExtrac
 
 async def test_relationship_extraction(input_data, expected_relationships):
     mock_config = RelationshipExtractorConfig()  
-    
     output = await RelationExtractor(mock_config).process_event(EventState(EventType.NER_GRAPH_UPDATE, 1.0, input_data))
-    print (output)
-    assert expected_relationships[1] in output
+    assert expected_relationships[0][0] in output[0]
 
