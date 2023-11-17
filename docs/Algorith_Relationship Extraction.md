@@ -73,7 +73,8 @@ This is a comprehensive solution for embedding-based text processing and retriev
 6. The class provides functionality to save the created FAISS index to a file (save_index) and to load an existing index from a file (load_index), facilitating persistence and retrieval of indexed data.<br />
 7. The as_retriever method allows for retrieving documents from the index based on similarity or other search criteria, making it a powerful tool for information retrieval tasks using the pre-computed embeddings.<br />
 <br />
-![](https://github.com/Querent-ai/querent-ai/blob/nishant/docs/images/Local_faiss_index.png)
+![](./images/Local_faiss_index.png)
+
 
 
 ### V. Extract Relationships<br />
