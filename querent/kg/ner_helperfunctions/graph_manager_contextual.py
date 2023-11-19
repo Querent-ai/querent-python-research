@@ -37,7 +37,7 @@ class KnowledgeGraphManager:
     def string_to_uri(self, term):
         return URI(self.base_uri + term)
     
-    def add_triple(self, s, p, o):
+    def add_triple_contextual(self, s, p, o):
         s_uri = self.string_to_uri(s)
         p_bnode = BNode(p)
         o_uri = self.string_to_uri(o)
@@ -54,7 +54,7 @@ class KnowledgeGraphManager:
 
     def feed_input(self, triples_list):
         for s, p, o in triples_list:
-            self.add_triple(s, p, o)
+            self.add_triple_contextual(s, p, o)
     
     def retrieve_triples(self):
         all_triples = []

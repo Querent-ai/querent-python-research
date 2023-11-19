@@ -3,6 +3,10 @@ import pytest
 from querent.common.types.querent_event import EventState, EventType
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
+from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.core.transformers.bert_llm import BERTLLM
+from querent.common.types.querent_queue import QuerentQueue
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data, expected_relationships", [
     (
@@ -19,7 +23,7 @@ from querent.core.transformers.relationship_extraction_llm import RelationExtrac
 ])
 
 async def test_relationship_extraction(input_data, expected_relationships):
-    mock_config = RelationshipExtractorConfig()  
-    output = await RelationExtractor(mock_config).process_event(EventState(EventType.NER_GRAPH_UPDATE, 1.0, input_data))
+    mock_config = RelationshipExtractorConfig()
+    output = await RelationExtractor(mock_config).process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, input_data))
     assert expected_relationships[0][0] in output[0]
 

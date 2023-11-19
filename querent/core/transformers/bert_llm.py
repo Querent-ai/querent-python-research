@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
-from querent.kg.ner_helperfunctions.graph_manager import KnowledgeGraphManager
+from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine

@@ -1,14 +1,18 @@
 import json
 from querent.callback.event_callback_interface import EventCallbackInterface
+from querent.common.types.ingested_code import IngestedCode
+from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.querent_event import EventState, EventType
 from typing import Any, List, Tuple
+from querent.kg.ner_helperfunctions.graph_manager_semantic import Semantic_KnowledgeGraphManager
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.common.types.querent_queue import QuerentQueue
 
 """
     A class that extends the EventCallbackInterface to extract relationships between entities in a contextual triple(s) to create semantic triples for a Knowledge Graph.
@@ -34,11 +38,11 @@ from querent.config.core.relation_config import RelationshipExtractorConfig
         build_faiss_index(data): Builds a FAISS index from the provided data.
     """
 
-class RelationExtractor(EventCallbackInterface):
+class RelationExtractor(EventCallbackInterface, BaseEngine):
     def __init__(self, config: RelationshipExtractorConfig):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
-            super().__init__()
+            super().__init__(super().__init__(QuerentQueue))
             self.config = config
             self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
             self.template = config.qa_template
@@ -56,9 +60,15 @@ class RelationExtractor(EventCallbackInterface):
     async def handle_event(self, event_type: EventType, event_state: EventState):
         try:
             if event_type == EventType.NER_GRAPH_UPDATE:
-                await self.process_event(event_state)
+                await self.process_tokens(event_state)
         except Exception as e:
             self.logger.error(f"Error in handling event: {e}")
+    
+    def process_messages(self, data: IngestedMessages):
+        return super().process_messages(data)
+
+    async def process_code(self, data: IngestedCode):
+        return super().process_messages(data)
 
     def validate(self, data) -> bool:
         try:
@@ -84,11 +94,15 @@ class RelationExtractor(EventCallbackInterface):
             self.logger.error(f"Error in validation: {e}")
             return False
 
-    async def process_event(self, event_state: EventState):
+    async def process_tokens(self, event_state: EventState):
         try:
             triples = event_state.payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
             relationships = self.extract_relationships(trimmed_triples)
+            graph_manager = Semantic_KnowledgeGraphManager()
+            graph_manager.feed_input(relationships)
+            final_triples = graph_manager.retrieve_triples()
+            print("final triples", final_triples)
             
             return relationships
         
@@ -128,7 +142,6 @@ class RelationExtractor(EventCallbackInterface):
                     predicate['relationship'] = answer_relation
                 updated_predicate_str = json.dumps(predicate)
                 updated_triples.append((entity1, updated_predicate_str, entity2))
-            print('updated_triples', updated_triples)
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")
@@ -143,7 +156,8 @@ class RelationExtractor(EventCallbackInterface):
                     'entity1_nn_chunk': predicate_dict.get('entity1_nn_chunk', ''),
                     'entity2_nn_chunk': predicate_dict.get('entity2_nn_chunk', ''),
                     'entity1_label': predicate_dict.get('entity1_label', ''),
-                    'entity2_label': predicate_dict.get('entity2_label', '')
+                    'entity2_label': predicate_dict.get('entity2_label', ''),
+                    'file_path': predicate_dict.get('file_path', '')
                 }
                 trimmed_data.append((entity1, trimmed_predicate, entity2))
 
