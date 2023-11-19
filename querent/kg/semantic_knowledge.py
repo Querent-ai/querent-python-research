@@ -51,16 +51,22 @@ class SemanticKnowledge(Subject):
             raise InvalidParameter("Object needs to be a URI.")
 
         try:
-            if not o:
-                del self._resource[p]
-            else:
+            # Remove the normal triple
+            if o:
                 self._resource[p].remove(o)
                 if not self._resource[p]:
                     del self._resource[p]
+
+            # Check for and remove any reified subject and its metadata
+            reified_subject = self._generate_reified_subject(p, o)
+            if reified_subject in self._resource:
+                del self._resource[reified_subject]
+
         except KeyError:
             return False
 
         return True
+
     
     def _generate_reified_subject(self, p, o):
         hash_input = str(self._s) + str(p) + str(o)
@@ -90,9 +96,15 @@ class SemanticKnowledge(Subject):
         return self.__iter__()
 
     def _calculate_memory_usage(self):
-        return sum(
-            [
-                len(str(self._s)),
-                sum([   len(str(p)) + len(str(o)) + len(str(self._metadata.get((p, o), '')))
-                        for p, os in self._resource.items()
-                        for o in os]),])
+        size = len(str(self._s))  # Size of the subject URI
+
+        # Calculate the size of all triples in the resource dictionary
+        for triples in self._resource.values():
+            for item in triples:
+                if isinstance(item, tuple):
+                    p, o = item
+                    size += len(str(p)) + len(str(o))
+                else:
+                    size += len(str(item))
+
+        return size
