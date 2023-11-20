@@ -22,14 +22,9 @@ class SemanticKnowledge(Subject):
         self._resource[p].add(o)
         if reify and metadata:
             reified_subject = self._generate_reified_subject(p, o)
-
-            rdf_type_stmt = URI(base_uri + "type")
-            rdf_statement = URI(base_uri + "Statement")
             rdf_subject = URI(base_uri + "subject")
             rdf_predicate = URI(base_uri + "predicate")
             rdf_object = URI(base_uri + "object")
-
-            self._resource.setdefault(reified_subject, set()).add((rdf_type_stmt, rdf_statement))
             self._resource.setdefault(reified_subject, set()).add((rdf_subject, self._s))
             self._resource.setdefault(reified_subject, set()).add((rdf_predicate, p))
             self._resource.setdefault(reified_subject, set()).add((rdf_object, o))
@@ -40,9 +35,6 @@ class SemanticKnowledge(Subject):
                 meta_predicate = URI(f"http://metadata.org/{meta_key}")
                 meta_object = Literal(meta_value)
                 self._resource.setdefault(reified_subject, set()).add((meta_predicate, meta_object))
-            represents_literal = Literal(f"{self._s} {p} {o}")
-            self._reified_subjects[reified_subject].append((URI("http://represents.org/represents"), represents_literal))
-
 
     def remove_context(self, p, o=None):
         if not isinstance(p, URI):
@@ -51,13 +43,10 @@ class SemanticKnowledge(Subject):
             raise InvalidParameter("Object needs to be a URI.")
 
         try:
-            # Remove the normal triple
             if o:
                 self._resource[p].remove(o)
                 if not self._resource[p]:
                     del self._resource[p]
-
-            # Check for and remove any reified subject and its metadata
             reified_subject = self._generate_reified_subject(p, o)
             if reified_subject in self._resource:
                 del self._resource[reified_subject]
@@ -96,9 +85,7 @@ class SemanticKnowledge(Subject):
         return self.__iter__()
 
     def _calculate_memory_usage(self):
-        size = len(str(self._s))  # Size of the subject URI
-
-        # Calculate the size of all triples in the resource dictionary
+        size = len(str(self._s))  
         for triples in self._resource.values():
             for item in triples:
                 if isinstance(item, tuple):

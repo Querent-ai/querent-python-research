@@ -38,11 +38,11 @@ from querent.common.types.querent_queue import QuerentQueue
         build_faiss_index(data): Builds a FAISS index from the provided data.
     """
 
-class RelationExtractor(EventCallbackInterface, BaseEngine):
+class RelationExtractor(EventCallbackInterface):
     def __init__(self, config: RelationshipExtractorConfig):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
-            super().__init__(super().__init__(QuerentQueue))
+            super().__init__()
             self.config = config
             self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
             self.template = config.qa_template
@@ -64,12 +64,6 @@ class RelationExtractor(EventCallbackInterface, BaseEngine):
         except Exception as e:
             self.logger.error(f"Error in handling event: {e}")
     
-    def process_messages(self, data: IngestedMessages):
-        return super().process_messages(data)
-
-    async def process_code(self, data: IngestedCode):
-        return super().process_messages(data)
-
     def validate(self, data) -> bool:
         try:
             if not data:
@@ -94,7 +88,7 @@ class RelationExtractor(EventCallbackInterface, BaseEngine):
             self.logger.error(f"Error in validation: {e}")
             return False
 
-    async def process_tokens(self, event_state: EventState):
+    def process_tokens(self, event_state: EventState):
         try:
             triples = event_state.payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
@@ -102,9 +96,8 @@ class RelationExtractor(EventCallbackInterface, BaseEngine):
             graph_manager = Semantic_KnowledgeGraphManager()
             graph_manager.feed_input(relationships)
             final_triples = graph_manager.retrieve_triples()
-            print("final triples", final_triples)
-            
-            return relationships
+        
+            return final_triples
         
         except Exception as e:
             self.logger.error(f"Error in processing event: {e}")

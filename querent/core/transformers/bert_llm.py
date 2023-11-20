@@ -1,4 +1,6 @@
 from transformers import AutoTokenizer
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
 from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
@@ -168,6 +170,13 @@ class BERTLLM(BaseEngine):
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
+                await self.set_state(new_state=current_state)
+                mock_config = RelationshipExtractorConfig()
+                semantic_extractor = RelationExtractor(mock_config)
+                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
+                current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)
+                print("semantic_triples", semantic_triples)
+                
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(

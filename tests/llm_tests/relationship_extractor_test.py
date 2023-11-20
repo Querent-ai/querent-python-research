@@ -24,6 +24,8 @@ from querent.common.types.querent_queue import QuerentQueue
 
 async def test_relationship_extraction(input_data, expected_relationships):
     mock_config = RelationshipExtractorConfig()
-    output = await RelationExtractor(mock_config).process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, input_data))
-    assert expected_relationships[0][0] in output[0]
+    output = RelationExtractor(mock_config).process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, input_data))
+    subjects = [triple[0].value for triple in output]
+    objects = [triple[2].value for triple in output]
+    assert expected_relationships[0][0] in output[0][0].value
 

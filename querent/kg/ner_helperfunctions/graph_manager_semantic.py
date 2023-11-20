@@ -40,8 +40,7 @@ class Semantic_KnowledgeGraphManager:
             if isinstance(p, str):
                 p_parsed = json.loads(p)
                 metadata = {key: p_parsed[key] for key in p_parsed if key != 'relationship'}
-                p = p_parsed.get('relationship')
-            print(s, p, o)           
+                p = p_parsed.get('relationship')          
             self.add_triple_semantic(s, p, o, metadata)
     
     def retrieve_triples(self):

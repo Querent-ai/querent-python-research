@@ -53,17 +53,23 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.TOKEN_PROCESSED
+            assert event_state.event_type == EventType.TOKEN_PROCESSED or event_state.event_type == EventType.RELATIONSHIP_ESTABLISHED
             triples = event_state.payload
             subjects = [triple[0].value for triple in triples]
             objects = [triple[2].value for triple in triples]
-            assert expected_entities[0] in subjects
-            assert expected_entities[1] in objects
+            predicates = [triple[1].value for triple in triples]
+            if event_state.event_type == EventType.TOKEN_PROCESSED:
+                assert expected_entities[0] in subjects
+                assert expected_entities[1] in objects
+            elif event_type == EventType.RELATIONSHIP_ESTABLISHED:
+                print("subjectsss......", subjects)
+                print("objects......", objects)
+                print("predicates......", predicates)
+                assert 'http://geodata.org/tectonic' in subjects
+
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
-    mock_config = RelationshipExtractorConfig()  
-    llm_instance.subscribe(EventType.NER_GRAPH_UPDATE, RelationExtractor(mock_config))
-
+    llm_instance.subscribe(EventType.RELATIONSHIP_ESTABLISHED, StateChangeCallback())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
