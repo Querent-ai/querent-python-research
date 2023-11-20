@@ -3,6 +3,35 @@ from querent.kg.semantic_knowledge import SemanticKnowledge
 import json
 from querent.graph.utils import URI, BNode, Literal
 
+"""
+    A class for managing a semantic knowledge graph, primarily focusing on handling RDF triples with 
+    support for reification and metadata. It allows for the addition, removal, and retrieval of semantic 
+    triples associated with various subjects in a structured manner.
+
+    Attributes:
+        subjects_dict (dict): A dictionary mapping subject URIs to SemanticKnowledge instances.
+        metadata_dict (dict): A dictionary for storing additional metadata (currently unused).
+        base_uri (str): The base URI used for constructing URIs from string terms.
+
+    Methods:
+        string_to_uri(term):
+            Converts a string term to a full URI using the base_uri.
+        
+        parse_predicate(predicate_str):
+            Parses a predicate string in JSON format to extract the 'relationship' key.
+        
+        add_triple_semantic(s, p_str, o, metadata=None):
+            Adds a semantic triple to the graph, with optional metadata and reification.
+        
+        remove_triple(s, p_str, o):
+            Removes a semantic triple from the graph.
+        
+        feed_input(triples_list):
+            Processes a list of triples and feeds them into the graph. The predicate can be a JSON string containing additional metadata.
+        
+        retrieve_triples():
+            Retrieves all triples from the semantic knowledge graph.
+    """
 
 class Semantic_KnowledgeGraphManager:
     def __init__(self, base_uri="http://geodata.org/"):

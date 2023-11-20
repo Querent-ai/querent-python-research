@@ -175,8 +175,6 @@ class BERTLLM(BaseEngine):
                 semantic_extractor = RelationExtractor(mock_config)
                 semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
                 current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)
-                print("semantic_triples", semantic_triples)
-                
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(

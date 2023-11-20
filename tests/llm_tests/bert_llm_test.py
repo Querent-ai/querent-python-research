@@ -62,9 +62,6 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
                 assert expected_entities[0] in subjects
                 assert expected_entities[1] in objects
             elif event_type == EventType.RELATIONSHIP_ESTABLISHED:
-                print("subjectsss......", subjects)
-                print("objects......", objects)
-                print("predicates......", predicates)
                 assert 'http://geodata.org/tectonic' in subjects
 
 

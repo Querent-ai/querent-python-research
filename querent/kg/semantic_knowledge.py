@@ -3,6 +3,37 @@ from querent.graph.utils import URI, BNode, Literal
 from querent.graph.subject import Reification, Subject
 import hashlib
 
+"""
+    A class representing semantic knowledge in the form of RDF (Resource Description Framework) triples. 
+    It extends the functionality of the Subject class, focusing on the management of RDF triples, 
+    including reification and metadata handling.
+
+    Attributes:
+        _s (URI): The primary subject URI of the semantic knowledge instance.
+        _resource (dict): A dictionary storing the triples and associated metadata.
+        _reified_subjects (dict): A dictionary storing reified subjects and their details.
+        _size_len (int): The size of the instance for memory management purposes.
+
+    Methods:
+        add_context(p, o, metadata=None, reify=None, base_uri="http://geodata.org/"):
+            Adds an RDF triple to the instance, with optional reification and metadata.
+        
+        remove_context(p, o=None):
+            Removes an RDF triple or all triples with a specific predicate from the instance.
+
+        _generate_reified_subject(p, o):
+            Generates a unique reified subject URI based on the hash of the subject, predicate, and object.
+
+        __iter__():
+            Iterator method for iterating over all triples (normal and reified) in the knowledge base.
+
+        __next__():
+            Returns the next element in the iteration over the triples.
+
+        _calculate_memory_usage():
+            Calculates and returns the estimated memory usage of the instance.
+    """
+
 class SemanticKnowledge(Subject):
     def __init__(self, s):
         if not isinstance(s, URI):
