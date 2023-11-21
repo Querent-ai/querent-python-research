@@ -91,8 +91,11 @@ class RelationExtractor(EventCallbackInterface):
     def process_tokens(self, event_state: EventState):
         try:
             triples = event_state.payload
+            print("Inside processing tokens")
             trimmed_triples = self.normalizetriples_buildindex(triples)
+            print("going to start extraction")
             relationships = self.extract_relationships(trimmed_triples)
+            print("relationships extracted")
             graph_manager = Semantic_KnowledgeGraphManager()
             graph_manager.feed_input(relationships)
             final_triples = graph_manager.retrieve_triples()

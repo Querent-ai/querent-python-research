@@ -17,7 +17,7 @@ def test_semantic_knowledge():
     assert (s1, p2, o1) in list(knowledge1)
 
     # Testing removal of context
-    knowledge1.remove_context(p1, o1)
+    knowledge1.remove_context(p1, o1, base_uri="http://geodata.org/")
     assert (s1, p1, o1) not in list(knowledge1)
 
     # Testing invalid parameters
@@ -48,14 +48,14 @@ def test_semantic_knowledge_reification_and_metadata():
     assert (s, p, o) in list(knowledge)
 
     # Check for the presence of metadata triples
-    reified_subject = knowledge._generate_reified_subject(p, o)
+    reified_subject = knowledge._generate_reified_subject(p, o, base_uri="http://geodata.org/")
     for meta_key, meta_value in metadata.items():
         meta_predicate = URI(f"http://metadata.org/{meta_key}")
         meta_object = Literal(meta_value)
         assert (reified_subject, meta_predicate, meta_object) in list(knowledge)
 
     # Test the removal of reified triples and metadata
-    knowledge.remove_context(p, o)
+    knowledge.remove_context(p, o, base_uri="http://geodata.org/")
     assert (s, p, o) not in list(knowledge)
 
     # After removal, check if the metadata is also removed

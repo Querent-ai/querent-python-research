@@ -52,7 +52,7 @@ class SemanticKnowledge(Subject):
             self._resource[p] = set()
         self._resource[p].add(o)
         if reify and metadata:
-            reified_subject = self._generate_reified_subject(p, o)
+            reified_subject = self._generate_reified_subject(p, o, base_uri)
             rdf_subject = URI(base_uri + "subject")
             rdf_predicate = URI(base_uri + "predicate")
             rdf_object = URI(base_uri + "object")
@@ -67,7 +67,7 @@ class SemanticKnowledge(Subject):
                 meta_object = Literal(meta_value)
                 self._resource.setdefault(reified_subject, set()).add((meta_predicate, meta_object))
 
-    def remove_context(self, p, o=None):
+    def remove_context(self, p, o, base_uri):
         if not isinstance(p, URI):
             raise InvalidParameter("Predicate needs to be a URI.")
         if o and not isinstance(o, URI):
@@ -78,7 +78,7 @@ class SemanticKnowledge(Subject):
                 self._resource[p].remove(o)
                 if not self._resource[p]:
                     del self._resource[p]
-            reified_subject = self._generate_reified_subject(p, o)
+            reified_subject = self._generate_reified_subject(p, o, base_uri)
             if reified_subject in self._resource:
                 del self._resource[reified_subject]
 
@@ -88,11 +88,11 @@ class SemanticKnowledge(Subject):
         return True
 
     
-    def _generate_reified_subject(self, p, o):
+    def _generate_reified_subject(self, p, o, base_uri="http://data.org/"):
         hash_input = str(self._s) + str(p) + str(o)
         hash_output = hashlib.sha1(hash_input.encode()).hexdigest()[:8]
 
-        return URI(f"http://geodata.org/reified/{hash_output}")
+        return URI(f"{base_uri}reified/{hash_output}")
 
     @property
     def subject(self):
