@@ -20,7 +20,7 @@ def drive_config():
         drive_client_secret=os.getenv("DRIVE_CLIENT_SECRET"),
         specific_file_type="application/pdf",
         # Remember to put id of the folder you want to crawl
-        folder_to_crawl="1-5ISYohLL0BT9H9hncxYd11gcpWZIegM",
+        folder_to_crawl="1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
     )
 
 
