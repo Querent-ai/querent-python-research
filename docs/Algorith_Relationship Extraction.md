@@ -88,6 +88,10 @@ Why reordering ? No matter the architecture of the model, there is a substantial
 4. Utilizes a custom chain (custom_stuff_chain) to process the reordered documents with the input query and the template, generating the final output (relationships).
 5. The method updates the triples with relationship information.
 
+![](./images/Retrieval.png)
+![](./images/Vector_Embedding.png)
+![](./images/RAG_Reranker.png)
+
 
 ```python
 [('tectonic', '{"context": "study , present evidence paleocene\\u2013eocene thermal maximum ( petm ) record within 543-m-thick ( 1780 ft ) deep-marine section 
