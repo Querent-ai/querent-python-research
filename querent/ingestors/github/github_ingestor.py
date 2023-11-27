@@ -38,6 +38,11 @@ class GithubIngestor(BaseIngestor):
                         )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
+                    yield IngestedCode(
+                        file=current_file,
+                        data=None,
+                        error=None,
+                    )
 
                 collected_bytes += chunk_bytes.data
 
@@ -50,6 +55,7 @@ class GithubIngestor(BaseIngestor):
                         data=[line],  # Wrap line in a list
                         error=None,
                     )
+                yield IngestedCode(file=current_file, data=None, error=None)
         except Exception as e:
             yield IngestedCode(file=current_file, data=None, error=f"Exception: {e}")
 
