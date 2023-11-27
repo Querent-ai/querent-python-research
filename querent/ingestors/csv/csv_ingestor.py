@@ -50,6 +50,11 @@ class CsvIngestor(BaseIngestor):
                         yield IngestedTokens(file=current_file, data=[row], error=None)
                     collected_bytes = b""
                     current_file = chunk_bytes.file
+                    yield IngestedTokens(
+                        file=current_file,
+                        data=None,
+                        error=None,
+                    )
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
@@ -59,6 +64,8 @@ class CsvIngestor(BaseIngestor):
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield IngestedTokens(file=current_file, data=[row], error=None)
+
+            yield IngestedTokens(file=current_file, data=None, error=None)
 
     async def extract_and_process_csv(
         self, collected_bytes: CollectedBytes

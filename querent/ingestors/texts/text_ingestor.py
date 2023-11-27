@@ -59,6 +59,11 @@ class TextIngestor(BaseIngestor):
                             )
                         collected_bytes = b""
                         current_file = chunk_bytes.file
+                        yield IngestedTokens(
+                            file=current_file,
+                            data=None,
+                            error=None,
+                        )
 
                     collected_bytes += chunk_bytes.data
 
@@ -71,6 +76,7 @@ class TextIngestor(BaseIngestor):
                         data=[line],  # Wrap line in a list
                         error=None,
                     )
+                yield IngestedTokens(file=current_file, data=None, error=None)
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
 

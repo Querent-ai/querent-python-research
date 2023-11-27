@@ -31,7 +31,6 @@ async def test_collect_and_ingest_generic_bytes():
     # Set up the collector
     collector_factory = SlackCollectorFactory()
     uri = Uri("slack://")
-    print(os.getenv("SLACK_ACCESS_KEY"))
     config = get_collector_config()
     collector = collector_factory.resolve(uri, config)
 
@@ -49,7 +48,6 @@ async def test_collect_and_ingest_generic_bytes():
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested is not "" or ingested is not None:
-                # print(ingested)
                 counter += 1
         assert counter == 23
 

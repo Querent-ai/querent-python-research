@@ -80,6 +80,11 @@ class CodeIngestor(BaseIngestor):
                         )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
+                    yield IngestedTokens(
+                        file=current_file,
+                        data=None,
+                        error=None,
+                    )
 
                 collected_bytes += chunk_bytes.data
             if current_file:
@@ -91,6 +96,7 @@ class CodeIngestor(BaseIngestor):
                         data=[line],
                         error=None,
                     )
+                yield IngestedTokens(file=current_file, data=None, error=None)
         except Exception as exc:
             print(exc)
             raise Exception from exc

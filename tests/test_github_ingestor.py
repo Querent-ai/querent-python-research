@@ -40,7 +40,8 @@ async def test_collect_and_ingest_code():
             if ingested is not "" or ingested is not None:
                 counter += 1
 
-        assert counter == 6
+        # 6 extra IngestedTokens signifying end of file
+        assert counter == 12
 
     await poll_and_print()  # Notice the use of await here
 

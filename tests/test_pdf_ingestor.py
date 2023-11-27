@@ -33,7 +33,9 @@ async def test_collect_and_ingest_pdf():
             assert ingested is not None
             if ingested is not "" or ingested is not None:
                 counter += 1
-        assert counter == 19  # 19 pages in the PDF
+        assert (
+            counter == 20
+        )  # 19 pages in the PDF and 1 empty IngestedTokens to signify end of file
 
     await poll_and_print()  # Notice the use of await here
 

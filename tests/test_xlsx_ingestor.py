@@ -30,10 +30,9 @@ async def test_collect_and_ingest_xlsx():
             assert isinstance(ingested, IngestedTokens)
             assert ingested.error is None
             assert ingested.file is not None
-            assert ingested.data is not None
-            assert len(ingested.data) > 0
             counter += 1
-        assert counter == 1
+        # 1 extra empty IngestedTokens signifying end of file
+        assert counter == 2
 
     await poll_and_print()
 

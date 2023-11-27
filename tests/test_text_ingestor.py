@@ -31,7 +31,8 @@ async def test_collect_and_ingest_txt():
             assert ingested is not None
             if ingested is not "" or ingested is not None:
                 counter += 1
-        assert counter == 15
+        # 2 extra empty IngestedTokens for signify end of file
+        assert counter == 17
 
     await poll_and_print()  # Notice the use of await here
 

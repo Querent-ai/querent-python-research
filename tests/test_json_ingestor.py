@@ -25,13 +25,13 @@ async def test_collect_and_ingest_json_data():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
+            print(ingested)
             assert ingested is not None
             assert ingested.error is None
             assert ingested.file is not None
-            assert ingested.data is not None
-            assert len(ingested.data) > 0
             counter += 1
-        assert counter == 2
+        # 2 extra IngestedTokens is to signify end of file
+        assert counter == 4
 
     await poll_and_print()
 

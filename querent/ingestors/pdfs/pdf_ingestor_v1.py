@@ -52,6 +52,11 @@ class PdfIngestor(BaseIngestor):
                         yield page_text
                     collected_bytes = b""
                     current_file = chunk_bytes.file
+                    yield IngestedTokens(
+                        file=current_file,
+                        data=None,
+                        error=None,
+                    )
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # at the queue level, we can sample out the error
@@ -63,6 +68,8 @@ class PdfIngestor(BaseIngestor):
                     CollectedBytes(file=current_file, data=collected_bytes)
                 ):
                     yield page_text
+
+                yield IngestedTokens(file=current_file, data=None, error=None)
             except Exception as exc:
                 yield None
 

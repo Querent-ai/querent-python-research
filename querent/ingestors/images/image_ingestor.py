@@ -62,6 +62,7 @@ class ImageIngestor(BaseIngestor):
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
                 yield IngestedTokens(file=current_file, data=[text], error=None)
+                yield IngestedTokens(file=current_file, data=None, error=None)
 
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
@@ -88,7 +89,7 @@ class ImageIngestor(BaseIngestor):
             ) from exc
 
         text = pytesseract.image_to_string(image)
-        return text
+        return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> str:
         processed_data = text
