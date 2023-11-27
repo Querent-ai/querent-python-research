@@ -6,13 +6,14 @@ from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
+import uuid
 
 
 @pytest.mark.asyncio
 async def test_collect_and_ingest_xlsx():
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/xlsx/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path)
+    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
     collector = collector_factory.resolve(uri, config)
 
     ingestor_factory_manager = IngestorFactoryManager()

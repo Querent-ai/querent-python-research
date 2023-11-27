@@ -6,6 +6,7 @@ from querent.config.collector_config import SlackCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
+import uuid
 
 from dotenv import load_dotenv
 
@@ -14,6 +15,7 @@ load_dotenv()
 
 def get_collector_config():
     return SlackCollectorConfig(
+        id=str(uuid.uuid4()),
         channel_name="C05TA5R7D88",
         cursor=None,
         include_all_metadata=0,

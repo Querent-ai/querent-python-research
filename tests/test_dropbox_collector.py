@@ -4,6 +4,7 @@ import os
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.config.collector_config import DropboxConfig
 from querent.common.uri import Uri
+import uuid
 
 from dotenv import load_dotenv
 
@@ -13,6 +14,7 @@ load_dotenv()
 @pytest.fixture
 def dropbox_config():
     return DropboxConfig(
+        id=str(uuid.uuid4()),
         dropbox_app_key=os.getenv("DROPBOX_APP_KEY"),
         dropbox_app_secret=os.getenv("DROPBOX_APP_SECRET"),
         dropbox_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),

@@ -5,7 +5,7 @@ from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, GcsCollectConfig
 import pytest
-import os
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,7 +17,10 @@ def gcs_config():
     credentials_info = json.load(open(cred_file))
     credential_json_str = json.dumps(credentials_info)
     return GcsCollectConfig(
-        bucket="querent-test", credentials=credential_json_str, chunk=1024
+        id=str(uuid.uuid4()),
+        bucket="querent-test",
+        credentials=credential_json_str,
+        chunk=1024,
     )
 
 
