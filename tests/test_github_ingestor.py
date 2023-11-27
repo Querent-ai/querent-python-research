@@ -6,6 +6,7 @@ from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import os
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,6 +16,7 @@ load_dotenv()
 async def test_collect_and_ingest_code():
     collector_factory = GithubCollectorFactory()
     config = GithubConfig(
+        id=str(uuid.uuid4()),
         github_username=os.getenv("USERNAME_GITHUB"),
         repository=os.getenv("REPOSITORY_NAME_GITHUB"),
         github_access_token=os.getenv("ACCESS_TOKEN_GITHUB"),
