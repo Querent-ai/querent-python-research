@@ -49,24 +49,30 @@ class JsonIngestor(BaseIngestor):
                                     file=current_file, data=[json_object], error=None
                                 )
                         collected_bytes = b""
+                        if current_file:
+                            yield IngestedTokens(
+                                file=current_file,
+                                data=None,
+                                error=None,
+                            )
                         current_file = chunk_bytes.file
 
                     collected_bytes += chunk_bytes.data
-
-                if current_file:
-                    json_objects = await self.extract_and_process_json(
-                        CollectedBytes(file=current_file, data=collected_bytes)
-                    )
-                    for json_object in json_objects:
-                        processed_json_object = await self.process_data(json_object)
-                        yield IngestedTokens(
-                            file=current_file, data=[processed_json_object], error=None
-                        )
 
             except json.JSONDecodeError:
                 yield IngestedTokens(
                     file=current_file, data=None, error="JSON Decode Error"
                 )
+            finally:
+                json_objects = await self.extract_and_process_json(
+                    CollectedBytes(file=current_file, data=collected_bytes)
+                )
+                for json_object in json_objects:
+                    processed_json_object = await self.process_data(json_object)
+                    yield IngestedTokens(
+                        file=current_file, data=[processed_json_object], error=None
+                    )
+                yield IngestedTokens(file=current_file, data=None, error=None)
 
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")

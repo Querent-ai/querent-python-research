@@ -30,7 +30,8 @@ async def test_collect_and_ingest_xml():
         async for ingested in ingested_call:
             if ingested != "" or ingested is not None:
                 counter += 1
-        assert counter == 2
+        # 2 extra empty Ingested Tokens signfying end of file
+        assert counter == 4
 
     await poll_and_print()
 

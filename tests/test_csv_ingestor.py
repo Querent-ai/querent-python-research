@@ -29,10 +29,9 @@ async def test_collect_and_ingest_csv_data():
             assert ingested is not None
             assert ingested.error is None
             assert ingested.file is not None
-            assert ingested.data is not None
-            assert len(ingested.data) > 0
             counter += 1
-        assert counter == 7
+        # 2 extra IngestedTokens are representing end of file
+        assert counter == 9
 
     await poll_and_print()
 
