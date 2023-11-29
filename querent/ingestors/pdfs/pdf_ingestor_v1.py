@@ -1,12 +1,21 @@
 from typing import AsyncGenerator, List
-import fitz  # PyMuPDF
+from io import BytesIO
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.ingested_images import IngestedImages
 from querent.config.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.common import common_errors
+import uuid
+import pypdf
+from PIL import Image
+import io
+
+import pybase64
+from rapidocr_onnxruntime import RapidOCR
+import pytesseract
 
 
 class PdfIngestorFactory(IngestorFactory):
@@ -30,7 +39,7 @@ class PdfIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[IngestedTokens, None]:
+    ) -> AsyncGenerator[IngestedTokens or str, None]:
         current_file = None
         collected_bytes = b""
 
@@ -77,25 +86,63 @@ class PdfIngestor(BaseIngestor):
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
-            pdf = fitz.open(stream=collected_bytes.data, filetype="pdf")
-        except fitz.DocumentError as exc:
-            raise common_errors.DocumentError(
-                f"Getting Document error on this file {collected_bytes.file}"
-            ) from exc
+            path = BytesIO(collected_bytes.data)
+            loader = pypdf.PdfReader(path)
+
+            for page_num, page in enumerate(loader.pages):
+                text = page.extract_text()
+                async for image_result in self.extract_images_and_ocr(
+                    page,
+                    page_num,
+                    text,
+                    collected_bytes.data,
+                    collected_bytes.file,
+                ):
+                    yield image_result
+                if not text:
+                    continue
+                processed_text = await self.process_data(text)
+
+                # Yield processed text as IngestedTokens
+                yield IngestedTokens(
+                    file=collected_bytes.file,
+                    data=processed_text,
+                    error=collected_bytes.error,
+                )
+
         except TypeError as exc:
+            print("Exception while extracting   ", exc)
             raise common_errors.TypeError(
                 f"Getting type error on this file {collected_bytes.file}"
             ) from exc
-        for page in pdf:
-            text = page.get_text()
-            if not text:
-                continue
-            processed_text = await self.process_data(text)
-            yield IngestedTokens(
-                file=collected_bytes.file,
-                data=processed_text,
-                error=collected_bytes.error,
-            )
+
+        except Exception as exc:
+            print("Exception    ", exc)
+            raise common_errors.UnknownError(
+                f"Getting unknown error while handling this file: {collected_bytes.file} error - {exc}"
+            ) from exc
+
+    async def extract_images_and_ocr(self, page, page_num, text, data, file_path):
+        try:
+            for image_path in page.images:
+                ocr = await self.get_ocr_from_image(image_path)
+                yield IngestedImages(
+                    file_path=file_path,
+                    image=pybase64.b64encode(data),
+                    image_name=uuid.uuid4(),
+                    page_num=page_num,
+                    text=text,
+                    coordinates=None,
+                    ocr_text=ocr,
+                )
+        except Exception as e:
+            print("Exception in pdf extracter  ", e)
+
+    async def get_ocr_from_image(self, image):
+        """Implement this to return ocr text of the image"""
+        image = Image.open(io.BytesIO(image.data))
+        text = pytesseract.image_to_string(image)
+        return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> List[str]:
         processed_data = text
