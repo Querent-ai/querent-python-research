@@ -92,6 +92,15 @@ Why reordering ? No matter the architecture of the model, there is a substantial
 ![](./images/Vector_Embedding.png)
 ![](./images/RAG_Reranker.png)
 
+Given the entities '{entity1}' and '{entity2}', and their context: "{context}", 
+Pease decompose the task of evaluating their relationship into the following smaller sub-tasks:
+        1. Evaluate if a meaningful relationship exists.
+        2. If a meaningful relationship exists, extract the relationship.
+        3. Determine the type of relationship (e.g., location-based, person-based).
+        4. Check the response for factual accuracy.
+        5. Assess alignment with the user's question and relevance.
+        6. Identify any temporal and causal relationships.
+
 
 ```python
 [('tectonic', '{"context": "study , present evidence paleocene\\u2013eocene thermal maximum ( petm ) record within 543-m-thick ( 1780 ft ) deep-marine section 

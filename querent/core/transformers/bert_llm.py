@@ -82,6 +82,11 @@ class BERTLLM(BaseEngine):
         self.triple_filter = None
         if self.enable_filtering:
             self.triple_filter = TripleFilter(**self.filter_params)
+        self.sample_entities = config.sample_entities
+        self.fixed_entities = config.fixed_entities
+        self.fixed_relationships = config.fixed_relationships
+        self.sample_relationships = config.sample_relationships
+        self.user_context = config.user_context
  
 
     def validate(self) -> bool:
@@ -175,6 +180,7 @@ class BERTLLM(BaseEngine):
                 semantic_extractor = RelationExtractor(mock_config)
                 semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
                 current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)
+                print("semantic triples::::::::::::::::::::::::::: %s" % semantic_triples)                    
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(

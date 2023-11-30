@@ -63,6 +63,10 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
                 assert expected_entities[1] in objects
             elif event_type == EventType.RELATIONSHIP_ESTABLISHED:
                 assert 'http://geodata.org/tectonic' in subjects
+            # Assuming 'triples' is already defined and populated
+            for triple in triples:
+                subject, predicate, object_ = triple[0].value, triple[1].value, triple[2].value
+                print(f"({subject}, {predicate}, {object_})")
 
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
