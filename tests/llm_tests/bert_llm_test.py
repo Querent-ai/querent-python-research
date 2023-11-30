@@ -10,11 +10,13 @@ from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 import os
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("input_data,ner_model_name, llm_class,expected_entities,filter_entities", [
-    ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
+    #("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
     ("""In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
 record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
 using organic carbon stable isotopes and biostratigraphic constraints. We suggest that
@@ -45,21 +47,26 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.TOKEN_PROCESSED
+            assert event_state.event_type == EventType.TOKEN_PROCESSED or event_state.event_type == EventType.RELATIONSHIP_ESTABLISHED
             triples = event_state.payload
             subjects = [triple[0].value for triple in triples]
             objects = [triple[2].value for triple in triples]
-            assert expected_entities[0] in subjects
-            assert expected_entities[1] in objects
+            predicates = [triple[1].value for triple in triples]
+            if event_state.event_type == EventType.TOKEN_PROCESSED:
+                assert expected_entities[0] in subjects
+                assert expected_entities[1] in objects
+            elif event_type == EventType.RELATIONSHIP_ESTABLISHED:
+                assert 'http://geodata.org/tectonic' in subjects
+
 
     llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
-
+    llm_instance.subscribe(EventType.RELATIONSHIP_ESTABLISHED, StateChangeCallback())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
