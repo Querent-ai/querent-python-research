@@ -21,12 +21,14 @@ class CollectorConfig(BaseModel):
 
 class FSCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.LocalFile
+    id: str
     root_path: str
     chunk_size: int = 1024
 
 
 class AzureCollectConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.AzureBlobStorage
+    id: str
     connection_string: str
     account_url: str
     credentials: str
@@ -37,6 +39,7 @@ class AzureCollectConfig(CollectorConfig):
 
 class S3CollectConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.S3
+    id: str
     bucket: str
     region: str
     access_key: str
@@ -46,6 +49,7 @@ class S3CollectConfig(CollectorConfig):
 
 class GcsCollectConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Gcs
+    id: str
     bucket: str
     credentials: str
     chunk: int = 1024
@@ -53,6 +57,7 @@ class GcsCollectConfig(CollectorConfig):
 
 class SlackCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Slack
+    id: str
     cursor: Optional[str]
     include_all_metadata: int
     inclusive: int
@@ -64,6 +69,7 @@ class SlackCollectorConfig(CollectorConfig):
 
 class DropboxConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.DropBox
+    id: str
     dropbox_app_key: str
     dropbox_app_secret: str
     folder_path: str
@@ -73,6 +79,7 @@ class DropboxConfig(CollectorConfig):
 
 class GithubConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Github
+    id: str
     github_username: str
     github_access_token: str
     repository: str
@@ -80,11 +87,13 @@ class GithubConfig(CollectorConfig):
 
 class WebScraperConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.WebScraper
+    id: str
     website_url: str = Field(..., description="The URL of the website to scrape.")
 
 
 class DriveCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Drive
+    id: str
     drive_refresh_token: str
     drive_token: str
     drive_scopes: str

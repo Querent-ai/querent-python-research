@@ -118,12 +118,6 @@ jobs:
         run: |
             pip install gdown
             gdown https://drive.google.com/uc?id=1eou4KhGcU87p291ZqrN9tNzbujeGASCR -O ./tests/llama-2-7b-chat.Q4_K_M.gguf
-        
-        
-      - name: Run Pytest
-        run: python -B -m pytest -v --disable-warnings .
-        env:
-          PYTHONDONTWRITEBYTECODE: 1
 
       - name: Test Code Coverage
         run: pytest --cov=querent
