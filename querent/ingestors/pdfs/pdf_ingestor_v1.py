@@ -91,14 +91,6 @@ class PdfIngestor(BaseIngestor):
 
             for page_num, page in enumerate(loader.pages):
                 text = page.extract_text()
-                async for image_result in self.extract_images_and_ocr(
-                    page,
-                    page_num,
-                    text,
-                    collected_bytes.data,
-                    collected_bytes.file,
-                ):
-                    yield image_result
                 if not text:
                     continue
                 processed_text = await self.process_data(text)
@@ -109,6 +101,14 @@ class PdfIngestor(BaseIngestor):
                     data=processed_text,
                     error=collected_bytes.error,
                 )
+                async for image_result in self.extract_images_and_ocr(
+                    page,
+                    page_num,
+                    processed_text,
+                    collected_bytes.data,
+                    collected_bytes.file,
+                ):
+                    yield image_result
 
         except TypeError as exc:
             print("Exception while extracting   ", exc)
