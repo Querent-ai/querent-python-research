@@ -8,6 +8,7 @@ from querent.config.collector_config import CollectorBackend
 import pytest
 import os
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 @pytest.fixture
 def aws_config():
     config = S3CollectConfig(
+        id=str(uuid.uuid4()),
         bucket="pstreamsbucket1",
         region="ap-south-1",
         access_key=aws_access_key_id,

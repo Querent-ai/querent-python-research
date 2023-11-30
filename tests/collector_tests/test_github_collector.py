@@ -4,6 +4,7 @@ import os
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.config.collector_config import GithubConfig
 from querent.common.uri import Uri
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,6 +13,7 @@ load_dotenv()
 @pytest.fixture
 def github_config():
     return GithubConfig(
+        id=str(uuid.uuid4()),
         github_username=os.getenv("USERNAME_GITHUB"),
         repository=os.getenv("REPOSITORY_NAME_GITHUB"),
         github_access_token=os.getenv("ACCESS_TOKEN_GITHUB"),

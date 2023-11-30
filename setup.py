@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    "aiohttp==3.8.5",
+    "aiohttp==3.9.0",
     "aiosignal==1.3.1",
     "alembic==1.11.1",
     "amqp==5.1.1",
@@ -29,7 +29,7 @@ requirements = [
     "click-repl==0.2.0",
     "colorama==0.4.6",
     "confluent-kafka==2.1.1",
-    "cryptography==41.0.3",
+    "cryptography==41.0.6",
     "cssselect==1.2.0",
     "chromadb==0.3.26",
     "dataclasses-json==0.5.7",

@@ -4,11 +4,13 @@ import os
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.config.collector_config import SlackCollectorConfig
 from querent.common.uri import Uri
+import uuid
 
 
 @pytest.fixture
 def slack_config():
     return SlackCollectorConfig(
+        id=str(uuid.uuid4()),
         channel_name="C05TA5R7D88",
         cursor=None,
         include_all_metadata=0,

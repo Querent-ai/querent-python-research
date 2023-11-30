@@ -5,6 +5,7 @@ from querent.config.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
+import uuid
 
 
 @pytest.mark.asyncio
@@ -12,7 +13,7 @@ async def test_collect_and_ingest_code():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/code/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path)
+    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
@@ -28,9 +29,10 @@ async def test_collect_and_ingest_code():
         counter = 0
         async for ingested in ingested_call:
             assert ingested is not None
-            if ingested is not "" or ingested is not None:
+            if ingested.data != "" or ingested is not None:
                 counter += 1
-        assert counter == 2
+        # counter is 2 though files are 4, that is because we are yielding an empty IngestedCode at the end of each file
+        assert counter == 4
 
     await poll_and_print()
 

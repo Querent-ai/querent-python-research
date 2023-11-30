@@ -16,6 +16,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, DriveCollectorConfig
 from querent.common import common_errors
+import requests
 
 
 class DriveCollector(Collector):
@@ -40,9 +41,26 @@ class DriveCollector(Collector):
         except Exception as e:
             self.items_to_ignore = []
 
+    async def get_access_token(self):
+        params = {
+            "grant_type": "refresh_token",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "refresh_token": self.refresh_token,
+        }
+
+        authorization_url = "https://oauth2.googleapis.com/token"
+
+        r = requests.post(authorization_url, data=params)
+        if r.ok:
+            return r.json()["access_token"]
+        else:
+            return None
+
     async def connect(self):
+        access_token = await self.get_access_token()
         self.creds = Credentials(
-            token=self.token,
+            token=access_token,
             refresh_token=self.refresh_token,
             scopes=[self.scopes],
             token_uri="https://oauth2.googleapis.com/token",
