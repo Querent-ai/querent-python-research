@@ -1,5 +1,6 @@
 from typing import Optional
 from querent.collectors.azure.azure_collector import AzureCollectorFactory
+from querent.collectors.email.email_collector import EmailCollectorFactory
 from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
@@ -29,6 +30,7 @@ class CollectorResolver:
             CollectorBackend.DropBox: DropBoxCollectorFactory(),
             CollectorBackend.Github: GithubCollectorFactory(),
             CollectorBackend.Drive: DriveCollectorFactory(),
+            CollectorBackend.Email: EmailCollectorFactory(),
             # Add other collector factories as needed
         }
 
