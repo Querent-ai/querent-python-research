@@ -4,6 +4,7 @@ from querent.collectors.email.email_collector import EmailCollectorFactory
 from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
+from querent.collectors.jira.jira_collector import JiraCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
@@ -31,6 +32,7 @@ class CollectorResolver:
             CollectorBackend.Github: GithubCollectorFactory(),
             CollectorBackend.Drive: DriveCollectorFactory(),
             CollectorBackend.Email: EmailCollectorFactory(),
+            CollectorBackend.Jira: JiraCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -75,6 +77,8 @@ class CollectorResolver:
             return CollectorBackend.Drive
         elif protocol.is_email():
             return CollectorBackend.Email
+        elif protocol.is_jira():
+            return CollectorBackend.Jira
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"

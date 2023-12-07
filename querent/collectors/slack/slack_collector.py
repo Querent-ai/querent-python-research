@@ -54,7 +54,7 @@ class SlackCollector(Collector):
                     messages = response["messages"]
                     for message in messages:
                         yield CollectedBytes(
-                            file=f"slack://{self.channel}",
+                            file=f"slack://{self.channel}.slack",
                             data=bytes(message["text"] + "\n\n", "utf-8"),
                         )
 
