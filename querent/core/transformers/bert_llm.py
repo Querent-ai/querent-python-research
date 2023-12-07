@@ -1,8 +1,12 @@
 from transformers import AutoTokenizer
+from querent.common.types.ingested_images import IngestedImages
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
+from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
@@ -94,6 +98,9 @@ class BERTLLM(BaseEngine):
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
+    
+    def process_images(self, data: IngestedImages):
+        return super().process_messages(data)
 
     async def process_code(self, data: IngestedCode):
         return super().process_messages(data)
@@ -169,9 +176,14 @@ class BERTLLM(BaseEngine):
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                 else:
-                    filtered_triples = pairs_with_predicates         
+                    filtered_triples = pairs_with_predicates    
+                print("--------------------------------", filtered_triples, "--------------------------------")     
                 current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
                 await self.set_state(new_state=current_state)
+                # filtered_triples = pairs_with_predicates
+                # print("--------------------------------", filtered_triples, "--------------------------------")          
+                # current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
+                # await self.set_state(new_state=current_state)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
                 current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
@@ -180,10 +192,7 @@ class BERTLLM(BaseEngine):
                 semantic_extractor = RelationExtractor(mock_config)
                 semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
                 current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)
-<<<<<<< HEAD
                 print("semantic triples::::::::::::::::::::::::::: %s" % semantic_triples)                    
-=======
->>>>>>> origin
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(

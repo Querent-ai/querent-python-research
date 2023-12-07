@@ -5,6 +5,8 @@ from langchain.prompts import PromptTemplate
 from langchain.document_transformers import LongContextReorder
 from langchain.chains import StuffDocumentsChain, LLMChain
 from querent.logging.logger import setup_logger
+from sentence_transformers import CrossEncoder
+
 
 """
     The class designed to manage and execute question-answering tasks using a large language model (LLM) and an 
@@ -50,16 +52,22 @@ class QASystem:
                 self.db = self.load_faiss_index()
                 self.qa_llm = self.setup_retriever()
                 self.long_context_reorder = LongContextReorder()
+                self.cross_encoder = self.load_cross_encoder('cross-encoder/ms-marco-TinyBERT-L-2-v2')
+                
+
         except Exception as e:
                 self.logger.error(f"Invalid {self.__class__.__name__} configuration. Initialization failed: {e}")
                 raise Exception(f"Initialization failed: {e}")
+    
+    def load_cross_encoder(self, model_name):
+        return CrossEncoder(model_name)
 
     def load_llm(self):
         try:
             llm = CTransformers(
                 model=self.rel_model_path,
                 model_type=self.rel_model_type,
-                config={'max_new_tokens': 256, 'temperature': 0.01, 'context_length': 4096}
+                config={'max_new_tokens': 500, 'temperature': 0.01, 'context_length': 4096}
             )
             return llm
         except Exception as e:
@@ -78,7 +86,7 @@ class QASystem:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error loading FAISS Index: {e}")
             raise Exception(f"Error loading FAISS Index: {e}")
     
-    def setup_retriever(self, search_type_user=None, search_kwargs={'k': 2}):
+    def setup_retriever(self, search_type_user=None, search_kwargs={'k': 10}):
         try:
             if search_type_user is not None:
                 retriever = self.db.as_retriever(
@@ -95,13 +103,22 @@ class QASystem:
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error setting up retriever: {e}")
             raise Exception(f"Error setting up retriever: {e}")
+    
+    def rerank_documents(self, documents, query, top_k=3):
+        # Assuming that 'page_content' is an attribute of the Document class
+        document_texts = [doc.page_content for doc in documents]
+        pairs = [[query, text] for text in document_texts]
+        scores = self.cross_encoder.predict(pairs)
+        ranked_docs = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
+        return [doc for doc, score in ranked_docs[:top_k]]
 
-    def custom_stuff_chain(self, reordered_docs, query):
+
+    def custom_stuff_chain(self, reordered_docs, llm_chain, query):
         try:
-            prompt = PromptTemplate(
-                template=self.template, input_variables=["context", "query"]
-            )
-            llm_chain = LLMChain(llm=self.llm, prompt=prompt)
+            # prompt = PromptTemplate(
+            #     template=self.template, input_variables=["context", "query"]
+            # )
+            # llm_chain = LLMChain(llm=self.llm, prompt=prompt)
             document_prompt = PromptTemplate(
                 input_variables=["page_content"], template="{page_content}"
             )
@@ -115,15 +132,64 @@ class QASystem:
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error in starting llm chain: {e}")
             raise Exception(f"Error in starting llm chain: {e}")
-
-    def ask_question(self, prompt, search_type_user=None, search_kwargs={'k': 2}):
+    
+    def retrieve_documents(self, prompt , search_type_user=None, search_kwargs={'k': 8}):
         try:
             if search_kwargs != self.current_search_kwargs or search_type_user != self.current_search_type_user:
                 self.qa_llm = self.setup_retriever(search_type_user=search_type_user, search_kwargs=search_kwargs)
             retrieved_docs = self.qa_llm.get_relevant_documents(prompt)
-            reordered_docs = self.long_context_reorder.transform_documents(retrieved_docs)
-            output = self.custom_stuff_chain(reordered_docs, prompt)
+            top_docs = self.rerank_documents(retrieved_docs, prompt)
+            print("top documents", top_docs)
+            return top_docs
+        except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error asking questions to LLM: {e}")
+            raise Exception(f"Error asking LLM: {e}")
+
+    def ask_question(self, prompt, llm_chain, top_docs=None):
+        try:
+            #reordered_docs = self.long_context_reorder.transform_documents(retrieved_docs)
+            output = self.custom_stuff_chain(reordered_docs=top_docs, llm_chain=llm_chain, query= prompt)
             return output
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error asking questions to LLM: {e}")
             raise Exception(f"Error asking LLM: {e}")
+        
+
+# # Example usage:
+# if __name__ == "__main__":
+#     template = """Use the following pieces of information to answer the user's question.
+#     If you don't know the answer, just say that you don't know, don't try to make up an answer.
+#     Context:{context}
+#     {format_instructions}
+#     Question: {query}
+#     Only return the helpful answer below and nothing else.
+#     Helpful answer:
+#     """
+
+#     qa_system = QASystem(
+#         rel_model_path='/home/nishantg/querent-main/llama-2-7b-chat.Q4_K_M.gguf',
+#         rel_model_type='llama',
+#         emb_model_name='sentence-transformers/all-MiniLM-L6-v2',
+#         faiss_index_path="/home/nishantg/querent-main/querent/querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index",
+#         template=template
+#     )
+
+#     prompt = "I would like to define a knowledge graph triple like (Subject, Predicate, Object), do Subject - PETM and Object - Gulf of Mexico show a predicate or a relationship ?"
+    
+#     # Retrieve documents relevant to the prompt
+#     retrieved_docs = qa_system.retrieve_documents(prompt)
+
+#     # Ask a question using the retrieved documents
+#     answer = qa_system.ask_question(prompt=prompt, retrieved_docs=retrieved_docs)
+    
+#     print("--------------------------------")
+#     print(answer)
+
+
+    
+    
+    # answer = qa_system.ask_question(prompt=prompt, search_type_user='similarity_score_threshold',search_kwargs={'score_threshold': 0.5, 'k': 8})
+    # print(answer)
+    
+    # answer = qa_system.ask_question(prompt=prompt, search_type_user='mmr')
+    # print(answer)
