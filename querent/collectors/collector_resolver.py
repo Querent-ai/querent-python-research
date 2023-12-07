@@ -73,6 +73,8 @@ class CollectorResolver:
             return CollectorBackend.Github
         elif protocol.is_drive():
             return CollectorBackend.Drive
+        elif protocol.is_email():
+            return CollectorBackend.Email
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"

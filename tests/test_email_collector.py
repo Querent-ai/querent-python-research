@@ -19,7 +19,7 @@ def email_config():
         imap_port=993,
         imap_username="puneet@querent.xyz",
         imap_password=os.getenv("IMAP_PASSWORD"),
-        imap_folder="DRAFTS",
+        imap_folder="[Gmail]/Drafts",
         imap_certfile=None,
         imap_keyfile=None,
     )
