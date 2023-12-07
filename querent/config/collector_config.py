@@ -13,6 +13,7 @@ class CollectorBackend(str, Enum):
     DropBox = "dropbox"
     Github = "github"
     Drive = "drive"
+    Email = "email"
 
 
 class CollectorConfig(BaseModel):
@@ -102,3 +103,14 @@ class DriveCollectorConfig(CollectorConfig):
     chunk_size: int
     specific_file_type: Optional[str] = None
     folder_to_crawl: Optional[str] = None
+
+class EmailCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.Email
+    id: str
+    imap_server: str
+    imap_port: int
+    imap_username: str
+    imap_password: str
+    imap_folder: str
+    imap_keyfile: Optional[str] = None
+    imap_certfile: Optional[str] = None

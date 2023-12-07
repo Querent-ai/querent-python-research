@@ -16,6 +16,7 @@ class Protocol(enum.Enum):
     DropBox = "dropbox"
     Github = "github"
     Drive = "drive"
+    Email = "email"
 
     def is_azure(self) -> bool:
         return self == Protocol.Azure
@@ -62,7 +63,8 @@ class Protocol(enum.Enum):
     def is_drive(self) -> bool:
         return self == Protocol.Drive
 
-
+    def is_email(self) -> bool:
+        return self == Protocol.Email
 class Uri:
     PROTOCOL_SEPARATOR = "://"
     DATABASE_URI_PATTERN = re.compile(
