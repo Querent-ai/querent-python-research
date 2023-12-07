@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -14,6 +14,7 @@ class CollectorBackend(str, Enum):
     Github = "github"
     Drive = "drive"
     Email = "email"
+    Jira = "jira"
 
 
 class CollectorConfig(BaseModel):
@@ -104,6 +105,7 @@ class DriveCollectorConfig(CollectorConfig):
     specific_file_type: Optional[str] = None
     folder_to_crawl: Optional[str] = None
 
+
 class EmailCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Email
     id: str
@@ -114,3 +116,21 @@ class EmailCollectorConfig(CollectorConfig):
     imap_folder: str
     imap_keyfile: Optional[str] = None
     imap_certfile: Optional[str] = None
+
+
+class JiraCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.Jira
+    id: str
+    jira_server: str
+    jira_username: str
+    jira_project: str
+    jira_query: str
+    jira_password: Optional[str] = None
+    jira_api_token: Optional[str] = None
+    jira_start_at: Optional[int] = 0
+    jira_max_results: Optional[int] = 50
+    jira_fields: Optional[Union[str, List[str]]] = ("*all",)
+    jira_expand: Optional[str] = None
+    jira_keyfile: Optional[str] = None
+    jira_certfile: Optional[str] = None
+    jira_verify: Optional[bool] = True
