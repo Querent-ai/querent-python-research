@@ -1,9 +1,7 @@
 import asyncio
-import re
 from pathlib import Path
 from typing import AsyncGenerator
 import io
-import aiofiles
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -58,40 +56,57 @@ class DriveCollector(Collector):
             return None
 
     async def connect(self):
-        access_token = await self.get_access_token()
-        self.creds = Credentials(
-            token=access_token,
-            refresh_token=self.refresh_token,
-            scopes=[self.scopes],
-            token_uri="https://oauth2.googleapis.com/token",
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-        )
-        if self.creds and self.creds.expired and self.creds.refresh_token:
-            self.creds.refresh(Request())
+        try:
+            access_token = await self.get_access_token()
+            self.creds = Credentials(
+                token=access_token,
+                refresh_token=self.refresh_token,
+                scopes=[self.scopes],
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+            if self.creds and self.creds.expired and self.creds.refresh_token:
+                self.creds.refresh(Request())
 
-        self.drive_service = build("drive", "v3", credentials=self.creds)
+            self.drive_service = build("drive", "v3", credentials=self.creds)
+        except Exception as e:
+            raise common_errors.ConnectionError(
+                "Failed to connect to Google Drive: {}".format(str(e))
+            ) from e
 
     async def disconnect(self):
-        self.creds = None
-
-    # collect those files
+        try:
+            if self.drive_service:
+                # Close the Google Drive connection
+                self.drive_service.close()
+        except Exception as e:
+            raise common_errors.ConnectionError(
+                f"Failed to disconnect from Google Drive: {str(e)}"
+            ) from e
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
-        query = ""
-        if self.specific_file_type:
-            query = f"mimeType='{self.specific_file_type}'"
-        if self.folder_to_crawl:
+        try:
+            query = ""
             if self.specific_file_type:
-                query += " and "
-            query = f"'{self.folder_to_crawl}' in parents"
-        results = self.drive_service.files().list(q=query).execute()
-        files = results.get("files", [])
-        if not files:
-            print("No files found.")
-        for file in files:
-            async for chunk in self.read_chunks(file["id"]):
-                yield CollectedBytes(data=chunk, file=file["name"])
+                query = f"mimeType='{self.specific_file_type}'"
+            if self.folder_to_crawl:
+                if self.specific_file_type:
+                    query += " and "
+                query = f"'{self.folder_to_crawl}' in parents"
+            results = self.drive_service.files().list(q=query).execute()
+            files = results.get("files", [])
+            if not files:
+                print("No files found.")
+            for file in files:
+                async for chunk in self.read_chunks(file["id"]):
+                    yield CollectedBytes(data=chunk, file=file["name"])
+        except Exception as e:
+            raise common_errors.CollectorPollingError(
+                f"Failed to poll Google Drive: {str(e)}"
+            ) from e
+        finally:
+            await self.disconnect()
 
     async def read_chunks(self, file_id):
         file_metadata = (
@@ -104,9 +119,10 @@ class DriveCollector(Collector):
                 export_mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             elif mime_type == "application/vnd.google-apps.folder":
                 return
-
             else:
-                raise Exception(f"Unsupported Google Docs file type: {mime_type}")
+                raise common_errors.CollectorPollingError(
+                    f"Unsupported Google Docs file type: {mime_type}"
+                )
 
             request = self.drive_service.files().export_media(
                 fileId=file_id, mimeType=export_mime_type
@@ -119,9 +135,7 @@ class DriveCollector(Collector):
         downloader = MediaIoBaseDownload(fh, request, chunksize=self.chunk_size)
         done = False
         while not done:
-            status, done = await asyncio.get_event_loop().run_in_executor(
-                None, downloader.next_chunk
-            )
+            status, done = downloader.next_chunk()
             if status:
                 yield fh.getvalue()
                 fh.seek(0)
@@ -142,9 +156,6 @@ class DriveCollector(Collector):
 
 
 class DriveCollectorFactory(CollectorFactory):
-    def __init__(self):
-        pass
-
     def backend(self) -> CollectorBackend:
         return CollectorBackend.LocalFile
 

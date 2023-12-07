@@ -32,6 +32,7 @@ env:
   DRIVE_TOKEN: ${{secrets.DRIVE_TOKEN}}
   DRIVE_CLIENT_ID: ${{secrets.DRIVE_CLIENT_ID}}
   DRIVE_CLIENT_SECRET: ${{secrets.DRIVE_CLIENT_SECRET}}
+  IMAP_PASSWORD: ${{secrets.IMAP_PASSWORD}}
 
 jobs:
   pytest:
