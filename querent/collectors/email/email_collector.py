@@ -52,7 +52,7 @@ class EmailCollector(Collector):
                         message = response_part[1]
                         yield CollectedBytes(
                             data=message,
-                            file=f"{self.config.imap_folder}/{i}.eml",
+                            file=f"{self.config.imap_folder}/{i}.email",
                         )
         except imaplib.IMAP4.error as e:
             raise common_errors.ConnectionError(
