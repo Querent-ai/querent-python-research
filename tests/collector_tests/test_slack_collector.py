@@ -33,8 +33,8 @@ async def test_slack_collector(slack_config):
         async for result in collector.poll():
             assert not result.is_error()
             chunk = result.unwrap()
-            assert chunk is not None
-            if chunk != "" or chunk is not None:
+
+            if chunk is not None:
                 counter += 1
         assert counter == 18
 

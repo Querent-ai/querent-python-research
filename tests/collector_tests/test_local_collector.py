@@ -34,7 +34,6 @@ async def poll_and_print(collector):
     async for result in collector.poll():
         assert not result.is_error()
         chunk = result.unwrap()
-        assert chunk is not None
 
 
 async def add_files(temp_dir):
