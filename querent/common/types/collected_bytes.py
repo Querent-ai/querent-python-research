@@ -20,6 +20,9 @@ class CollectedBytes:
     def is_error(self) -> bool:
         return self.error is not None
 
+    def is_eof(self) -> bool:
+        return self.eof
+
     def get_file_path(self) -> str:
         return self.file
 

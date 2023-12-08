@@ -38,7 +38,7 @@ class XlsxIngestor(BaseIngestor):
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     continue
                 if current_file is None:
                     current_file = chunk_bytes.file

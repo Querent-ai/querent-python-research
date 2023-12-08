@@ -35,7 +35,7 @@ class TextIngestor(BaseIngestor):
         current_file = None
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     continue
                 if self.is_token_stream:
                     async for line in self.ingest_token_stream(chunk_bytes=chunk_bytes):
