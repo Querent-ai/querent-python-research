@@ -27,6 +27,7 @@ from cachetools import LRUCache, cachedmethod
 import asyncio
 
 from querent.logging.logger import setup_logger
+from querent.processors.async_processor import AsyncProcessor
 
 
 class IngestorFactoryManager:
@@ -74,10 +75,12 @@ class IngestorFactoryManager:
     def __init__(
         self,
         collectors: Optional[List[Collector]] = None,
+        processors: Optional[List[AsyncProcessor]] = None,
         cache_size: Optional[int] = 100,
         result_queue: Optional[Queue] = None,
     ):
         self.collectors = collectors
+        self.processors = processors
         self.ingestor_factories = {
             IngestorBackend.PDF.value: PdfIngestorFactory(),
             IngestorBackend.TEXT.value: TextIngestorFactory(),
@@ -114,27 +117,23 @@ class IngestorFactoryManager:
 
     async def get_ingestor(self, file_extension: str) -> Optional[BaseIngestor]:
         """get_ingestor to get factory for that extension"""
-        factory = self.get_factory(file_extension)
-        return factory.create(file_extension)
+        factory = await self.get_factory(file_extension)
+        return await factory.create(file_extension, self.processors)
 
     async def supports(self, file_extension: str) -> bool:
         """check if extension supports factory"""
-        factory = self.get_factory(file_extension)
+        factory = await self.get_factory(file_extension)
         return factory.supports(file_extension)
 
     @cachedmethod(cache=lambda self: self.file_caches)
-    async def ingest_file_async(self, collected_bytes_list: List[CollectedBytes]):
+    async def ingest_file_async(self, file_id: str):
         try:
-            file_extension = collected_bytes_list[0].file_extension
+            collected_bytes_list = self.file_caches.pop(file_id)
+            file_extension = collected_bytes_list[0].extension
             ingestor = await self.get_ingestor(file_extension)
             if ingestor is not None:
-                tokens = []
                 async for chunk_tokens in ingestor.ingest(collected_bytes_list):
-                    tokens.extend(chunk_tokens)
-
-                # Instead of yielding, put the tokens into the result queue
-                if self.result_queue:
-                    await self.result_queue.put((file_extension, tokens))
+                    self.result_queue.put_nowait(chunk_tokens)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
@@ -156,11 +155,9 @@ class IngestorFactoryManager:
 
             # Check if this is the end of the file
             if collected_bytes.eof:
-                collected_bytes_list = self.file_caches.pop(current_file)
-
                 # Try to ingest the ongoing file even if the cache is full
                 try:
-                    await self.ingest_file_async(collected_bytes_list)
+                    await self.ingest_file_async(current_file)
                 except Exception as e:
                     self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
 
@@ -168,7 +165,7 @@ class IngestorFactoryManager:
                 while current_file in self.file_caches:
                     await asyncio.sleep(0.1)
 
-    async def ingest_all_async(self) -> AsyncGenerator[IngestedTokens, None]:
+    async def ingest_all_async(self):
         """Asynchronously ingest data from all collectors concurrently."""
         ingestion_tasks = [
             self.ingest_collector_async(collector) for collector in self.collectors
