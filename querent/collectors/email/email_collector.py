@@ -9,12 +9,14 @@ from querent.common import common_errors
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, EmailCollectorConfig
+from querent.logging.logger import setup_logger
 
 
 class EmailCollector(Collector):
     def __init__(self, config: EmailCollectorConfig):
         self.config = config
         self.imap_email = ImapEmail()
+        self.logger = setup_logger(__name__, "EmailCollector")
 
     async def connect(self):
         try:
@@ -23,6 +25,7 @@ class EmailCollector(Collector):
             # Other connection-related setup can be done here if needed
 
         except imaplib.IMAP4.error as e:
+            self.logger.error(f"Error connecting to IMAP server: {e}")
             raise common_errors.ConnectionError(
                 "Failed to connect to the IMAP server: {}".format(str(e))
             ) from e
@@ -35,9 +38,7 @@ class EmailCollector(Collector):
                     None, self.imap_connection.logout
                 )
         except Exception as e:
-            raise common_errors.ConnectionError(
-                f"Failed to disconnect: {str(e)}"
-            ) from e
+            self.logger.error(f"Error disconnecting from IMAP server: {e}")
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
@@ -54,9 +55,15 @@ class EmailCollector(Collector):
                             data=message,
                             file=f"{self.config.imap_folder}/{i}.email",
                         )
+                yield CollectedBytes(
+                    data=None,
+                    file=f"{self.config.imap_folder}/{i}.email",
+                    eof=True,
+                )
         except imaplib.IMAP4.error as e:
+            self.logger.error(f"Error fetching emails from IMAP server: {e}")
             raise common_errors.ConnectionError(
-                f"Failed to poll emails: {str(e)}"
+                "Failed to fetch emails from the IMAP server: {}".format(str(e))
             ) from e
         finally:
             await self.disconnect()

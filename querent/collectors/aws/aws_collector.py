@@ -12,6 +12,8 @@ from querent.collectors.collector_factory import CollectorFactory
 from querent.common.uri import Uri
 import boto3
 
+from querent.logging.logger import setup_logger
+
 
 class AWSCollector(Collector):
     def __init__(self, config: S3CollectConfig, prefix: str):
@@ -20,6 +22,7 @@ class AWSCollector(Collector):
         self.access_key = config.access_key
         self.secret_key = config.secret_key
         self.chunk_size = 1024
+        self.logger = setup_logger(__name__, "AWSCollector")
 
     async def connect(self):
         # Initialize the S3 client with proper error handling for credentials
@@ -48,11 +51,12 @@ class AWSCollector(Collector):
                 file = self.download_object_as_byte_stream(obj["Key"])
                 async for chunk in self.read_chunks(file):
                     yield CollectedBytes(file=obj["Key"], data=chunk, error=None)
+                yield CollectedBytes(file=obj["Key"], data=None, error=None, eof=True)
 
         except PermissionError as exc:
-            print(f"Unable to open this file {file}, getting error as {exc}")
+            self.logger.error(f"Getting Permission Error on file {file}, as {exc}")
         except OSError as exc:
-            print(f"Getting OS Error on file {file}, as {exc}")
+            self.logger.error(f"Getting OS Error on file {file}, as {exc}")
         finally:
             await self.disconnect()  # Disconnect when done
 

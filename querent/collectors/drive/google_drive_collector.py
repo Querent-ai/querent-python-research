@@ -16,6 +16,8 @@ from querent.config.collector_config import CollectorBackend, DriveCollectorConf
 from querent.common import common_errors
 import requests
 
+from querent.logging.logger import setup_logger
+
 
 class DriveCollector(Collector):
     def __init__(self, config: DriveCollectorConfig):
@@ -31,6 +33,7 @@ class DriveCollector(Collector):
         self.chunk_size = config.chunk_size
         self.specific_file_type = config.specific_file_type
         self.folder_to_crawl = config.folder_to_crawl
+        self.logger = setup_logger(__name__, "DriveCollector")
         try:
             with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
                 self.items_to_ignore = set(
@@ -71,6 +74,7 @@ class DriveCollector(Collector):
 
             self.drive_service = build("drive", "v3", credentials=self.creds)
         except Exception as e:
+            self.logger.error(f"Error connecting to Google Drive: {e}")
             raise common_errors.ConnectionError(
                 "Failed to connect to Google Drive: {}".format(str(e))
             ) from e
@@ -81,9 +85,7 @@ class DriveCollector(Collector):
                 # Close the Google Drive connection
                 self.drive_service.close()
         except Exception as e:
-            raise common_errors.ConnectionError(
-                f"Failed to disconnect from Google Drive: {str(e)}"
-            ) from e
+            self.logger.error(f"Error disconnecting from Google Drive: {e}")
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
@@ -97,10 +99,11 @@ class DriveCollector(Collector):
             results = self.drive_service.files().list(q=query).execute()
             files = results.get("files", [])
             if not files:
-                print("No files found.")
+                self.logger.info("No files found in Google Drive")
             for file in files:
                 async for chunk in self.read_chunks(file["id"]):
                     yield CollectedBytes(data=chunk, file=file["name"])
+                yield CollectedBytes(data=None, file=file["name"], eof=True)
         except Exception as e:
             raise common_errors.CollectorPollingError(
                 f"Failed to poll Google Drive: {str(e)}"
