@@ -48,13 +48,13 @@ class HtmlIngestor(BaseIngestor):
                         yield IngestedTokens(
                             file=current_file, data=[element], error=None
                         )
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
                     )
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")

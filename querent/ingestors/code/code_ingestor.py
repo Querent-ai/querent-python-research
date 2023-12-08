@@ -78,14 +78,13 @@ class CodeIngestor(BaseIngestor):
                             data=[line],
                             error=None,
                         )
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
                     )
-
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
             if current_file:
                 async for line in self.extract_code_from_bytes(

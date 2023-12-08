@@ -36,13 +36,13 @@ class GithubIngestor(BaseIngestor):
                             data=[line],  # Wrap line in a list
                             error=None,
                         )
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedCode(
                         file=current_file,
                         data=None,
                         error=None,
                     )
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
 
                 collected_bytes += chunk_bytes.data
 
