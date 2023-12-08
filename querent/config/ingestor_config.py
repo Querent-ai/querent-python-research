@@ -28,3 +28,6 @@ class IngestorBackend(str, Enum):
     WAV = "wav"
     GITHUB = "github"
     Unsupported = "unsupported"
+    Email = "email"
+    Slack = "slack"
+    Jira = "jira"

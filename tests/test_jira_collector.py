@@ -35,8 +35,8 @@ async def test_jira_collector(jira_config):
         async for result in collector.poll():
             assert result is not None
             chunk = result.unwrap()
-            assert chunk is not None
-            if chunk != "" or chunk is not None:
+
+            if chunk is not None:
                 counter += 1
         assert counter == 1
 

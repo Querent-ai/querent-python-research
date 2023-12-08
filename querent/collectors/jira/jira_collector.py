@@ -9,11 +9,14 @@ from querent.common.uri import Uri
 from querent.config.collector_config import CollectorBackend, JiraCollectorConfig
 from jira import JIRA
 
+from querent.logging.logger import setup_logger
+
 
 class JiraCollector(Collector):
     def __init__(self, config: JiraCollectorConfig):
         self.config = config
         self.jira = None  # Initialize to None
+        self.logger = setup_logger(__name__, "JiraCollector")
 
     def create_jira_client(self):
         options = {
@@ -43,6 +46,7 @@ class JiraCollector(Collector):
         try:
             self.jira = self.create_jira_client()
         except Exception as e:
+            self.logger.error(f"Error connecting to Jira: {e}")
             raise common_errors.ConnectionError(
                 f"Failed to connect to Jira: {str(e)}"
             ) from e
@@ -72,8 +76,12 @@ class JiraCollector(Collector):
                 yield CollectedBytes(
                     data=json_issue, file=f"jira_issue_{issue.key}.json.jira"
                 )
+                yield CollectedBytes(
+                    data=None, file=f"jira_issue_{issue.key}.json.jira", eof=True
+                )
 
         except common_errors.ConnectionError as e:
+            self.logger.error(f"Error polling Jira issues: {e}")
             raise  # Re-raise ConnectionError without adding additional information
         except Exception as e:
             raise common_errors.ConnectionError(

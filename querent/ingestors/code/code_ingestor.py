@@ -64,7 +64,7 @@ class CodeIngestor(BaseIngestor):
         current_file = None
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     continue
 
                 if current_file is None:
@@ -78,14 +78,13 @@ class CodeIngestor(BaseIngestor):
                             data=[line],
                             error=None,
                         )
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
                     )
-
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
             if current_file:
                 async for line in self.extract_code_from_bytes(

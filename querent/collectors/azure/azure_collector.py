@@ -7,6 +7,7 @@ from querent.config.collector_config import CollectorBackend, AzureCollectConfig
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.uri import Uri
+from querent.logging.logger import setup_logger
 
 
 class AzureCollector(Collector):
@@ -19,21 +20,26 @@ class AzureCollector(Collector):
         self.prefix = config.prefix
         self.blob_service_client = None
         self.container_client = None
+        self.logger = setup_logger(__name__, "AzureCollector")
 
     async def connect(self):
-        if self.connection_string:
-            self.blob_service_client = BlobServiceClient.from_connection_string(
-                conn_str=self.connection_string,
-                credential=self.credentials,
+        try:
+            if self.connection_string:
+                self.blob_service_client = BlobServiceClient.from_connection_string(
+                    conn_str=self.connection_string,
+                    credential=self.credentials,
+                )
+            elif self.account_url:
+                self.blob_service_client = BlobServiceClient(
+                    account_url=self.account_url,
+                    credential=self.credentials,
+                )
+            self.container_client = self.blob_service_client.get_container_client(
+                self.container_name
             )
-        elif self.account_url:
-            self.blob_service_client = BlobServiceClient(
-                account_url=self.account_url,
-                credential=self.credentials,
-            )
-        self.container_client = self.blob_service_client.get_container_client(
-            self.container_name
-        )
+        except Exception as e:
+            self.logger.error(f"Error connecting to Azure Blob Storage: {e}")
+            raise e
 
     async def disconnect(self):
         pass  # No asynchronous disconnect needed for the Azure Blob Storage client
@@ -50,9 +56,11 @@ class AzureCollector(Collector):
                 )
                 async for chunk in self.read_chunks(file):
                     yield CollectedBytes(file=blob.name, data=chunk, error=None)
+                yield CollectedBytes(file=blob.name, data=None, error=None, eof=True)
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
-            print(f"An error occurred: {e}")
+            self.logger.error(f"Error polling Azure Blob Storage: {e}")
+            raise e
         finally:
             # Disconnect the client when done
             await self.disconnect()

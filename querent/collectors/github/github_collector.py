@@ -7,6 +7,7 @@ from querent.config.collector_config import GithubConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.uri import Uri
+from querent.logging.logger import setup_logger
 
 
 class GithubCollector(Collector):
@@ -16,6 +17,7 @@ class GithubCollector(Collector):
         self.user_name = config.github_username
         self.repository = config.repository
         self.access_token = config.github_access_token
+        self.logger = setup_logger(__name__, "GithubCollector")
 
     async def connect(self):
         pass
@@ -47,8 +49,11 @@ class GithubCollector(Collector):
                         file_response.raise_for_status()
                         file_contents = (file_response.text).encode("utf-8")
                         yield CollectedBytes(file=item["name"], data=file_contents)
+                        yield CollectedBytes(
+                            file=item["name"], data=None, error=None, eof=True
+                        )
                     except requests.exceptions.RequestException as file_error:
-                        print(f"Error fetching file contents: {file_error}")
+                        self.logger.error(f"Error connecting to Github: {file_error}")
                         yield CollectedBytes(
                             file=item["name"], data=None, error=file_error
                         )
@@ -58,7 +63,7 @@ class GithubCollector(Collector):
                         yield sub_item
 
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            self.logger.error(f"Error connecting to Github: {e}")
 
 
 class GithubCollectorFactory(CollectorFactory):

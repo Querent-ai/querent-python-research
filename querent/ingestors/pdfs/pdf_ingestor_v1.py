@@ -45,9 +45,7 @@ class PdfIngestor(BaseIngestor):
 
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
-                    current_file = None
-                    collected_bytes = b""
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     # report to metrics
                     continue
 

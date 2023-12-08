@@ -9,6 +9,7 @@ from querent.config.collector_config import CollectorBackend
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common import common_errors
 from querent.common.uri import Uri
+from querent.logging.logger import setup_logger
 
 
 class DropboxCollector(Collector):
@@ -18,6 +19,7 @@ class DropboxCollector(Collector):
         self.folder_path = config.folder_path
         self.chunk_size = config.chunk_size
         self.refresh_token = config.dropbox_refresh_token
+        self.logger = setup_logger(__name__, "DropboxCollector")
 
     async def connect(self):
         pass
@@ -40,8 +42,12 @@ class DropboxCollector(Collector):
                 file_content_bytes = response.content
                 async for chunk in self.stream_blob(file_content_bytes):
                     yield CollectedBytes(file=entry.name, data=chunk)
+                yield CollectedBytes(file=entry.name, data=None, eof=True)
         except dropbox.exceptions.ApiError as e:
-            print(f"Error listing files: {e}")
+            self.logger.error(f"Error connecting to Dropbox: {e}")
+            raise common_errors.ConnectionError(
+                "Failed to connect to Dropbox: {}".format(str(e))
+            ) from e
 
     async def stream_blob(self, content_bytes):
         offset = 0

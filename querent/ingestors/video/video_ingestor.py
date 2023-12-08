@@ -37,7 +37,7 @@ class VideoIngestor(BaseIngestor):
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     # TODO handle error
                     continue
                 if current_file is None:
@@ -48,13 +48,13 @@ class VideoIngestor(BaseIngestor):
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(file=current_file, data=[text], error=None)
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
                     )
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
