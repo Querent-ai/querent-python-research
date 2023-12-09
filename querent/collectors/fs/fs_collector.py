@@ -37,10 +37,11 @@ class FSCollector(Collector):
         async for file_path in self.walk_files(self.root_dir):
             try:
                 async with aiofiles.open(file_path, "rb") as file:
+                    file_path_str = str(file_path)
                     async for chunk in self.read_chunks(file):
-                        yield CollectedBytes(file=file_path, data=chunk, error=None)
+                        yield CollectedBytes(file=file_path_str, data=chunk, error=None)
                     yield CollectedBytes(
-                        file=file_path, data=None, error=None, eof=True
+                        file=file_path_str, data=None, error=None, eof=True
                     )
             except PermissionError as exc:
                 raise common_errors.PermissionError(
@@ -49,6 +50,10 @@ class FSCollector(Collector):
             except OSError as exc:
                 raise common_errors.OSError(
                     f"Getting OS Error on file {file_path}, as {exc}"
+                ) from exc
+            except Exception as exc:
+                raise common_errors.UnknownError(
+                    f"Getting unknown error on file {file_path}, as {exc}"
                 ) from exc
 
     async def read_chunks(self, file):
@@ -62,8 +67,8 @@ class FSCollector(Collector):
     async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
         for item in root.iterdir():
             item_split = set(str(item).split("/"))
-            item_split.remove("")
-            if item_split.intersection(self.items_to_ignore):
+            item_split.discard("")  # Use discard instead of remove to avoid KeyError
+            if item_split and item_split.intersection(self.items_to_ignore):
                 continue
             if item.is_file():
                 yield item
