@@ -125,7 +125,7 @@ class PdfIngestor(BaseIngestor):
             for image_path in page.images:
                 ocr = await self.get_ocr_from_image(image_path)
                 yield IngestedImages(
-                    file_path=file_path,
+                    file=file_path,
                     image=pybase64.b64encode(data),
                     image_name=uuid.uuid4(),
                     page_num=page_num,

@@ -37,12 +37,15 @@ async def test_ingest_all_async():
 
     # Optionally, check the result_queue for ingested data
     counter = 0
+    unique_files = set()
     while not result_queue.empty():
         ingested_data = await result_queue.get()
         if ingested_data is not None:
+            unique_files.add(ingested_data.file)
             counter += 1
     print(f"Found {counter} ingested files")
     assert counter == 36
+    assert len(unique_files) == 3
 
 
 if __name__ == "__main__":

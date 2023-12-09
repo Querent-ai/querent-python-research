@@ -4,7 +4,7 @@ from typing import Union
 class IngestedImages:
     def __init__(
         self,
-        file_path: str,
+        file: str,
         image: str,
         image_name: str,
         page_num: int,
@@ -13,7 +13,7 @@ class IngestedImages:
         ocr_text: list = [],
         error: str = None,
     ) -> None:
-        self.file_path = file_path
+        self.file = file
         self.text = text
         self.error = error
         self.image = image
@@ -21,7 +21,7 @@ class IngestedImages:
         self.page_num = page_num
         self.coordinates = coordinates
         self.ocr_text = ocr_text
-        file = str(file_path)
+        file = str(file)
         self.extension = file.split(".")[-1]
         self.file_id = file.split("/")[-1].split(".")[0]
 
