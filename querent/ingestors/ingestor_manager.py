@@ -81,6 +81,10 @@ class IngestorFactoryManager:
     ):
         self.collectors = collectors
         self.processors = processors
+        if self.processors is None:
+            self.processors = []
+        if self.collectors is None:
+            self.collectors = []
         self.ingestor_factories = {
             IngestorBackend.PDF.value: PdfIngestorFactory(),
             IngestorBackend.TEXT.value: TextIngestorFactory(),
@@ -126,14 +130,23 @@ class IngestorFactoryManager:
         return factory.supports(file_extension)
 
     @cachedmethod(cache=lambda self: self.file_caches)
-    async def ingest_file_async(self, file_id: str):
+    async def ingest_file_async(
+        self, file_id: str, result_queue: Optional[Queue] = None
+    ):
         try:
             collected_bytes_list = self.file_caches.pop(file_id)
             file_extension = collected_bytes_list[0].extension
             ingestor = await self.get_ingestor(file_extension)
             if ingestor is not None:
-                async for chunk_tokens in ingestor.ingest(collected_bytes_list):
-                    self.result_queue.put_nowait(chunk_tokens)
+
+                async def chunk_generator() -> AsyncGenerator[CollectedBytes, None]:
+                    for chunk in collected_bytes_list:
+                        if chunk.eof or chunk.error is not None:
+                            break
+                        yield chunk
+
+                async for chunk_tokens in ingestor.ingest(chunk_generator()):
+                    result_queue.put_nowait(chunk_tokens)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
@@ -143,21 +156,25 @@ class IngestorFactoryManager:
                 f"Error ingesting file {collected_bytes_list[0].file}: {str(e)}"
             )
 
-    async def ingest_collector_async(self, collector: Collector):
+    async def ingest_collector_async(
+        self, collector: Collector, result_queue: Optional[Queue] = None
+    ):
         """Asynchronously ingest data from a single collector."""
         async for collected_bytes in collector.poll():
             current_file = collected_bytes.file
 
             if current_file not in self.file_caches:
-                self.file_caches[current_file] = [collected_bytes]
+                if not collected_bytes.eof:
+                    self.file_caches[current_file] = [collected_bytes]
             else:
-                self.file_caches[current_file].append(collected_bytes)
+                if not collected_bytes.eof:
+                    self.file_caches[current_file].append(collected_bytes)
 
             # Check if this is the end of the file
             if collected_bytes.eof:
                 # Try to ingest the ongoing file even if the cache is full
                 try:
-                    await self.ingest_file_async(current_file)
+                    await self.ingest_file_async(current_file, result_queue)
                 except Exception as e:
                     self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
 
@@ -168,6 +185,7 @@ class IngestorFactoryManager:
     async def ingest_all_async(self):
         """Asynchronously ingest data from all collectors concurrently."""
         ingestion_tasks = [
-            self.ingest_collector_async(collector) for collector in self.collectors
+            self.ingest_collector_async(collector, self.result_queue)
+            for collector in self.collectors
         ]
         await asyncio.gather(*ingestion_tasks)

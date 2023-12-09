@@ -41,8 +41,8 @@ async def test_ingest_all_async():
         ingested_data = await result_queue.get()
         if ingested_data is not None:
             counter += 1
-
-    assert counter > 0
+    print(f"Found {counter} ingested files")
+    assert counter == 36
 
 
 if __name__ == "__main__":
