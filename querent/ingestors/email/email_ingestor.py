@@ -42,7 +42,7 @@ class EmailIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[IngestedTokens | IngestedImages, None]:
+    ) -> AsyncGenerator[IngestedTokens, None]:
         collected_bytes = b""
         current_file = None
         try:
