@@ -2,6 +2,8 @@ from enum import Enum
 from typing import List, Optional, Union
 from pydantic import BaseModel, Field
 
+from querent.channel.channel_interface import ChannelCommandInterface
+
 
 class CollectorBackend(str, Enum):
     LocalFile = "localfile"
@@ -19,6 +21,7 @@ class CollectorBackend(str, Enum):
 
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
+    channel: ChannelCommandInterface
 
 
 class FSCollectorConfig(CollectorConfig):
