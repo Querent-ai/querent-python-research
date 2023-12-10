@@ -36,12 +36,11 @@ async def test_collect_and_ingest_generic_bytes():
 
     # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
-    ingestor_factory = await ingestor_factory_manager.get_factory("")
-    ingestor = await ingestor_factory.create("", [])
+    ingestor_factory = await ingestor_factory_manager.get_factory("slack")
+    ingestor = await ingestor_factory.create("slack", [])
 
     # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())
-    counter = 0
 
     async def poll_and_print():
         counter = 0

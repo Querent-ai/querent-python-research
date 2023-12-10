@@ -6,6 +6,7 @@ from querent.common.types.ingested_images import IngestedImages
 from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
+from querent.logging.logger import setup_logger
 from querent.processors.async_processor import AsyncProcessor
 from querent.common import common_errors
 import uuid
@@ -36,6 +37,7 @@ class PdfIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(IngestorBackend.PDF)
         self.processors = processors
+        self.logger = setup_logger(__name__, "PdfIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -78,7 +80,11 @@ class PdfIngestor(BaseIngestor):
 
                 yield IngestedTokens(file=current_file, data=None, error=None)
             except Exception as exc:
-                yield None
+                yield IngestedTokens(
+                    file=current_file,
+                    data=None,
+                    error=f"Exception: {exc}",
+                )
 
     async def extract_and_process_pdf(
         self, collected_bytes: CollectedBytes
@@ -109,13 +115,13 @@ class PdfIngestor(BaseIngestor):
                     yield image_result
 
         except TypeError as exc:
-            print("Exception while extracting   ", exc)
+            self.logger.error(f"Exception while extracting pdf {exc}")
             raise common_errors.TypeError(
                 f"Getting type error on this file {collected_bytes.file}"
             ) from exc
 
         except Exception as exc:
-            print("Exception    ", exc)
+            self.logger.error(f"Exception while extracting pdf {exc}")
             raise common_errors.UnknownError(
                 f"Getting unknown error while handling this file: {collected_bytes.file} error - {exc}"
             ) from exc
@@ -134,7 +140,16 @@ class PdfIngestor(BaseIngestor):
                     ocr_text=ocr,
                 )
         except Exception as e:
-            print("Exception in pdf extracter  ", e)
+            self.logger.error(f"Error extracting images and OCR: {e}")
+            yield IngestedImages(
+                file=file_path,
+                image=pybase64.b64encode(data),
+                image_name=uuid.uuid4(),
+                page_num=page_num,
+                text=text,
+                coordinates=None,
+                ocr_text=None,
+            )
 
     async def get_ocr_from_image(self, image):
         """Implement this to return ocr text of the image"""
@@ -143,6 +158,8 @@ class PdfIngestor(BaseIngestor):
         return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> List[str]:
+        if self.processors == None or len(self.processors) == 0:
+            return [text]
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process_text(processed_data)

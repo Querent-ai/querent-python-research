@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import asyncio
 from querent.callback.event_callback_dispatcher import EventCallbackDispatcher
 from querent.callback.event_callback_interface import EventCallbackInterface
+from querent.common.types.ingested_images import IngestedImages
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_code import IngestedCode
@@ -114,6 +115,18 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def process_images(self, data: IngestedImages):
+        """
+        Process images asynchronously.
+        Args:
+            data (IngestedImages): The input data to process.
+        Returns:
+            EventState: The state of the event is set with the event type and the timestamp
+            of the event and set using `self.set_state(event_state)`.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the LLM.
@@ -200,6 +213,8 @@ class BaseEngine(ABC):
                             await self.process_tokens(data)
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
+                        elif isinstance(data, IngestedImages):
+                            await self.process_images(data)
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"

@@ -8,6 +8,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
+from querent.ingestors.email.email_ingestor import EmailIngestorFactory
 from querent.ingestors.ingestor_factory import IngestorFactory, UnsupportedIngestor
 from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory
 from querent.ingestors.texts.text_ingestor import TextIngestorFactory
@@ -103,7 +104,8 @@ class IngestorFactoryManager:
             IngestorBackend.HTML.value: HtmlIngestorFactory(),
             IngestorBackend.MP4.value: VideoIngestorFactory(),
             IngestorBackend.GITHUB.value: GithubIngestorFactory(),
-            IngestorBackend.Slack.value: TextIngestorFactory(),
+            IngestorBackend.Slack.value: TextIngestorFactory(is_token_stream=True),
+            IngestorBackend.Email.value: EmailIngestorFactory(),
             # Add more mappings as needed
         }
         self.file_caches = LRUCache(maxsize=cache_size)
