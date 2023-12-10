@@ -9,7 +9,10 @@ from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class TextIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"txt", ""}
+    SUPPORTED_EXTENSIONS = {"txt", "slack", ""}
+
+    def __init__(self, is_token_stream=False):
+        self.is_token_stream = is_token_stream
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -19,7 +22,7 @@ class TextIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return TextIngestor(processors, file_extension == "")
+        return TextIngestor(processors, file_extension == "", self.is_token_stream)
 
 
 class TextIngestor(BaseIngestor):
