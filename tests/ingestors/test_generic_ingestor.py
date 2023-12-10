@@ -36,8 +36,8 @@ async def test_collect_and_ingest_generic_bytes():
 
     # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
-    ingestor_factory = await ingestor_factory_manager.get_factory("")
-    ingestor = await ingestor_factory.create("", [])
+    ingestor_factory = await ingestor_factory_manager.get_factory("slack")
+    ingestor = await ingestor_factory.create("slack", [])
 
     # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())
@@ -49,7 +49,7 @@ async def test_collect_and_ingest_generic_bytes():
             assert ingested is not None
             if ingested is not "" or ingested is not None:
                 counter += 1
-        assert counter == 23
+        assert counter == 44
 
     await poll_and_print()  # Notice the use of await here
 
