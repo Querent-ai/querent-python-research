@@ -103,6 +103,7 @@ class IngestorFactoryManager:
             IngestorBackend.HTML.value: HtmlIngestorFactory(),
             IngestorBackend.MP4.value: VideoIngestorFactory(),
             IngestorBackend.GITHUB.value: GithubIngestorFactory(),
+            IngestorBackend.Slack.value: TextIngestorFactory(),
             # Add more mappings as needed
         }
         self.file_caches = LRUCache(maxsize=cache_size)
