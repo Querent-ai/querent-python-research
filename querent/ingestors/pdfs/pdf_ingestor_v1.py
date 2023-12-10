@@ -158,6 +158,8 @@ class PdfIngestor(BaseIngestor):
         return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> List[str]:
+        if self.processors == None or len(self.processors) == 0:
+            return [text]
         processed_data = text
         for processor in self.processors:
             processed_data = await processor.process_text(processed_data)

@@ -8,7 +8,10 @@ from querent.collectors.email.imap import ImapEmail
 from querent.common import common_errors
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
-from querent.config.collector.collector_config import CollectorBackend, EmailCollectorConfig
+from querent.config.collector.collector_config import (
+    CollectorBackend,
+    EmailCollectorConfig,
+)
 from querent.logging.logger import setup_logger
 
 
@@ -53,11 +56,11 @@ class EmailCollector(Collector):
                         message = response_part[1]
                         yield CollectedBytes(
                             data=message,
-                            file=f"{self.config.imap_folder}/{i}.email",
+                            file=f"{self.config.imap_username}:{self.config.imap_folder}/{i}.email",
                         )
                 yield CollectedBytes(
                     data=None,
-                    file=f"{self.config.imap_folder}/{i}.email",
+                    file=f"{self.config.imap_username}:{self.config.imap_folder}/{i}.email",
                     eof=True,
                 )
         except imaplib.IMAP4.error as e:
