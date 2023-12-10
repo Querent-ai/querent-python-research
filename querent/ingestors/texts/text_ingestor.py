@@ -22,7 +22,7 @@ class TextIngestorFactory(IngestorFactory):
     ) -> BaseIngestor:
         if not await self.supports(file_extension):
             return None
-        return TextIngestor(processors, file_extension == "", self.is_token_stream)
+        return TextIngestor(processors, self.is_token_stream)
 
 
 class TextIngestor(BaseIngestor):
