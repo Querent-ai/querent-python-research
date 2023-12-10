@@ -1,6 +1,8 @@
 from enum import Enum
-from typing import List, Optional, Union
-from pydantic import BaseModel, Field
+from typing import Any, List, Optional, Union
+from pydantic import BaseModel, Field, validator
+
+from querent.channel.channel_interface import ChannelCommandInterface
 
 
 class CollectorBackend(str, Enum):
@@ -19,6 +21,14 @@ class CollectorBackend(str, Enum):
 
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
+    # Use Field with allow_mutation=False to specify the type
+    channel: Any
+
+    # Custom validator for ChannelCommandInterface
+    @validator("channel", pre=True, allow_reuse=True)
+    def validate_channel(cls, value):
+        # Perform any additional validation logic here
+        return value
 
 
 class FSCollectorConfig(CollectorConfig):

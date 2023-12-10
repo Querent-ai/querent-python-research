@@ -6,7 +6,7 @@ from cachetools import LRUCache, cachedmethod
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import IngestedTokens
-from querent.config.ingestor_config import IngestorBackend
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory, UnsupportedIngestor
 from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory

@@ -2,7 +2,7 @@ import asyncio
 import pytest
 import os
 from querent.collectors.collector_resolver import CollectorResolver
-from querent.config.collector_config import GithubConfig
+from querent.config.collector.collector_config import GithubConfig
 from querent.common.uri import Uri
 import uuid
 from dotenv import load_dotenv

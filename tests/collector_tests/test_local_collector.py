@@ -7,7 +7,7 @@ import pytest
 import uuid
 
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend, FSCollectorConfig
+from querent.config.collector.collector_config import CollectorBackend, FSCollectorConfig
 
 
 @pytest.fixture

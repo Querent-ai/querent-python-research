@@ -3,7 +3,7 @@ from aiohttp import ClientSession, TCPConnector
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.collector_config import CollectorBackend, WebScraperConfig
+from querent.config.collector.collector_config import CollectorBackend, WebScraperConfig
 from querent.common.uri import Uri
 from querent.tools.web_page_extractor import WebpageExtractor
 from urllib.parse import urlparse, urljoin

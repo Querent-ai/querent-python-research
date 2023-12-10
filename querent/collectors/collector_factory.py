@@ -6,7 +6,7 @@ from querent.collectors.collector_errors import (
     CollectorResolverError,
     CollectorErrorKind,
 )
-from querent.config.collector_config import CollectorConfig, CollectorBackend
+from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
 
 
 class CollectorFactory(ABC):

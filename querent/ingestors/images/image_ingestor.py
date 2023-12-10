@@ -3,7 +3,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
-from querent.config.ingestor_config import IngestorBackend
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.processors.async_processor import AsyncProcessor
 from querent.common.common_errors import (
     FileNotFoundError,

@@ -7,7 +7,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
-from querent.config.engine_config import EngineConfig
+from querent.config.engine.engine_config import EngineConfig
 from querent.logging.logger import setup_logger
 
 """

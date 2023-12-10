@@ -2,7 +2,7 @@ import asyncio
 import os
 from pathlib import Path
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
-from querent.config.collector_config import SlackCollectorConfig
+from querent.config.collector.collector_config import SlackCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest

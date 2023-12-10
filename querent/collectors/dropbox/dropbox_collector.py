@@ -3,9 +3,9 @@ from typing import AsyncGenerator
 import dropbox
 from dropbox.oauth import DropboxOAuth2FlowNoRedirect
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.collector_config import DropboxConfig
+from querent.config.collector.collector_config import DropboxConfig
 from querent.collectors.collector_base import Collector
-from querent.config.collector_config import CollectorBackend
+from querent.config.collector.collector_config import CollectorBackend
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common import common_errors
 from querent.common.uri import Uri

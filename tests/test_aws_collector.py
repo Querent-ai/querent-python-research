@@ -1,10 +1,10 @@
 import asyncio
 
-from querent.config.collector_config import S3CollectConfig
+from querent.config.collector.collector_config import S3CollectConfig
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend
+from querent.config.collector.collector_config import CollectorBackend
 import pytest
 import os
 from dotenv import load_dotenv
