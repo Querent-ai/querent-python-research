@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, List
 import json
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.ingestor_config import IngestorBackend
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor

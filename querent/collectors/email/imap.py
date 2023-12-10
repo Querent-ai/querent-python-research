@@ -1,6 +1,6 @@
 import imaplib
 
-from querent.config.collector_config import EmailCollectorConfig
+from querent.config.collector.collector_config import EmailCollectorConfig
 
 
 class ImapEmail:

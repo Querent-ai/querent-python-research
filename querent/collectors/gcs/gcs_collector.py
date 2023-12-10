@@ -3,8 +3,8 @@ from typing import AsyncGenerator
 
 import aiofiles
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.collector_config import GcsCollectConfig
-from querent.config.collector_config import CollectorBackend
+from querent.config.collector.collector_config import GcsCollectConfig
+from querent.config.collector.collector_config import CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.uri import Uri

@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.common.types.ingested_tokens import IngestedTokens
-from querent.config.collector_config import FSCollectorConfig
+from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest

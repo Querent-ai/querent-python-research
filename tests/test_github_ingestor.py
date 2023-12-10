@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 from querent.collectors.github.github_collector import GithubCollectorFactory
-from querent.config.collector_config import GithubConfig
+from querent.config.collector.collector_config import GithubConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest

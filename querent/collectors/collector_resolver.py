@@ -10,7 +10,7 @@ from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.collectors.github.github_collector import GithubCollectorFactory
 from querent.collectors.drive.google_drive_collector import DriveCollectorFactory
-from querent.config.collector_config import CollectorConfig, CollectorBackend
+from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
     CollectorResolverError,

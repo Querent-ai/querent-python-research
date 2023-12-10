@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 import os
 
 from querent.collectors.collector_factory import CollectorFactory
-from querent.config.collector_config import CollectorBackend, SlackCollectorConfig
+from querent.config.collector.collector_config import CollectorBackend, SlackCollectorConfig
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri

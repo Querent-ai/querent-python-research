@@ -7,7 +7,7 @@ from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend, FSCollectorConfig
+from querent.config.collector.collector_config import CollectorBackend, FSCollectorConfig
 import aiofiles
 from querent.common import common_errors
 

@@ -6,7 +6,7 @@ from botocore.exceptions import (
 from querent.common.types.collected_bytes import (
     CollectedBytes,
 )  # Import for handling authentication errors
-from querent.config.collector_config import CollectorBackend, S3CollectConfig
+from querent.config.collector.collector_config import CollectorBackend, S3CollectConfig
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.uri import Uri

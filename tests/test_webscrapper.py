@@ -7,7 +7,7 @@ import pytest
 import uuid
 
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend, WebScraperConfig
+from querent.config.collector.collector_config import CollectorBackend, WebScraperConfig
 
 
 def test_webscrapper_collector():

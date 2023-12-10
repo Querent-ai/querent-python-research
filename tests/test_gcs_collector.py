@@ -3,7 +3,7 @@ import json
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.common.uri import Uri
-from querent.config.collector_config import CollectorBackend, GcsCollectConfig
+from querent.config.collector.collector_config import CollectorBackend, GcsCollectConfig
 import pytest
 import uuid
 from dotenv import load_dotenv
