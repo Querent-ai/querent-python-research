@@ -27,7 +27,12 @@ class CollectorConfig(BaseModel):
     # Custom validator for ChannelCommandInterface
     @validator("channel", pre=True, allow_reuse=True)
     def validate_channel(cls, value):
-        # Perform any additional validation logic here
+        if not hasattr(value, "receive_in_python") or not hasattr(
+            value, "send_in_rust"
+        ):
+            raise ValueError(
+                "Invalid type for channel. Must have 'receive_in_python' and 'send_in_rust' functions."
+            )
         return value
 
 
@@ -36,6 +41,20 @@ class FSCollectorConfig(CollectorConfig):
     id: str
     root_path: str
     chunk_size: int = 1024
+    channel: Any
+
+    # Custom validator for ChannelCommandInterface
+    @validator("channel", pre=True, allow_reuse=True)
+    def validate_channel(cls, value):
+        if (
+            value is None
+            or not hasattr(value, "receive_in_python")
+            or not hasattr(value, "send_in_rust")
+        ):
+            raise ValueError(
+                "Invalid type for channel. Must have 'receive_in_python' and 'send_in_rust' functions."
+            )
+        return value
 
 
 class AzureCollectConfig(CollectorConfig):
