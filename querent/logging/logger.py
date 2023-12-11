@@ -1,11 +1,11 @@
 import logging
+from logging.handlers import RotatingFileHandler
 from querent.config.logger.logger_config import (
     LOGGING_LEVEL,
     LOGGING_FORMAT,
     LOGGING_DATE_FORMAT,
     LOGGING_FILE,
 )
-from querent.logging.handlers import create_console_handler, create_file_handler
 
 
 def setup_logger(logger_name: str, log_file_id: str) -> logging.Logger:
@@ -17,15 +17,21 @@ def setup_logger(logger_name: str, log_file_id: str) -> logging.Logger:
         logger = logging.getLogger(logger_name)
         logger.setLevel(LOGGING_LEVEL)
 
-        console_handler = create_console_handler(LOGGING_FORMAT, LOGGING_DATE_FORMAT)
-        file_handler = create_file_handler(
-            log_file_name, LOGGING_FORMAT, LOGGING_DATE_FORMAT
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(
+            logging.Formatter(LOGGING_FORMAT, LOGGING_DATE_FORMAT)
         )
-
         logger.addHandler(console_handler)
+
+        file_handler = RotatingFileHandler(
+            log_file_name, maxBytes=1024 * 1024, backupCount=5
+        )
+        file_handler.setFormatter(
+            logging.Formatter(LOGGING_FORMAT, LOGGING_DATE_FORMAT)
+        )
         logger.addHandler(file_handler)
 
         return logger
     except Exception as e:
-        print(f"Error while setting up logger: {e}")
+        logger.error(f"Error while setting up logger: {e}")
         return None
