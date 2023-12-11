@@ -12,7 +12,10 @@ from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
-from querent.config.collector.collector_config import CollectorBackend, DriveCollectorConfig
+from querent.config.collector.collector_config import (
+    CollectorBackend,
+    DriveCollectorConfig,
+)
 from querent.common import common_errors
 import requests
 
@@ -42,27 +45,10 @@ class DriveCollector(Collector):
         except Exception as e:
             self.items_to_ignore = []
 
-    async def get_access_token(self):
-        params = {
-            "grant_type": "refresh_token",
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "refresh_token": self.refresh_token,
-        }
-
-        authorization_url = "https://oauth2.googleapis.com/token"
-
-        r = requests.post(authorization_url, data=params)
-        if r.ok:
-            return r.json()["access_token"]
-        else:
-            return None
-
     async def connect(self):
         try:
-            access_token = await self.get_access_token()
             self.creds = Credentials(
-                token=access_token,
+                token=self.token,
                 refresh_token=self.refresh_token,
                 scopes=[self.scopes],
                 token_uri="https://oauth2.googleapis.com/token",
@@ -76,7 +62,7 @@ class DriveCollector(Collector):
         except Exception as e:
             self.logger.error(f"Error connecting to Google Drive: {e}")
             raise common_errors.ConnectionError(
-                "Failed to connect to Google Drive: {}".format(str(e))
+                f"Failed to connect to Google Drive: {str(e)}"
             ) from e
 
     async def disconnect(self):
