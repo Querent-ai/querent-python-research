@@ -31,16 +31,6 @@ class DropboxCollector(Collector):
                     app_secret=self.dropbox_app_secret,
                     oauth2_refresh_token=self.refresh_token,
                 )
-
-                # Explicitly refresh the access token
-                access_token = self.dbx.refresh_access_token()
-                if access_token:
-                    self.logger.info("Access token refreshed successfully.")
-                else:
-                    self.logger.error("Failed to refresh access token.")
-                    raise common_errors.ConnectionError(
-                        "Failed to refresh access token."
-                    )
         except dropbox.exceptions.AuthError as auth_error:
             self.logger.error(
                 f"Authentication error during Dropbox connection: {auth_error}"
