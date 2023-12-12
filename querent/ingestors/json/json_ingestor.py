@@ -10,7 +10,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class JsonIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"json"}
+    SUPPORTED_EXTENSIONS = {"json", "jira"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS

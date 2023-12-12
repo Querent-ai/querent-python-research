@@ -106,6 +106,7 @@ class IngestorFactoryManager:
             IngestorBackend.GITHUB.value: GithubIngestorFactory(),
             IngestorBackend.Slack.value: TextIngestorFactory(is_token_stream=True),
             IngestorBackend.Email.value: EmailIngestorFactory(),
+            IngestorBackend.Jira.value: JsonIngestorFactory(),
             # Add more mappings as needed
         }
         self.file_caches = LRUCache(maxsize=cache_size)
