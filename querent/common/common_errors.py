@@ -28,6 +28,7 @@ class IngestorError(Enum):
     OSERROR = "OSError"
     CONNECTIONERROR = "ConnectionError"
     SLACKERROR = "SlackAPIError"
+    POLLINGERROR = "PollingError"
 
 
 class IngestorErrorBase(Exception):
@@ -152,3 +153,8 @@ class ConnectionError(IngestorErrorBase):
 class SlackApiError(IngestorErrorBase):
     def __init__(self, message=None) -> None:
         super().__init__(IngestorError.SLACKERROR, message)
+
+
+class PollingError(IngestorErrorBase):
+    def __init__(self, message=None) -> None:
+        super().__init__(IngestorError.POLLINGERROR, message)
