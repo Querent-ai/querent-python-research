@@ -9,15 +9,8 @@ class RelationshipExtractorConfig(BaseModel):
 
     # Shared configurations for relationship extraction and BSM
     model_type = 'llama'
-    model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'  # Used as LLaMA model path in BSM
-    qa_template: str = """Use the following pieces of information to answer the user's question.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-        Context: {context}
-        {format_instructions}
-        Question: {query}
-        Only return the helpful answer below and nothing else.
-        Helpful answer:
-        """
+    # model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'  # Used as LLaMA model path in BSM
+    model_path: str = '/home/nishantg/querent-main/llama-2-7b-chat.Q5_K_S.gguf'  # Used as LLaMA model path in BSM
     # Using a dictionary for multiple templates
     qa_templates: Dict[str, str] = Field(default_factory=lambda: {
         "default": """Use the following pieces of information to answer the user's question.
@@ -26,7 +19,7 @@ class RelationshipExtractorConfig(BaseModel):
         Question: {query}
         Only return the helpful answer below and nothing else.
         Helpful answer:""",
-        "bsm_template": """Use the following pieces of information to answer the user's question.
+        "bsm_template": """Use the following context to answer the user's question.
         If you don't know the answer, just say that you don't know, don't try to make up an answer.
         Context: {context}
         {format_instructions}
@@ -47,10 +40,10 @@ class RelationshipExtractorConfig(BaseModel):
     faiss_index_path: str = "./querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index"
 
     # BSM specific configurations
-    bsm_validator_model_path: str = '/home/nishantg/Downloads/falcon-7b-instruct.ggccv1.q4_1.bin'
-    bsm_validator_model_type='falcon'
-    bsm_max_new_tokens: int = 100
-    bsm_temperature: float = 0
+    bsm_validator_model_path: str = "/home/nishantg/Downloads/vicuna-13b-v1.5.Q4_K_M.gguf"
+    bsm_validator_model_type='vicuna'
+    bsm_max_new_tokens: int = -1
+    bsm_temperature: float = 0.1
     bsm_repetition_penalty: float = 1.7
     bsm_context_length: int = 2000
 

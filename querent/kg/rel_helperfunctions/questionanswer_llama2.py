@@ -1,4 +1,5 @@
-from langchain.llms import CTransformers
+from langchain.llms import CTransformers, LlamaCpp
+from langchain.callbacks.manager import CallbackManager
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
@@ -6,8 +7,14 @@ from langchain.document_transformers import LongContextReorder
 from langchain.chains import StuffDocumentsChain, LLMChain
 from querent.logging.logger import setup_logger
 from sentence_transformers import CrossEncoder
+from llama_cpp.llama import Llama, LlamaGrammar
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+import asyncio
+import aiofiles
 
 
+
+# llm = LlamaCpp(
 """
     The class designed to manage and execute question-answering tasks using a large language model (LLM) and an 
     embedding-based retrieval system.
@@ -38,14 +45,13 @@ from sentence_transformers import CrossEncoder
     """
 
 class QASystem:
-    def __init__(self, emb_model_name, rel_model_path, rel_model_type, faiss_index_path, template):
+    def __init__(self, emb_model_name, rel_model_path, rel_model_type, faiss_index_path):
         self.logger = setup_logger("Question-Answering_config", "Question-Answering")
         try:
                 self.emb_model_name = emb_model_name
                 self.rel_model_type = rel_model_type
                 self.rel_model_path = rel_model_path
                 self.faiss_index_path = faiss_index_path
-                self.template = template
                 self.current_search_kwargs = None
                 self.current_search_type_user = None
                 self.llm = self.load_llm()
@@ -64,11 +70,8 @@ class QASystem:
 
     def load_llm(self):
         try:
-            llm = CTransformers(
-                model=self.rel_model_path,
-                model_type=self.rel_model_type,
-                config={'max_new_tokens': 500, 'temperature': 0.01, 'context_length': 4096}
-            )
+            file_path = '/home/nishantg/querent-main/querent/querent/kg/rel_helperfunctions/json.gbnf'
+            llm = LlamaCpp(model_path=self.rel_model_path, max_tokens=-1, temperature=0,verbose=True,n_ctx=1000,f16_kv=True, grammar_path=file_path)
             return llm
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error loading LLM: {e}")
@@ -104,8 +107,7 @@ class QASystem:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error setting up retriever: {e}")
             raise Exception(f"Error setting up retriever: {e}")
     
-    def rerank_documents(self, documents, query, top_k=3):
-        # Assuming that 'page_content' is an attribute of the Document class
+    def rerank_documents(self, documents, query, top_k=1):
         document_texts = [doc.page_content for doc in documents]
         pairs = [[query, text] for text in document_texts]
         scores = self.cross_encoder.predict(pairs)
@@ -115,10 +117,6 @@ class QASystem:
 
     def custom_stuff_chain(self, reordered_docs, llm_chain, query):
         try:
-            # prompt = PromptTemplate(
-            #     template=self.template, input_variables=["context", "query"]
-            # )
-            # llm_chain = LLMChain(llm=self.llm, prompt=prompt)
             document_prompt = PromptTemplate(
                 input_variables=["page_content"], template="{page_content}"
             )
@@ -148,6 +146,7 @@ class QASystem:
     def ask_question(self, prompt, llm_chain, top_docs=None):
         try:
             #reordered_docs = self.long_context_reorder.transform_documents(retrieved_docs)
+            print("prompt into ask Questions :", prompt)
             output = self.custom_stuff_chain(reordered_docs=top_docs, llm_chain=llm_chain, query= prompt)
             return output
         except Exception as e:
