@@ -33,9 +33,9 @@ section in the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, 
 
 
 
-# async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, llm_class, expected_entities, filter_entities):
-#     input_queue = QuerentQueue()
-#     resource_manager = ResourceManager()
+async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, llm_class, expected_entities, filter_entities):
+    input_queue = QuerentQueue()
+    resource_manager = ResourceManager()
     
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
     await input_queue.put(ingested_data)
@@ -79,5 +79,5 @@ section in the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, 
         resource_manager=resource_manager,
     )
 
-#     await querent.start()
+    await querent.start()
 
