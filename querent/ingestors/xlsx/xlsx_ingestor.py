@@ -5,7 +5,7 @@ import pandas as pd
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.processors.async_processor import AsyncProcessor
-from querent.config.ingestor_config import IngestorBackend
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import (
     IngestedTokens,
@@ -38,7 +38,7 @@ class XlsxIngestor(BaseIngestor):
         collected_bytes = b""
         try:
             async for chunk_bytes in poll_function:
-                if chunk_bytes.is_error():
+                if chunk_bytes.is_error() or chunk_bytes.is_eof():
                     continue
                 if current_file is None:
                     current_file = chunk_bytes.file
@@ -53,13 +53,13 @@ class XlsxIngestor(BaseIngestor):
                             ),  # Convert DataFrame to a list of dictionaries
                             error=None,
                         )
-                    collected_bytes = b""
-                    current_file = chunk_bytes.file
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
                     )
+                    collected_bytes = b""
+                    current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")

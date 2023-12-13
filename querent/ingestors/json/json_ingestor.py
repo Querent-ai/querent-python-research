@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, List
 import json
 from querent.common.types.collected_bytes import CollectedBytes
-from querent.config.ingestor_config import IngestorBackend
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
@@ -10,7 +10,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 
 
 class JsonIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"json"}
+    SUPPORTED_EXTENSIONS = {"json", "jira"}
 
     async def supports(self, file_extension: str) -> bool:
         return file_extension.lower() in self.SUPPORTED_EXTENSIONS
@@ -36,7 +36,7 @@ class JsonIngestor(BaseIngestor):
             collected_bytes = b""
             try:
                 async for chunk_bytes in poll_function:
-                    if chunk_bytes.is_error():
+                    if chunk_bytes.is_error() or chunk_bytes.is_eof():
                         continue
 
                     if chunk_bytes.file != current_file:
@@ -48,13 +48,13 @@ class JsonIngestor(BaseIngestor):
                                 yield IngestedTokens(
                                     file=current_file, data=[json_object], error=None
                                 )
-                        collected_bytes = b""
                         if current_file:
                             yield IngestedTokens(
                                 file=current_file,
                                 data=None,
                                 error=None,
                             )
+                        collected_bytes = b""
                         current_file = chunk_bytes.file
 
                     collected_bytes += chunk_bytes.data

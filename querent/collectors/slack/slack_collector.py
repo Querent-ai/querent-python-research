@@ -4,11 +4,12 @@ from typing import AsyncGenerator
 import os
 
 from querent.collectors.collector_factory import CollectorFactory
-from querent.config.collector_config import CollectorBackend, SlackCollectorConfig
+from querent.config.collector.collector_config import CollectorBackend, SlackCollectorConfig
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
 from querent.common import common_errors
+from querent.logging.logger import setup_logger
 
 
 class SlackCollector(Collector):
@@ -24,6 +25,7 @@ class SlackCollector(Collector):
         self.access_token = config.access_token
 
         self.client = WebClient()
+        self.logger = setup_logger(__name__, "SlackCollector")
 
     async def connect(self):
         pass
@@ -37,9 +39,7 @@ class SlackCollector(Collector):
             self.client = WebClient(token=self.access_token)
             response = self.client.conversations_join(channel=self.channel)
             if not response["ok"]:
-                print(
-                    f"Failed to join channel: {self.channel}, Error: {response['error']}"
-                )
+                self.logger.error(f"Error connecting to Slack: {response['error']}")
         except SlackApiError as exc:
             raise common_errors.SlackApiError(
                 f"Slack API Error: {exc.response['error']}"
@@ -54,11 +54,17 @@ class SlackCollector(Collector):
                     messages = response["messages"]
                     for message in messages:
                         yield CollectedBytes(
-                            file=f"slack://{self.channel}",
+                            file=f"slack://{self.channel}.slack",
                             data=bytes(message["text"] + "\n\n", "utf-8"),
                         )
 
                     if not response["has_more"]:
+                        yield CollectedBytes(
+                            file=f"slack://{self.channel}.slack",
+                            data=None,
+                            error=None,
+                            eof=True,
+                        )
                         break
                 else:
                     raise common_errors.SlackApiError(

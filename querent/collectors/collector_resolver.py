@@ -1,14 +1,16 @@
 from typing import Optional
 from querent.collectors.azure.azure_collector import AzureCollectorFactory
+from querent.collectors.email.email_collector import EmailCollectorFactory
 from querent.collectors.gcs.gcs_collector import GCSCollectorFactory
 from querent.collectors.aws.aws_collector import AWSCollectorFactory
 from querent.collectors.fs.fs_collector import FSCollectorFactory
+from querent.collectors.jira.jira_collector import JiraCollectorFactory
 from querent.collectors.webscaper.web_scraper_collector import WebScraperFactory
 from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.collectors.github.github_collector import GithubCollectorFactory
 from querent.collectors.drive.google_drive_collector import DriveCollectorFactory
-from querent.config.collector_config import CollectorConfig, CollectorBackend
+from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
     CollectorResolverError,
@@ -29,6 +31,8 @@ class CollectorResolver:
             CollectorBackend.DropBox: DropBoxCollectorFactory(),
             CollectorBackend.Github: GithubCollectorFactory(),
             CollectorBackend.Drive: DriveCollectorFactory(),
+            CollectorBackend.Email: EmailCollectorFactory(),
+            CollectorBackend.Jira: JiraCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -71,6 +75,10 @@ class CollectorResolver:
             return CollectorBackend.Github
         elif protocol.is_drive():
             return CollectorBackend.Drive
+        elif protocol.is_email():
+            return CollectorBackend.Email
+        elif protocol.is_jira():
+            return CollectorBackend.Jira
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"

@@ -2,10 +2,11 @@ from typing import Union
 
 
 class CollectedBytes:
-    def __init__(self, file: str, data: bytes, error: str = None) -> None:
+    def __init__(self, file: str, data: bytes, error: str = None, eof: bool = False):
         self.data = data
         self.error = error
         self.file = file
+        self.eof = eof
         if self.file:
             file = str(file)
             self.extension = file.split(".")[-1]
@@ -18,6 +19,9 @@ class CollectedBytes:
 
     def is_error(self) -> bool:
         return self.error is not None
+
+    def is_eof(self) -> bool:
+        return self.eof
 
     def get_file_path(self) -> str:
         return self.file

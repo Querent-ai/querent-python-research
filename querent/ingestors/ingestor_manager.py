@@ -1,9 +1,14 @@
-"""
-Ingestor manager, for managing all the factories with backend
-"""
-from typing import Optional
-from querent.config.ingestor_config import IngestorBackend
+import asyncio
+from asyncio import Queue
+from typing import AsyncGenerator, List, Optional
+from cachetools import LRUCache, cachedmethod
+
+from querent.collectors.collector_base import Collector
+from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
+from querent.ingestors.email.email_ingestor import EmailIngestorFactory
 from querent.ingestors.ingestor_factory import IngestorFactory, UnsupportedIngestor
 from querent.ingestors.pdfs.pdf_ingestor_v1 import PdfIngestorFactory
 from querent.ingestors.texts.text_ingestor import TextIngestorFactory
@@ -19,6 +24,11 @@ from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
 from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
 from querent.ingestors.github.github_ingestor import GithubIngestorFactory
 from querent.ingestors.code.code_ingestor import CodeIngestorFactory
+from cachetools import LRUCache, cachedmethod
+import asyncio
+
+from querent.logging.logger import setup_logger
+from querent.processors.async_processor import AsyncProcessor
 
 
 class IngestorFactoryManager:
@@ -63,7 +73,19 @@ class IngestorFactoryManager:
         "vb",
     ]
 
-    def __init__(self):
+    def __init__(
+        self,
+        collectors: Optional[List[Collector]] = None,
+        processors: Optional[List[AsyncProcessor]] = None,
+        cache_size: Optional[int] = 100,
+        result_queue: Optional[Queue] = None,
+    ):
+        self.collectors = collectors
+        self.processors = processors
+        if self.processors is None:
+            self.processors = []
+        if self.collectors is None:
+            self.collectors = []
         self.ingestor_factories = {
             IngestorBackend.PDF.value: PdfIngestorFactory(),
             IngestorBackend.TEXT.value: TextIngestorFactory(),
@@ -82,8 +104,14 @@ class IngestorFactoryManager:
             IngestorBackend.HTML.value: HtmlIngestorFactory(),
             IngestorBackend.MP4.value: VideoIngestorFactory(),
             IngestorBackend.GITHUB.value: GithubIngestorFactory(),
+            IngestorBackend.Slack.value: TextIngestorFactory(is_token_stream=True),
+            IngestorBackend.Email.value: EmailIngestorFactory(),
+            IngestorBackend.Jira.value: JsonIngestorFactory(),
             # Add more mappings as needed
         }
+        self.file_caches = LRUCache(maxsize=cache_size)
+        self.result_queue = result_queue
+        self.logger = setup_logger(__name__, "IngestorFactoryManager")
 
     async def get_factory(self, file_extension: str) -> IngestorFactory:
         """get_factory to match factory based on file extension"""
@@ -97,10 +125,71 @@ class IngestorFactoryManager:
 
     async def get_ingestor(self, file_extension: str) -> Optional[BaseIngestor]:
         """get_ingestor to get factory for that extension"""
-        factory = self.get_factory(file_extension)
-        return factory.create(file_extension)
+        factory = await self.get_factory(file_extension)
+        return await factory.create(file_extension, self.processors)
 
     async def supports(self, file_extension: str) -> bool:
         """check if extension supports factory"""
-        factory = self.get_factory(file_extension)
+        factory = await self.get_factory(file_extension)
         return factory.supports(file_extension)
+
+    @cachedmethod(cache=lambda self: self.file_caches)
+    async def ingest_file_async(
+        self, file_id: str, result_queue: Optional[Queue] = None
+    ):
+        try:
+            collected_bytes_list = self.file_caches.pop(file_id)
+            file_extension = collected_bytes_list[0].extension
+            ingestor = await self.get_ingestor(file_extension)
+            if ingestor is not None:
+
+                async def chunk_generator() -> AsyncGenerator[CollectedBytes, None]:
+                    for chunk in collected_bytes_list:
+                        if chunk.eof or chunk.error is not None:
+                            break
+                        yield chunk
+
+                async for chunk_tokens in ingestor.ingest(chunk_generator()):
+                    result_queue.put_nowait(chunk_tokens)
+            else:
+                self.logger.warning(
+                    f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
+                )
+        except Exception as e:
+            self.logger.error(
+                f"Error ingesting file {collected_bytes_list[0].file}: {str(e)}"
+            )
+
+    async def ingest_collector_async(
+        self, collector: Collector, result_queue: Optional[Queue] = None
+    ):
+        """Asynchronously ingest data from a single collector."""
+        async for collected_bytes in collector.poll():
+            current_file = collected_bytes.file
+
+            if current_file not in self.file_caches:
+                if not collected_bytes.eof:
+                    self.file_caches[current_file] = [collected_bytes]
+            else:
+                if not collected_bytes.eof:
+                    self.file_caches[current_file].append(collected_bytes)
+
+            # Check if this is the end of the file
+            if collected_bytes.eof:
+                # Try to ingest the ongoing file even if the cache is full
+                try:
+                    await self.ingest_file_async(current_file, result_queue)
+                except Exception as e:
+                    self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
+
+                # Wait for ongoing file processing to complete before checking for the next file
+                while current_file in self.file_caches:
+                    await asyncio.sleep(0.1)
+
+    async def ingest_all_async(self):
+        """Asynchronously ingest data from all collectors concurrently."""
+        ingestion_tasks = [
+            self.ingest_collector_async(collector, self.result_queue)
+            for collector in self.collectors
+        ]
+        await asyncio.gather(*ingestion_tasks)
