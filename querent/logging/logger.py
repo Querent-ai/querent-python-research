@@ -14,6 +14,7 @@ def setup_logger(logger_name: str, log_file_id: str) -> logging.Logger:
     """
     try:
         log_file_name = LOGGING_FILE % log_file_id
+        print("----------------------------------------------------------------", log_file_name, "----------------------------------------------------------------")
         logger = logging.getLogger(logger_name)
         logger.setLevel(LOGGING_LEVEL)
 

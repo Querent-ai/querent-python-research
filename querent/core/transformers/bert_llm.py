@@ -69,7 +69,7 @@ class BERTLLM(BaseEngine):
         input_queue:QuerentQueue,
         config: BERTLLMConfig
     ):  
-        self.logger = setup_logger(config.logger, "BERTLLM")
+        self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
         self.graph_config = GraphConfig(identifier=config.ner_model_name)
         self.contextual_graph = QuerentKG(self.graph_config)
