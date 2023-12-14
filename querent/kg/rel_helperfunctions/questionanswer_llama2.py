@@ -137,8 +137,6 @@ class QASystem:
 
     def ask_question(self, prompt, llm_chain, top_docs=None):
         try:
-            #reordered_docs = self.long_context_reorder.transform_documents(retrieved_docs)
-            print("prompt into ask Questions :", prompt)
             output = self.custom_stuff_chain(reordered_docs=top_docs, llm_chain=llm_chain, query= prompt)
             return output
         except Exception as e:
