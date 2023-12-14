@@ -165,6 +165,7 @@ class BERTLLM(BaseEngine):
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
+                print("pairs_with_predicates------------------------", pairs_with_predicates)
                 if self.enable_filtering == True:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']

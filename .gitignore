@@ -169,4 +169,4 @@ tests/vicuna-13b-v1.5.Q4_K_M.gguf
 
 #files
 querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.faiss
-kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.pkl
+querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.pkl

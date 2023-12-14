@@ -47,8 +47,10 @@ class QASystem:
                 self.current_search_kwargs = None
                 self.current_search_type_user = None
                 self.llm = self.load_llm()
-                self.db = self.load_faiss_index()
-                self.qa_llm = self.setup_retriever()
+                # self.db = self.load_faiss_index()
+                # self.qa_llm = self.setup_retriever()
+                self.db = None
+                self.qa_llm = None
                 self.long_context_reorder = LongContextReorder()
                 self.cross_encoder = self.load_cross_encoder('cross-encoder/ms-marco-TinyBERT-L-2-v2')
                 
@@ -56,6 +58,14 @@ class QASystem:
         except Exception as e:
                 self.logger.error(f"Invalid {self.__class__.__name__} configuration. Initialization failed: {e}")
                 raise Exception(f"Initialization failed: {e}")
+    
+    def initialize_components(self):
+        try:
+            self.db = self.load_faiss_index()
+            self.qa_llm = self.setup_retriever()
+        except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Faiss Index Loading Or Setting up Retriever failed: {e}")
+            raise
     
     def load_cross_encoder(self, model_name):
         return CrossEncoder(model_name)
