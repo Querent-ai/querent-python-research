@@ -11,7 +11,6 @@ class EventType:
     """
 
     _STATE_TRANSITION = "state_transition"
-    RDF_GRAPH_UPDATE = "rdf_graph_update"
     CONTEXTUAL_TRIPLES = "contextual_triples"
     RDF_CONTEXTUAL_TRIPLES = "rdf_contextual_triples"
     TOKEN_PROCESSED = "token_processed"
