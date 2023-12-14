@@ -62,7 +62,7 @@ class QASystem:
 
     def load_llm(self):
         try:
-            file_path = '/home/nishantg/querent-main/querent/querent/kg/rel_helperfunctions/json.gbnf'
+            file_path = './querent/kg/rel_helperfunctions/json.gbnf'
             llm = LlamaCpp(model_path=self.rel_model_path, max_tokens=-1, temperature=0,verbose=True,n_ctx=1000,f16_kv=True, grammar_path=file_path)
             return llm
         except Exception as e:

@@ -119,8 +119,9 @@ jobs:
       - name: Download AI Model from Google Drive
         run: |
             pip install gdown
-            gdown https://drive.google.com/file/d/12LFXp70AFzysNcfkb0e9wugGWXk4ONwg -O ./tests/llama-2-7b-chat.Q5_K_S.gguf
-            gdown https://drive.google.com/file/d/1YOj-gwHwcctKlQHxaCO4N_EIHsiGsQq2 -O ./tests/vicuna-13b-v1.5.Q4_K_M.gguf
+            gdown 'https://drive.google.com/uc?id=12LFXp70AFzysNcfkb0e9wugGWXk4ONwg' -O ./tests/llama-2-7b-chat.Q5_K_S.gguf
+            gdown 'https://drive.google.com/uc?id=1YOj-gwHwcctKlQHxaCO4N_EIHsiGsQq2' -O ./tests/vicuna-13b-v1.5.Q4_K_M.gguf
+          
 
       - name: Test Code Coverage
         run: pytest --cov=querent
