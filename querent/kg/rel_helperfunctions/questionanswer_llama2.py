@@ -1,20 +1,12 @@
-from langchain.llms import CTransformers, LlamaCpp
-from langchain.callbacks.manager import CallbackManager
+from langchain.llms import LlamaCpp
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
 from langchain.document_transformers import LongContextReorder
-from langchain.chains import StuffDocumentsChain, LLMChain
+from langchain.chains import StuffDocumentsChain
 from querent.logging.logger import setup_logger
 from sentence_transformers import CrossEncoder
-from llama_cpp.llama import Llama, LlamaGrammar
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-import asyncio
-import aiofiles
 
-
-
-# llm = LlamaCpp(
 """
     The class designed to manage and execute question-answering tasks using a large language model (LLM) and an 
     embedding-based retrieval system.

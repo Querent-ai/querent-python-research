@@ -164,3 +164,7 @@ cython_debug/
 
 # AI Model
 tests/llama-2-7b-chat.Q4_K_M.gguf
+
+#files
+querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.faiss
+querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.pkl

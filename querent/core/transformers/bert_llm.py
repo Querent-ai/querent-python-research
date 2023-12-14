@@ -71,7 +71,7 @@ class BERTLLM(BaseEngine):
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
-        self.graph_config = GraphConfig(identifier=config.ner_model_name)
+        self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
@@ -175,23 +175,24 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtring Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates    
                 print("--------------------------------", filtered_triples, "--------------------------------")     
-                current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
+                current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples)
                 await self.set_state(new_state=current_state)
                 # filtered_triples = pairs_with_predicates
                 # print("--------------------------------", filtered_triples, "--------------------------------")          
-                # current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
+                # current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples)
                 # await self.set_state(new_state=current_state)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
-                current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
+                current_state = EventState(EventType.RDF_CONTEXTUAL_TRIPLES, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
-                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
-                current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)                 
+                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples))
+                current_state = EventState(EventType.RDF_SEMANTIC_TRIPLES, 1.0, semantic_triples)                 
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(

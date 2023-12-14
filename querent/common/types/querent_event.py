@@ -12,10 +12,11 @@ class EventType:
 
     _STATE_TRANSITION = "state_transition"
     RDF_GRAPH_UPDATE = "rdf_graph_update"
-    NER_GRAPH_UPDATE = "ner_graph_update"
+    CONTEXTUAL_TRIPLES = "contextual_triples"
+    RDF_CONTEXTUAL_TRIPLES = "rdf_contextual_triples"
     TOKEN_PROCESSED = "token_processed"
     CHAT_COMPLETED = "chat_completed"
-    RELATIONSHIP_ESTABLISHED = "relationship_established"
+    RDF_SEMANTIC_TRIPLES = "rdf_semantic_triples"
 
 
 class EventState:

@@ -15,8 +15,6 @@ from querent.logging.logger import setup_logger
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.common.types.querent_queue import QuerentQueue
 from langchain.docstore.document import Document
-
-
 import ast
 
 """
@@ -43,7 +41,7 @@ import ast
         build_faiss_index(data): Builds a FAISS index from the provided data.
     """
 
-class RelationExtractor(EventCallbackInterface):
+class RelationExtractor():
     def __init__(self, config: RelationshipExtractorConfig):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
@@ -67,13 +65,6 @@ class RelationExtractor(EventCallbackInterface):
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
-
-    async def handle_event(self, event_type: EventType, event_state: EventState):
-        try:
-            if event_type == EventType.NER_GRAPH_UPDATE:
-                await self.process_tokens(event_state)
-        except Exception as e:
-            self.logger.error(f"Error in handling event: {e}")
     
     def validate(self, data) -> bool:
         try:
@@ -146,41 +137,19 @@ class RelationExtractor(EventCallbackInterface):
 
     def extract_relationships(self, triples):
         try:
-            # question_entities_validate = "Do Subject - {entity1} and Object - {entity2} show a predicate or a relationship ? Just give a yes or no answer."
-            # question_entities_relation = "Provide all relationships between {entity1} and {entity2}."
             updated_triples = []
-            for entity1, predicate_str, entity2 in triples:
+            for _, predicate_str, _ in triples:
                 all_tasks = []
                 documents=[]
                 data = json.loads(predicate_str)
                 context = data['context']
                 predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)
                 doc =  Document(page_content=context)
-                # print(doc)
-                # Ask the first question
-                # validation_prompt = question_entities_validate.format(entity1=entity1, entity2=entity2)
-                # validation_prompt = question_entities_validate.format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
-                # validation_chain = self.bsmbranch.create_llm_chain(llm = self.qa_system.llm, template= self.config.get_template("default"), format_instructions= False)
-                # retrieved_docs_validate = self.qa_system.retrieve_documents(validation_prompt, search_kwargs={'k': 10})
-                # print(retrieved_docs_validate)
                 documents.append(doc)
-                # retrieved_docs_validate=documents
-                # answer_validate = self.qa_system.ask_question(prompt=validation_prompt, top_docs=retrieved_docs_validate, llm_chain=validation_chain)
-                # print("validate answer-------------", answer_validate)
-                # if "yes" in answer_validate.lower():
-                # relation_prompt = question_entities_relation.format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
-                # print("relational prompt -----------",relation_prompt)
-                # retrieved_docs_relation = self.qa_system.retrieve_documents(relation_prompt, search_kwargs={'k': 10})
-                #answer_relation = self.qa_system.ask_question(prompt=validation_prompt, top_docs=retrieved_docs_validate, llm_chain=validation_chain)
-                #self.sub_tasks.append(("I would like to define a semantic knowledge graph triple like (Subject, Predicate, Object) between Subject - {entity1} and Object - {entity2}").format(entity1=entity1, entity2=entity2))
                 all_tasks.append((" I want to define a semantic knowledge graph triple (Subject, Predicate, Object). The Subject is {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                # print((" I want to define a semantic knowledge graph triple (Subject, Predicate, Object). The Subject is {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                #self.sub_tasks.append(("Check factual accuracy of relationship between  {entity1} and {entity2}").format(entity1=entity1, entity2=entity2))
                 sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
                 for task in sub_task_list_llm:    
                     answer_relation = self.qa_system.ask_question(prompt=task[2], top_docs=documents, llm_chain=task[0])
-                    print("relations answer----------------", answer_relation)
-                    # print("predicate str----------------", predicate_str)
                     try:
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)

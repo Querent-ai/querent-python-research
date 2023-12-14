@@ -56,24 +56,24 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.TOKEN_PROCESSED or event_state.event_type == EventType.RELATIONSHIP_ESTABLISHED
+            assert event_state.event_type == EventType.RDF_CONTEXTUAL_TRIPLES or event_state.event_type == EventType.RDF_SEMANTIC_TRIPLES
             triples = event_state.payload
             subjects = [triple[0].value for triple in triples]
             objects = [triple[2].value for triple in triples]
             predicates = [triple[1].value for triple in triples]
-            if event_state.event_type == EventType.TOKEN_PROCESSED:
+            if event_state.event_type == EventType.RDF_CONTEXTUAL_TRIPLES:
                 assert expected_entities[0] in subjects
                 assert expected_entities[1] in objects
-            elif event_type == EventType.RELATIONSHIP_ESTABLISHED:
+            elif event_type == EventType.RDF_SEMANTIC_TRIPLES:
                 assert 'http://geodata.org/tectonic perturbations' in subjects
             for triple in triples:
                 subject, predicate, object_ = triple[0].value, triple[1].value, triple[2].value
                 print(f"({subject}, {predicate}, {object_})")
 
 
-    llm_instance.subscribe(EventType.TOKEN_PROCESSED, StateChangeCallback())
-    llm_instance.subscribe(EventType.RELATIONSHIP_ESTABLISHED, StateChangeCallback())
-    # llm_instance.subscribe(EventType.RELATIONSHIP_ESTABLISHED, StateChangeCallback())
+    llm_instance.subscribe(EventType.RDF_CONTEXTUAL_TRIPLES, StateChangeCallback())
+    llm_instance.subscribe(EventType.RDF_SEMANTIC_TRIPLES, StateChangeCallback())
+    # llm_instance.subscribe(EventType.RDF_SEMANTIC_TRIPLES, StateChangeCallback())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
