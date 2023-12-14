@@ -175,7 +175,7 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
-                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtring Disabled. ")
+                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates    
                 print("--------------------------------", filtered_triples, "--------------------------------")     
@@ -195,9 +195,5 @@ class BERTLLM(BaseEngine):
                 current_state = EventState(EventType.RDF_SEMANTIC_TRIPLES, 1.0, semantic_triples)                 
                 await self.set_state(new_state=current_state)
         except Exception as e:
-            self.logger.error(
-                f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}"
-            )
-            raise Exception(
-                f"An unexpected error occurred while processing tokens: {e}"
-            )
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+            raise Exception(f"An unexpected error occurred while processing tokens: {e}")

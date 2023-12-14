@@ -10,7 +10,7 @@ class RelationshipExtractorConfig(BaseModel):
     # Shared configurations for relationship extraction and BSM
     model_type = 'llama'
     # model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'  # Used as LLaMA model path in BSM
-    model_path: str = '/home/nishantg/querent-main/llama-2-7b-chat.Q5_K_S.gguf'  # Used as LLaMA model path in BSM
+    model_path: str = './tests/llama-2-7b-chat.Q5_K_S.gguf'  # Used as LLaMA model path in BSM
     # Using a dictionary for multiple templates
     qa_templates: Dict[str, str] = Field(default_factory=lambda: {
         "default": """Use the following pieces of information to answer the user's question.
@@ -40,7 +40,7 @@ class RelationshipExtractorConfig(BaseModel):
     faiss_index_path: str = "./querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index"
 
     # BSM specific configurations
-    bsm_validator_model_path: str = "/home/nishantg/Downloads/vicuna-13b-v1.5.Q4_K_M.gguf"
+    bsm_validator_model_path: str = "./tests/vicuna-13b-v1.5.Q4_K_M.gguf"
     bsm_validator_model_type='vicuna'
     bsm_max_new_tokens: int = -1
     bsm_temperature: float = 0.1
