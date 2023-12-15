@@ -25,7 +25,6 @@ async def test_collect_and_ingest_json_data():
     async def poll_and_print():
         counter = 0
         async for ingested in ingested_call:
-            print(ingested)
             assert ingested is not None
             assert ingested.error is None
             assert ingested.file is not None

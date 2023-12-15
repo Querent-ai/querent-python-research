@@ -15,7 +15,6 @@ from PIL import Image
 import io
 
 import pybase64
-from rapidocr_onnxruntime import RapidOCR
 import pytesseract
 
 
@@ -157,10 +156,13 @@ class PdfIngestor(BaseIngestor):
         text = pytesseract.image_to_string(image)
         return str(text).encode("utf-8").decode("unicode_escape")
 
-    async def process_data(self, text: str) -> List[str]:
-        if self.processors == None or len(self.processors) == 0:
+    async def process_data(self, text: str) -> str:
+        if self.processors is None or len(self.processors) == 0:
             return [text]
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")
