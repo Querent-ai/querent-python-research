@@ -15,6 +15,7 @@ from querent.common.common_errors import (
     UnknownError,
 )
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.logging.logger import setup_logger
 
 
 class AudioIngestorFactory(IngestorFactory):
@@ -61,6 +62,7 @@ class AudioIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(IngestorBackend.MP3)
         self.processors = processors
+        self.logger = setup_logger(__name__, "AudioIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -120,7 +122,8 @@ class AudioIngestor(BaseIngestor):
             # Recognize the text using the recognizer
 
             recognized_text = recognizer.recognize_google(audio_data, language="en-US")
-            yield recognized_text
+            processed_text = await self.process_data(recognized_text)
+            yield processed_text
         except sr.UnknownValueError as exc:
             raise UnknownValueError(
                 f"The following file gave Unknown Value Error {collected_bytes.file}"
@@ -139,7 +142,12 @@ class AudioIngestor(BaseIngestor):
             ) from exc
 
     async def process_data(self, text: str) -> str:
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+        if self.processors is None or len(self.processors) == 0:
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")
