@@ -68,6 +68,7 @@ json5==0.9.14
 jsonmerge==1.9.0
 jsonschema==4.17.3
 kombu==5.2.4
+llama_cpp_python==0.2.15
 llama-index==0.8.38
 log-symbols==0.0.14
 loguru==0.7.0
