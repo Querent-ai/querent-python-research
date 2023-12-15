@@ -45,7 +45,7 @@ async def test_ingest_all_async():
             counter += 1
     print(f"Found {counter} ingested files")
     assert counter == 98
-    assert len(unique_files) == 3
+    assert len(unique_files) == 5
 
 
 if __name__ == "__main__":
