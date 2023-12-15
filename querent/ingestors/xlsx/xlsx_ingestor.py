@@ -10,6 +10,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import (
     IngestedTokens,
 )  # Added import for the return type
+from querent.logging.logger import setup_logger
 
 
 class XlsxIngestorFactory(IngestorFactory):
@@ -30,6 +31,7 @@ class XlsxIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(IngestorBackend.XLSX)
         self.processors = processors
+        self.logger = setup_logger(__name__, "XlsxIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -43,14 +45,12 @@ class XlsxIngestor(BaseIngestor):
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    async for frame in self.extract_and_process_xlsx(
+                    async for data in self.extract_and_process_xlsx(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(
                             file=current_file,
-                            data=frame.to_dict(
-                                orient="records"
-                            ),  # Convert DataFrame to a list of dictionaries
+                            data=[data],
                             error=None,
                         )
                     yield IngestedTokens(
@@ -64,14 +64,12 @@ class XlsxIngestor(BaseIngestor):
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            async for frame in self.extract_and_process_xlsx(
+            async for data in self.extract_and_process_xlsx(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
                 yield IngestedTokens(
                     file=current_file,
-                    data=frame.to_dict(
-                        orient="records"
-                    ),  # Convert DataFrame to a list of dictionaries
+                    data=[data],
                     error=None,
                 )
             yield IngestedTokens(file=current_file, data=None, error=None)
@@ -80,7 +78,8 @@ class XlsxIngestor(BaseIngestor):
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[pd.DataFrame, None]:
         df = await self.extract_text_from_xlsx(collected_bytes)
-        yield df
+        processed_text = await self.process_data(df.to_string())
+        yield processed_text
 
     async def extract_text_from_xlsx(
         self, collected_bytes: CollectedBytes
@@ -89,8 +88,13 @@ class XlsxIngestor(BaseIngestor):
         dataframe = pd.read_excel(excel_buffer)
         return dataframe
 
-    async def process_data(self, text: pd.DataFrame) -> pd.DataFrame:
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+    async def process_data(self, text: str) -> str:
+        if self.processors is None or len(self.processors) == 0:
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")
