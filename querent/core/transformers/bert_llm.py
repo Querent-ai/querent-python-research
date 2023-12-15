@@ -173,8 +173,10 @@ class BERTLLM(BaseEngine):
                     cluster_persistence = cluster_output['cluster_persistence']
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples is not None:
+                        print("Final cluster triple..........", final_clustered_triples)
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
+                        print("Clustered triples..........", clustered_triples)
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:

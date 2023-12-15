@@ -122,7 +122,7 @@ jobs:
             gdown "${{ secrets.GOOGLE_DRIVE_LINK_LLAMA2 }}" -O ./tests/llama-2-7b-chat.Q5_K_S.gguf
           
       - name: Run Pytest
-        run: python -B -m pytest -v --disable-warnings .
+        run: python -B -m pytest -s --disable-warnings .
         env:
               PYTHONDONTWRITEBYTECODE: 1
 
