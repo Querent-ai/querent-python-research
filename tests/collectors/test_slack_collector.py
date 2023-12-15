@@ -36,7 +36,8 @@ async def test_slack_collector(slack_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 18
+        # Changing the number because messages before 90 days get deleted from slack
+        assert counter == 5
 
     await poll_and_print()
 
