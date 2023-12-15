@@ -59,7 +59,7 @@ class JiraCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
-            await self.connect()
+            self.connect()
             if not self.jira:
                 raise common_errors.ConnectionError(
                     "Jira client not initialized. Call connect() before polling."
