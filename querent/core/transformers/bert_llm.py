@@ -152,6 +152,7 @@ class BERTLLM(BaseEngine):
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
                     number_sentences = number_sentences + 1
+               
 
 
             else:
@@ -160,10 +161,12 @@ class BERTLLM(BaseEngine):
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.count_entity_pairs(pairs_withattn)>1:
+                    print ("----------------------------------------------------", self.count_entity_pairs(pairs_withattn))
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                print("Processing Emb --------------------------------", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
                 print("pairs_with_predicates------------------------", pairs_with_predicates)
                 if self.enable_filtering == True:

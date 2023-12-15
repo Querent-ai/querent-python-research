@@ -31,11 +31,13 @@ class EntityEmbeddingExtractor:
 
     def __init__(self, model, tokenizer, number_entity_pairs, number_sentences):
         self.logger = setup_logger(__name__, "EntityEmbeddingExtractor")
-        self.model = model
-        self.tokenizer = tokenizer
-        self.reducer = umap.UMAP(init='random',n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
-        self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
-
+        try:
+            self.model = model
+            self.tokenizer = tokenizer
+            self.reducer = umap.UMAP(init='random',n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
+            self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
+        except Exception as e:
+            self.logger.error(f"Error Initializing Entity Embedding Extractor Class: {e}")
 
     def extract_entity_embedding(self, entity, context):
         try:
