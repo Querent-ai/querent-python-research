@@ -29,7 +29,7 @@ in the GoM. This relationship is illustrated in the deep-water basin by (1) a hi
 modation and deposition of a shale interval when coarse-grained terrigenous material
 was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi-
 ment supply during the PETM, which is archived as a particularly thick sedimentary
-section in the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/Tectonic perturbations","http://geodata.org/downstream sectors"], False)])
+section in  the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/Tectonic perturbations","http://geodata.org/downstream sectors"], False)])
 
 
 
