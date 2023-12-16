@@ -8,12 +8,10 @@ The `EventType` class contains predefined constants that represent different kin
 
 ### Attributes
 
-- `_STATE_TRANSITION`: This is a private constant used internally by the system for representing state transition events.
 - **`CONTEXTUAL_TRIPLES`**: Indicates event involving the generation of contextual triples (text) in the system.
 - **`RDF_CONTEXTUAL_TRIPLES`**: Denotes event involving the generation of (Resource Description Framework) graph formatted contextual triples in the system.
-- `TOKEN_PROCESSED`: Signifies the completion of token processing in a Querent operation.
-- `CHAT_COMPLETED`: Indicates that a chat interaction or session has been completed.
 - **`RDF_SEMANTIC_TRIPLES`**: Used for events involving the creation of (Resource Description Framework) graph formatted semantic triples.
+- **`CONTEXTUAL_EMBEDDING`**: Used for events involving creation of Vector embeddings of context.
 
 ### Usage Example (All event types generated from llm for now)
 
