@@ -139,7 +139,6 @@ class QASystem:
                 self.qa_llm = self.setup_retriever(search_type_user=search_type_user, search_kwargs=search_kwargs)
             retrieved_docs = self.qa_llm.get_relevant_documents(prompt)
             top_docs = self.rerank_documents(retrieved_docs, prompt)
-            print("top documents", top_docs)
             return top_docs
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error asking questions to LLM: {e}")

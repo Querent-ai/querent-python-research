@@ -28,17 +28,8 @@ def test_contextual_predicate():
       dtype=np.float32),'sentence_embedding': np.array([ 8.136787  , 12.801951  ,  3.1658218 ,  7.360018  ,  9.823584  ,
         0.28562617, 12.840015  ,  0.40643066,  9.059556  , 12.759513  ],
       dtype=np.float32)})]]
-    
-    
-    # # Convert numpy arrays to lists
-    # for inner_list in sample_data:
-    #     for tup in inner_list:
-    #         if tup:
-    #             tup[3]['entity1_embedding'] = tup[3]['entity1_embedding'].tolist()
-    #             tup[3]['entity2_embedding'] = tup[3]['entity2_embedding'].tolist()
 
     result_list = process_data(sample_data, "dummy1.pdf")
     result_string = result_list[0][1] if result_list else ""
-    #print("................",result_string)
     expected_string = '{"context": "In this study, we present evidence of a PaleoceneEocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints.", "entity1_score": 1.0, "entity2_score": 0.69, "entity1_label": "B-GeoMeth, B-GeoTime", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "a PaleoceneEocene Thermal Maximum (PETM) record", "entity2_nn_chunk": "a 543-m-thick (1780 ft) deep-marine section", "file_path": "dummy1.pdf", "entity1_attnscore": 0.46, "entity2_attnscore": 0.21, "pair_attnscore": 0.13, "entity1_embedding": [5.513506889343262, 6.146870136260986, 0.5682124495506287, 3.7250893115997314, 8.519091606140137, 2.1298775672912598, 6.703079700469971, 8.760442733764648, -2.409541130065918, 14.959247589111328], "entity2_embedding": [4.321151256561279, 5.328315258026123, 1.2105072736740112, 5.361891269683838, 8.233750343322754, 2.951651096343994, 7.340362548828125, 10.785664558410645, -2.559330463409424, 14.518231391906738], "sentence_embedding": [8.136787414550781, 12.80195140838623, 3.1658217906951904, 7.360017776489258, 9.823583602905273, 0.2856261730194092, 12.840015411376953, 0.4064306616783142, 9.059556007385254, 12.759512901306152]}'
     assert result_string == expected_string, f"Expected {expected_string}, but got {result_string}"

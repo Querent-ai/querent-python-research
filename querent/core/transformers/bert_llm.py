@@ -161,14 +161,11 @@ class BERTLLM(BaseEngine):
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.count_entity_pairs(pairs_withattn)>1:
-                    print ("----------------------------------------------------", self.count_entity_pairs(pairs_withattn))
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                print("Processing Emb --------------------------------", pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, filename)
-                print("pairs_with_predicates------------------------", pairs_with_predicates)
                 if self.enable_filtering == True:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -176,21 +173,14 @@ class BERTLLM(BaseEngine):
                     cluster_persistence = cluster_output['cluster_persistence']
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples is not None:
-                        print("Final cluster triple..........", final_clustered_triples)
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
-                        print("Clustered triples..........", clustered_triples)
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates    
-                print("--------------------------------", filtered_triples, "--------------------------------")     
+                    filtered_triples = pairs_with_predicates     
                 current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples)
                 await self.set_state(new_state=current_state)
-                # filtered_triples = pairs_with_predicates
-                # print("--------------------------------", filtered_triples, "--------------------------------")          
-                # current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples)
-                # await self.set_state(new_state=current_state)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
                 current_state = EventState(EventType.RDF_CONTEXTUAL_TRIPLES, 1.0, kgm.retrieve_triples())
