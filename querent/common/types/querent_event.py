@@ -9,13 +9,11 @@ class EventType:
         TOKEN_PROCESSED (Literal["token_processed"]): Event type for token processing completion.
         CHAT_COMPLETED (Literal["chat_completed"]): Event type for chat completion.
     """
-
-    _STATE_TRANSITION = "state_transition"
+    
     CONTEXTUAL_TRIPLES = "contextual_triples"
     RDF_CONTEXTUAL_TRIPLES = "rdf_contextual_triples"
-    TOKEN_PROCESSED = "token_processed"
-    CHAT_COMPLETED = "chat_completed"
     RDF_SEMANTIC_TRIPLES = "rdf_semantic_triples"
+    CONTEXTUAL_EMBEDDING = "contextual_embedding"
 
 
 class EventState:

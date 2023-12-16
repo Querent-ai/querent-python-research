@@ -184,7 +184,7 @@ class MockLLMEngine(BaseEngine):
         # can set the state of the LLM using the set_state method
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
-        current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, "anything")
+        current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, "anything")
         await self.set_state(new_state=current_state)
 
     def validate(self):
@@ -204,12 +204,12 @@ async def test_querent_with_base_llm():
 
     # Define a callback function to subscribe to state changes
     def state_change_callback(new_state):
-        assert new_state.event_type == EventType.TOKEN_PROCESSED
+        assert new_state.event_type == EventType.CONTEXTUAL_TRIPLES
 
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM
-    llm_mocker.subscribe(EventType.TOKEN_PROCESSED, state_change_callback)
+    llm_mocker.subscribe(EventType.CONTEXTUAL_TRIPLES, state_change_callback)
 
     ## one can also subscribe to other events, e.g. EventType.CHAT_COMPLETION ...
 
