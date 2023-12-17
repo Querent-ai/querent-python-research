@@ -97,7 +97,9 @@ class CodeIngestor(BaseIngestor):
                     )
                 yield IngestedTokens(file=current_file, data=None, error=None)
         except Exception as exc:
-            print(exc)
+            yield IngestedTokens(
+                file=current_file, data=None, error=f"Exception: {exc}"
+            )
             raise Exception from exc
 
     async def extract_code_from_bytes(

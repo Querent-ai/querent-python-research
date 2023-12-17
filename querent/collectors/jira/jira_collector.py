@@ -6,7 +6,10 @@ from querent.collectors.collector_factory import CollectorFactory
 from querent.common import common_errors
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.uri import Uri
-from querent.config.collector.collector_config import CollectorBackend, JiraCollectorConfig
+from querent.config.collector.collector_config import (
+    CollectorBackend,
+    JiraCollectorConfig,
+)
 from jira import JIRA
 
 from querent.logging.logger import setup_logger
@@ -56,7 +59,7 @@ class JiraCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
-            self.connect()
+            await self.connect()
             if not self.jira:
                 raise common_errors.ConnectionError(
                     "Jira client not initialized. Call connect() before polling."

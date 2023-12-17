@@ -6,6 +6,7 @@ from querent.processors.async_processor import AsyncProcessor
 from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.logging.logger import setup_logger
 
 
 class TextIngestorFactory(IngestorFactory):
@@ -30,6 +31,7 @@ class TextIngestor(BaseIngestor):
         super().__init__(IngestorBackend.TEXT)
         self.processors = processors
         self.is_token_stream = is_token_stream
+        self.logger = setup_logger(__name__, "TextIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -119,8 +121,13 @@ class TextIngestor(BaseIngestor):
             ) from exc
         return text
 
-    async def process_data(self, text: str) -> List[str]:
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+    async def process_data(self, text: str) -> str:
+        if self.processors is None or len(self.processors) == 0:
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")

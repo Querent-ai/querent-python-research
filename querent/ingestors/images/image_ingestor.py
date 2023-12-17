@@ -14,6 +14,7 @@ import pytesseract
 from PIL import Image, UnidentifiedImageError
 import io
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.logging.logger import setup_logger
 
 
 class ImageIngestorFactory(IngestorFactory):
@@ -34,6 +35,7 @@ class ImageIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(IngestorBackend.JPG)
         self.processors = processors
+        self.logger = setup_logger(__name__, "ImageIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -51,6 +53,7 @@ class ImageIngestor(BaseIngestor):
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
                         yield IngestedTokens(file=current_file, data=[text], error=None)
+                        yield IngestedTokens(file=current_file, data=None, error=None)
 
                     current_file = chunk_bytes.file
                     collected_bytes = b""
@@ -92,7 +95,12 @@ class ImageIngestor(BaseIngestor):
         return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> str:
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+        if self.processors is None or len(self.processors) == 0:
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")

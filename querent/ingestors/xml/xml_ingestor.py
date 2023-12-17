@@ -10,6 +10,7 @@ from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import (
     IngestedTokens,
 )  # Added import for the return type
+from querent.logging.logger import setup_logger
 
 
 class XmlIngestorFactory(IngestorFactory):
@@ -34,6 +35,7 @@ class XmlIngestor(BaseIngestor):
     def __init__(self, processors: List[AsyncProcessor]):
         super().__init__(IngestorBackend.XML)
         self.processors = processors
+        self.logger = setup_logger(__name__, "XmlIngestor")
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
@@ -84,7 +86,12 @@ class XmlIngestor(BaseIngestor):
         return text
 
     async def process_data(self, text: str) -> str:
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+        if self.processors is None or len(self.processors) == 0:
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")

@@ -119,7 +119,7 @@ jobs:
       - name: Download AI Model from Google Drive
         run: |
             pip install gdown
-            gdown https://drive.google.com/uc?id=1eou4KhGcU87p291ZqrN9tNzbujeGASCR -O ./tests/llama-2-7b-chat.Q4_K_M.gguf
+            gdown "${{ secrets.GOOGLE_DRIVE_LINK_LLAMA2 }}" -O ./tests/llama-2-7b-chat.Q5_K_S.gguf
 
       - name: Test Code Coverage
         run: pytest --cov=querent

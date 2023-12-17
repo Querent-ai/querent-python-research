@@ -204,10 +204,13 @@ class EmailIngestor(BaseIngestor):
             self.logger.error(f"Error extracting images and OCR: {e}")
         return ocr_text
 
-    async def process_data(self, text: str) -> List[str]:
+    async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:
-            return [text]
-        processed_data = text
-        for processor in self.processors:
-            processed_data = await processor.process_text(processed_data)
-        return processed_data
+            return text
+        try:
+            processed_data = text
+            for processor in self.processors:
+                processed_data = await processor.process_text(processed_data)
+            return processed_data
+        except Exception as e:
+            self.logger.error(f"Error while processing text: {e}")
