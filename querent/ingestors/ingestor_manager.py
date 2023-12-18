@@ -24,7 +24,6 @@ from querent.ingestors.xml.xml_ingestor import XmlIngestorFactory
 from querent.ingestors.html.html_ingestor import HtmlIngestorFactory
 from querent.ingestors.github.github_ingestor import GithubIngestorFactory
 from querent.ingestors.code.code_ingestor import CodeIngestorFactory
-from cachetools import LRUCache, cachedmethod
 import asyncio
 
 from querent.logging.logger import setup_logger
