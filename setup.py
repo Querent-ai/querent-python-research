@@ -56,6 +56,7 @@ requirements = [
     "dropbox==11.36.2",
     "requests==2.31.0",
     "google-api-python-client==2.105.0",
+    "requests_html==0.10.0",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
