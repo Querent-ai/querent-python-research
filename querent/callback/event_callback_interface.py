@@ -9,7 +9,7 @@ logger = setup_logger(__name__, "EventCallbackInterface")
 
 class EventCallbackInterface(ABC):
     @abstractmethod
-    def handle_event(self, event_type: EventType, event_data: EventState):
+    async def handle_event(self, event_type: EventType, event_data: EventState):
         """
         Handle an event.
         Args:

@@ -21,7 +21,7 @@ class MockLLMEngine(BaseEngine):
         super().__init__(input_queue)
 
     async def process_tokens(self, data: IngestedTokens):
-        super().process_tokens(data)
+        await super().process_tokens(data)
         if data is None or data.is_error():
             # the LLM developer can raise an error here or do something else
             # the developers of Querent can customize the behavior of Querent
