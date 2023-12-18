@@ -5,6 +5,9 @@ from querent.collectors.collector_resolver import CollectorResolver
 from querent.config.collector.collector_config import DriveCollectorConfig
 from querent.common.uri import Uri
 import uuid
+from querent.common.types.querent_queue import QuerentQueue
+from querent.common.types.querent_message import MessageState, MessageType
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,25 +30,36 @@ def drive_config():
 
 
 @pytest.mark.asyncio
-async def test_google_drive_collector(drive_config):
+async def test_google_drive_collector_signal(drive_config):
     uri = Uri("drive://")
     resolver = CollectorResolver()
     collector = resolver.resolve(uri, drive_config)
     assert collector is not None
     await collector.connect()
 
+    async def add_message(queue: QuerentQueue):
+        time.sleep(5)
+        message = MessageState(
+            message_type=MessageType.STOP, timestamp=time.time(), payload=None
+        )
+
+        await queue.put(message)
+
+    # message_task = asyncio.create_task(add_message(collector.message_queue))
+
     async def poll_and_print():
         counter = 0
         async for result in collector.poll():
             assert result is not None
             chunk = result.unwrap()
-
             if chunk is not None:
                 counter += 1
-        assert counter == 14
+        assert counter == 16
 
-    await poll_and_print()
+    asyncio.gather(
+        poll_and_print(), asyncio.create_task(add_message(collector.message_queue))
+    )
 
 
 if __name__ == "__main__":
-    asyncio.run(test_google_drive_collector())
+    asyncio.run(test_google_drive_collector_signal())

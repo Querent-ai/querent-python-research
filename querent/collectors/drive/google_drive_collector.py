@@ -17,6 +17,7 @@ from querent.config.collector.collector_config import (
     DriveCollectorConfig,
 )
 from querent.common import common_errors
+from querent.common.types.querent_message import MessageState, MessageType
 import requests
 
 from querent.logging.logger import setup_logger
@@ -24,6 +25,7 @@ from querent.logging.logger import setup_logger
 
 class DriveCollector(Collector):
     def __init__(self, config: DriveCollectorConfig):
+        super().__init__(config=config)
         self.items_to_ignore = []
         self.chunk_size = config.chunk_size
         self.refresh_token = config.drive_refresh_token
@@ -87,6 +89,9 @@ class DriveCollector(Collector):
             if not files:
                 self.logger.info("No files found in Google Drive")
             for file in files:
+                if await self.check_messages():
+                    self.logger.info("Stop message received. Stopping the collector.")
+                    break
                 async for chunk in self.read_chunks(file["id"]):
                     yield CollectedBytes(data=chunk, file=file["name"])
                 yield CollectedBytes(data=None, file=file["name"], eof=True)
@@ -95,7 +100,18 @@ class DriveCollector(Collector):
                 f"Failed to poll Google Drive: {str(e)}"
             ) from e
         finally:
+            await self.message_queue.close()
             await self.disconnect()
+
+    async def check_messages(self):
+        try:
+            message = await self.message_queue.get_nowait()
+            if isinstance(message, MessageState):
+                if message.message_type == "stop":
+                    return True
+        except asyncio.QueueEmpty:
+            pass
+        return False
 
     async def read_chunks(self, file_id):
         file_metadata = (
