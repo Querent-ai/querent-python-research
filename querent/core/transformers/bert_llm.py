@@ -6,6 +6,7 @@ from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
@@ -91,6 +92,10 @@ class BERTLLM(BaseEngine):
         self.fixed_relationships = config.fixed_relationships
         self.sample_relationships = config.sample_relationships
         self.user_context = config.user_context
+        if config.fixed_entities:
+                self.entity_context_extractor = FixedEntityExtractor(config.fixed_entities)
+        else:
+                self.entity_context_extractor = None
  
 
     def validate(self) -> bool:
@@ -140,6 +145,8 @@ class BERTLLM(BaseEngine):
                 data.get_file_path(), data.data
             )
             if content:
+                if self.entity_context_extractor:
+                    content = self.entity_context_extractor.find_entity_sentences(content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
                     (
@@ -179,16 +186,16 @@ class BERTLLM(BaseEngine):
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates     
-                current_state = EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples)
+                current_state = EventState(EventType.ContextualTriples, 1.0, filtered_triples)
                 await self.set_state(new_state=current_state)
                 kgm = KnowledgeGraphManager()
                 kgm.feed_input(filtered_triples)
-                current_state = EventState(EventType.RDF_CONTEXTUAL_TRIPLES, 1.0, kgm.retrieve_triples())
+                current_state = EventState(EventType.RdfContextualTriples, 1.0, kgm.retrieve_triples())
                 await self.set_state(new_state=current_state)
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
-                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.CONTEXTUAL_TRIPLES, 1.0, filtered_triples))
-                current_state = EventState(EventType.RDF_SEMANTIC_TRIPLES, 1.0, semantic_triples)                 
+                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.ContextualTriples, 1.0, filtered_triples))
+                current_state = EventState(EventType.RdfSemanticTriples, 1.0, semantic_triples)                 
                 await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

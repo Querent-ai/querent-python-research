@@ -56,21 +56,21 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.RDF_CONTEXTUAL_TRIPLES or event_state.event_type == EventType.RDF_SEMANTIC_TRIPLES
+            assert event_state.event_type == EventType.RdfContextualTriples or event_state.event_type == EventType.RdfSemanticTriples
             triples = event_state.payload
             subjects = [triple[0].value for triple in triples]
             objects = [triple[2].value for triple in triples]
             predicates = [triple[1].value for triple in triples]
-            if event_state.event_type == EventType.RDF_CONTEXTUAL_TRIPLES:
+            if event_state.event_type == EventType.RdfContextualTriples:
                 assert expected_entities[0] in subjects
                 assert expected_entities[1] in objects
-            elif event_type == EventType.RDF_SEMANTIC_TRIPLES:
+            elif event_type == EventType.RdfSemanticTriples:
                 assert 'http://geodata.org/tectonic perturbations' in subjects
 
 
-    llm_instance.subscribe(EventType.RDF_CONTEXTUAL_TRIPLES, StateChangeCallback())
-    llm_instance.subscribe(EventType.RDF_SEMANTIC_TRIPLES, StateChangeCallback())
-    # llm_instance.subscribe(EventType.RDF_SEMANTIC_TRIPLES, StateChangeCallback())
+    llm_instance.subscribe(EventType.RdfContextualTriples, StateChangeCallback())
+    llm_instance.subscribe(EventType.RdfSemanticTriples, StateChangeCallback())
+    # llm_instance.subscribe(EventType.RdfSemanticTriples, StateChangeCallback())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,

@@ -10,10 +10,10 @@ class EventType:
         CHAT_COMPLETED (Literal["chat_completed"]): Event type for chat completion.
     """
     
-    CONTEXTUAL_TRIPLES = "contextual_triples"
-    RDF_CONTEXTUAL_TRIPLES = "rdf_contextual_triples"
-    RDF_SEMANTIC_TRIPLES = "rdf_semantic_triples"
-    CONTEXTUAL_EMBEDDING = "contextual_embedding"
+    ContextualTriples = "contextual_triples"
+    RdfContextualTriples = "rdf_contextual_triples"
+    RdfSemanticTriples = "rdf_semantic_triples"
+    ContextualEmbeddings = "contextual_embedding"
 
 
 class EventState:

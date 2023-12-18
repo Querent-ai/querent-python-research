@@ -13,8 +13,8 @@
 
 ## Trigger for the Relationship Extraction to start work:
 
-Event Type : CONTEXTUAL_TRIPLES
-We have subscribed the relationship extractor class to CONTEXTUAL_TRIPLES event type emitted from the bert llm class.  When this event type signal is emitted, the handle_event function is triggered inside the relationship extractor which is responsible for extracting relationships. Below is the workflow of the relationship extractor:
+Event Type : ContextualTriples
+We have subscribed the relationship extractor class to ContextualTriples event type emitted from the bert llm class.  When this event type signal is emitted, the handle_event function is triggered inside the relationship extractor which is responsible for extracting relationships. Below is the workflow of the relationship extractor:
 <br /><br />
 
 ### I. Data Validation in RealtionExtractor:<br />
