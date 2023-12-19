@@ -106,13 +106,17 @@ class RelationExtractor():
             for entity, json_string, related_entity in triples:
                 data = json.loads(json_string)
                 context = data.get("context", "")
+                predicate = data.get("predicate","")
+                predicate_type = data.get("predicate_type","")
 
                 # Generate embeddings for the context
                 context_embeddings = self.create_emb.get_embeddings([context])[0]
 
                 essential_data = {
                     "context": context,
-                    "context_embeddings" : context_embeddings
+                    "context_embeddings" : context_embeddings,
+                    "predicate_type": predicate_type,
+                    "predicate" : predicate
                 }
                 updated_json_string = json.dumps(essential_data)
                 processed_pairs.append((entity, updated_json_string, related_entity))
@@ -135,7 +139,7 @@ class RelationExtractor():
             graph_manager.feed_input(relationships)
             final_triples = graph_manager.retrieve_triples()
         
-            return final_triples
+            return relationships, final_triples
         
         except Exception as e:
             self.logger.error(f"Error in processing event: {e}")
