@@ -42,7 +42,7 @@ async def test_google_drive_collector(drive_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 8
+        assert counter == 14
 
     await poll_and_print()
 
