@@ -43,7 +43,6 @@ class FixedRelationshipExtractor:
                 for l in syn.lemmas():
                     all_synonyms.add(l.name().replace('_', ' '))
         combined_pattern = '|'.join(map(re.escape, all_synonyms))
-        print(combined_pattern)
         return re.compile(r'\b(?:' + combined_pattern + r')\b', re.IGNORECASE)
 
     def find_relationship_sentences(self, text: str, chunk_size=1000) -> str:

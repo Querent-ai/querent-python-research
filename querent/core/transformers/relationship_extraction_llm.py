@@ -141,9 +141,7 @@ class RelationExtractor():
         try:
             triples = event_state.payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
-            print("completed normaliziation")
             if self.rag_approach == True:
-                print("inside rag approach")
                 self.rag_retriever.build_faiss_index(trimmed_triples)
             relationships = self.extract_relationships(triples)
             graph_manager = Semantic_KnowledgeGraphManager()
@@ -197,7 +195,6 @@ class RelationExtractor():
                     db = self.rag_retriever.load_faiss_index()
                     prompt=("What is the relationship between {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
                     top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
-                    print(top_docs)
                     documents = top_docs
                 else:
                     doc =  Document(page_content=context)

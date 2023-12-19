@@ -16,20 +16,16 @@ class RAGRetriever:
     
     def build_faiss_index(self, data):
         try:
-            print('Building faiss index', data)
             contexts = set()
             for item in data:
-                print("item ", item)
                 if isinstance(item, tuple) and len(item) == 3:
                     _, predicate_dict, _ = item
                     if isinstance(predicate_dict, dict) and 'context' in predicate_dict:
                         context = predicate_dict['context']
                         context = context.encode().decode('unicode_escape')
                         contexts.add(context)
-            print(contexts)
             self.create_emb.create_index(texts=contexts, verbose=True)
             self.create_emb.save_index('my_FAISS_index')
-            print("Index saved successfully")
         except Exception as e:
             self.logger.error(f"Error in building FAISS index: {e}")
             raise Exception(f'Error in building FAISS Index : {e}')
