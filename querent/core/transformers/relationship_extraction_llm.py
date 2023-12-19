@@ -72,16 +72,7 @@ class RelationExtractor():
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
-                rel_model_path=config.rel_model_path,
-                rel_model_type="llama",
-                emb_model_name=config.emb_model_name,
-                faiss_index_path=config.faiss_index_path,
-                template=self.template,
-            )
-        except Exception as e:
-            self.logger.error(f"Initialization failed: {e}")
-            raise Exception(f"Initialization failed: {e}")
-
+        
     def validate(self, data) -> bool:
         try:
             if not data:
@@ -270,6 +261,6 @@ def main():
     except Exception as e:
         print(f"Error during extraction: {e}")
 
-  main()
+    main()
 
   
