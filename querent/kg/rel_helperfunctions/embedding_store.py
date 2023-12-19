@@ -91,6 +91,7 @@ class EmbeddingStore:
         try:
             file_path = os.path.join(self.vector_store_path, file_name)
             os.makedirs(self.vector_store_path, exist_ok=True)
+            print("file path", file_path)
             self.db.save_local(file_path)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to save index: {e}")
@@ -112,4 +113,16 @@ class EmbeddingStore:
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to initialize retriever: {e}")
             raise Exception(f"Failed to initialize retriever: {e}")
+    
+    def get_embeddings(self, texts):
+        try:
+            embeddings = []
+            for text in texts:
+                embedding = self.embeddings.embed_query(text)
+                embeddings.append(embedding)
+            return embeddings
+        except Exception as e:
+            self.logger.error(f"Failed to generate embeddings: {e}")
+            raise Exception(f"Failed to generate embeddings: {e}")
+
     

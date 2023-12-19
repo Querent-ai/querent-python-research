@@ -19,6 +19,7 @@ class RelationshipExtractorConfig(BaseModel):
         Question: {query}
         Only return the helpful answer below and nothing else.
         Helpful answer:""",
+        
         "bsm_template": """Use the following context to answer the user's question.
         If you don't know the answer, just say that you don't know, don't try to make up an answer.
         Context: {context}
@@ -37,7 +38,6 @@ class RelationshipExtractorConfig(BaseModel):
     # Specific configurations for relationship extraction
     vector_store_path: str = "./querent/kg/rel_helperfunctions/vectorstores/"
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
-    faiss_index_path: str = "./querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index"
 
     # BSM specific configurations
     bsm_validator_model_path: str = "./tests/vicuna-13b-v1.5.Q4_K_M.gguf"
@@ -49,3 +49,8 @@ class RelationshipExtractorConfig(BaseModel):
 
     # Additional parameter for dynamic sub-tasks
     dynamic_sub_tasks: list = Field(default_factory=list)  # List of sub-tasks that user may provide
+    
+    rag_approach: bool = False
+    
+    def get_faiss_index_path(self):
+        return self.vector_store_path + "my_FAISS_index"
