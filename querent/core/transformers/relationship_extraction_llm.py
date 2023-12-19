@@ -1,9 +1,6 @@
 import json
 from querent.callback.event_callback_interface import EventCallbackInterface
-from querent.common.types.ingested_code import IngestedCode
-from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.querent_event import EventState, EventType
-from querent.core.base_engine import BaseEngine
 from querent.common.types.querent_event import EventState, EventType
 from typing import Any, List, Tuple
 from querent.kg.ner_helperfunctions.graph_manager_semantic import Semantic_KnowledgeGraphManager
@@ -14,9 +11,11 @@ from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.relation_config import RelationshipExtractorConfig
+
 from querent.common.types.querent_queue import QuerentQueue
 from langchain.docstore.document import Document
 import ast
+
 
 """
     A class that extends the EventCallbackInterface to extract relationships between entities in a contextual triple(s) to create semantic triples for a Knowledge Graph.
@@ -41,6 +40,7 @@ import ast
         trim_triples(data): Trims triples to a required format.
         build_faiss_index(data): Builds a FAISS index from the provided data.
     """
+
 
 class RelationExtractor():
     def __init__(self, config: RelationshipExtractorConfig):  
@@ -67,32 +67,52 @@ class RelationExtractor():
                 emb_model_name=config.emb_model_name,
                 embedding_store=self.create_emb,
                 logger=self.logger)
-                
             self.bsmbranch = BSMBranch()
             self.sub_tasks = config.dynamic_sub_tasks
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
-    
+                rel_model_path=config.rel_model_path,
+                rel_model_type="llama",
+                emb_model_name=config.emb_model_name,
+                faiss_index_path=config.faiss_index_path,
+                template=self.template,
+            )
+        except Exception as e:
+            self.logger.error(f"Initialization failed: {e}")
+            raise Exception(f"Initialization failed: {e}")
+
     def validate(self, data) -> bool:
         try:
             if not data:
-                self.logger.error(f"Invalid {self.__class__.__name__} configuration. Empty List Error")
+                self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Empty List Error"
+                )
                 return False
 
             if not isinstance(data, list):
-                self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Not a list")
+                self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Not a list"
+                )
                 return False
 
             item = data[0]
             if not isinstance(item, tuple) or len(item) != 3:
-                self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Item is not a triple")
+                self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Item is not a triple"
+                )
                 return False
 
-            if not (isinstance(item[0], str) and isinstance(item[2], str) and isinstance(item[1], str)):
-                self.logger.error(f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Incorrect item format")
+            if not (
+                isinstance(item[0], str)
+                and isinstance(item[2], str)
+                and isinstance(item[1], str)
+            ):
+                self.logger.error(
+                    f"Invalid {self.__class__.__name__} configuration. Incorrect Format Error: Incorrect item format"
+                )
                 return False
-                
+
             return True
         except Exception as e:
             self.logger.error(f"Error in validation: {e}")
@@ -134,9 +154,9 @@ class RelationExtractor():
             graph_manager = Semantic_KnowledgeGraphManager()
             graph_manager.feed_input(relationships)
             final_triples = graph_manager.retrieve_triples()
-        
+
             return final_triples
-        
+
         except Exception as e:
             self.logger.error(f"Error in processing event: {e}")
             raise Exception(f"Invalid in processing event: {e}")
@@ -247,4 +267,6 @@ def main():
         print(f"Error during extraction: {e}")
 
 if __name__ == "__main__":
-    main()
+  main()
+
+  
