@@ -109,9 +109,9 @@ class RelationExtractor():
             self.logger.error(f"Error in validation: {e}")
             return False
 
-    def generate_embeddings(self, event_state: EventState):
+    def generate_embeddings(self, payload):
         try:
-            triples = event_state.payload
+            triples = payload
             processed_pairs = []
 
             for entity, json_string, related_entity in triples:
@@ -137,18 +137,18 @@ class RelationExtractor():
             self.logger.error(f"Error in extracting embeddings: {e}")
             raise Exception(f"Error in extracting embeddings: {e}")
     
-    def process_tokens(self, event_state: EventState):
+    def process_tokens(self, payload):
         try:
-            triples = event_state.payload
+            triples = payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
             if self.rag_approach == True:
                 self.rag_retriever.build_faiss_index(trimmed_triples)
             relationships = self.extract_relationships(triples)
-            graph_manager = Semantic_KnowledgeGraphManager()
-            graph_manager.feed_input(relationships)
-            final_triples = graph_manager.retrieve_triples()
+            # graph_manager = Semantic_KnowledgeGraphManager()
+            # graph_manager.feed_input(relationships)
+            # final_triples = graph_manager.retrieve_triples()
         
-            return relationships, final_triples
+            return relationships
         
         except Exception as e:
             self.logger.error(f"Error in processing event: {e}")

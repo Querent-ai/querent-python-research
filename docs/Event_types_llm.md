@@ -19,19 +19,15 @@ current_state = EventState(EventType.Graph, 1.0, kgm.retrieve_triples(), filenam
 
 
 Vector----------------------------------
-{
-  "payload": [
+  "payload":
     {"id":"gombasin_deposit_shaleinterval",
     "embeddings": [-0.0011837006313726306, -0.024518130347132683, 0.14961548149585724, -0.033723924309015274, -0.05840631201863289,.. ], 
     "size": 768
     "namespace": "deposit"
     }
-  ]
-}
 
 GRAPH---------------------------------- 
-{
-  "payload": [
+  "payload":
     {
       "subject_name": "tectonic",
       "subject_type": "geo",
@@ -43,6 +39,4 @@ GRAPH----------------------------------
 the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom-
 modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a 
 considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin."""
-    }
-  ]
 }
