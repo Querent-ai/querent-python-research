@@ -8,110 +8,41 @@ The `EventType` class contains predefined constants that represent different kin
 
 ### Attributes
 
-- **`ContextualTriples`**: Indicates event involving the generation of contextual triples (text) in the system.
-- **`RdfContextualTriples`**: Denotes event involving the generation of (Resource Description Framework) graph formatted contextual triples in the system.
-- **`RdfSemanticTriples`**: Used for events involving the creation of (Resource Description Framework) graph formatted semantic triples.
-- **`ContextualEmbeddings`**: Used for events involving creation of Vector embeddings of context.
+- **`Vector`**: Indicates event involving the sending of context embeddings generated from the system.
+- **`Graph`**: Denotes event involving the sending of semantic triple data generated from the system.
 
 ### Usage Example (All event types generated from llm for now)
 
 ```python
-current_state = EventState(EventType.ContextualTriples, 1.0, filtered_triples, filename)
-current_state = EventState(EventType.RdfContextualTriples, 1.0, kgm.retrieve_triples(), filename)
-current_state = EventState(EventType.RdfSemanticTriples, 1.0, semantic_triples, filename)
-current_state = EventState(EventType.ContextualEmbeddings,1.0, embedding_triples, filename)
+current_state = EventState(EventType.Vector, 1.0, filtered_triples, filename)
+current_state = EventState(EventType.Graph, 1.0, kgm.retrieve_triples(), filename)
 
 
-Contextual triples------------------------ 
-[('tectonic', '{"context": "In this study, we present evidence of a Paleocene\\u2013Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints. We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "tectonic perturbations", "entity2_nn_chunk": "the upstream North American catchments", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.25, "entity2_attnscore": 0.11, "pair_attnscore": 0.15, "entity1_embedding": [3.4171669483184814, -0.07936620712280273, 5.707786560058594, 3.148844003677368, 1.2693098783493042, 1.28926682472229, -0.599577784538269, 0.5579516887664795, 15.05527400970459, 8.859268188476562], "entity2_embedding": [2.8158295154571533, 1.2662440538406372, 3.3925530910491943, 2.324713706970215, 0.7742978930473328, 1.6694233417510986, -0.7911773324012756, 1.0014389753341675, 15.167254447937012, 9.735977172851562]}', 'upstream'), 
-('basin', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "the GoM basin", "entity2_nn_chunk": "upstream", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.26, "entity2_attnscore": 0.09, "pair_attnscore": 0.13, "entity1_embedding": [4.571426868438721, 0.34864938259124756, 5.11123514175415, 4.266997814178467, 0.8743603229522705, 1.9211300611495972, -0.2600305676460266, 0.3008062541484833, 15.270146369934082, 9.872461318969727], "entity2_embedding": [2.871062994003296, 1.017332673072815, 3.392543315887451, 2.3407912254333496, 0.8637638092041016, 1.73477303981781, -0.7065155506134033, 1.0324641466140747, 15.12967300415039, 9.998303413391113]}', 'upstream'),
-('deposition', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin.", "entity1_score": 1.0, "entity2_score": 1.0, "entity1_label": "B-GeoPetro", "entity2_label": "B-GeoMeth", "entity1_nn_chunk": "deposition", "entity2_nn_chunk": "upstream", "file_path": "dummy_1_file.txt", "entity1_attnscore": 0.26, "entity2_attnscore": 0.09, "pair_attnscore": 0.13, "entity1_embedding": [3.949748992919922, 0.23691491782665253, 5.494395732879639, 3.2852585315704346, 1.4632160663604736, 1.2843307256698608, -0.5374468564987183, 0.444357305765152, 16.091243743896484, 8.553814888000488], "entity2_embedding": [3.545250654220581, 0.826586902141571, 3.3754987716674805, 2.878432512283325, 0.5978345274925232, 2.1107490062713623, -1.2309588193893433, 0.62945157289505, 15.280911445617676, 9.797978401184082]}', 'upstream')]
+Vector----------------------------------
+{
+  "payload": [
+    {"id":"gombasin_deposit_shaleinterval",
+    "embeddings": [-0.0011837006313726306, -0.024518130347132683, 0.14961548149585724, -0.033723924309015274, -0.05840631201863289,.. ], 
+    "size": 768
+    "namespace": "deposit"
+    }
+  ]
+}
 
-RDF Contextual Triples----------------------- 
-[(<querent.graph.utils.URI object at 0x7f0b85cda9e0>, <querent.graph.utils.BNode object at 0x7f0b85cdb3d0>, <querent.graph.utils.URI object at 0x7f0b96173970>), 
-(<querent.graph.utils.URI object at 0x7f0b852cc280>, <querent.graph.utils.BNode object at 0x7f0b852cfd00>, <querent.graph.utils.URI object at 0x7f0b852cc3a0>), 
-(<querent.graph.utils.URI object at 0x7f0bc8113b20>, <querent.graph.utils.BNode object at 0x7f0b77c374f0>, <querent.graph.utils.URI object at 0x7f0b960b4970>)]
-
-RDF Semantic Triples-----------------------
-[(<querent.graph.utils.URI object at 0x7f0b7594df30>, <querent.graph.utils.URI object at 0x7f0b7594df90>, <querent.graph.utils.URI object at 0x7f0b7594e110>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b91f8b4f0>, <querent.graph.utils.Literal object at 0x7f0b91f8b730>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b7594e0e0>, <querent.graph.utils.Literal object at 0x7f0b91f8b490>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b91f8b550>, <querent.graph.utils.Literal object at 0x7f0b91f8b5b0>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b7594d990>, <querent.graph.utils.URI object at 0x7f0b7594df30>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b7594e140>, <querent.graph.utils.URI object at 0x7f0b7594df90>), 
-(<querent.graph.utils.URI object at 0x7f0b7594dfc0>, <querent.graph.utils.URI object at 0x7f0b7594e380>, <querent.graph.utils.URI object at 0x7f0b7594e110>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b520>, <querent.graph.utils.URI object at 0x7f0b91f8b280>, <querent.graph.utils.URI object at 0x7f0b91f8b220>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f8a920>, <querent.graph.utils.Literal object at 0x7f0b91f89ea0>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f897e0>, <querent.graph.utils.Literal object at 0x7f0b91f89840>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f8af80>, <querent.graph.utils.URI object at 0x7f0b91f8b220>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f8b010>, <querent.graph.utils.URI object at 0x7f0b91f8b520>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f8afb0>, <querent.graph.utils.URI object at 0x7f0b91f8b280>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8b070>, <querent.graph.utils.URI object at 0x7f0b91f89900>, <querent.graph.utils.Literal object at 0x7f0b91f8ab90>), 
-(<querent.graph.utils.URI object at 0x7f0b91f89e40>, <querent.graph.utils.URI object at 0x7f0b91f899c0>, <querent.graph.utils.URI object at 0x7f0b91f89a80>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f89db0>, <querent.graph.utils.Literal object at 0x7f0b91f89f60>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f8a980>, <querent.graph.utils.URI object at 0x7f0b91f89a80>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f8ae90>, <querent.graph.utils.URI object at 0x7f0b91f89e40>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f8abc0>, <querent.graph.utils.URI object at 0x7f0b91f899c0>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f8a830>, <querent.graph.utils.Literal object at 0x7f0b91f8b400>), 
-(<querent.graph.utils.URI object at 0x7f0b91f8ad40>, <querent.graph.utils.URI object at 0x7f0b91f8b1c0>, <querent.graph.utils.Literal object at 0x7f0b91f89cf0>)]
-
-Contextual Embedding---------------------------------- 
-[('GoM Basin', '{"context": "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in 
-the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom- 
-modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable 
-increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin.", 
-"context_embeddings": [-0.0011837006313726306, -0.024518130347132683, 0.14961548149585724, -0.033723924309015274, -0.05840631201863289, -0.06296741962432861, -0.
-1140032485127449, -0.0032285358756780624, -0.01215912215411663, -0.06379254162311554, -0.06848873198032379, -0.08332854509353638, 0.000230968784308061, -0.
-029658783227205276, -0.02129519358277321, 0.014384073205292225, -0.011825532652437687, 0.01440999936312437, 0.09153030067682266, -0.047110751271247864, 0.
-043367695063352585, 0.09209573268890381, -0.02615027315914631, 0.0028693475760519505, -0.04312779754400253, -0.010090528056025505, -0.03776327520608902, 0.
-022657472640275955, 0.039883363991975784, -0.005429503973573446, -0.0288173109292984, 0.09678389877080917, -0.05519098415970802, -0.07479207962751389, 0.
-014746468514204025, 0.017146937549114227, -0.03867020830512047, 0.03949681669473648, -0.01904144696891308, 0.0694769024848938, -0.056680046021938324, -0.
-05039430037140846, 0.08006516844034195, 0.06536024063825607, -0.08514527976512909, -0.04565436765551567, 0.06788978725671768, -0.037619903683662415, -0.
-06205546855926514, 0.02091427892446518, 0.039631690829992294, -0.007483525667339563, -0.11008349061012268, 0.017522050067782402, -0.02800069935619831, -0.
-00043482883484102786, -0.00044012500438839197, -0.026552893221378326, -0.05497010052204132, 0.017463140189647675, 0.019940659403800964, -0.0025049264077097178, 
--0.07085447013378143, -0.02973490208387375, 0.0860416516661644, 0.08819910883903503, 0.03135739266872406, 0.018328659236431122, -0.04740613326430321, -0.
-009235278703272343, 0.004288847092539072, 0.03504158928990364, -0.0504012368619442, -0.08389761298894882, 0.022630872204899788, -0.009215273894369602, -0.
-06980650871992111, 0.033846624195575714, 0.03230271115899086, -0.025775348767638206, -0.029442230239510536, 0.06623455882072449, 0.10458530485630035, -0.
-0927920788526535, -0.0370623953640461, -0.049072686582803726, 0.014705594629049301, 0.020082883536815643, 0.033397555351257324, 0.0527162067592144, 0.
-011855395510792732, -0.049738314002752304, -0.0351492203772068, -0.02460392750799656, 0.014605939388275146, 0.0247321929782629, -0.04833477735519409, 0.
-0034472905099391937, 0.047141265124082565, -0.03520546481013298, -0.006197592243552208, 0.09097714722156525, -0.0790444165468216, -0.04497288912534714, 0.
-0687202736735344, 0.04233081638813019, 0.008181862533092499, 0.06616568565368652, 0.018490131944417953, 0.06900515407323837, -0.01139733288437128, -0.
-008873343467712402, 0.02736135758459568, -0.014755378477275372, 0.007809240836650133, 0.019802704453468323, -0.012331287376582623, -0.06026399880647659, -0.
-08922649919986725, -0.05480523407459259, -0.12748220562934875, -0.03453868627548218, -0.026873022317886353, 0.06320559978485107, 0.056309767067432404, -0.
-021539075300097466, -0.0455126017332077, -1.2366685002892698e-34, 0.13364601135253906, -0.062486667186021805, -0.007425032556056976, 0.059216953814029694, -0.
-024109652265906334, 0.023392803966999054, 0.016019590198993683, -0.025608818978071213, -0.10440108180046082, -0.0009777686791494489, -0.04340494051575661, -0.
-0169466994702816, -0.05988806113600731, 0.06492432951927185, -0.05122701823711395, -0.12511475384235382, -0.04405051842331886, -0.027530580759048462, -0.
-0018443216104060411, -0.1401955783367157, -0.05326949432492256, 0.00781609583646059, -0.004928788635879755, -0.08320856094360352, 0.02784416638314724, -0.
-03829539939761162, 0.018510181456804276, 0.017551828175783157, -0.07390978932380676, -0.009166669100522995, -0.04194697365164757, -0.027312804013490677, 0.
-03961828351020813, -0.015440800227224827, 0.13383086025714874, -0.015392144210636616, 0.015352452173829079, 0.019036123529076576, -0.013060696423053741, 0.
-05746188014745712, 0.09418588876724243, -0.026296693831682205, 0.04906657710671425, 0.015353770926594734, 0.008824657648801804, -0.07888143509626389, 0.
-07305996119976044, 0.06318744271993637, -0.005569130182266235, 0.013930181041359901, 0.02866789884865284, 0.056466784328222275, -0.01165754720568657, 0.
-005827553570270538, -0.07358317077159882, 0.03711320087313652, -0.00038657471304759383, -0.061258818954229355, -0.024588190019130707, 0.01877153478562832, -0.
-04160083085298538, 0.04661370441317558, 0.04428652301430702, -0.004163080360740423, 0.03687497228384018, 0.11785534024238586, 0.008396121673285961, 0.
-036984700709581375, 0.009768445044755936, 0.06520814448595047, -0.01993679441511631, -0.023509833961725235, 0.05123802646994591, 0.050253208726644516, -0.
-008883827365934849, 0.017316406592726707, 0.03656727448105812, 0.02705724723637104, 0.03301788866519928, 0.059328436851501465, -0.01962033472955227, 0.
-04476350545883179, -0.04727945476770401, -0.020827412605285645, -0.07717038691043854, 0.049784909933805466, 0.04642035812139511, -0.04516255483031273, 0.
-05219617858529091, 0.05584486573934555, -0.023009466007351875, 0.003689009230583906, 0.03578469157218933, -0.038030657917261124, 0.07284034043550491, -1.
-174785472627444e-33, 0.04594297707080841, -0.019519874826073647, -0.06768051534891129, 0.009971451945602894, -0.024471189826726913, -0.09634605050086975, 0.
-15417172014713287, 0.0973515659570694, -0.0026282656472176313, 0.0005721153574995697, -0.03240514174103737, 0.13149313628673553, 0.04120451956987381, -0.
-02087394706904888, 0.010339684784412384, -0.0658663660287857, 0.009824016131460667, -0.021498771384358406, 0.0308160949498415, -0.07354626804590225, -0.
-04220379516482353, -0.0949113517999649, -0.013138918206095695, -0.02939898520708084, -3.172421929775737e-05, 0.046441808342933655, -0.04432431235909462, -0.
-013301672413945198, -0.04579203575849533, 0.010072323493659496, 0.006570244673639536, 0.02979997918009758, -0.012348469346761703, -0.063459113240242, -0.
-09309273958206177, 0.07130753248929977, -0.021594969555735588, 0.04205821827054024, -0.012048148550093174, -0.0576801523566246, -0.005085591226816177, 0.
-0015798968961462379, 0.04070999473333359, -0.017993716523051262, 0.03482554107904434, 0.02675260603427887, 0.03258458524942398, 0.0172505471855402, -0.
-02937416359782219, 0.023198410868644714, -0.031989775598049164, 0.03213321417570114, 0.036144666373729706, 0.06732399761676788, 0.030932554975152016, 0.
-052053824067115784, 0.01876254379749298, -0.0014489254681393504, -0.08253547549247742, -0.012501676566898823, -0.025812815874814987, 0.10927488654851913, -0.0778132900595665, -0.04517248645424843, 0.07877029478549957, -0.04323017597198486, -0.06022100895643234, -0.05597861856222153, 0.018718626350164413, 0.
-04971183091402054, -0.007455743383616209, -0.006274852901697159, -0.026067357510328293, -0.06864172220230103, 0.09738494455814362, -0.015753742307424545, -0.
-02068750187754631, 0.04256833717226982, -0.035381000488996506, 0.057257965207099915, 0.013458083383738995, 0.03773210942745209, -0.04318842664361, 0.
-0518752746284008, 0.01445805560797453, -0.017185399308800697, 0.028600377961993217, -0.07777624577283859, 0.015639297664165497, 0.015043261460959911, 0.
-02390274591743946, -0.02989107370376587, -0.09219016879796982, -0.028712397441267967, -0.030482197180390358, -4.4126437614977476e-08, 0.03103100322186947, 0.
-014044520445168018, 0.035598233342170715, 0.09663619846105576, 0.08617136627435684, -0.03686361014842987, 0.014350338838994503, 0.08383873850107193, 0.
-024316785857081413, 0.002433616667985916, 0.08178506046533585, -0.09201548248529434, -0.03007226623594761, -0.050800714641809464, 0.0633162260055542, 0.
-0018745895940810442, -0.01814296841621399, 0.0010384285124018788, -0.0688660517334938, -0.10266599804162979, -0.006401547230780125, 0.007918012328445911, 0.
-0072221760638058186, 0.04581315442919731, 0.03309372067451477, 0.031258344650268555, 0.08090855181217194, 0.04921077936887741, -0.014760182239115238, 0.
-030847227200865746, 0.07339363545179367, -0.030958371236920357, -0.05485948547720909, -0.04146963357925415, 0.06905880570411682, -0.024236302822828293, 0.
-010292061604559422, 0.041377387940883636, -0.005175673868507147, -0.009445172734558582, -0.015966219827532768, 0.06491636484861374, 0.0524301640689373, 0.
-010575379244983196, -0.014418259263038635, 0.07129558175802231, -0.09398110955953598, 0.044810183346271515, 0.047146085649728775, 0.05522396042943001, 0.
-005550025496631861, 0.05138060450553894, 0.03252386301755905, 0.09511390328407288, 0.08306632190942764, 0.0022814602125436068, 0.04205923527479172, -0.
-048472609370946884, -0.06126105412840843, 0.08586123585700989, -0.022540709003806114, -0.022217227146029472, 0.032650936394929886, -0.10562080144882202], 
-"predicate_type": "location based", "predicate": "deposit"}', 'shale interval'),..]
+GRAPH---------------------------------- 
+{
+  "payload": [
+    {
+      "subject_name": "tectonic",
+      "subject_type": "geo",
+      "object_name": "shale interval",
+      "object_type": "geo",
+      "predicate": "deposit",
+      "predicate_type": "location based",
+      "sentence": """We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in 
+the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accom-
+modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a 
+considerable increase in sedi- ment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin."""
+    }
+  ]
+}
