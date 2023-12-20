@@ -32,7 +32,7 @@ requirements = [
     "pylint==2.17.4",
     "pytest-cov==4.1.0",
     "pytest-mock==3.11.1",
-    "transformers==4.30.2",
+    "transformers==4.36.0",
     "pypdf==3.17.0",
     "asyncio==3.4.3",
     "aiofiles==23.2.1",
