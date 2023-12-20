@@ -1,0 +1,43 @@
+from unidecode import unidecode
+import nltk
+from nltk.corpus import words
+
+from querent.processors.async_processor import AsyncProcessor
+
+
+class TextProcessor(AsyncProcessor):
+    def __init__(self):
+        nltk.download("words")
+        self.english_vocab = set(w.lower() for w in words.words())
+
+    async def process_text(self, data: str) -> str:
+        if data is None or data == "":
+            return [data]
+        text = unidecode(data)
+
+        processed_lines = []
+        for line in text.split("\n"):
+            words_in_line = line.split()
+            i = 0
+            new_line = []
+            while i < len(words_in_line):
+                word = words_in_line[i]
+                # Check if next word exists and current word is not valid
+                if i + 1 < len(words_in_line) and not self.is_valid_word(word):
+                    next_word = words_in_line[i + 1]
+                    combined_word = word + next_word
+                    # Join words if combined form is valid or both forms are invalid
+                    if self.is_valid_word(combined_word) or (
+                        not self.is_valid_word(word)
+                        and not self.is_valid_word(next_word)
+                    ):
+                        word = combined_word
+                        i += 1
+                new_line.append(word)
+                i += 1
+            processed_lines.append(" ".join(new_line))
+
+        return processed_lines
+
+    def is_valid_word(self, word):
+        return word.lower() in self.english_vocab

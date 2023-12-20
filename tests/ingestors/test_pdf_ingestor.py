@@ -4,6 +4,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.processors.text_processor import TextProcessor
 import pytest
 import uuid
 
@@ -21,7 +22,8 @@ async def test_collect_and_ingest_pdf():
     ingestor_factory = await ingestor_factory_manager.get_factory(
         "pdf"
     )  # Notice the use of await here
-    ingestor = await ingestor_factory.create("pdf", [])
+    processor = TextProcessor()
+    ingestor = await ingestor_factory.create("pdf", [processor])
 
     # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())

@@ -96,6 +96,7 @@ class PdfIngestor(BaseIngestor):
                 text = page.extract_text()
                 if not text:
                     continue
+
                 processed_text = await self.process_data(text)
 
                 # Yield processed text as IngestedTokens
@@ -107,7 +108,7 @@ class PdfIngestor(BaseIngestor):
                 async for image_result in self.extract_images_and_ocr(
                     page,
                     page_num,
-                    processed_text,
+                    processed_text[0],
                     collected_bytes.data,
                     collected_bytes.file,
                 ):
