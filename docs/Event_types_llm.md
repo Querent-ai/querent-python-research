@@ -29,9 +29,9 @@ Vector----------------------------------
 GRAPH---------------------------------- 
   "payload":
     {
-      "subject_name": "tectonic",
+      "subject": "tectonic",
       "subject_type": "geo",
-      "object_name": "shale interval",
+      "object": "shale interval",
       "object_type": "geo",
       "predicate": "deposit",
       "predicate_type": "location based",
