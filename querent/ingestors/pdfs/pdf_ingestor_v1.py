@@ -108,7 +108,7 @@ class PdfIngestor(BaseIngestor):
                 async for image_result in self.extract_images_and_ocr(
                     page,
                     page_num,
-                    processed_text[0],
+                    processed_text,
                     collected_bytes.data,
                     collected_bytes.file,
                 ):
@@ -149,6 +149,7 @@ class PdfIngestor(BaseIngestor):
                 text=text,
                 coordinates=None,
                 ocr_text=None,
+                error=f"Exception:{e}",
             )
 
     async def get_ocr_from_image(self, image):
