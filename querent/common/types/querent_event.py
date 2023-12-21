@@ -14,6 +14,8 @@ class EventType:
     RdfContextualTriples = "RdfContextualTriples"
     RdfSemanticTriples = "RdfSemanticTriples"
     ContextualEmbeddings = "ContextualEmbeddings"
+    Graph = "Graph"
+    Vector = "Vector"
 
 
 class EventState:

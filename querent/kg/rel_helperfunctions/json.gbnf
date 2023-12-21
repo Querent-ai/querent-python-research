@@ -1,7 +1,6 @@
 root ::= SemanticTriple
-SemanticTriple ::= "{"   ws   "\"subject\":"   ws   string   ","   ws   "\"predicate\":"   ws   string   ","   ws   "\"object\":"   ws   string   ","   ws   "\"predicate_type\":"   ws   PredicateType   "}"
+SemanticTriple ::= "{"   ws   "\"subject\":"   ws   string   ","   ws   "\"predicate\":"   ws   string   ","   ws   "\"object\":"   ws   string   ","   ws   "\"subject_type\":"   ws   string   ","   ws   "\"predicate_type\":"   ws   string   ","   ws   "\"object_type\":"   ws   string   "}"
 SemanticTriplelist ::= "[]" | "["   ws   SemanticTriple   (","   ws   SemanticTriple)*   "]"
-PredicateType ::= "\"location based\"" | "\"causal\"" | "\"temporal\"" | "\"comparative\"" | "\"qualitative\"" | "\"ownership\"" | "\"passive voice\""
 string ::= "\""   ([^"]*)   "\""
 boolean ::= "true" | "false"
 ws ::= [ \t\n]*

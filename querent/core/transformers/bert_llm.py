@@ -7,8 +7,6 @@ from querent.core.transformers.relationship_extraction_llm import RelationExtrac
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
 from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
-from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
-from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -25,6 +23,7 @@ from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 
 
 
@@ -185,19 +184,20 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates     
+                    filtered_triples = pairs_with_predicates   
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
                 relationships = semantic_extractor.process_tokens(filtered_triples)
-                print(relationships)
-                # print("Semantic Triples----------------------------------", semantic_triples)
-                # current_state = EventState(EventType.RdfSemanticTriples, 1.0, semantic_triples, filename)                 
-                # await self.set_state(new_state=current_state)
                 embedding_triples = semantic_extractor.generate_embeddings(relationships)
-                print(embedding_triples)
-                # current_state = EventState(EventType.ContextualEmbeddings,1.0, embedding_triples, filename)
-                # print("Contextual Embedding----------------------------------", embedding_triples)
-                # await self.set_state(new_state=current_state)
+                for triple in embedding_triples:
+                    graph_json = TripleToJsonConverter.convert_graphjson(triple)
+                    if graph_json:
+                        current_state = EventState(EventType.Graph,1.0, graph_json, filename)
+                        await self.set_state(new_state=current_state)
+                    vector_json = TripleToJsonConverter.convert_vectorjson(triple)
+                    if vector_json:
+                        current_state = EventState(EventType.Vector,1.0, vector_json, filename)
+                        await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")

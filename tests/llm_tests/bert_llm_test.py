@@ -9,11 +9,6 @@ from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
-import os
-from querent.config.core.relation_config import RelationshipExtractorConfig
-from querent.core.transformers.relationship_extraction_llm import RelationExtractor
-from querent.config.core.relation_config import RelationshipExtractorConfig
-from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 
 
 @pytest.mark.asyncio
@@ -29,14 +24,13 @@ in the GoM. This relationship is illustrated in the deep-water basin by (1) a hi
 modation and deposition of a shale interval when coarse-grained terrigenous material
 was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi-
 ment supply during the PETM, which is archived as a particularly thick sedimentary
-section in  the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["http://geodata.org/Tectonic perturbations","http://geodata.org/downstream sectors"], True)])
+section in  the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["tectonic perturbations","downstream sectors"], True)])
 
 
 
 async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_model_name, llm_class, expected_entities, filter_entities):
     input_queue = QuerentQueue()
     resource_manager = ResourceManager()
-    
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=input_data)
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data="dummy"))
@@ -56,20 +50,12 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.RdfContextualTriples or event_state.event_type == EventType.RdfSemanticTriples
-            triples = event_state.payload
-            subjects = [triple[0].value for triple in triples]
-            objects = [triple[2].value for triple in triples]
-            predicates = [triple[1].value for triple in triples]
-            if event_state.event_type == EventType.RdfContextualTriples:
-                assert expected_entities[0] in subjects
-                assert expected_entities[1] in objects
-            elif event_type == EventType.RdfSemanticTriples:
-                assert 'http://geodata.org/tectonic perturbations' in subjects
+            assert event_state.event_type == EventType.Graph
+            triple = event_state.payload
+            assert triple['subject'] == 'tectonic perturbations' or triple['subject'] == 'deposition'
 
 
-    llm_instance.subscribe(EventType.RdfContextualTriples, StateChangeCallback())
-    llm_instance.subscribe(EventType.RdfSemanticTriples, StateChangeCallback())
+    llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     # llm_instance.subscribe(EventType.RdfSemanticTriples, StateChangeCallback())
     querent = Querent(
         [llm_instance],
