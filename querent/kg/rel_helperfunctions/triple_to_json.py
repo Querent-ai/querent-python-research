@@ -61,10 +61,10 @@ class TripleToJsonConverter:
 
             id_format = f"{TripleToJsonConverter._normalize_text(subject)}_{TripleToJsonConverter._normalize_text(data.get('predicate', ''))}_{TripleToJsonConverter._normalize_text(object_)}"
             json_object = {
-                "id": id_format,
+                "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True),
                 "embeddings": data.get("context_embeddings", []),
                 "size": len(data.get("context_embeddings", [])),
-                "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""))
+                "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True)
             }
 
             return json_object

@@ -19,9 +19,8 @@ current_state = EventState(EventType.Graph, 1.0, filtered_triples, filename)
 
 
 Vector----------------------------------
-{'id': 'deposition_occurred in_upstream', 'embeddings': [-0.0011837006313726306, -0.024518130347132683, 0.14961548149585724, -0.033723924309015274, -0.05840631201863289, -0.06296741962432861, -0.1140032485127449, -0.0032285358756780624, -0.01215912215411663, -0.06379254162311554, -0.06848873198032379, ....], 'size': 384, 'namespace': 'occurred in'}
+{'id': 'gom_basin_accommodate_shale_interval', 'embeddings': [-0.0011837006313726306, -0.024518130347132683, ..],
+ 'size': 384, 'namespace': 'accommodate'}
 
 GRAPH---------------------------------- 
-{'subject': 'deposition', 'subject_type': 'location', 'object': 'upstream', 'object_type': 'catchment', 'predicate': 'occurred in', 'predicate_type': 'location', 'sentence': 'we suggest that climate and tectonic perturbations in the upstream north american catchments can induce a substantial response in the downstream sectors of the gulf coastal plain and ultimately in the gom. this relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the petm, and (2) a considerable increase in sedi- ment supply during the petm, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the gom basin.'}
-
-
+{'subject': 'gom basin', 'subject_type': 'geological_feature', 'object': 'shale interval', 'object_type': 'sedimentary_rock', 'predicate': 'accommodate', 'predicate_type': 'geological_process', 'sentence': 'we suggest that climate and tectonic perturbations in the upstream north american catchments can induce a substantial response in the downstream sectors of the gulf coastal plain and ultimately in the gom. this relationship is illustrated in the deep-water basin by (1) a high accom- modation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the petm, and (2) a considerable increase in sedi- ment supply during the petm, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the gom basin.'}
