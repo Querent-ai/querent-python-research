@@ -41,6 +41,7 @@ class TextProcessor(AsyncProcessor):
             return processed_lines
         except Exception as e:
             self.logger.error(f"Exception while processing data {e}")
+            return []
 
     def is_valid_word(self, word):
         return word.lower() in self.english_vocab
