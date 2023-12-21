@@ -19,24 +19,22 @@ class TextProcessor(AsyncProcessor):
         for line in text.split("\n"):
             words_in_line = line.split()
             i = 0
-            new_line = []
+            new_line = ""
             while i < len(words_in_line):
                 word = words_in_line[i]
-                # Check if next word exists and current word is not valid
-                if i + 1 < len(words_in_line) and not self.is_valid_word(word):
+                # Check if next word exists
+                if i + 1 < len(words_in_line):
                     next_word = words_in_line[i + 1]
                     combined_word = word + next_word
-                    # Join words if combined form is valid or both forms are invalid
-                    if self.is_valid_word(combined_word) or (
-                        not self.is_valid_word(word)
-                        and not self.is_valid_word(next_word)
+                    # Join words only if the combined form is valid and neither of the individual words is valid
+                    if self.is_valid_word(combined_word) and not (
+                        self.is_valid_word(word) or self.is_valid_word(next_word)
                     ):
                         word = combined_word
                         i += 1
-                new_line.append(word)
+                new_line += word + " "
                 i += 1
-            processed_lines.append(" ".join(new_line))
-
+            processed_lines.append(new_line.strip())
         return processed_lines
 
     def is_valid_word(self, word):
