@@ -19,7 +19,8 @@ class TextProcessor(AsyncProcessor):
             text = unidecode(data)
 
             processed_lines = []
-            for line in text.split("\n"):
+            lines = text.split("\n")
+            for index, line in enumerate(lines):
                 words_in_line = line.split()
                 i = 0
                 new_line = ""
@@ -37,7 +38,24 @@ class TextProcessor(AsyncProcessor):
                             i += 1
                     new_line += word + " "
                     i += 1
+
+                if (
+                    len(line) > 3
+                    and index < len(lines) - 1
+                    and words_in_line[len(words_in_line) - 1] == "-"
+                ):
+                    # If the sentence ends with hyphen(-), then check if the word is incomplete, if yes then join them
+                    current_word = words_in_line[len(words_in_line) - 2]
+                    next_index = lines[index + 1].index(" ")
+                    print("next index    ", next_index)
+                    next_word = lines[index + 1][:next_index]
+                    new_word = current_word + next_word
+                    if self.is_valid_word(new_word):
+                        new_line = new_line[: len(new_line) - 3] + next_word
+                        lines[index + 1] = lines[index + 1][next_index + 1 :]
+
                 processed_lines.append(new_line.strip())
+
             return processed_lines
         except Exception as e:
             self.logger.error(f"Exception while processing data {e}")
