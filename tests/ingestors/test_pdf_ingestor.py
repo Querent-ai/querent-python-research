@@ -4,6 +4,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.common.types.ingested_images import IngestedImages
 import pytest
 import uuid
 
@@ -33,6 +34,8 @@ async def test_collect_and_ingest_pdf():
             assert ingested is not None
             if ingested is not "" or ingested is not None:
                 counter += 1
+                if isinstance(ingested, IngestedImages):
+                    print(ingested.page_num)
         assert (
             counter == 31
         )  # 30 pages in the PDF and 1 empty IngestedTokens to signify end of file

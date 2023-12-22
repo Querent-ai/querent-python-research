@@ -1,67 +1,80 @@
 import json
-from querent.callback.event_callback_interface import EventCallbackInterface
-from querent.common.types.querent_event import EventState, EventType
-from querent.common.types.querent_event import EventState, EventType
-from querent.kg.ner_helperfunctions.graph_manager_semantic import (
-    Semantic_KnowledgeGraphManager,
-)
+from typing import Any, List, Tuple
+from querent.kg.rel_helperfunctions.BSM_relationfilter import BSMBranch
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
+from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.relation_config import RelationshipExtractorConfig
+from langchain.docstore.document import Document
+import ast
 
 """
-    A class that extends the EventCallbackInterface to extract relationships between entities in a contextual triple(s) to create semantic triples for a Knowledge Graph.
+    A class for extracting relationships from triples and processing them for various representations.
 
-    The RelationExtractor is responsible for handling events, particularly updates to a Named Entity Recognition (NER)
-    graph, and extracting relationships between entities. It uses an embedding store for efficient similarity searches
-    and a QA system for relationship extraction.
+    This class includes methods for validating triples, generating embeddings, processing tokens, 
+    normalizing and building indices for triples, creating semantic triples, extracting relationships, 
+    and trimming triples.
 
     Attributes:
-        logger (Logger): A logging instance for recording events and errors.
         config (RelationshipExtractorConfig): Configuration settings for the relationship extractor.
-        create_emb (EmbeddingStore): An instance of EmbeddingStore for handling vector storage and retrieval.
-        template (str): The template string for QA prompts.
-        qa_system (QASystem): An instance of QASystem for asking questions about relationships.
+        logger (Logger): Logger for logging messages and errors.
+        create_emb (EmbeddingStore): An instance of EmbeddingStore for generating embeddings.
+        qa_system (QASystem): A question-answering system for extracting relationships.
+        rag_approach (bool): A flag indicating whether to use the RAG approach for retrieval.
+        rag_retriever (RAGRetriever): A RAG retriever for document retrieval, used if rag_approach is True.
+        bsmbranch (BSMBranch): An instance of BSMBranch for handling BSM-related tasks.
+        sub_tasks (list): List of dynamic sub-tasks for processing.
 
     Methods:
-        handle_event(event_type: EventType, event_state: EventState): Handles the event based on the type and state.
-        validate(data) -> bool: Validates the input data format for relationship extraction.
-        process_event(event_state: EventState): Processes the event and extracts relationships.
-        normalizetriples_buildindex(triples): Normalizes triples and builds a FAISS index for them.
-        extract_relationships(triples): Extracts relationships from triples using QA prompts.
-        trim_triples(data): Trims triples to a required format.
-        build_faiss_index(data): Builds a FAISS index from the provided data.
+        validate(data) -> bool:
+            Validates the input data to ensure it's in the correct format for processing.
+        generate_embeddings(payload):
+            Generates embeddings for the given payload containing triples.
+        process_tokens(payload):
+            Processes tokens in the given payload and extracts relationships.
+        normalizetriples_buildindex(triples):
+            Normalizes the given triples and builds an index for them.
+        create_semantic_triple(input1, input2):
+            Creates a semantic triple from the given inputs.
+        extract_relationships(triples):
+            Extracts relationships from the given triples.
+        trim_triples(data):
+            Trims the given data to a more concise format.
     """
 
-
-class RelationExtractor(EventCallbackInterface):
-    def __init__(self, config: RelationshipExtractorConfig):
+class RelationExtractor():
+    def __init__(self, config: RelationshipExtractorConfig):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
             super().__init__()
             self.config = config
             self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
-            self.template = config.qa_template
             self.qa_system = QASystem(
-                rel_model_path=config.rel_model_path,
-                rel_model_type="llama",
+                rel_model_path=config.model_path,
+                rel_model_type=config.model_type,
+                )
+            
+            # self.qa_system_bsm_validator = QASystem(
+            #     rel_model_path=config.bsm_validator_model_path,
+            #     rel_model_type=config.bsm_validator_model_type,
+            #     emb_model_name=config.emb_model_name,
+            #     faiss_index_path=config.get_faiss_index_path()
+            #     )
+            self.rag_approach = config.rag_approach
+            if  self.rag_approach == True:
+                self.rag_retriever = RAGRetriever(
+                faiss_index_path=config.get_faiss_index_path(),
                 emb_model_name=config.emb_model_name,
-                faiss_index_path=config.faiss_index_path,
-                template=self.template,
-            )
+                embedding_store=self.create_emb,
+                logger=self.logger)
+            self.bsmbranch = BSMBranch()
+            self.sub_tasks = config.dynamic_sub_tasks
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
-
-    async def handle_event(self, event_type: EventType, event_state: EventState):
-        try:
-            if event_type == EventType.NER_GRAPH_UPDATE:
-                await self.process_tokens(event_state)
-        except Exception as e:
-            self.logger.error(f"Error in handling event: {e}")
-
+        
     def validate(self, data) -> bool:
         try:
             if not data:
@@ -98,17 +111,46 @@ class RelationExtractor(EventCallbackInterface):
             self.logger.error(f"Error in validation: {e}")
             return False
 
-    def process_tokens(self, event_state: EventState):
+    def generate_embeddings(self, payload):
         try:
-            triples = event_state.payload
+            triples = payload
+            processed_pairs = []
+
+            for entity, json_string, related_entity in triples:
+                data = json.loads(json_string)
+                context = data.get("context", "")
+                predicate = data.get("predicate","")
+                predicate_type = data.get("predicate_type","")
+                subject_type = data.get("subject_type","")
+                object_type = data.get("object_type","")
+                context_embeddings = self.create_emb.get_embeddings([context])[0]
+                essential_data = {
+                    "context": context,
+                    "context_embeddings" : context_embeddings,
+                    "predicate_type": predicate_type,
+                    "predicate" : predicate,
+                    "subject_type": subject_type,
+                    "object_type": object_type
+                }
+                updated_json_string = json.dumps(essential_data)
+                processed_pairs.append((entity, updated_json_string, related_entity))
+
+            return processed_pairs
+        
+        except Exception as e:
+            self.logger.error(f"Error in extracting embeddings: {e}")
+            raise Exception(f"Error in extracting embeddings: {e}")
+    
+    def process_tokens(self, payload):
+        try:
+            triples = payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
-            relationships = self.extract_relationships(trimmed_triples)
-            graph_manager = Semantic_KnowledgeGraphManager()
-            graph_manager.feed_input(relationships)
-            final_triples = graph_manager.retrieve_triples()
-
-            return final_triples
-
+            if self.rag_approach == True:
+                self.rag_retriever.build_faiss_index(trimmed_triples)
+            relationships = self.extract_relationships(triples)
+        
+            return relationships
+        
         except Exception as e:
             self.logger.error(f"Error in processing event: {e}")
             raise Exception(f"Invalid in processing event: {e}")
@@ -121,44 +163,57 @@ class RelationExtractor(EventCallbackInterface):
             normalizer = TextNormalizer()
             normalized_triples = normalizer.normalize_triples(triples)
             trimmed_triples = self.trim_triples(normalized_triples)
-            self.build_faiss_index(trimmed_triples)
+            
             return trimmed_triples
+        
         except Exception as e:
             self.logger.error(f"Error in normalizing/building index: {e}")
             raise Exception(f"Error in normalizing/building index: {e}")
+    
+    def create_semantic_triple(self, input1, input2):
+        input1_data = ast.literal_eval(input1)
+        input2_data = ast.literal_eval(input2)
+        triple = (
+            input1_data.get("subject",""),
+            json.dumps({
+                "predicate": input1_data.get("predicate",""),
+                "predicate_type": input1_data.get("predicate_type",""),
+                "context": input2_data.get("context", ""),
+                "file_path": input2_data.get("file_path", ""),
+                "subject_type": input1_data.get("subject_type",""),
+                "object_type": input1_data.get("object_type","")
+            }),
+            input1_data.get("object","")
+        )
+        return triple
 
     def extract_relationships(self, triples):
         try:
-            question_entities_validate = "I would like to define a knowledge graph triple, do {entity1} and {entity2} show relationship ? Just give a yes or no answer."
-            question_entities_relation = (
-                "Please find possible relationships between {entity1} and {entity2}"
-            )
             updated_triples = []
-            for entity1, predicate_str, entity2 in triples:
-                predicate = (
-                    predicate_str
-                    if isinstance(predicate_str, dict)
-                    else json.loads(predicate_str)
-                )
-                # Ask the first question
-                validation_prompt = question_entities_validate.format(
-                    entity1=entity1, entity2=entity2
-                )
-                answer_validate = self.qa_system.ask_question(
-                    prompt=validation_prompt, search_kwargs={"k": 3}
-                )
-
-                if "yes" in answer_validate.lower():
-                    # Ask the second question
-                    relation_prompt = question_entities_relation.format(
-                        entity1=entity1, entity2=entity2
-                    )
-                    answer_relation = self.qa_system.ask_question(
-                        prompt=relation_prompt, search_kwargs={"k": 3}
-                    )
-                    predicate["relationship"] = answer_relation
-                updated_predicate_str = json.dumps(predicate)
-                updated_triples.append((entity1, updated_predicate_str, entity2))
+            for _, predicate_str, _ in triples:
+                all_tasks = []
+                documents=[]
+                data = json.loads(predicate_str)
+                context = data['context']
+                predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)
+                if self.rag_approach == True:
+                    db = self.rag_retriever.load_faiss_index()
+                    prompt=("What is the relationship between {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
+                    top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
+                    documents = top_docs
+                else:
+                    doc =  Document(page_content=context)
+                    documents.append(doc)    
+                all_tasks.append((" I want to define a semantic knowledge graph. The Subject is {entity1} and the Object is {entity2}. Please also identify the subject type, predicate type and object type").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
+                # all_tasks.append(("I want to define a semantic knowledge graph where the subject is {entity1} and the object is {entity2}. Please also identify the subject type, predicate type and object type.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
+                sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
+                for task in sub_task_list_llm:  
+                    answer_relation = self.qa_system.ask_question(prompt=task[2], top_docs=documents, llm_chain=task[0])
+                    try:
+                        updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
+                        updated_triples.append(updated_triple)
+                    except:
+                        continue       
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")
@@ -169,29 +224,16 @@ class RelationExtractor(EventCallbackInterface):
             for entity1, predicate, entity2 in data:
                 predicate_dict = json.loads(predicate)
                 trimmed_predicate = {
-                    "context": predicate_dict.get("context", ""),
-                    "entity1_nn_chunk": predicate_dict.get("entity1_nn_chunk", ""),
-                    "entity2_nn_chunk": predicate_dict.get("entity2_nn_chunk", ""),
-                    "entity1_label": predicate_dict.get("entity1_label", ""),
-                    "entity2_label": predicate_dict.get("entity2_label", ""),
-                    "file_path": predicate_dict.get("file_path", ""),
+                    'context': predicate_dict.get('context', ''),
+                    'entity1_nn_chunk': predicate_dict.get('entity1_nn_chunk', ''),
+                    'entity2_nn_chunk': predicate_dict.get('entity2_nn_chunk', ''),
+                    'file_path': predicate_dict.get('file_path', '')
                 }
                 trimmed_data.append((entity1, trimmed_predicate, entity2))
 
             return trimmed_data
+        
         except Exception as e:
             self.logger.error(f"Error in trimming triples: {e}")
-            raise Exception(f"Error in trimming triples: {e}")
-
-    def build_faiss_index(self, data):
-        try:
-            contexts = set()
-            for _, predicate, _ in data:
-                context = predicate.get("context", "")
-                context = context.encode().decode("unicode_escape")
-                contexts.add(context)
-            self.create_emb.create_index(texts=contexts, verbose=False)
-            self.create_emb.save_index("my_FAISS_index")
-        except Exception as e:
-            self.logger.error(f"Error in building FAISS index: {e}")
-            raise Exception(f"Error in building FAISS Index : {e}")
+            raise Exception(f'Error in trimming triples: {e}')
+  

@@ -31,11 +31,13 @@ class EntityEmbeddingExtractor:
 
     def __init__(self, model, tokenizer, number_entity_pairs, number_sentences):
         self.logger = setup_logger(__name__, "EntityEmbeddingExtractor")
-        self.model = model
-        self.tokenizer = tokenizer
-        self.reducer = umap.UMAP(init='random',n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
-        self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
-
+        try:
+            self.model = model
+            self.tokenizer = tokenizer
+            self.reducer = umap.UMAP(init='random',n_neighbors=min(15, number_entity_pairs), min_dist=0.1, n_components=10, metric='cosine')
+            self.sentence_reducer = umap.UMAP(init='random', n_neighbors=min(15, number_sentences), min_dist=0.1, n_components=10, metric='cosine')
+        except Exception as e:
+            self.logger.error(f"Error Initializing Entity Embedding Extractor Class: {e}")
 
     def extract_entity_embedding(self, entity, context):
         try:
@@ -55,69 +57,13 @@ class EntityEmbeddingExtractor:
         except Exception as e:
             self.logger.error(f"Error extracting entity embedding: {e}")
             raise   Exception("Error extracting entity embedding: {}".format(e))
-    
-    def get_embedding(self, entity, context, task_type="cls_embedding"):
+
+
+    def fit_umap(self, all_embeddings):
         try:
-            inputs = self.tokenizer(context, return_tensors="pt", truncation=True, padding=True, max_length=512)
-            with torch.no_grad():
-                outputs = self.model(**inputs, output_hidden_states=True)
-                all_hidden_states = outputs.hidden_states
-                last_hidden_state = all_hidden_states[-1][0]
-
-            entity_token_ids = self.tokenizer.encode(entity, add_special_tokens=False)
-            entity_positions = [i for i, token_id in enumerate(inputs["input_ids"][0]) if token_id in entity_token_ids]
-
-            #Bad Results
-            if task_type == "average":
-                return last_hidden_state[entity_positions].mean(dim=0)
-
-            # Bad Results 
-            elif task_type == "layerwise_average":
-                layers = [-1, -2, -3, -4]
-                return torch.stack([all_hidden_states[layer][0][entity_positions].mean(dim=0) for layer in layers]).mean(dim=0)
-            
-            #not good for geobert
-            elif task_type == "concatenate":
-                layers = [-1, -2]
-                return torch.cat([all_hidden_states[layer][0][entity_positions].mean(dim=0) for layer in layers], dim=0)
-            
-            #not good for geobert
-            elif task_type == "max_pooling":
-                return last_hidden_state[entity_positions].max(dim=0)[0]
-
-            #not good for geobert but best for colln model
-            elif task_type == "difference":
-                sentence_embedding = last_hidden_state.mean(dim=0)
-                entity_embedding = last_hidden_state[entity_positions].mean(dim=0)
-                return entity_embedding - sentence_embedding
-            
-            #only pass the entity and get the embeddings on the cls token or the embedding itself
-            elif task_type == "cls_embedding":
-                self.model.eval()
-                inputs1 = self.tokenizer(entity, return_tensors="pt", truncation=True, padding=True, max_length=512)
-                tokenized_text = self.tokenizer.tokenize(entity)
-                with torch.no_grad():
-                    outputs1 = self.model(**inputs1, output_hidden_states=True)
-                last_hidden_state = outputs1['hidden_states'][-1]
-                cls_embedding = last_hidden_state[0, 0, :]
-                return cls_embedding
-                  
-
-            else:
-                raise ValueError(f"Unsupported task_type: {task_type}")
-        
-        except Exception as e:
-            self.logger.error(f"Error extracting entity embedding: {e}")
-            raise   Exception("Error extracting entity embedding: {}".format(e))
-
-
-    def fit_umap(self, all_embeddings, sentence_embeddings):
-        try:
-            if not all_embeddings or not sentence_embeddings:
+            if not all_embeddings:
                 raise ValueError("Embedding lists are empty or contain invalid data.")
             self.reducer.fit(np.array(all_embeddings))
-            self.sentence_reducer.fit(np.array(sentence_embeddings))
-
         except Exception as e:
             self.logger.error(f"Error fitting UMAP: {e}")
             raise Exception(f"Error fitting UMAP: {e}")
@@ -148,31 +94,27 @@ class EntityEmbeddingExtractor:
                 entity1, full_context, entity2, pair_dict = pair
                 context = self._get_relevant_context(entity1, entity2, full_context)
                 entity1_embedding, _ = self.extract_entity_embedding(entity1, context)
-                entity2_embedding, sentence_embedding = self.extract_entity_embedding(entity2, context)
+                entity2_embedding, _ = self.extract_entity_embedding(entity2, context)
                 pair_dict['entity1_embedding'] = self.reducer.transform([entity1_embedding.tolist()])[0]
                 pair_dict['entity2_embedding'] = self.reducer.transform([entity2_embedding.tolist()])[0]
-                pair_dict['sentence_embedding'] = self.sentence_reducer.transform([sentence_embedding.tolist()])[0]
                 updated_inner_list.append((entity1, full_context, entity2, pair_dict))
             updated_pairs.append(updated_inner_list)
         return updated_pairs
 
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
         all_embeddings = []
-        all_sentences = []
         all_entities = []
-        all_sentence_embeddings = []
         try:
             for inner_list in doc_entity_pairs:
                 for pair in inner_list:
                     entity1, full_context, entity2, _ = pair
                     context = self._get_relevant_context(entity1, entity2, full_context)
-                    entity1_embedding, sentence_embedding = self.extract_entity_embedding(entity1, context)
+                    entity1_embedding, _ = self.extract_entity_embedding(entity1, context)
                     entity2_embedding, _ = self.extract_entity_embedding(entity2, context)
                     self.append_if_not_present(entity1, entity1_embedding, all_entities, all_embeddings, sentence=context)
                     self.append_if_not_present(entity2, entity2_embedding, all_entities, all_embeddings, sentence=context)
-                    self.append_if_not_present(context, sentence_embedding, all_sentences, all_sentence_embeddings)
 
-            self.fit_umap(all_embeddings=all_embeddings, sentence_embeddings=all_sentence_embeddings)
+            self.fit_umap(all_embeddings=all_embeddings)
             return self._update_pairs_with_embeddings(doc_entity_pairs)
         
         except Exception as e:

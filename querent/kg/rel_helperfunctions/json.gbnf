@@ -1,0 +1,9 @@
+root ::= SemanticTriple
+SemanticTriple ::= "{"   ws   "\"subject\":"   ws   string   ","   ws   "\"predicate\":"   ws   string   ","   ws   "\"object\":"   ws   string   ","   ws   "\"subject_type\":"   ws   string   ","   ws   "\"predicate_type\":"   ws   string   ","   ws   "\"object_type\":"   ws   string   "}"
+SemanticTriplelist ::= "[]" | "["   ws   SemanticTriple   (","   ws   SemanticTriple)*   "]"
+string ::= "\""   ([^"]*)   "\""
+boolean ::= "true" | "false"
+ws ::= [ \t\n]*
+number ::= [0-9]+   "."?   [0-9]*
+stringlist ::= "["   ws   "]" | "["   ws   string   (","   ws   string)*   ws   "]"
+numberlist ::= "["   ws   "]" | "["   ws   string   (","   ws   number)*   ws   "]"

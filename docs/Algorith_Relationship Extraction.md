@@ -13,8 +13,8 @@
 
 ## Trigger for the Relationship Extraction to start work:
 
-Event Type : NER_GRAPH_UPDATE
-We have subscribed the relationship extractor class to NER_GRAPH_UPDATE event type emitted from the bert llm class.  When this event type signal is emitted, the handle_event function is triggered inside the relationship extractor which is responsible for extracting relationships. Below is the workflow of the relationship extractor:
+Event Type : ContextualTriples
+We have subscribed the relationship extractor class to ContextualTriples event type emitted from the bert llm class.  When this event type signal is emitted, the handle_event function is triggered inside the relationship extractor which is responsible for extracting relationships. Below is the workflow of the relationship extractor:
 <br /><br />
 
 ### I. Data Validation in RealtionExtractor:<br />
@@ -87,6 +87,19 @@ Why reordering ? No matter the architecture of the model, there is a substantial
 3. For each triple, the method formulates a validation question to ascertain if entity1 and entity2 have a relationship. This question is sent to a question-answering system (self.qa_system). If the answer suggests a relationship exists (contains "yes"), the method then asks a second question to determine the nature of the relationship.
 4. Utilizes a custom chain (custom_stuff_chain) to process the reordered documents with the input query and the template, generating the final output (relationships).
 5. The method updates the triples with relationship information.
+
+![](./images/Retrieval.png)
+![](./images/Vector_Embedding.png)
+![](./images/RAG_Reranker.png)
+
+Given the entities '{entity1}' and '{entity2}', and their context: "{context}", 
+Pease decompose the task of evaluating their relationship into the following smaller sub-tasks:
+        1. Evaluate if a meaningful relationship exists.
+        2. If a meaningful relationship exists, extract the relationship.
+        3. Determine the type of relationship (e.g., location-based, person-based).
+        4. Check the response for factual accuracy.
+        5. Assess alignment with the user's question and relevance.
+        6. Identify any temporal and causal relationships.
 
 
 ```python

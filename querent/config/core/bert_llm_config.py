@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import List, Dict, Any
 
 class BERTLLMConfig(BaseModel):
     name: str = "BERTLLMEngine"
@@ -16,4 +17,9 @@ class BERTLLMConfig(BaseModel):
         'cluster_persistence_threshold': 0.4
     })
 
+    sample_entities: List[str] = Field(default_factory=list, description="List of sample entities")
+    fixed_entities: List[str] = Field(default_factory=list, description="List of fixed entities")
+    fixed_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of fixed relationships represented as dictionaries")
+    sample_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of sample relationships represented as dictionaries")
+    user_context: Dict[str, Any] = Field(default_factory=dict, description="User-specific context information")
 

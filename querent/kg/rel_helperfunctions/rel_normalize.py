@@ -81,9 +81,9 @@ class TextNormalizer:
 
     def normalize(self, text):
         try:
-            text = self.lowercase(text)
-            text = self.lemmatize(text)
-            text = self.remove_stop_words(text)
+            #text = self.lowercase(text)
+            #text = self.lemmatize(text)
+            #text = self.remove_stop_words(text)
             return text
         except Exception as e:
             self.logger.error(f"Error in normalizing text: {e}")
@@ -94,10 +94,10 @@ class TextNormalizer:
             normalized_triples = []
             for triple in triples:
                 entity1, context_json, entity2 = triple
-                context_dict = json.loads(context_json)  # Assuming context_json is a JSON string
+                context_dict = json.loads(context_json)
                 normalized_context = self.normalize(context_dict['context'])
-                context_dict['context'] = normalized_context  # Replace the context with the normalized one
-                normalized_context_json = json.dumps(context_dict)  # Convert back to JSON string if needed
+                context_dict['context'] = normalized_context
+                normalized_context_json = json.dumps(context_dict)
                 normalized_triples.append((entity1, normalized_context_json, entity2))
             return normalized_triples
         except Exception as e:
