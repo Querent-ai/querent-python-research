@@ -14,8 +14,8 @@ The `EventType` class contains predefined constants that represent different kin
 ### Usage Example (All event types generated from llm for now)
 
 ```python
-current_state = EventState(EventType.Vector, 1.0, filtered_triples, filename)
-current_state = EventState(EventType.Graph, 1.0, filtered_triples, filename)
+current_state = EventState(EventType.Vector, 1.0, filtered_triples, file)
+current_state = EventState(EventType.Graph, 1.0, filtered_triples, file)
 
 
 Vector----------------------------------

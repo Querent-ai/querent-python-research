@@ -29,8 +29,8 @@ class EventState:
         payload (Any): The payload of the event.
     """
 
-    def __init__(self, event_type: EventType, timestamp: float, payload: Any, filename: str):
+    def __init__(self, event_type: EventType, timestamp: float, payload: Any, file: str):
         self.event_type = event_type
         self.timestamp = timestamp
         self.payload = payload
-        self.filename = filename
+        self.file = file

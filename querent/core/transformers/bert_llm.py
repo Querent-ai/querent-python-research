@@ -140,7 +140,7 @@ class BERTLLM(BaseEngine):
 
                 return
 
-            filename, content = self.file_buffer.add_chunk(
+            file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
             if content:
@@ -171,7 +171,7 @@ class BERTLLM(BaseEngine):
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                pairs_with_predicates = process_data(pairs_withemb, filename)
+                pairs_with_predicates = process_data(pairs_withemb, file)
                 if self.enable_filtering == True:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -192,11 +192,11 @@ class BERTLLM(BaseEngine):
                 for triple in embedding_triples:
                     graph_json = TripleToJsonConverter.convert_graphjson(triple)
                     if graph_json:
-                        current_state = EventState(EventType.Graph,1.0, graph_json, filename)
+                        current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)
                     vector_json = TripleToJsonConverter.convert_vectorjson(triple)
                     if vector_json:
-                        current_state = EventState(EventType.Vector,1.0, vector_json, filename)
+                        current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
