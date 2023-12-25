@@ -1,9 +1,12 @@
 from transformers import AutoTokenizer
+from querent.common.types.ingested_images import IngestedImages
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
-from querent.kg.ner_helperfunctions.graph_manager_contextual import KnowledgeGraphManager
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -20,6 +23,7 @@ from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 
 
 
@@ -65,9 +69,9 @@ class BERTLLM(BaseEngine):
         input_queue:QuerentQueue,
         config: BERTLLMConfig
     ):  
-        self.logger = setup_logger(config.logger, "BERTLLM")
+        self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
-        self.graph_config = GraphConfig(identifier=config.ner_model_name)
+        self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
@@ -82,12 +86,24 @@ class BERTLLM(BaseEngine):
         self.triple_filter = None
         if self.enable_filtering:
             self.triple_filter = TripleFilter(**self.filter_params)
+        self.sample_entities = config.sample_entities
+        self.fixed_entities = config.fixed_entities
+        self.fixed_relationships = config.fixed_relationships
+        self.sample_relationships = config.sample_relationships
+        self.user_context = config.user_context
+        if config.fixed_entities:
+                self.entity_context_extractor = FixedEntityExtractor(config.fixed_entities)
+        else:
+                self.entity_context_extractor = None
  
 
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
 
     def process_messages(self, data: IngestedMessages):
+        return super().process_messages(data)
+    
+    def process_images(self, data: IngestedImages):
         return super().process_messages(data)
 
     async def process_code(self, data: IngestedCode):
@@ -124,10 +140,12 @@ class BERTLLM(BaseEngine):
 
                 return
 
-            filename, content = self.file_buffer.add_chunk(
+            file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
             if content:
+                if self.entity_context_extractor:
+                    content = self.entity_context_extractor.find_entity_sentences(content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
                     (
@@ -140,6 +158,7 @@ class BERTLLM(BaseEngine):
                         self.ner_llm_instance.transform_entity_pairs(entity_pairs)
                     )
                     number_sentences = number_sentences + 1
+               
 
 
             else:
@@ -152,7 +171,7 @@ class BERTLLM(BaseEngine):
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                pairs_with_predicates = process_data(pairs_withemb, filename)
+                pairs_with_predicates = process_data(pairs_withemb, file)
                 if self.enable_filtering == True:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -163,23 +182,22 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates         
-                current_state = EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples)
-                await self.set_state(new_state=current_state)
-                kgm = KnowledgeGraphManager()
-                kgm.feed_input(filtered_triples)
-                current_state = EventState(EventType.TOKEN_PROCESSED, 1.0, kgm.retrieve_triples())
-                await self.set_state(new_state=current_state)
+                    filtered_triples = pairs_with_predicates   
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
-                semantic_triples = semantic_extractor.process_tokens(EventState(EventType.NER_GRAPH_UPDATE, 1.0, filtered_triples))
-                current_state = EventState(EventType.RELATIONSHIP_ESTABLISHED, 1.0, semantic_triples)
-                await self.set_state(new_state=current_state)
+                relationships = semantic_extractor.process_tokens(filtered_triples)
+                embedding_triples = semantic_extractor.generate_embeddings(relationships)
+                for triple in embedding_triples:
+                    graph_json = TripleToJsonConverter.convert_graphjson(triple)
+                    if graph_json:
+                        current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                        await self.set_state(new_state=current_state)
+                    vector_json = TripleToJsonConverter.convert_vectorjson(triple)
+                    if vector_json:
+                        current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                        await self.set_state(new_state=current_state)
         except Exception as e:
-            self.logger.error(
-                f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}"
-            )
-            raise Exception(
-                f"An unexpected error occurred while processing tokens: {e}"
-            )
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+            raise Exception(f"An unexpected error occurred while processing tokens: {e}")

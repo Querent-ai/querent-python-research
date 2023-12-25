@@ -104,7 +104,7 @@ class EmbeddingStore:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to load index: {e}")
             raise Exception(f"Failed to load index: {e}")
 
-    def as_retriever(self, search_type='similarity', search_kwargs={'k': 2}):
+    def as_retriever(self, search_type='similarity', search_kwargs={'k': 10}):
         try:
             if self.db is None:
                 raise ValueError("FAISS index is not loaded. Call load_index() first.")
@@ -112,4 +112,16 @@ class EmbeddingStore:
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to initialize retriever: {e}")
             raise Exception(f"Failed to initialize retriever: {e}")
+    
+    def get_embeddings(self, texts):
+        try:
+            embeddings = []
+            for text in texts:
+                embedding = self.embeddings.embed_query(text)
+                embeddings.append(embedding)
+            return embeddings
+        except Exception as e:
+            self.logger.error(f"Failed to generate embeddings: {e}")
+            raise Exception(f"Failed to generate embeddings: {e}")
+
     
