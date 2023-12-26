@@ -10,6 +10,7 @@ import time
 from querent.graph.graph_namespace import NamespaceManager
 from querent.graph.subject import Subject
 from querent.graph.utils import URI, BNode, Literal
+from rdflib.plugins.sparql import prepareQuery
 
 from querent.logging.logger import setup_logger
 
@@ -183,3 +184,26 @@ class QuerentGraph(object):
     def calculate_actual_memory_usage(self):
         # Calculate the actual memory usage
         return self.graph.serialize(format="nt").__sizeof__()
+
+    def execute_query(self, query_str: str):
+        """
+        Execute a query. Example usage to get all subjects with specific predicate and object
+
+        graph = QuerentGraph()
+        Add few triples and then
+
+        sparql_query = \"""
+        SELECT ?subject
+        WHERE {
+            ?subject <http://example.org/predicate> "Example Object" .
+        }
+        \"""
+        results = querent_graph.execute_query(sparql_query)
+        print(results)
+        """
+        try:
+            query = prepareQuery(query_str)
+            return list(self.graph.query(query))
+        except Exception as e:
+            self.logger.error(f"Failed to execute query: {query_str}")
+            raise e
