@@ -8,7 +8,7 @@ class IngestedImages:
         image: str,
         image_name: str,
         page_num: int,
-        text: str,
+        text: [str],
         coordinates: list = [],
         ocr_text: list = [],
         error: str = None,
@@ -28,13 +28,10 @@ class IngestedImages:
     def __str__(self):
         if self.error:
             return f"Error: {self.error}"
-        return f"Data: {self.file_path}"
+        return f"Data: {self.ocr_text}"
 
     def is_error(self) -> bool:
         return self.error is not None
-
-    def get_file_path(self) -> str:
-        return self.file_path
 
     def get_extension(self) -> str:
         return self.extension
