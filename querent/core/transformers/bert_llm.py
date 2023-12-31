@@ -120,8 +120,7 @@ class BERTLLM(BaseEngine):
                 self.set_termination_event()
 
                 return
-
-            file, content = self.file_buffer.add_chunk(
+            
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
