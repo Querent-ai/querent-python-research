@@ -209,6 +209,7 @@ class RelationExtractor():
                 sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
                 for task in sub_task_list_llm:  
                     answer_relation = self.qa_system.ask_question(prompt=task[2], top_docs=documents, llm_chain=task[0])
+                    print("answersssssss", answer_relation)
                     try:
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)

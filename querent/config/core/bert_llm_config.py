@@ -19,7 +19,7 @@ class BERTLLMConfig(BaseModel):
 
     sample_entities: List[str] = Field(default_factory=list, description="List of sample entities")
     fixed_entities: List[str] = Field(default_factory=list, description="List of fixed entities")
-    fixed_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of fixed relationships represented as dictionaries")
-    sample_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of sample relationships represented as dictionaries")
+    fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
+    sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
     user_context: Dict[str, Any] = Field(default_factory=dict, description="User-specific context information")
 

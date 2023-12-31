@@ -24,7 +24,8 @@ in the GoM. This relationship is illustrated in the deep-water basin by (1) a hi
 modation and deposition of a shale interval when coarse-grained terrigenous material
 was trapped upstream at the onset of the PETM, and (2) a considerable increase in sedi-
 ment supply during the PETM, which is archived as a particularly thick sedimentary
-section in  the deep-sea fans of the GoM basin.""","botryan96/GeoBERT", BERTLLM, ["tectonic perturbations","downstream sectors"], True)])
+section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca. 56 Ma) was a rapid global warming event characterized by the rise of temperatures to5–9 °C (Kennett and Stott, 1991), which caused substantial environmental changes around the globe.""",
+"botryan96/GeoBERT", BERTLLM, ["tectonic perturbations","downstream sectors"], True)])
 
 
 
@@ -46,17 +47,20 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             'min_samples': 3,
             'cluster_persistence_threshold':0.2
         }
+            # ,fixed_entities = ['eocene', 'mexico']
+            , sample_entities=['B-GeoTime', 'B-GeoLoc']
+            , fixed_relationships=["constraint"]
+            , sample_relationships=["location", "locatedin"]
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = event_state.payload
+            print("--------------------------------", triple)
+            print("-----------------------inside assertion")
             assert triple['subject'] == 'tectonic perturbations' or triple['subject'] == 'deposition'
-
-
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
-    # llm_instance.subscribe(EventType.RdfSemanticTriples, StateChangeCallback())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,

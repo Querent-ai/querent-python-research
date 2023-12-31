@@ -1,4 +1,5 @@
 from transformers import AutoTokenizer
+from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
@@ -25,44 +26,6 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 
-
-
-
-"""
-    BERT-based Named Entity Recognition (NER) and Linking Language Model (LLM) for extracting entities and relationships from text.
-
-    Inherits from:
-        BaseEngine: Base class for processing engines.
-
-    Attributes:
-        graph_config (GraphConfig): Configuration for the graph.
-        logger (Logger): Logger instance for logging errors and information.
-        file_buffer (FileBuffer): Buffer for storing files.
-        ner_tokenizer (AutoTokenizer): Tokenizer for the NER model.
-        ner_model (Model): Pre-trained NER model.
-        ner_llm_instance (NER_LLM): Instance of the NER_LLM class.
-        attn_scores_instance (EntityAttentionExtractor): Instance for extracting attention scores.
-        entity_embedding_extractor (EntityEmbeddingExtractor, optional): Instance for extracting entity embeddings.
-        triple_filter_instance (EntityTripleFilter
-
-    Methods:
-        validate() -> bool:
-            Validates if the NER model and tokenizer are initialized.
-
-        process_messages(data: IngestedMessages):
-            Processes the ingested messages.
-
-        process_code(data: IngestedCode):
-            Processes the ingested code.
-
-        validate_ingested_tokens(data: IngestedTokens) -> bool:
-            Validates the ingested tokens.
-
-        process_tokens(data: IngestedTokens):
-            Processes the ingested tokens, extracts entities, and builds the knowledge graph.
-    """
-
-
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -88,13 +51,25 @@ class BERTLLM(BaseEngine):
             self.triple_filter = TripleFilter(**self.filter_params)
         self.sample_entities = config.sample_entities
         self.fixed_entities = config.fixed_entities
+        if self.fixed_entities and not self.sample_entities:
+            raise ValueError("If specific entities are provided, their types should also be provided.")
+        if self.fixed_entities and self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities)
+        elif self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities)
+        else:
+            self.entity_context_extractor = None
         self.fixed_relationships = config.fixed_relationships
         self.sample_relationships = config.sample_relationships
-        self.user_context = config.user_context
-        if config.fixed_entities:
-                self.entity_context_extractor = FixedEntityExtractor(config.fixed_entities)
+        if self.fixed_relationships and not self.sample_relationships:
+            raise ValueError("If specific predicates are provided, their types should also be provided.")
+        if self.fixed_relationships and self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships)
+        elif self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
         else:
-                self.entity_context_extractor = None
+            self.predicate_context_extractor = None
+        self.user_context = config.user_context
  
 
     def validate(self) -> bool:
@@ -143,36 +118,40 @@ class BERTLLM(BaseEngine):
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
+            print("--------------------------------", content)
             if content:
-                if self.entity_context_extractor:
+                if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
+                    print("--------------------------------", content)
+                if self.fixed_relationships:
+                    content = self.predicate_context_extractor.find_predicate_sentences(content)
+                    print("--------------------------------", content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+                print("tokens: ", tokens)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (
-                        entities,
-                        entity_pairs,
-                    ) = self.ner_llm_instance.extract_entities_from_sentence(
-                        original_sentence, sentence_idx, [s[1] for s in tokens]
-                    )
-                    doc_entity_pairs.append(
-                        self.ner_llm_instance.transform_entity_pairs(entity_pairs)
-                    )
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],False, [''])
+                    print("entity pairs", entity_pairs)
+                    if entity_pairs:
+                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
                     number_sentences = number_sentences + 1
-               
-
-
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
+            print("doc entities-----------------------", doc_entity_pairs)
+            if self.sample_entities:
+                doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
+            print("doc entities---------------------", doc_entity_pairs)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
+                print("-----------",pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                 else :
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
                 pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                print("-----------",pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, file)
-                if self.enable_filtering == True:
+                if self.enable_filtering == True and not self.entity_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
@@ -189,8 +168,12 @@ class BERTLLM(BaseEngine):
                 semantic_extractor = RelationExtractor(mock_config)
                 relationships = semantic_extractor.process_tokens(filtered_triples)
                 embedding_triples = semantic_extractor.generate_embeddings(relationships)
+                print("-------------------------------- embedding triples: {}".format(embedding_triples))
+                if self.sample_relationships:
+                    embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                 for triple in embedding_triples:
                     graph_json = TripleToJsonConverter.convert_graphjson(triple)
+                    print("-------------------------------- Graph : {}".format(graph_json))
                     if graph_json:
                         current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)

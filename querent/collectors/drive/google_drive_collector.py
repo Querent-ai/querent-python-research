@@ -134,7 +134,6 @@ class DriveCollector(Collector):
             item_split = set(str(item).split("/"))
             item_split.remove("")
             if item_split.intersection(self.items_to_ignore):
-                print(item_split, "\n\n", self.items_to_ignore)
                 continue
             if item.is_file():
                 yield item

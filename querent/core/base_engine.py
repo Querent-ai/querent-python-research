@@ -128,18 +128,6 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def process_images(self, data: IngestedImages):
-        """
-        Process images asynchronously.
-        Args:
-            data (IngestedImages): The input data to process.
-        Returns:
-            EventState: The state of the event is set with the event type and the timestamp
-            of the event and set using `self.set_state(event_state)`.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the LLM.

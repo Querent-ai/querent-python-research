@@ -256,14 +256,38 @@ class NER_LLM:
             self.logger.error(f"Error extracting binary pairs: {e}")
             raise(f"Error extracting binary pairs: {e}")
         return binary_pairs
+    
+    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], default_label='User', default_score=1.0):
+        results = []
+        try:
+            for idx, token in enumerate(chunk):
+                for entity in fixed_entities:
+                    if token.lower() == entity.lower():  # Case insensitive comparison
+                        entity_info = {
+                            "entity": token.lower(),
+                            "label": default_label,
+                            "score": default_score,
+                            "start_idx": idx
+                        }
+                        results.append(entity_info)
+        except Exception as e:
+            self.logger.error(f"Error extracting fixed entities from chunk: {e}")
+            raise Exception(f"Error extracting fixed entities from chunk: {e}")
 
-    def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str]):
+        return results
+
+    def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str]):
         try:
             tokens = self.tokenize_sentence(sentence)
             chunks = self.get_chunks(tokens)
             all_entities = []
             for chunk in chunks:
-                entities = self.extract_entities_from_chunk(chunk)
+                if fixed_entities_flag == False:
+                    entities = self.extract_entities_from_chunk(chunk)
+                else:
+                    print("Extracting entities from chunk..........")
+                    entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities)
+                print("entities: {}".format(entities))
                 all_entities.extend(entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
             parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence)
