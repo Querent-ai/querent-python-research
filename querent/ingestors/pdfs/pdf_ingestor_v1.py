@@ -96,6 +96,7 @@ class PdfIngestor(BaseIngestor):
                 text = page.extract_text()
                 if not text:
                     continue
+
                 processed_text = await self.process_data(text)
 
                 # Yield processed text as IngestedTokens
@@ -148,6 +149,7 @@ class PdfIngestor(BaseIngestor):
                 text=text,
                 coordinates=None,
                 ocr_text=None,
+                error=f"Exception:{e}",
             )
 
     async def get_ocr_from_image(self, image):

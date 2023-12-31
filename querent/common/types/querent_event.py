@@ -12,3 +12,4 @@ class EventState:
         self.timestamp = timestamp
         self.payload = payload
         self.file = file
+        self.file = file

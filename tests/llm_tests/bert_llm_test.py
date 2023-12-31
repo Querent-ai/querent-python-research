@@ -67,4 +67,5 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     )
 
     await querent.start()
+    await querent.start()
 

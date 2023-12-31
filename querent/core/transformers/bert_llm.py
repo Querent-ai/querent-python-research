@@ -8,6 +8,7 @@ from querent.core.transformers.relationship_extraction_llm import RelationExtrac
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
 from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -33,7 +34,9 @@ class BERTLLM(BaseEngine):
         config: BERTLLMConfig
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
+        self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
+        self.graph_config = GraphConfig(identifier=config.name)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
@@ -80,6 +83,9 @@ class BERTLLM(BaseEngine):
     
     def process_images(self, data: IngestedImages):
         return super().process_messages(data)
+    
+    def process_images(self, data: IngestedImages):
+        return super().process_messages(data)
 
     async def process_code(self, data: IngestedCode):
         return super().process_messages(data)
@@ -115,6 +121,7 @@ class BERTLLM(BaseEngine):
 
                 return
 
+            file, content = self.file_buffer.add_chunk(
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
@@ -162,7 +169,9 @@ class BERTLLM(BaseEngine):
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
+                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
+                    filtered_triples = pairs_with_predicates   
                     filtered_triples = pairs_with_predicates   
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
@@ -182,5 +191,7 @@ class BERTLLM(BaseEngine):
                         current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)
         except Exception as e:
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+            raise Exception(f"An unexpected error occurred while processing tokens: {e}")
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")
