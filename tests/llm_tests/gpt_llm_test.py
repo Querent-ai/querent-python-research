@@ -6,7 +6,7 @@ from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
 from querent.config.core.bert_llm_config import BERTLLMConfig
-from querent.core.transformers.bert_llm import BERTLLM
+from querent.core.transformers.gpt2_llm_v1 import GPT2LLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 
@@ -15,8 +15,6 @@ from querent.querent.querent import Querent
 @pytest.mark.parametrize(
     "input_data,ner_model_name, llm_class,expected_entities,filter_entities",
     [
-        # ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
-        # ("Nishant is working from Delhi. Ansh is working from Punjab. Ayush is working from Odisha. India is very good at playing cricket. Nishant is working from Houston.", "dbmdz/bert-large-cased-finetuned-conll03-english", BERTLLM, ["http://geodata.org/Nishant", "http://geodata.org/Delhi"], False),
         (
             """In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM)
 record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM)
@@ -29,7 +27,7 @@ was trapped upstream at the onset of the PETM, and (2) a considerable increase i
 ment supply during the PETM, which is archived as a particularly thick sedimentary
 section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca. 56 Ma) was a rapid global warming event characterized by the rise of temperatures to5–9 °C (Kennett and Stott, 1991), which caused substantial environmental changes around the globe.""",
             "botryan96/GeoBERT",
-            BERTLLM,
+            GPT2LLM,
             ["tectonic perturbations", "downstream sectors"],
             True,
         )
@@ -56,12 +54,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(
             "min_cluster_size": 5,
             "min_samples": 3,
             "cluster_persistence_threshold": 0.2,
-        }
-        # ,fixed_entities = ['eocene', 'mexico']
-        ,
-        sample_entities=["B-GeoTime", "B-GeoLoc"],
-        fixed_relationships=["constraint"],
-        sample_relationships=["location", "locatedin"],
+        },
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
 
