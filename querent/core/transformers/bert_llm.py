@@ -27,7 +27,19 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
+"""
+    BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
+    Key functionalities include:
+    - Initializing with a specific configuration for named entity recognition (NER) and language model processing.
+    - Validating the presence of NER models and tokenizers.
+    - Processing various types of input data like messages, images, code, and tokens.
+    - Implementing methods for counting entity pairs, setting filter parameters, and processing tokens.
+    - Extracting and clustering entities and relationships from the text, and converting them into graph and vector formats.
+    - Handling errors and maintaining robustness in data processing.
+
+    The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
+    """
 class BERTLLM(BaseEngine):
     def __init__(
         self,
