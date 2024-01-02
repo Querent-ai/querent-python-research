@@ -257,15 +257,16 @@ class NER_LLM:
             raise(f"Error extracting binary pairs: {e}")
         return binary_pairs
     
-    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], default_label='User', default_score=1.0):
+    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=1.0):
         results = []
         try:
             for idx, token in enumerate(chunk):
-                for entity in fixed_entities:
+                for entity_idx, entity in enumerate(fixed_entities):
                     if token.lower() == entity.lower():  # Case insensitive comparison
+                        label = entity_types[entity_idx] if entity_idx < len(entity_types) else 'Unknown'
                         entity_info = {
                             "entity": token.lower(),
-                            "label": default_label,
+                            "label": label,
                             "score": default_score,
                             "start_idx": idx
                         }
@@ -276,7 +277,7 @@ class NER_LLM:
 
         return results
 
-    def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str]):
+    def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
         try:
             tokens = self.tokenize_sentence(sentence)
             chunks = self.get_chunks(tokens)
@@ -286,7 +287,7 @@ class NER_LLM:
                     entities = self.extract_entities_from_chunk(chunk)
                 else:
                     print("Extracting entities from chunk..........")
-                    entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities)
+                    entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
                 print("entities: {}".format(entities))
                 all_entities.extend(entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)

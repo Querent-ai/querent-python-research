@@ -1,3 +1,4 @@
+import json
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -73,6 +74,7 @@ class BERTLLM(BaseEngine):
         else:
             self.predicate_context_extractor = None
         self.user_context = config.user_context
+        self.isConfinedSearch = config.is_confined_search
  
 
     def validate(self) -> bool:
@@ -135,7 +137,7 @@ class BERTLLM(BaseEngine):
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
                 print("tokens: ", tokens)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],False, [''])
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
                     print("entity pairs", entity_pairs)
                     if entity_pairs:
                         doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
@@ -152,45 +154,49 @@ class BERTLLM(BaseEngine):
                 print("-----------",pairs_withattn)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
-                else :
-                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
-                pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                    pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                else:
+                    pairs_withemb = pairs_withattn
                 print("-----------",pairs_withemb)
                 pairs_with_predicates = process_data(pairs_withemb, file)
-                if self.enable_filtering == True and not self.entity_context_extractor:
+                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
-                    if final_clustered_triples is not None:
+                    print("final_clustered_triples----------------------------",final_clustered_triples)
+                    if final_clustered_triples:
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
+                        print("filtered triples----------------------------",filtered_triples)
                     else:
+                        print("clustered triples----------------------------",clustered_triples)
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+                        print("filtered triples222222----------------------------",filtered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates   
-                    filtered_triples = pairs_with_predicates   
+                    filtered_triples = pairs_with_predicates
+                print("filtered triples33333----------------------------",filtered_triples)    
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
+                print("after filteration1")
                 relationships = semantic_extractor.process_tokens(filtered_triples)
+                print("after filteration2")
                 embedding_triples = semantic_extractor.generate_embeddings(relationships)
                 print("-------------------------------- embedding triples: {}".format(embedding_triples))
                 if self.sample_relationships:
                     embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                 for triple in embedding_triples:
-                    graph_json = TripleToJsonConverter.convert_graphjson(triple)
+                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                     print("-------------------------------- Graph : {}".format(graph_json))
                     if graph_json:
                         current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)
-                    vector_json = TripleToJsonConverter.convert_vectorjson(triple)
+                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                     if vector_json:
                         current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)
         except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
-            raise Exception(f"An unexpected error occurred while processing tokens: {e}")
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")

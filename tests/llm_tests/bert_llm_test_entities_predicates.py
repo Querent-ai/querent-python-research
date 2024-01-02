@@ -48,6 +48,11 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             'min_samples': 3,
             'cluster_persistence_threshold':0.2
         }
+            ,fixed_entities = ['eocene', 'mexico']
+            , sample_entities=['B-GeoTime', 'B-GeoLoc']
+            , fixed_relationships=["constraint"]
+            , sample_relationships=["location", "locatedin"]
+            , is_confined_search= True
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):

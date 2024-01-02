@@ -20,6 +20,7 @@ class BERTLLMConfig(BaseModel):
 
     sample_entities: List[str] = Field(default_factory=list, description="List of sample entities")
     fixed_entities: List[str] = Field(default_factory=list, description="List of fixed entities")
+    is_confined_search: bool = False
     fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
     sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
     user_context: Dict[str, Any] = Field(default_factory=dict, description="User-specific context information")
