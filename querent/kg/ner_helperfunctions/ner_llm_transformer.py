@@ -286,9 +286,7 @@ class NER_LLM:
                 if fixed_entities_flag == False:
                     entities = self.extract_entities_from_chunk(chunk)
                 else:
-                    print("Extracting entities from chunk..........")
                     entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
-                print("entities: {}".format(entities))
                 all_entities.extend(entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
             parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence)
