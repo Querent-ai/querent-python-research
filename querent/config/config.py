@@ -14,22 +14,14 @@ class Config(BaseSettings):
 
     @classmethod
     def load_config(cls, config_source) -> dict:
-        if isinstance(config_source, str) and not os.path.exists(config_source):
-            # If config source is a string, assume it's a YAML configuration string
-            config_data = yaml.safe_load(config_source) or {}
-        elif os.path.exists(config_source):
-            # If config source is a file path, read it
-            with open(config_source, "r") as file:
-                config_data = yaml.safe_load(file) or {}
+        if isinstance(config_source, dict):
+            # If config source is a dictionary, return a dictionary
+            config_data = config_source
         else:
-            raise ValueError(
-                "Invalid config source. Must be a valid file path or YAML string."
-            )
+            raise ValueError("Invalid config. Must be a valid dictionary")
 
-        # Merge environment variables and config data
         env_vars = dict(os.environ)
-        config_data = {**config_data, **env_vars}
-
+        config_data.update(env_vars)
         return config_data
 
     @classmethod
