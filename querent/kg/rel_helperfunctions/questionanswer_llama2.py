@@ -3,6 +3,17 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import StuffDocumentsChain
 from querent.logging.logger import setup_logger
 
+"""
+    QASystem is a class designed for a question-answering system, leveraging large language models (LLMs) to process and answer queries. It focuses on integrating a relationship model and custom processing chains to handle various aspects of question-answering.
+
+    Key functionalities include:
+    - Initialization with paths and types for the relationship model.
+    - Loading of the large language model (LLM) with specific configurations.
+    - Execution of a custom processing chain, which integrates document processing and LLM querying.
+    - Handling the process of asking questions to the LLM and retrieving answers.
+
+    The class includes error handling and logging mechanisms to ensure robustness and traceability of operations. It's designed to handle complex querying processes by integrating multiple components for document processing and query answering in a cohesive workflow.
+    """
 class QASystem:
     def __init__(self, rel_model_path, rel_model_type):
         self.logger = setup_logger("Question-Answering_config", "Question-Answering")

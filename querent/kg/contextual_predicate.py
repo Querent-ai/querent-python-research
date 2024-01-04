@@ -46,21 +46,23 @@ class ContextualPredicate(BaseModel):
     @classmethod
     def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
         try:
+            entity1_embedding = data[3].get('entity1_embedding', []).tolist() if 'entity1_embedding' in data[3] else []
+            entity2_embedding = data[3].get('entity2_embedding', []).tolist() if 'entity2_embedding' in data[3] else []
+
             return cls(
                 context=data[1],
-                entity1_score=data[3]['entity1_score'],
-                entity2_score=data[3]['entity2_score'],
-                entity1_label=data[3]['entity1_label'],
-                entity2_label=data[3]['entity2_label'],
-                entity1_nn_chunk=data[3]['entity1_nn_chunk'],
-                entity2_nn_chunk=data[3]['entity2_nn_chunk'],
-                entity1_attnscore=data[3]['entity1_attnscore'],
-                entity2_attnscore=data[3]['entity2_attnscore'],
-                pair_attnscore=data[3]['pair_attnscore'],
-                entity1_embedding=data[3]['entity1_embedding'].tolist(),
-                entity2_embedding=data[3]['entity2_embedding'].tolist(),
+                entity1_score=data[3].get('entity1_score'),
+                entity2_score=data[3].get('entity2_score'),
+                entity1_label=data[3].get('entity1_label'),
+                entity2_label=data[3].get('entity2_label'),
+                entity1_nn_chunk=data[3].get('entity1_nn_chunk'),
+                entity2_nn_chunk=data[3].get('entity2_nn_chunk'),
+                entity1_attnscore=data[3].get('entity1_attnscore'),
+                entity2_attnscore=data[3].get('entity2_attnscore'), 
+                pair_attnscore=data[3].get('pair_attnscore'), 
+                entity1_embedding=entity1_embedding,
+                entity2_embedding=entity2_embedding,
                 file_path=data[4]
-                
             )
         except Exception as e:
             raise ValueError(f"Error creating ContextualPredicate from tuple: {e}")

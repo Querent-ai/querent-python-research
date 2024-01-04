@@ -11,6 +11,7 @@ from querent.common.types.querent_queue import QuerentQueue
 from querent.config.engine.engine_config import EngineConfig
 from querent.logging.logger import setup_logger
 from querent.common.types.ingested_images import IngestedImages
+from querent.common.types.ingested_images import IngestedImages
 
 """
     BaseEngine is an abstract base class that provides the foundational structure and methods 
@@ -128,18 +129,6 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def process_images(self, data: IngestedImages):
-        """
-        Process images asynchronously.
-        Args:
-            data (IngestedImages): The input data to process.
-        Returns:
-            EventState: The state of the event is set with the event type and the timestamp
-            of the event and set using `self.set_state(event_state)`.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the LLM.
@@ -226,10 +215,14 @@ class BaseEngine(ABC):
                             await self.process_tokens(data)
                         elif isinstance(data, IngestedImages):
                             await self.process_images(data)    
+                        elif isinstance(data, IngestedImages):
+                            await self.process_images(data)    
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
                         elif isinstance(data, IngestedImages):
                             await self.process_images(data)
+                        elif isinstance(data, None):
+                            self.termination_event.set()
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"

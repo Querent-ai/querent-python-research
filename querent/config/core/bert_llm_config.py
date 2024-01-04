@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
+from typing import List, Dict, Any
 
 class BERTLLMConfig(BaseModel):
     name: str = "BERTLLMEngine"
@@ -19,7 +20,8 @@ class BERTLLMConfig(BaseModel):
 
     sample_entities: List[str] = Field(default_factory=list, description="List of sample entities")
     fixed_entities: List[str] = Field(default_factory=list, description="List of fixed entities")
-    fixed_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of fixed relationships represented as dictionaries")
-    sample_relationships: List[Dict[str, Any]] = Field(default_factory=list, description="List of sample relationships represented as dictionaries")
+    is_confined_search: bool = False
+    fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
+    sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
     user_context: Dict[str, Any] = Field(default_factory=dict, description="User-specific context information")
 

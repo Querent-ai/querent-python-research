@@ -48,13 +48,15 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
             'min_samples': 3,
             'cluster_persistence_threshold':0.2
         }
+            , fixed_relationships=["constraint"]
+            , sample_relationships=["location", "locatedin"]
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
-            assert isinstance(triple['subject'], str) and triple['subject']
+            assert triple['predicate_type'] == 'location' or triple['predicate_type'] == 'locatedIn'
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(
         [llm_instance],

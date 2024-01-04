@@ -32,7 +32,7 @@ class EventCallbackDispatcher:
             event_data (Any): Data associated with the event.
         """
         for callback in self.callbacks[event_type]:
-            callback.handle_event(event_type, event_data)
+            await callback.handle_event(event_type, event_data)
 
     def register_webhook(self, event_type: EventType, webhook: str):
         """
