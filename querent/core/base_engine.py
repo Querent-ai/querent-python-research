@@ -221,6 +221,8 @@ class BaseEngine(ABC):
                             await self.process_code(data)
                         elif isinstance(data, IngestedImages):
                             await self.process_images(data)
+                        elif isinstance(data, None):
+                            self.termination_event.set()
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
