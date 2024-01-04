@@ -1,4 +1,6 @@
+import json
 from transformers import AutoTokenizer
+from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
@@ -6,6 +8,7 @@ from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
@@ -24,45 +27,19 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
-
-
-
-
 """
-    BERT-based Named Entity Recognition (NER) and Linking Language Model (LLM) for extracting entities and relationships from text.
+    BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
-    Inherits from:
-        BaseEngine: Base class for processing engines.
+    Key functionalities include:
+    - Initializing with a specific configuration for named entity recognition (NER) and language model processing.
+    - Validating the presence of NER models and tokenizers.
+    - Processing various types of input data like messages, images, code, and tokens.
+    - Implementing methods for counting entity pairs, setting filter parameters, and processing tokens.
+    - Extracting and clustering entities and relationships from the text, and converting them into graph and vector formats.
+    - Handling errors and maintaining robustness in data processing.
 
-    Attributes:
-        graph_config (GraphConfig): Configuration for the graph.
-        logger (Logger): Logger instance for logging errors and information.
-        file_buffer (FileBuffer): Buffer for storing files.
-        ner_tokenizer (AutoTokenizer): Tokenizer for the NER model.
-        ner_model (Model): Pre-trained NER model.
-        ner_llm_instance (NER_LLM): Instance of the NER_LLM class.
-        attn_scores_instance (EntityAttentionExtractor): Instance for extracting attention scores.
-        entity_embedding_extractor (EntityEmbeddingExtractor, optional): Instance for extracting entity embeddings.
-        triple_filter_instance (EntityTripleFilter
-
-    Methods:
-        validate() -> bool:
-            Validates if the NER model and tokenizer are initialized.
-
-        process_messages(data: IngestedMessages):
-            Processes the ingested messages.
-
-        process_code(data: IngestedCode):
-            Processes the ingested code.
-
-        validate_ingested_tokens(data: IngestedTokens) -> bool:
-            Validates the ingested tokens.
-
-        process_tokens(data: IngestedTokens):
-            Processes the ingested tokens, extracts entities, and builds the knowledge graph.
+    The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
     """
-
-
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -70,7 +47,9 @@ class BERTLLM(BaseEngine):
         config: BERTLLMConfig
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
+        self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
+        self.graph_config = GraphConfig(identifier=config.name)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
@@ -88,19 +67,35 @@ class BERTLLM(BaseEngine):
             self.triple_filter = TripleFilter(**self.filter_params)
         self.sample_entities = config.sample_entities
         self.fixed_entities = config.fixed_entities
+        if self.fixed_entities and not self.sample_entities:
+            raise ValueError("If specific entities are provided, their types should also be provided.")
+        if self.fixed_entities and self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities)
+        elif self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities)
+        else:
+            self.entity_context_extractor = None
         self.fixed_relationships = config.fixed_relationships
         self.sample_relationships = config.sample_relationships
-        self.user_context = config.user_context
-        if config.fixed_entities:
-                self.entity_context_extractor = FixedEntityExtractor(config.fixed_entities)
+        if self.fixed_relationships and not self.sample_relationships:
+            raise ValueError("If specific predicates are provided, their types should also be provided.")
+        if self.fixed_relationships and self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships)
+        elif self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
         else:
-                self.entity_context_extractor = None
+            self.predicate_context_extractor = None
+        self.user_context = config.user_context
+        self.isConfinedSearch = config.is_confined_search
  
 
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
 
     def process_messages(self, data: IngestedMessages):
+        return super().process_messages(data)
+    
+    def process_images(self, data: IngestedImages):
         return super().process_messages(data)
     
     def process_images(self, data: IngestedImages):
@@ -139,62 +134,59 @@ class BERTLLM(BaseEngine):
                 self.set_termination_event()
 
                 return
-
+            
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), data.data
             )
             if content:
-                if self.entity_context_extractor:
+                if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
+                if self.fixed_relationships:
+                    content = self.predicate_context_extractor.find_predicate_sentences(content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (
-                        entities,
-                        entity_pairs,
-                    ) = self.ner_llm_instance.extract_entities_from_sentence(
-                        original_sentence, sentence_idx, [s[1] for s in tokens]
-                    )
-                    doc_entity_pairs.append(
-                        self.ner_llm_instance.transform_entity_pairs(entity_pairs)
-                    )
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                    if entity_pairs:
+                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
                     number_sentences = number_sentences + 1
-               
-
-
             else:
                 if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()
+            if self.sample_entities:
+                doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.count_entity_pairs(pairs_withattn)>1:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
-                else :
-                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, 2, number_sentences=number_sentences)
-                pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                    pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                else:
+                    pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
-                if self.enable_filtering == True:
+                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
-                    if final_clustered_triples is not None:
+                    if final_clustered_triples:
                         filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates   
+                    filtered_triples = pairs_with_predicates 
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
                 relationships = semantic_extractor.process_tokens(filtered_triples)
                 embedding_triples = semantic_extractor.generate_embeddings(relationships)
+                if self.sample_relationships:
+                    embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                 for triple in embedding_triples:
-                    graph_json = TripleToJsonConverter.convert_graphjson(triple)
+                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                     if graph_json:
                         current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)
-                    vector_json = TripleToJsonConverter.convert_vectorjson(triple)
+                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                     if vector_json:
                         current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)

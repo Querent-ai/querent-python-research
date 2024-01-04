@@ -70,4 +70,6 @@ class TripleToJsonConverter:
             return json_object
         except Exception as e:
             raise Exception(f"Error in convert_vectorjson: {e}")
-
+        
+        
+        
