@@ -90,7 +90,7 @@ class DriveCollector(Collector):
                     yield CollectedBytes(data=chunk, file=file["name"])
                 yield CollectedBytes(data=None, file=file["name"], eof=True)
         except Exception as e:
-            raise common_errors.CollectorPollingError(
+            raise common_errors.PollingError(
                 f"Failed to poll Google Drive: {str(e)}"
             ) from e
         finally:
@@ -108,7 +108,7 @@ class DriveCollector(Collector):
             elif mime_type == "application/vnd.google-apps.folder":
                 return
             else:
-                raise common_errors.CollectorPollingError(
+                raise common_errors.PollingError(
                     f"Unsupported Google Docs file type: {mime_type}"
                 )
 
@@ -128,19 +128,6 @@ class DriveCollector(Collector):
                 yield fh.getvalue()
                 fh.seek(0)
                 fh.truncate(0)
-
-    async def walk_files(self, root: Path) -> AsyncGenerator[Path, None]:
-        for item in root.iterdir():
-            item_split = set(str(item).split("/"))
-            item_split.remove("")
-            if item_split.intersection(self.items_to_ignore):
-                print(item_split, "\n\n", self.items_to_ignore)
-                continue
-            if item.is_file():
-                yield item
-            elif item.is_dir():
-                async for file_path in self.walk_files(item):
-                    yield file_path
 
 
 class DriveCollectorFactory(CollectorFactory):
