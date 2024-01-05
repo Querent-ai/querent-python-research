@@ -1,6 +1,8 @@
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, Dict
 from pydantic import BaseModel, Field, validator
+import os
+from querent.common.types.collector_config_keys import CollectorConfigKey
 
 from querent.channel.channel_interface import ChannelCommandInterface
 
@@ -22,7 +24,11 @@ class CollectorBackend(str, Enum):
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
     # Use Field with allow_mutation=False to specify the type
-    channel: Any
+    channel: Optional[Any]
+    id: str
+    name: str
+    config: Dict[str, str]
+    inner_channel: Optional[Any]
 
     # Custom validator for ChannelCommandInterface
     @validator("channel", pre=True, allow_reuse=True)

@@ -1,10 +1,25 @@
 import os
 from pydantic import BaseSettings
 import yaml
+from pydantic import BaseModel
+from typing import Optional, List
+
 from querent.common.types.config_keys import ConfigKey
+from querent.config.workflow.workflow_config import WorkflowConfig
+from querent.config.collector.collector_config import CollectorConfig
+from querent.config.engine.engine_config import EngineConfig
+from querent.config.resource.resource_config import ResourceConfig
 
 
-class Config(BaseSettings):
+class Config(BaseModel):
+    version: float
+    querent_id: str
+    querent_name: str
+    workflow: WorkflowConfig
+    collectors: List[CollectorConfig]
+    engines: List[EngineConfig]
+    resource: Optional[ResourceConfig]
+
     def __init__(self, config_source=None, **kwargs):
         super().__init__(**kwargs)
         if config_source:

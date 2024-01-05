@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from pydantic import BaseModel, Field, validator
 
 from querent.channel.channel_interface import ChannelCommandInterface
@@ -7,17 +7,17 @@ from querent.channel.channel_interface import ChannelCommandInterface
 class EngineConfig(BaseModel):
     """Engine configuration."""
 
+    id: str
     name: str
-    description: str
-    version: str
 
-    num_workers: int = 1
-    max_retries: int = 1
-    retry_interval: float = 2.0
-    message_throttle_limit: int = 1000
-    message_throttle_delay: float = 0.001
+    num_workers: Optional[int] = 1
+    max_retries: Optional[int] = 1
+    retry_interval: Optional[int] = 2
+    message_throttle_limit: Optional[int] = 1000
+    message_throttle_delay: Optional[int] = 1
     # Use Field with allow_mutation=False to specify the type
-    channel: Any
+    inner_channel: Optional[Any]
+    channel: Optional[Any]
     logger: str = f"{__name__}.engine_config"
     state_queue: str = f"{__name__}.state_queue"
     workers: str = f"{__name__}.workers"

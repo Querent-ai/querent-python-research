@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional, Dict
 from pydantic import BaseModel, validator
 
 
@@ -7,8 +7,11 @@ class WorkflowConfig(BaseModel):
 
     name: str
     id: str
-    channel: Any
-    event_handler: Any
+    config: Dict[str, str]
+    inner_channel: Optional[Any]
+    channel: Optional[Any]
+    inner_channel_handler: Optional[Any]
+    event_handler: Optional[Any]
 
     @validator("channel", pre=True, allow_reuse=True)
     def validate_channel(cls, value):
