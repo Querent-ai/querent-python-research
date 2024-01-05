@@ -170,8 +170,8 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.state_queue.empty() or not self.termination_event.is_set():
-            new_state = await self.state_queue.get()
+        while not self.state_queue.empty() and not self.termination_event.is_set():
+            new_state = await self.state_queue.get_nowait()
             if isinstance(new_state, EventState):
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
@@ -216,9 +216,7 @@ class BaseEngine(ABC):
                             await self.process_images(data)       
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
-                        elif isinstance(data, IngestedImages):
-                            await self.process_images(data)
-                        elif isinstance(data, None):
+                        elif data is None:
                             self.termination_event.set()
                         else:
                             raise Exception(
