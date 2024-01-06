@@ -1,8 +1,19 @@
 import asyncio
+from asyncio import Queue
+import json
 from pathlib import Path
+from querent.callback.event_callback_interface import EventCallbackInterface
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.querent_event import EventState, EventType
+from querent.common.uri import Uri
+from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
-import os
 import uuid
+from querent.core.transformers.bert_llm import BERTLLM
+from querent.querent.resource_manager import ResourceManager
+from querent.querent.querent import Querent
+
 from dotenv import load_dotenv
 
 from querent.config.collector.collector_config import (
@@ -11,10 +22,8 @@ from querent.config.collector.collector_config import (
     SlackCollectorConfig,
 )
 from querent.common.uri import Uri
-from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.collectors.collector_resolver import CollectorResolver
-from querent.common.types.ingested_tokens import IngestedTokens
-
+import os
 
 load_dotenv()
 
@@ -50,7 +59,7 @@ def slack_config():
 @pytest.mark.asyncio
 async def test_multiple_collectors_all_async():
     # Set up the collectors
-    directories = ["./tests/data/pdf/", "./tests/data/pdf2/", "./tests/data/pdf3/"]
+    directories = ["./tests/data/llm/old_pdf", "./tests/data/llm/pdf"]
     collectors = [
         CollectorResolver().resolve(
             Uri("file://" + str(Path(directory).resolve())),
@@ -88,27 +97,38 @@ async def test_multiple_collectors_all_async():
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 
     # Wait for the task to complete
-    await asyncio.gather(ingest_task)
+    # await asyncio.gather(ingest_task)
+    # await result_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
+    resource_manager = ResourceManager()
+    bert_llm_config = BERTLLMConfig(
+    ner_model_name="botryan96/GeoBERT",
+    enable_filtering=True,
+    filter_params={
+            'score_threshold': 0.5,
+            'attention_score_threshold': 0.1,
+            'similarity_threshold': 0.5,
+            'min_cluster_size': 5,
+            'min_samples': 3,
+            'cluster_persistence_threshold':0.1
+        }
+            ,fixed_entities = ['carbon isotope', 'carbon stable isotope']
+            , sample_entities=['B-GeoPetro', 'B-GeoPetro']
+    )
+    llm_instance = BERTLLM(result_queue, bert_llm_config)
+    class StateChangeCallback(EventCallbackInterface):
+        async def handle_event(self, event_type: EventType, event_state: EventState):
+            assert event_state.event_type == EventType.Graph
+            triple = json.loads(event_state.payload)
+            print("triple: {}".format(triple))
+            assert isinstance(triple['subject'], str) and triple['subject']
+    llm_instance.subscribe(EventType.Graph, StateChangeCallback())
+    querent = Querent(
+        [llm_instance],
+        resource_manager=resource_manager,
+    )
 
-    # Optionally, check the result_queue for ingested data
-    counter = 0
-    unique_files = set()
-    messages = 0
-    while not result_queue.empty():
-        ingested_data = await result_queue.get()
-        if ingested_data is not None:
-            if (
-                isinstance(ingested_data, IngestedTokens)
-                and ingested_data.is_token_stream
-            ):
-                messages += 1
-            else:
-                unique_files.add(ingested_data.file)
-            counter += 1
-    assert counter == 129
-    assert len(unique_files) == 7
-    assert messages > 0
-
+    querent_task = asyncio.create_task(querent.start())
+    await asyncio.gather(ingest_task, querent_task)
 
 if __name__ == "__main__":
     asyncio.run(test_multiple_collectors_all_async())

@@ -115,10 +115,8 @@ class FixedEntityExtractor:
                     entity2_labels = entity_info.get('entity2_label', '').split(', ')
                     entity1_nn_chunk = entity_info.get('entity1_nn_chunk', '')
                     entity2_nn_chunk = entity_info.get('entity2_nn_chunk', '')
-
                     entity1_match = matches_criteria(entity1_nn_chunk, entity1_labels)
                     entity2_match = matches_criteria(entity2_nn_chunk, entity2_labels)
-
                     if entity1_match or entity2_match:
                         filtered_entities.append(entity_data)
 

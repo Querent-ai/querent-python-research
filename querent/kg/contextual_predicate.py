@@ -51,14 +51,14 @@ class ContextualPredicate(BaseModel):
 
             return cls(
                 context=data[1],
-                entity1_score=data[3].get('entity1_score'),
-                entity2_score=data[3].get('entity2_score'),
+                entity1_score=data[3].get('entity1_score', ''),
+                entity2_score=data[3].get('entity2_score', ''),
                 entity1_label=data[3].get('entity1_label'),
                 entity2_label=data[3].get('entity2_label'),
                 entity1_nn_chunk=data[3].get('entity1_nn_chunk'),
                 entity2_nn_chunk=data[3].get('entity2_nn_chunk'),
-                entity1_attnscore=data[3].get('entity1_attnscore'),
-                entity2_attnscore=data[3].get('entity2_attnscore'), 
+                entity1_attnscore=data[3].get('entity1_attnscore',''),
+                entity2_attnscore=data[3].get('entity2_attnscore',''), 
                 pair_attnscore=data[3].get('pair_attnscore'), 
                 entity1_embedding=entity1_embedding,
                 entity2_embedding=entity2_embedding,

@@ -1,77 +1,73 @@
-from functools import lru_cache
+from querent.logging.logger import setup_logger
 
 class FileBuffer:
     """
-    A buffer to manage and store file content in chunks using an LRU cache.
+    A buffer to manage and store file content in chunks.
 
-    The class is designed to handle file content that comes in chunks. It uses an LRU cache
-    to store these chunks efficiently. When a new file starts (indicated by a change in filename),
-    the content of the previous file is processed and cleared from the cache.
+    This class handles file content that comes in chunks by storing these chunks in a dictionary.
+    When a chunk with None is received, it is interpreted as the end of the current file,
+    and the content of that file is processed.
 
     Attributes:
         current_filename (str): The name of the file currently being processed.
-        _cache (functools._lru_cache_wrapper): The LRU cache storing file content chunks.
+        file_chunks (dict): A dictionary storing file content chunks.
 
     Methods:
-        _get_file_content(filename: str) -> list:
-            A private method to initialize an empty list for a given filename in the cache.
-
         add_chunk(filename: str, chunk: str) -> None:
-            Add a chunk of data to the buffer for the current file. If a new file starts,
-            process the end of the previous file.
+            Add a chunk of data to the buffer for the current file. If chunk is None,
+            process the end of the file.
 
-        end_file() -> str:
-            Process the end of the current file, clear its content from the cache, and return
-            the full content of the file.
+        end_file(filename: str) -> str:
+            Process the end of the specified file, clear its content from the dictionary,
+            and return the full content of the file.
 
         get_content(filename: str) -> str:
-            Retrieve the full content for a given filename from the cache.
+            Retrieve the full content for a given filename from the dictionary.
     """
 
-    # Neeed to discuss maxsize with sir
-    def __init__(self, maxsize=1000):
-        self.current_filename = None
-        self._cache = lru_cache(maxsize, typed=False)(self._get_file_content)
-
-    def _get_file_content(self, filename):
-
-        return []
+    def __init__(self):
+        self.logger = setup_logger(__name__, "FileBuffer")
+        self.file_chunks = {} 
 
     def add_chunk(self, filename, chunk):
         try:
-                if self.current_filename and self.current_filename != filename:
-                    
-                    return self.end_file()
+            if chunk is None:
+                return self.end_file(filename)
 
-                self.current_filename = filename
-                content = self._cache(filename)
-                content.append(chunk)
+            if filename not in self.file_chunks:
+                self.file_chunks[filename] = {}
+
+            # Automatically assign a chunk ID
+            chunk_id = len(self.file_chunks[filename])
+            self.file_chunks[filename][chunk_id] = chunk
+
+            return filename, None
                 
-                return self.current_filename, None
-            
         except Exception as e:
-            self.logger.error(
-                    f"Invalid {self.__class__.__name__} configuration. Unable to add data to cache. {e}"
-                )
+            self.logger.error(f"Error adding a chunk: {e}")
             raise Exception(f"An error occurred while adding a chunk: {e}")   
-             
 
-    def end_file(self):
+    def end_file(self, filename):
         try:
-            full_content = ''.join(self._cache(self.current_filename))
-            self._cache.cache_clear()
-            return self.current_filename,full_content
+            # Assemble file content from chunks
+            if filename in self.file_chunks:
+                chunks = self.file_chunks[filename]
+                full_content = ''.join([chunks[i] for i in sorted(chunks.keys())])
+                del self.file_chunks[filename]  # Clear the file entry
+                return filename, full_content
+            else:
+                raise Exception(f"No chunks found for file: {filename}")
         except Exception as e:
-            self.logger.error(
-                    f"Invalid {self.__class__.__name__} configuration. Unable to end file cache. {e}"
-                )
+            self.logger.error(f"Error ending the file: {e}")
             raise Exception(f"An error occurred while ending the file: {e}")
 
     def get_content(self, filename):
         try:
-            return ''.join(self._cache(filename))
+            if filename in self.file_chunks:
+                chunks = self.file_chunks[filename]
+                return ''.join([chunks[i] for i in sorted(chunks.keys())])
+            else:
+                raise Exception(f"No content found for file: {filename}")
         except Exception as e:
-            self.logger.error(
-                    f"Invalid {self.__class__.__name__} configuration. Unable to get contents from cache. {e}"
-                )
+            self.logger.error(f"Error getting content for {filename}: {e}")
             raise Exception(f"An error occurred while getting content for {filename}: {e}")
