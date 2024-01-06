@@ -92,8 +92,7 @@ class TripleFilter:
         for triple in triples:
             try:
                 entity1, json_data, entity2 = triple
-                data = json.loads(json_data)
-
+                data = json.loads(json_data)                
                 if not self.filter_by_score(data) or not self.filter_by_attention_score(data) or not self.filter_by_embedding_similarity(data):
                     continue
 
@@ -126,7 +125,6 @@ class TripleFilter:
                 min_samples=self.min_samples,
                 cluster_selection_method="leaf"
             )
-
             cluster_labels = clusterer.fit_predict(distance_matrix)
             cluster_persistence = clusterer.cluster_persistence_
 
@@ -158,4 +156,3 @@ class TripleFilter:
         else:
             
             return None
-        

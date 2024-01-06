@@ -34,19 +34,25 @@ from querent.logging.logger import setup_logger
     process_entities():
         Processes the entities, groups them by noun chunks, and calculates average scores.
     """
+nlp_model = spacy.load('en_core_web_lg')
 
 class Dependency_Parsing():
-    def __init__(self, entities=None, sentence=None):
+    def __init__(self, entities=None, sentence=None, nlp=nlp_model):
         self.logger = setup_logger(__name__, "Dependency_Parsing")
-        self.entities = entities
-        self.sentence = sentence.replace("\n", " ")
-        self.nlp = self.load_spacy_model()
-        self.doc = self.nlp(self.sentence)
-        self.noun_chunks = list(self.doc.noun_chunks)
-        self.filtered_chunks = self.filter_chunks()
-        self.merged_entities = self.merge_overlapping_entities()
-        self.compare_entities_with_chunks()
-        self.entities = self.process_entities()
+        try:
+            self.entities = entities
+            self.sentence = sentence.replace("\n", " ")
+            self.nlp = nlp
+            self.doc = self.nlp(self.sentence)
+            self.noun_chunks = list(self.doc.noun_chunks)
+            self.filtered_chunks = self.filter_chunks()
+            self.merged_entities = self.merge_overlapping_entities()
+            self.compare_entities_with_chunks()
+            self.entities = self.process_entities()
+        except Exception as e:
+            self.logger.info(f"Error Initializing Dependency Parsing Class: {e}")
+            raise Exception(f"Error Initializing Dependency Parsing Class: {e}")
+            
 
     def load_spacy_model(self):
         try:
@@ -89,20 +95,21 @@ class Dependency_Parsing():
         except Exception as e:
             self.logger.info(f"Error comparing entities with chunks: {e}")
             raise Exception(f"Error comparing entities with chunks: {e}")
-
+        
     def process_entities(self):
         try:
-            # Group entities by noun_chunk
             grouped_entities = {}
             for entity in self.entities:
+                # Use both chunk and start index as the key to differentiate entities at different positions
                 chunk = entity.get('noun_chunk', entity['entity'])
-                if chunk not in grouped_entities:
-                    grouped_entities[chunk] = []
-                grouped_entities[chunk].append(entity)
+                start_idx = entity.get('start_idx', -1)  # Use a default value if start_idx is not present
+                key = (chunk, start_idx)
 
-            # Process grouped entities
+                if key not in grouped_entities:
+                    grouped_entities[key] = []
+                grouped_entities[key].append(entity)
             processed_entities = []
-            for chunk, chunk_entities in grouped_entities.items():
+            for key, chunk_entities in grouped_entities.items():
                 if len(chunk_entities) == 1:
                     chunk_entities[0]['score'] = round(chunk_entities[0]['score'], 2)
                     chunk_entities[0].setdefault('noun_chunk', chunk_entities[0]['entity'])
@@ -126,3 +133,4 @@ class Dependency_Parsing():
         except Exception as e:
             self.logger.info(f"Error processing entities: {e}")
             raise Exception(f"Error processing entities: {e}")
+

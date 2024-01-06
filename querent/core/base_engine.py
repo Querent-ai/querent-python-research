@@ -170,8 +170,8 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.state_queue.empty() or not self.termination_event.is_set():
-            new_state = await self.state_queue.get()
+        while not self.state_queue.empty() and not self.termination_event.is_set():
+            new_state = await self.state_queue.get_nowait()
             if isinstance(new_state, EventState):
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
@@ -207,21 +207,16 @@ class BaseEngine(ABC):
                 while not self.termination_event.is_set():
                     retries = 0
                     data = await self.input_queue.get()
-
                     try:
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
                             await self.process_tokens(data)
                         elif isinstance(data, IngestedImages):
-                            await self.process_images(data)    
-                        elif isinstance(data, IngestedImages):
-                            await self.process_images(data)    
+                            await self.process_images(data)       
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
-                        elif isinstance(data, IngestedImages):
-                            await self.process_images(data)
-                        elif isinstance(data, None):
+                        elif data is None:
                             self.termination_event.set()
                         else:
                             raise Exception(
@@ -240,14 +235,12 @@ class BaseEngine(ABC):
                             break
 
                         await asyncio.sleep(self.retry_interval)
-
-                    await self.input_queue.task_done()
+                    self.input_queue.task_done()
                     current_message_total += 1
 
                     if current_message_total >= self.message_throttle_limit:
                         await asyncio.sleep(self.message_throttle_delay)
                         current_message_total = 0
-
             await asyncio.gather(state_listener, _inner_worker())
         except Exception as e:
             self.logger.error(f"Error while processing tokens: {e}")

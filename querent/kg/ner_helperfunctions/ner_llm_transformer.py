@@ -243,7 +243,7 @@ class NER_LLM:
                     if entities[i]["start_idx"] + 1 == entities[j]["start_idx"]:
                         continue
                     distance = self._token_distance(tokens, entities[i]["start_idx"], entities[j]["start_idx"],entities[i]["noun_chunk"], entities[j]["noun_chunk"])
-                    if distance <= 15:
+                    if distance <= 10:
                         pair = (entities[i], entities[j])
                         if pair not in binary_pairs:
                             metadata = {
@@ -295,5 +295,25 @@ class NER_LLM:
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
             raise(f"Error extracting entities from sentence: {e}")
+    
+    def remove_duplicates(self, data):
+        seen = set()
+        new_data = []
+
+        for sublist in data:
+            cleaned_sublist = []
+            for sub_item in sublist:
+                noun_chunk1 = sub_item[3]['entity1_nn_chunk']
+                noun_chunk2 = sub_item[3]['entity2_nn_chunk']
+                sentence = sub_item[1]
+                unique_key = (noun_chunk1, noun_chunk2, sentence)
+                if unique_key not in seen:
+                    seen.add(unique_key)
+                    cleaned_sublist.append(sub_item)
+            
+            if cleaned_sublist:
+                new_data.append(cleaned_sublist)
+
+        return new_data
 
 
