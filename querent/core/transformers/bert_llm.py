@@ -47,7 +47,6 @@ class BERTLLM(BaseEngine):
         config: BERTLLMConfig
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
-        self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
         self.graph_config = GraphConfig(identifier=config.name)
         self.graph_config = GraphConfig(identifier=config.name)
@@ -106,7 +105,7 @@ class BERTLLM(BaseEngine):
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
-        if not data.data or data.is_error():
+        if data.is_error():
             
             return False
 
@@ -130,13 +129,16 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
-            if data is None or data.is_error():
-                self.set_termination_event()
-
-                return
-            
+            if data.data:
+                single_string = ' '.join(data.data)
+                clean_text = single_string.replace('\n', ' ')
+            else:
+                clean_text = data.data
+            if not BERTLLM.validate_ingested_tokens(data):
+                    self.set_termination_event()
+                    return 
             file, content = self.file_buffer.add_chunk(
-                data.get_file_path(), data.data
+                data.get_file_path(), clean_text
             )
             if content:
                 if self.fixed_entities:
@@ -150,13 +152,13 @@ class BERTLLM(BaseEngine):
                         doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
                     number_sentences = number_sentences + 1
             else:
-                if not BERTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()
+                return
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
+                doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                if self.count_entity_pairs(pairs_withattn)>1:
+                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
                     pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 else:
