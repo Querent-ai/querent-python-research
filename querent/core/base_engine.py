@@ -170,8 +170,8 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.state_queue.empty() or not self.termination_event.is_set():
-            new_state = await self.state_queue.get()
+        while not self.state_queue.empty() and not self.termination_event.is_set():
+            new_state = await self.state_queue.get_nowait()
             if isinstance(new_state, EventState):
                 if new_state.payload == "terminate":
                     break
