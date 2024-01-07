@@ -117,7 +117,6 @@ class BERTLLM(BaseEngine):
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
         if data.is_error():
-        if data.is_error():
             
             return False
 
@@ -154,7 +153,6 @@ class BERTLLM(BaseEngine):
                     return 
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
-                data.get_file_path(), clean_text
             )
             if content:
                 if self.fixed_entities:
@@ -169,7 +167,7 @@ class BERTLLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-                return
+
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
