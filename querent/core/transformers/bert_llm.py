@@ -29,14 +29,6 @@ from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 import time
 import psutil
-from line_profiler import LineProfiler
-try:
-    from line_profiler import LineProfiler
-    profile = LineProfiler().wrap_function
-except ImportError:
-    # Define a dummy profile decorator if line_profiler is not installed
-    def profile(func):
-        return func
 """
     BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
@@ -59,6 +51,8 @@ class BERTLLM(BaseEngine):
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
+        mock_config = RelationshipExtractorConfig()
+        self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
@@ -136,7 +130,6 @@ class BERTLLM(BaseEngine):
         else:
             self.triple_filter = TripleFilter(**kwargs)
     
-    @profile
     async def process_tokens(self, data: IngestedTokens):
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
@@ -225,13 +218,11 @@ class BERTLLM(BaseEngine):
                 else:
                     filtered_triples = pairs_with_predicates 
                 # print("filtering in {self.__class__.__name__} producing", filtered_triples)
-                mock_config = RelationshipExtractorConfig()
-                semantic_extractor = RelationExtractor(mock_config)
-                relationships = semantic_extractor.process_tokens(filtered_triples[:1])
+                relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
                 current_time = time.time()
                 current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
                 print(f"Step 9: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
-                embedding_triples = semantic_extractor.generate_embeddings(relationships)
+                embedding_triples = self.semantic_extractor.generate_embeddings(relationships)
                 current_time = time.time()
                 current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
                 print(f"Step 10: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")

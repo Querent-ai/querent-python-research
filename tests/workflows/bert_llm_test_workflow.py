@@ -16,7 +16,7 @@ from querent.common.types.file_buffer import FileBuffer
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
-
+import time
 
 @pytest.mark.asyncio
 async def test_ingest_all_async():
@@ -74,4 +74,17 @@ async def test_ingest_all_async():
     await asyncio.gather(ingest_task, querent_task)
 
 if __name__ == "__main__":
+    # Record the start time
+    start_time = time.time()
+
+    # Run the async function
     asyncio.run(test_ingest_all_async())
+
+    # Record the end time
+    end_time = time.time()
+
+    # Calculate the duration
+    duration = end_time - start_time
+
+    # Print the duration
+    print(f"Total execution time: {duration} seconds")
