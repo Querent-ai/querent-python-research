@@ -41,10 +41,6 @@ async def test_ingest_all_async():
 
     # Start the ingest_all_async in a separate task
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-
-    # Wait for the task to complete
-    # await asyncio.gather(ingest_task)
-    # await result_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
     resource_manager = ResourceManager()
     bert_llm_config = BERTLLMConfig(
     ner_model_name="botryan96/GeoBERT",
