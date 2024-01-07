@@ -45,7 +45,14 @@ async def create_workers(directory, output_queue, logger_queue, stop_event):
     try:
         collector_factory = FSCollectorFactory()
         uri = Uri("file://" + str(Path(directory).resolve()))
-        config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
+        config = FSCollectorConfig(
+            config_source={
+                "id": str(uuid.uuid4()),
+                "root_path": directory,
+                "name": "Local-config",
+                "config": {},
+            }
+        )
         collector = collector_factory.resolve(uri, config)
         ingestor_factory_manager = IngestorFactoryManager()
         ingestor_factory = await ingestor_factory_manager.get_factory("pdf")

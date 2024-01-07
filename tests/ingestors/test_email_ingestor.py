@@ -18,15 +18,19 @@ load_dotenv()
 @pytest.fixture
 def email_config():
     return EmailCollectorConfig(
-        backend=CollectorBackend.Email,
-        id=str(uuid.uuid4()),
-        imap_server="imap.gmail.com",  # "imap.gmail.com
-        imap_port=993,
-        imap_username="puneet@querent.xyz",
-        imap_password=os.getenv("IMAP_PASSWORD"),
-        imap_folder="[Gmail]/Drafts",
-        imap_certfile=None,
-        imap_keyfile=None,
+        config_source={
+            "backend": "email",
+            "id": str(uuid.uuid4()),
+            "imap_server": "imap.gmail.com",
+            "imap_port": 993,
+            "imap_username": "puneet@querent.xyz",
+            "imap_password": os.getenv("IMAP_PASSWORD"),
+            "imap_folder": "[Gmail]/Drafts",
+            "imap_certfile": None,
+            "imap_keyfile": None,
+            "name": "Email-config",
+            "config": {},
+        }
     )
 
 

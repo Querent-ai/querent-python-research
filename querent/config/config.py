@@ -21,23 +21,32 @@ class Config(BaseModel):
     resource: Optional[ResourceConfig]
 
     def __init__(self, config_source=None, **kwargs):
-        super().__init__(**kwargs)
+        # if kwargs:
+        #     raise ValueError(
+        #         "Config values must be provided within a dictionary via 'config_source' parameter."
+        #     )
+
         if config_source:
-            self.config_data = self.load_config(config_source)
-        else:
-            self.config_data = {}
+            config_data = self.load_config(config_source)
+            for config_key in ConfigKey:
+                key = config_key.value
+                if key in config_data:
+                    setattr(self, key, config_data[key])
+
+        # else:
+        #     raise ValueError("Please pass config")
 
     @classmethod
     def load_config(cls, config_source) -> dict:
         if isinstance(config_source, dict):
             # If config source is a dictionary, return a dictionary
-            config_data = config_source
+            cls.config_data = config_source
         else:
             raise ValueError("Invalid config. Must be a valid dictionary")
 
         env_vars = dict(os.environ)
-        config_data.update(env_vars)
-        return config_data
+        cls.config_data.update(env_vars)
+        return cls.config_data
 
     @classmethod
     def get_full_config(cls):
