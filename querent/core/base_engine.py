@@ -170,9 +170,11 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.state_queue.empty() and not self.termination_event.is_set():
-            new_state = await self.state_queue.get_nowait()
+        while not self.state_queue.empty() or not self.termination_event.is_set():
+            new_state = await self.state_queue.get()
             if isinstance(new_state, EventState):
+                if new_state.payload == "terminate":
+                    break
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
                 raise Exception(
@@ -218,6 +220,8 @@ class BaseEngine(ABC):
                             await self.process_code(data)
                         elif data is None:
                             self.termination_event.set()
+                            current_state = EventState(EventType.Terminate,1.0, "terminate", "temp.txt")
+                            await self.set_state(new_state=current_state)
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"

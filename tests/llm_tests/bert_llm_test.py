@@ -44,8 +44,10 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
+            print("StateChangeCallback------------------------------------------------")
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
+            print("triple: {}".format(triple))
             assert isinstance(triple['subject'], str) and triple['subject']
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(

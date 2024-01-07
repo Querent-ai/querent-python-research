@@ -27,6 +27,16 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
+import time
+import psutil
+from line_profiler import LineProfiler
+try:
+    from line_profiler import LineProfiler
+    profile = LineProfiler().wrap_function
+except ImportError:
+    # Define a dummy profile decorator if line_profiler is not installed
+    def profile(func):
+        return func
 """
     BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
@@ -40,6 +50,7 @@ from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 
     The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
     """
+
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -124,8 +135,11 @@ class BERTLLM(BaseEngine):
             self.triple_filter.set_params(**kwargs)
         else:
             self.triple_filter = TripleFilter(**kwargs)
-
+    
+    @profile
     async def process_tokens(self, data: IngestedTokens):
+        start_time = time.time()
+        start_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
         doc_entity_pairs = []
         number_sentences = 0
         try:
@@ -135,7 +149,7 @@ class BERTLLM(BaseEngine):
             else:
                 clean_text = data.data
             if not BERTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()
+                    self.set_termination_event()                    
                     return 
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
@@ -156,40 +170,81 @@ class BERTLLM(BaseEngine):
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
+                current_time = time.time()
+                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                print(f"Step 1: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
+                current_time = time.time()
+                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                print(f"Step 2: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
+                current_time = time.time()
+                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                print(f"Step 3: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer, self.count_entity_pairs(pairs_withattn), number_sentences=number_sentences)
+                    # print("-------------------------------- pairs_withattn:::", pairs_withattn, "--------------------------------")
+                    print(self.count_entity_pairs(pairs_withattn))
+                    print(number_sentences)
+                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
                     pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+                    current_time = time.time()
+                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                    print(f"Step 4: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 else:
                     pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
+                    current_time = time.time()
+                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                    print(f"Step 5: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
+                    print("length of cluster_labels::::::{}".format(len(cluster_labels)))
+                    print("length of cluster persistence ::::::::::::", len(cluster_persistence))
+                          
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
+                    current_time = time.time()
+                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                    print(f"Step 6: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     if final_clustered_triples:
-                        filtered_triples, _ = self.triple_filter.filter_triples(final_clustered_triples)
+                        print("Intial Length--------------------------------", len(final_clustered_triples))
+                        filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
+                        print("reduction count -------------------", reduction_count)
+                        current_time = time.time()
+                        current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                        print(f"Step 7: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+                        current_time = time.time()
+                        current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                        print(f"Step 8: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates 
+                # print("filtering in {self.__class__.__name__} producing", filtered_triples)
                 mock_config = RelationshipExtractorConfig()
                 semantic_extractor = RelationExtractor(mock_config)
-                relationships = semantic_extractor.process_tokens(filtered_triples)
+                relationships = semantic_extractor.process_tokens(filtered_triples[:1])
+                current_time = time.time()
+                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                print(f"Step 9: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 embedding_triples = semantic_extractor.generate_embeddings(relationships)
+                current_time = time.time()
+                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
+                print(f"Step 10: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 if self.sample_relationships:
                     embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                 for triple in embedding_triples:
                     graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                     if graph_json:
+                        print("graph triples: {}".format(graph_json))
                         current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)
                     vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                     if vector_json:
+                        # print("vector triples: {}".format(vector_json))
                         current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)
         except Exception as e:
