@@ -1,3 +1,4 @@
+import json
 from pydantic import BaseModel
 from typing import List, Tuple, Dict
 
@@ -46,13 +47,13 @@ class ContextualPredicate(BaseModel):
     @classmethod
     def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
         try:
-            entity1_embedding = data[3].get('entity1_embedding', []) if 'entity1_embedding' in data[3] else []
-            entity2_embedding = data[3].get('entity2_embedding', []) if 'entity2_embedding' in data[3] else []
+            entity1_embedding = data[3].get('entity1_embedding', [])
+            entity2_embedding = data[3].get('entity2_embedding', [])
 
             return cls(
                 context=data[1],
-                entity1_score=data[3].get('entity1_score', ''),
-                entity2_score=data[3].get('entity2_score', ''),
+                entity1_score=float(data[3].get('entity1_score', 0.0)),
+                entity2_score=float(data[3].get('entity2_score', 0.0)),
                 entity1_label=data[3].get('entity1_label'),
                 entity2_label=data[3].get('entity2_label'),
                 entity1_nn_chunk=data[3].get('entity1_nn_chunk'),
@@ -77,7 +78,8 @@ def process_data(data: List[List[Tuple[str, str, str, Dict[str, float], str]]], 
                 if tup:  # Check if tuple is not empty
                     extended_tup = (*tup, file_path)
                     # Convert extended tuple to ContextualPredicate object and then to JSON string
-                    context_metadata_str = ContextualPredicate.from_tuple(extended_tup).json()
+                    context_metadata_str = ContextualPredicate.from_tuple(extended_tup)
+                    context_metadata_str = json.dumps(context_metadata_str.dict(), ensure_ascii=False)
                     result.append((tup[0], context_metadata_str, tup[2]))
                     
         return result

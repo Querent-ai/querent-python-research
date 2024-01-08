@@ -1,11 +1,35 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from querent.common.types.ingested_messages import IngestedMessages
-from querent.common.types.ingested_tokens import IngestedTokens
+import json
+from transformers import AutoTokenizer
+from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
+from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.core.transformers.relationship_extraction_llm import RelationExtractor
+from querent.kg.contextual_predicate import process_data
+from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
+from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
+from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
+from querent.common.types.querent_event import EventState, EventType
+from querent.core.base_engine import BaseEngine
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
-from querent.core.base_engine import BaseEngine
+from typing import Any, List, Tuple
+from querent.common.types.file_buffer import FileBuffer
 from querent.logging.logger import setup_logger
+from querent.kg.querent_kg import QuerentKG
+from querent.graph.graph import QuerentGraph
+from querent.config.graph_config import GraphConfig
+from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
+from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
+from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
+import time
+import psutil
 
 
 class GPT2LLM(BaseEngine):
@@ -17,9 +41,14 @@ class GPT2LLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAI")
         super().__init__(input_queue)
         self.model_name = model_name
+        self.ner_model_name = "botryan96/GeoBERT"
+        self.file_buffer = FileBuffer()
+        self.ner_tokenizer = AutoTokenizer.from_pretrained(self.ner_model_name)
+        self.ner_model = NER_LLM.load_model(self.ner_model_name, "NER")
+        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
     
     def validate(self) -> bool:
-        return self.ner_model is not None and self.ner_tokenizer is not None
+        return self.model_name is not None and self.ner_tokenizer is not None
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
