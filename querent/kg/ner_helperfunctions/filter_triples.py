@@ -129,8 +129,6 @@ class TripleFilter:
             cluster_persistence = clusterer.cluster_persistence_
 
             filtered_triples = [triples[index] for index, label in enumerate(cluster_labels) if label != -1]
-            print("Original cluster triples: ", len(triples))
-            print("Filtered cluster triples: ", len(filtered_triples))
             cluster_output = {
                 'filtered_triples': filtered_triples,
                 'reduction_count': len(triples) - len(filtered_triples),
@@ -145,8 +143,6 @@ class TripleFilter:
             raise Exception(f"Error during clustering: {e}")
 
     def filter_by_cluster_persistence(self, triples: List[Tuple[str, str,str]], cluster_persistence, cluster_labels) -> List[Tuple[str, str, str]]:
-        print("Cluster labelss: {}".format(cluster_labels))
-        print("Cluster persistence : {}".format(cluster_persistence))
         if self.cluster_persistence_threshold != -1:
             high_persistence_triples = []
             high_persistence_clusters = [index for index, persistence in enumerate(cluster_persistence) if persistence > self.cluster_persistence_threshold]

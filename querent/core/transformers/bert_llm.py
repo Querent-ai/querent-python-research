@@ -164,79 +164,39 @@ class BERTLLM(BaseEngine):
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
-                current_time = time.time()
-                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                print(f"Step 1: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
-                current_time = time.time()
-                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                print(f"Step 2: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                current_time = time.time()
-                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                print(f"Step 3: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    # print("-------------------------------- pairs_withattn:::", pairs_withattn, "--------------------------------")
-                    print(self.count_entity_pairs(pairs_withattn))
-                    print(number_sentences)
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
                     pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                    current_time = time.time()
-                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                    print(f"Step 4: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 else:
                     pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
-                    current_time = time.time()
-                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                    print(f"Step 5: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
-                    print("length of cluster_labels::::::{}".format(len(cluster_labels)))
-                    print("length of cluster persistence ::::::::::::", len(cluster_persistence))
                           
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
-                    current_time = time.time()
-                    current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                    print(f"Step 6: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     if final_clustered_triples:
-                        print("Intial Length--------------------------------", len(final_clustered_triples))
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
-                        print("reduction count -------------------", reduction_count)
-                        current_time = time.time()
-                        current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                        print(f"Step 7: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
-                        current_time = time.time()
-                        current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                        print(f"Step 8: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates 
-                # print("filtering in {self.__class__.__name__} producing", filtered_triples)
                 relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
-                current_time = time.time()
-                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                print(f"Step 9: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 embedding_triples = self.semantic_extractor.generate_embeddings(relationships)
-                current_time = time.time()
-                current_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
-                print(f"Step 10: Time elapsed: {current_time - start_time} seconds, Memory: {current_memory - start_memory} MB")
                 if self.sample_relationships:
                     embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                 for triple in embedding_triples:
                     graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                     if graph_json:
-                        print("graph triples: {}".format(graph_json))
                         current_state = EventState(EventType.Graph,1.0, graph_json, file)
                         await self.set_state(new_state=current_state)
                     vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                     if vector_json:
-                        # print("vector triples: {}".format(vector_json))
                         current_state = EventState(EventType.Vector,1.0, vector_json, file)
                         await self.set_state(new_state=current_state)
         except Exception as e:
