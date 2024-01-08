@@ -147,6 +147,7 @@ class BERTLLM(BaseEngine):
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
             )
+            print("Clean Text---------------------", clean_text)
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
