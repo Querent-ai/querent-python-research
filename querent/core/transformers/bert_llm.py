@@ -51,7 +51,7 @@ class BERTLLM(BaseEngine):
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
-        self.skip_inferences=False
+        self.skip_inferences=config.skip_inferences
         if not self.skip_inferences:
             mock_config = RelationshipExtractorConfig()
             self.semantic_extractor = RelationExtractor(mock_config)
@@ -190,7 +190,7 @@ class BERTLLM(BaseEngine):
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates
-                # print("filtered_triples -   {}".format(filtered_triples))           
+                print("filtered_triples -   {}".format(filtered_triples[:1]))           
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
                     embedding_triples = self.semantic_extractor.generate_embeddings(relationships)

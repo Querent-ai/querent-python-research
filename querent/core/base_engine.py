@@ -170,7 +170,7 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.state_queue.empty() and not self.termination_event.is_set():
+        while not self.state_queue.empty() or not self.termination_event.is_set():
             new_state = await self.state_queue.get()
             print("new State:", new_state)
             if isinstance(new_state, EventState):

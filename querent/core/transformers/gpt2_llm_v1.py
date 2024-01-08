@@ -1,5 +1,6 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import json
+from typing import List, Tuple
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -67,6 +68,21 @@ class GPT2LLM(BaseEngine):
 
         return True
 
+    @staticmethod
+    def remove_items_from_tuples(data: List[Tuple[str, str, str]]) -> List[Tuple[str, str, str]]:
+        result = []
+        keys_to_remove = ['entity1_embedding', 'entity2_embedding', 'entity1_attnscore', 'entity2_attnscore', 'pair_attnscore']
+
+        for tup in data:
+            json_data = json.loads(tup[1])
+            for key in keys_to_remove:
+                json_data.pop(key, None)
+            modified_json_str = json.dumps(json_data, ensure_ascii=False)
+            modified_tuple = (tup[0], modified_json_str, tup[2])
+            result.append(modified_tuple)
+
+        return result
+    
     async def process_tokens(self, data: IngestedTokens) -> str:
         try:
             # get the input text from the data which is a list of str
