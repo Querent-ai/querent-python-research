@@ -4,6 +4,7 @@ from typing import Any
 class EventType:
     Graph = "Graph"
     Vector = "Vector"
+    Terminate="Terminate"
 
 
 class EventState:

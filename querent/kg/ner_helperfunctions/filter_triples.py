@@ -129,7 +129,6 @@ class TripleFilter:
             cluster_persistence = clusterer.cluster_persistence_
 
             filtered_triples = [triples[index] for index, label in enumerate(cluster_labels) if label != -1]
-
             cluster_output = {
                 'filtered_triples': filtered_triples,
                 'reduction_count': len(triples) - len(filtered_triples),
