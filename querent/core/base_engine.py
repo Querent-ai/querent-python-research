@@ -176,6 +176,8 @@ class BaseEngine(ABC):
             if isinstance(new_state, EventState):
                 if new_state.payload == "Terminate":
                     break
+                if new_state.payload == "Terminate":
+                    break
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
                 raise Exception(
@@ -221,6 +223,8 @@ class BaseEngine(ABC):
                             await self.process_code(data)
                         elif data is None:
                             self.termination_event.set()
+                            current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                            await self.set_state(new_state=current_state)
                             current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
                             await self.set_state(new_state=current_state)
                         else:

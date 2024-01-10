@@ -44,6 +44,7 @@ import psutil
     The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
     """
 
+
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -132,7 +133,10 @@ class BERTLLM(BaseEngine):
         else:
             self.triple_filter = TripleFilter(**kwargs)
     
+    
     async def process_tokens(self, data: IngestedTokens):
+        start_time = time.time()
+        start_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
         doc_entity_pairs = []
         number_sentences = 0
         try:
@@ -142,6 +146,7 @@ class BERTLLM(BaseEngine):
             else:
                 clean_text = data.data
             if not BERTLLM.validate_ingested_tokens(data):
+                    self.set_termination_event()                    
                     self.set_termination_event()                    
                     return 
             file, content = self.file_buffer.add_chunk(
@@ -162,6 +167,7 @@ class BERTLLM(BaseEngine):
             else:
                 return
 
+
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
@@ -170,6 +176,7 @@ class BERTLLM(BaseEngine):
                 # print("doc entity pairs------------------------", doc_entity_pairs)
                 # print("pairs with attn-------------", pairs_withattn)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
+                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
                     pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 else:
@@ -183,8 +190,10 @@ class BERTLLM(BaseEngine):
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
                           
+                          
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples:
+                        filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)

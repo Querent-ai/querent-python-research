@@ -47,8 +47,8 @@ class ContextualPredicate(BaseModel):
     @classmethod
     def from_tuple(cls, data: Tuple[str, str, str, Dict[str, str], str]) -> 'ContextualPredicate':
         try:
-            entity1_embedding = data[3].get('entity1_embedding', [])
-            entity2_embedding = data[3].get('entity2_embedding', [])
+            entity1_embedding = data[3].get('entity1_embedding', []) if 'entity1_embedding' in data[3] else []
+            entity2_embedding = data[3].get('entity2_embedding', []) if 'entity2_embedding' in data[3] else []
 
             return cls(
                 context=data[1],
