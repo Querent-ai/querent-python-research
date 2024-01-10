@@ -1,23 +1,26 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import asyncio
 import json
-from transformers import AutoTokenizer
+from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
-from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
+from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
+from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from typing import Any, List, Tuple
+from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from langchain.utils.openai_functions import convert_pydantic_to_openai_function
-from langchain.chat_models import ChatOpenAI
-from querent.kg.rel_helperfunctions.gpt_pydantic_classes import Triples, TriplesList
+from openai import OpenAI
+from querent.kg.rel_helperfunctions.gpt_pydantic_classes import ClassifyEntities, TriplesList
 from dotenv import load_dotenv, find_dotenv
+import json
 
 _ = load_dotenv(find_dotenv())
 
@@ -42,16 +45,32 @@ class GPTLLM(BaseEngine):
                 'min_samples': config.filter_params['min_samples'],
                 'cluster_persistence_threshold':config.filter_params['cluster_persistence_threshold']
             },
+            sample_entities = config.sample_entities,
+            fixed_entities = config.fixed_entities,
             skip_inferences= True)
+            self.fixed_relationships = config.fixed_relationships
+            self.sample_relationships = config.sample_relationships
+            if self.fixed_relationships and not self.sample_relationships:
+                raise ValueError("If specific predicates are provided, their types should also be provided.")
+            if self.fixed_relationships and self.sample_relationships:
+                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships)
+            elif self.sample_relationships:
+                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
+            else:
+                self.predicate_context_extractor = None
+            self.create_emb = EmbeddingStore()
             print("going to initialize BERT")
             self.bert_instance = BERTLLM(input_queue, bert_llm_config)
             print("Bert Initialzed")
-            # self.triples = convert_pydantic_to_openai_function(Triples)
-            # self.triples_list = convert_pydantic_to_openai_function(TriplesList)
-            self.gpt_llm = ChatOpenAI()
+            self.triples = convert_pydantic_to_openai_function(ClassifyEntities)
+            print("triples----------------------------", self.triples)
+            self.triples_list = convert_pydantic_to_openai_function(TriplesList)
+            self.rel_model_name = "gpt-3.5-turbo"
+            self.gpt_llm = OpenAI()
+            self.function_registry = FunctionRegistry()
             # self.gpt_llm = self.gpt_llm.bind(
-                # functions=[self.triples],
-                # function_call={"name": "TriplesList"},
+            #     functions=[self.triples],
+            #     function_call={"name": "TriplesList"},
             # )
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
@@ -91,50 +110,163 @@ class GPTLLM(BaseEngine):
             result.append(modified_tuple)
 
         return result
-
-    async def get_triples(self, sentence: str):
-        # print(right_answer_list)
-        triples = self.gpt_llm.invoke(
-            f"Extract subject, object and predicate from the given sentence. Sentence: {sentence}",
-            functions=[self.triples, self.triples_list],
-        )
-
-        print(
-            "Triples ------------------------------------------------------------------------------------------------"
-        )
-        print(type(triples.content))
-        print(triples, "\n\n")
     
+    async def process_triples(self, context, entity1, entity2):
+        try:
+            classify_entity_function = self.function_registry.get_classifyentity_function()
+            predicate_info_function = self.function_registry.get_predicate_info_function()
+
+            classify_entity_message = f"Below is the context and two entities. " \
+                                    f"Classify these entities as subject and object and provide their respective types based on the given context."
+            messages_classify_entity = [
+                                        {"role": "user", "content": classify_entity_message},
+                                        {"role": "user", "content": f"Context: {context}"},
+                                        {"role": "user", "content": f"Entity 1: {entity1}"},
+                                        {"role": "user", "content": f"Entity 2: {entity2}"}
+                                    ]
+            
+            classify_entity_response = self.generate_response(
+                messages_classify_entity,
+                classify_entity_function
+            )
+
+            subject_info = self.extract_subject_object_info(classify_entity_response)
+            
+            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
+            messages_identify_predicate = [
+                                            {"role": "user", "content": identify_predicate_message},
+                                            {"role": "user", "content": f"Context: {context}"}
+                                        ]
+            identify_predicate_response = self.generate_response(
+                messages_identify_predicate,
+                predicate_info_function
+            )
+
+            predicate_info = self.extract_predicate_info(identify_predicate_response)
+
+            return {
+                'subject_type': subject_info['subject_type'],
+                'subject': subject_info['subject'],
+                'object_type': subject_info['object_type'],
+                'object': subject_info['object'],
+                'predicate': predicate_info['predicate'],
+                'predicate_type': predicate_info['predicate_type']
+            }
+
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return None
+
+    def generate_response(self, messages, functions):
+        response = self.gpt_llm.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0,
+            functions=functions,
+            function_call='auto'
+        )
+        return response
+
+    def extract_subject_object_info(self, response):
+        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        print("function_call_arguments-=------------------", function_call_arguments)
+        return {
+            'subject_type': function_call_arguments.get("subject_type"),
+            'subject': function_call_arguments.get("subject"),
+            'object_type': function_call_arguments.get("object_type"),
+            'object': function_call_arguments.get("object")
+        }
+
+    def extract_predicate_info(self, response):
+        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        print("function_call_arguments-=------------------", function_call_arguments)
+        return {
+            'predicate': function_call_arguments.get("predicate"),
+            'predicate_type': function_call_arguments.get("predicate_type")
+        }
+
+    def generate_output_tuple(self,result, context_json):
+        context_data = json.loads(context_json)
+        context = context_data.get("context", "")
+        subject_type = result.get("subject_type", "")
+        subject = result.get("subject", "")
+        object_type = result.get("object_type", "")
+        object = result.get("object", "")
+        predicate = result.get("predicate", "")
+        predicate_type = result.get("predicate_type", "")
+        output_tuple = (
+            subject,
+            f'{{"predicate": "{predicate}", "predicate_type": "{predicate_type}", "context": "{context}", "file": "{context_data.get("file_path", "")}", "subject_type": "{subject_type}", "object_type": "{object_type}"}}',
+            object
+        )
+
+        return output_tuple
+      
     async def process_tokens(self, data: IngestedTokens):
         try:
-            print("Inside processssssssssssssssssssssssssssssssssss")
-            filtered_triples = await self.bert_instance.process_tokens(data)
-            print("filtered_triples--------------------------------------", filtered_triples)
+            if not GPTLLM.validate_ingested_tokens(data):
+                    self.set_termination_event()                    
+                    return 
+            relationships = []
+            filtered_triples, file = await self.bert_instance.process_tokens(data)
+            print("filtered_triples----------------------------------------------------------------", filtered_triples[:1])
             if not filtered_triples: return 
             else:
-                print("Filtered_triples-------------------", filtered_triples[:1])
-                # modified_data = GPT2LLM.remove_items_from_tuples(data)
-                # # get the input text from the data which is a list of str
-                # input_text_list = data.data
-
-                # # concatenate the input text into a single string
-                # input_text = " ".join(input_text_list)
-
-                # model = GPT2LMHeadModel.from_pretrained(self.model_name)
-                # tokenizer = GPT2Tokenizer.from_pretrained(self.model_name)
-
-                # input_ids = tokenizer.encode(input_text, return_tensors="pt")
-                # output = model.generate(
-                #     input_ids,
-                #     max_length=50,
-                #     num_return_sequences=1,
-                #     no_repeat_ngram_size=2,
-                # )
-                # generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
-                # return generated_text
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:1])
+                # print("modified_data--------------------------------", modified_data)
+                for entity1, context_json, entity2 in modified_data:
+                    context_data = json.loads(context_json)
+                    context = context_data.get("context", "")
+                    result = await self.process_triples(context, entity1, entity2)
+                    if result:
+                        output_tuple = self.generate_output_tuple(result, context_json)
+                        relationships.append(output_tuple)
+                print("output_list--------------------------------", relationships)
+                embedding_triples = self.create_emb.generate_embeddings(relationships)
+                if self.sample_relationships:
+                        embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                for triple in embedding_triples:
+                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                    if graph_json:
+                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                            print("graph json :::::::::::::::", graph_json)
+                            await self.set_state(new_state=current_state)
+                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                    if vector_json:
+                            current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                            print("vector json :::::::::::::::", vector_json)
+                            await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
             raise Exception(f"An unexpected error occurred while extracting predicates using GPT: {e}")
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError
+
+
+
+
+# Define your context, entity1, and entity2 here
+context = "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca."
+entity1 = "the GoM basin"
+entity2 = "deposition"
+
+async def main():
+    try:
+        # Create an instance of GPTLLM with the desired configuration
+        gpt_llm_instance = GPTLLM(input_queue=None, config=GPTConfig())
+
+        # Call your async function to process context and entities
+        response = await gpt_llm_instance.process_triples(context, entity1, entity2)
+
+        # Process the response or print it as needed
+        if response:
+            print(response)
+        else:
+            print("An error occurred during processing.")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    asyncio.run(main())

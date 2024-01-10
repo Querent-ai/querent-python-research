@@ -1,3 +1,4 @@
+import json
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import SentenceTransformersTokenTextSplitter
@@ -123,5 +124,36 @@ class EmbeddingStore:
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
             raise Exception(f"Failed to generate embeddings: {e}")
+    
+    
+    def generate_embeddings(self, payload):
+        try:
+            triples = payload
+            processed_pairs = []
+
+            for entity, json_string, related_entity in triples:
+                data = json.loads(json_string)
+                context = data.get("context", "")
+                predicate = data.get("predicate","")
+                predicate_type = data.get("predicate_type","")
+                subject_type = data.get("subject_type","")
+                object_type = data.get("object_type","")
+                context_embeddings = self.get_embeddings([context])[0]
+                essential_data = {
+                    "context": context,
+                    "context_embeddings" : context_embeddings,
+                    "predicate_type": predicate_type,
+                    "predicate" : predicate,
+                    "subject_type": subject_type,
+                    "object_type": object_type
+                }
+                updated_json_string = json.dumps(essential_data)
+                processed_pairs.append((entity, updated_json_string, related_entity))
+
+            return processed_pairs
+
+        except Exception as e:
+            self.logger.error(f"Error in extracting embeddings: {e}")
+            raise Exception(f"Error in extracting embeddings: {e}")
 
     

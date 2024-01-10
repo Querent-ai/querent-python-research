@@ -27,6 +27,7 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
+from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
 import psutil
 """
@@ -62,9 +63,8 @@ class BERTLLM(BaseEngine):
         self.file_buffer = FileBuffer()
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
-        self.ner_llm_instance = NER_LLM(
-            provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
-        )
+        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+        self.create_emb = EmbeddingStore()
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
@@ -194,7 +194,8 @@ class BERTLLM(BaseEngine):
                 print("filtered_triples -   {}".format(filtered_triples[:1]))           
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
-                    embedding_triples = self.semantic_extractor.generate_embeddings(relationships)
+                    print("relationships - {}".format(relationships))
+                    embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:
                         embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                     for triple in embedding_triples:
@@ -206,9 +207,10 @@ class BERTLLM(BaseEngine):
                         vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                         if vector_json:
                             current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                            print("vector json :::::::::::::::", vector_json)
                             await self.set_state(new_state=current_state)
                 else:
-                    return filtered_triples
+                    return filtered_triples, file
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")
