@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from querent.kg.contextual_predicate import process_data
+from querent.kg.rel_helperfunctions.contextual_predicate import process_data
 from querent.core.base_engine import BaseEngine
 from typing import List, Tuple, Dict
 

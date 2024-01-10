@@ -4,6 +4,7 @@ from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtract
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
+from querent.kg.rel_helperfunctions.opeai_ratelimiter import RateLimiter
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -48,6 +49,7 @@ class GPTLLM(BaseEngine):
             sample_entities = config.sample_entities,
             fixed_entities = config.fixed_entities,
             skip_inferences= True)
+            self.rate_limiter = RateLimiter(config.requests_per_minute)
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             if self.fixed_relationships and not self.sample_relationships:
@@ -59,19 +61,11 @@ class GPTLLM(BaseEngine):
             else:
                 self.predicate_context_extractor = None
             self.create_emb = EmbeddingStore()
-            print("going to initialize BERT")
             self.bert_instance = BERTLLM(input_queue, bert_llm_config)
-            print("Bert Initialzed")
-            self.triples = convert_pydantic_to_openai_function(ClassifyEntities)
-            print("triples----------------------------", self.triples)
-            self.triples_list = convert_pydantic_to_openai_function(TriplesList)
-            self.rel_model_name = "gpt-3.5-turbo"
+            self.rel_model_name = config.rel_model_name
             self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
-            # self.gpt_llm = self.gpt_llm.bind(
-            #     functions=[self.triples],
-            #     function_call={"name": "TriplesList"},
-            # )
+            
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
             raise Exception(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
@@ -158,8 +152,9 @@ class GPTLLM(BaseEngine):
             return None
 
     def generate_response(self, messages, functions):
+        self.rate_limiter.wait_for_request_slot()
         response = self.gpt_llm.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=self.rel_model_name,
             messages=messages,
             temperature=0,
             functions=functions,
@@ -209,11 +204,9 @@ class GPTLLM(BaseEngine):
                     return 
             relationships = []
             filtered_triples, file = await self.bert_instance.process_tokens(data)
-            print("filtered_triples----------------------------------------------------------------", filtered_triples[:1])
             if not filtered_triples: return 
             else:
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:1])
-                # print("modified_data--------------------------------", modified_data)
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
