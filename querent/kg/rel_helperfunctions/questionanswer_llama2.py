@@ -1,4 +1,4 @@
-from langchain.llms import LlamaCpp
+from langchain_community.llms import LlamaCpp
 from langchain.prompts import PromptTemplate
 from langchain.chains import StuffDocumentsChain
 from querent.logging.logger import setup_logger

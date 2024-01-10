@@ -174,11 +174,15 @@ class RelationExtractor():
                 else:
                     doc =  Document(page_content=context)
                     documents.append(doc)    
-                all_tasks.append((" I want to define a semantic knowledge graph. The Subject is {entity1} and the Object is {entity2}. Please also identify the subject type, predicate type and object type").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
+                all_tasks.append(("""Entity 1: {entity1} and Entity 2: {entity2}.
+                    Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.""").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
+                
+                # all_tasks.append((" I want to define a semantic knowledge graph. The Subject is {entity1} and the Object is {entity2}. Please also identify the subject type, predicate type and object type").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
                 # all_tasks.append(("I want to define a semantic knowledge graph where the subject is {entity1} and the object is {entity2}. Please also identify the subject type, predicate type and object type.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
+                sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default1"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
                 for task in sub_task_list_llm:  
                     answer_relation = self.qa_system.ask_question(prompt=task[2], top_docs=documents, llm_chain=task[0])
+                    print("Answer relation------------------------", answer_relation)
                     try:
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)

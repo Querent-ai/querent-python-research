@@ -20,9 +20,9 @@ class RelationshipExtractorConfig(BaseModel):
         Only return the helpful answer below and nothing else.
         Helpful answer:""",
         
-        "default1": """Use the following pieces of information to answer the user's question.
+        "default1": """"Please analyze the provided context and two entities
         Context: {context}
-        Question: {query}
+        {query}
         Answer:""",
         
         "bsm_template": """Use the following context to answer the user's question.

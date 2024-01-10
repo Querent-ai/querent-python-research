@@ -142,7 +142,6 @@ class BERTLLM(BaseEngine):
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
             )
-            print("Clean Text---------------------", clean_text)
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
@@ -163,16 +162,12 @@ class BERTLLM(BaseEngine):
             if doc_entity_pairs:
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                # print("doc entity pairs------------------------", doc_entity_pairs)
-                # print("pairs with attn-------------", pairs_withattn)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
                     pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
                 else:
                     pairs_withemb = pairs_withattn
-                # print("pairs with predicates ---------",pairs_withemb[:1])
                 pairs_with_predicates = process_data(pairs_withemb, file)
-                # print("pairs with predicates ---------",pairs_with_predicates[:1])
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -191,7 +186,6 @@ class BERTLLM(BaseEngine):
          
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
-                    print("relationships - {}".format(relationships))
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:
                         embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
@@ -199,12 +193,10 @@ class BERTLLM(BaseEngine):
                         graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                         if graph_json:
                             current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            print("graph json :::::::::::::::", graph_json)
                             await self.set_state(new_state=current_state)
                         vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                         if vector_json:
                             current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                            print("vector json :::::::::::::::", vector_json)
                             await self.set_state(new_state=current_state)
                 else:
                     return filtered_triples, file

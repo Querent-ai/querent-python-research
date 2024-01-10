@@ -17,9 +17,7 @@ from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
 from querent.config.core.bert_llm_config import BERTLLMConfig
-from langchain.utils.openai_functions import convert_pydantic_to_openai_function
 from openai import OpenAI
-from querent.kg.rel_helperfunctions.gpt_pydantic_classes import ClassifyEntities, TriplesList
 from dotenv import load_dotenv, find_dotenv
 import json
 
@@ -110,30 +108,34 @@ class GPTLLM(BaseEngine):
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
 
-            classify_entity_message = f"Below is the context and two entities. " \
-                                    f"Classify these entities as subject and object and provide their respective types based on the given context."
+            classify_entity_message = (
+                    "Please analyze the provided context and two entities"\
+                    "Determine which entity is the subject and which is the object in the context. Also, identify the type of subject and type of object."
+                    )
             messages_classify_entity = [
-                                        {"role": "user", "content": classify_entity_message},
-                                        {"role": "user", "content": f"Context: {context}"},
-                                        {"role": "user", "content": f"Entity 1: {entity1}"},
-                                        {"role": "user", "content": f"Entity 2: {entity2}"}
-                                    ]
-            
+                    {"role": "system", "content": classify_entity_message},
+                    {"role": "user", "content": f"Context: {context}"},
+                    {"role": "user", "content": f"Entity 1: {entity1} (Entity 1)"},
+                    {"role": "user", "content": f"Entity 2: {entity2} (Entity 2)"}
+                ]
+                            
             classify_entity_response = self.generate_response(
                 messages_classify_entity,
-                classify_entity_function
+                classify_entity_function,
+                "classify_entities"
             )
-
+            print("response--------", classify_entity_response)
             subject_info = self.extract_subject_object_info(classify_entity_response)
             
             identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
             messages_identify_predicate = [
-                                            {"role": "user", "content": identify_predicate_message},
+                                            {"role": "system", "content": identify_predicate_message},
                                             {"role": "user", "content": f"Context: {context}"}
                                         ]
             identify_predicate_response = self.generate_response(
                 messages_identify_predicate,
-                predicate_info_function
+                predicate_info_function,
+                "predicate_info"
             )
 
             predicate_info = self.extract_predicate_info(identify_predicate_response)
@@ -148,33 +150,31 @@ class GPTLLM(BaseEngine):
             }
 
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return None
+            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
+            raise Exception(f"An unexpected error occurred while processing triples using GPT: {e}")
 
-    def generate_response(self, messages, functions):
+    def generate_response(self, messages, functions, name):
         self.rate_limiter.wait_for_request_slot()
         response = self.gpt_llm.chat.completions.create(
             model=self.rel_model_name,
             messages=messages,
             temperature=0,
             functions=functions,
-            function_call='auto'
+            function_call={"name": name}
         )
         return response
 
     def extract_subject_object_info(self, response):
         function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
-        print("function_call_arguments-=------------------", function_call_arguments)
         return {
-            'subject_type': function_call_arguments.get("subject_type"),
+            'subject_type': function_call_arguments.get("subject_type", "Unlabeled"),
             'subject': function_call_arguments.get("subject"),
-            'object_type': function_call_arguments.get("object_type"),
+            'object_type': function_call_arguments.get("object_type", "Unlabeled"),
             'object': function_call_arguments.get("object")
         }
 
     def extract_predicate_info(self, response):
         function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
-        print("function_call_arguments-=------------------", function_call_arguments)
         return {
             'predicate': function_call_arguments.get("predicate"),
             'predicate_type': function_call_arguments.get("predicate_type")
@@ -210,11 +210,12 @@ class GPTLLM(BaseEngine):
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
-                    result = await self.process_triples(context, entity1, entity2)
+                    entity1_nn_chunk = context_data.get("entity1_nn_chunk","")
+                    entity2_nn_chunk = context_data.get("entity2_nn_chunk","")
+                    result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk)
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)
-                print("output_list--------------------------------", relationships)
                 embedding_triples = self.create_emb.generate_embeddings(relationships)
                 if self.sample_relationships:
                         embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
@@ -222,12 +223,10 @@ class GPTLLM(BaseEngine):
                     graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                     if graph_json:
                             current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            print("graph json :::::::::::::::", graph_json)
                             await self.set_state(new_state=current_state)
                     vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                     if vector_json:
                             current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                            print("vector json :::::::::::::::", vector_json)
                             await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
@@ -243,6 +242,10 @@ class GPTLLM(BaseEngine):
 context = "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca."
 entity1 = "the GoM basin"
 entity2 = "deposition"
+
+# context = "Nishant is working in India and living in New Delhi"
+# entity1 = "Nihant"
+# entity2 = "New Delhi"
 
 async def main():
     try:
