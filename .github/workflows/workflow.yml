@@ -97,9 +97,9 @@ jobs:
         run: |
               access_token="${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}"
               file_id="${{ secrets.GOOGLE_DRIVE_FILE_ID }}"
-              file_name="./tests/llama-2-7b-chat.Q5_K_S.gguf"
+              file_name="./tests/llama-2-7b-chat.Q5_K_M.gguf"
               curl -H "Authorization: Bearer $access_token" "https://www.googleapis.com/drive/v3/files/$file_id?alt=media" -o "$file_name"
-              
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
