@@ -147,11 +147,11 @@ class RelationExtractor():
             input1_data.get("subject",""),
             json.dumps({
                 "predicate": input1_data.get("predicate",""),
-                "predicate_type": input1_data.get("predicate_type",""),
+                "predicate_type": input1_data.get("predicate_type","Unlabeled"),
                 "context": input2_data.get("context", ""),
                 "file_path": input2_data.get("file_path", ""),
-                "subject_type": input1_data.get("subject_type",""),
-                "object_type": input1_data.get("object_type","")
+                "subject_type": input1_data.get("subject_type","Unlabeled"),
+                "object_type": input1_data.get("object_type","Unlabeled")
             }),
             input1_data.get("object","")
         )

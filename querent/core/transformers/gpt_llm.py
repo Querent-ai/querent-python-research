@@ -176,7 +176,7 @@ class GPTLLM(BaseEngine):
         function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
         return {
             'predicate': function_call_arguments.get("predicate"),
-            'predicate_type': function_call_arguments.get("predicate_type")
+            'predicate_type': function_call_arguments.get("predicate_type", "Unlabeled")
         }
 
     def generate_output_tuple(self,result, context_json):
