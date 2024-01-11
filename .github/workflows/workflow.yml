@@ -43,6 +43,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
 
       - name: Check if requirements.txt has changed
         id: check-requirements
@@ -59,11 +64,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
         if: steps.check-requirements.outputs['check-requirements'] == 'Requirements changed'
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
 
       - name: Apt install dependencies
         run: |
@@ -116,11 +116,13 @@ jobs:
       - name: Download spaCy large model
         run: |
             python -m spacy download en_core_web_lg
-      
-      - name: Download AI Model from Google Drive
-        run: |
-            pip install gdown
-            gdown "${{ secrets.GOOGLE_DRIVE_LINK_LLAMA2 }}" -O ./tests/llama-2-7b-chat.Q5_K_S.gguf
+            - name: Download AI Model from Google Drive
+            run: |
+              access_token="${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+              file_id="${{ secrets.GOOGLE_DRIVE_FILE_ID }}"
+              file_name="./tests/llama-2-7b-chat.Q5_K_S.gguf"
+              
+              !curl -H "Authorization: Bearer $access_token" "https://www.googleapis.com/drive/v3/files/$file_id?alt=media" -o "$file_name"
 
       - name: Test Code Coverage
         run: pytest --cov=querent -vv --durations=0

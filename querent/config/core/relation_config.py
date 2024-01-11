@@ -10,7 +10,7 @@ class RelationshipExtractorConfig(BaseModel):
     # Shared configurations for relationship extraction and BSM
     model_type = 'llama'
     # model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'  # Used as LLaMA model path in BSM
-    model_path: str = './tests/llama-2-7b-chat.Q5_K_S.gguf'  # Used as LLaMA model path in BSM
+    model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf'  # Used as LLaMA model path in BSM
     # Using a dictionary for multiple templates
     qa_templates: Dict[str, str] = Field(default_factory=lambda: {
         "default": """Use the following pieces of information to answer the user's question.
