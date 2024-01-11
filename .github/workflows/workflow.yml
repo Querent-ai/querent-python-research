@@ -116,6 +116,11 @@ jobs:
       - name: Download spaCy large model
         run: |
             python -m spacy download en_core_web_lg
+
+      - name: Install curl
+        run: |
+           sudo apt-get update
+           sudo apt-get install curl -y
       
       - name: Download AI Model from Google Drive
         run: |
