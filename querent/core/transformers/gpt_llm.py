@@ -124,7 +124,6 @@ class GPTLLM(BaseEngine):
                 classify_entity_function,
                 "classify_entities"
             )
-            print("response--------", classify_entity_response)
             subject_info = self.extract_subject_object_info(classify_entity_response)
             
             identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."

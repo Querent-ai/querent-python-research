@@ -173,9 +173,7 @@ class RelationExtractor():
                     documents = top_docs
                 else:
                     doc =  Document(page_content=context)
-                    documents.append(doc)
-                print("--------------",predicate.get('entity1_nn_chunk', ''))
-                print("----------------------",predicate.get('entity2_nn_chunk', ''))    
+                    documents.append(doc)   
                 all_tasks.append(("""Entity 1: {entity1} and Entity 2: {entity2}.
                     Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.""").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
                 
@@ -189,8 +187,7 @@ class RelationExtractor():
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)
                     except:
-                        continue
-                print("--------iteration completed------------------------")       
+                        continue     
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")
