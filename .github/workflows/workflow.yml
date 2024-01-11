@@ -116,13 +116,13 @@ jobs:
       - name: Download spaCy large model
         run: |
             python -m spacy download en_core_web_lg
-            - name: Download AI Model from Google Drive
-            run: |
-              access_token="${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}"
-              file_id="${{ secrets.GOOGLE_DRIVE_FILE_ID }}"
-              file_name="./tests/llama-2-7b-chat.Q5_K_S.gguf"
-              
-              !curl -H "Authorization: Bearer $access_token" "https://www.googleapis.com/drive/v3/files/$file_id?alt=media" -o "$file_name"
+      
+      - name: Download AI Model from Google Drive
+        run: |
+            access_token="${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+            file_id="${{ secrets.GOOGLE_DRIVE_FILE_ID }}"
+            file_name="./tests/llama-2-7b-chat.Q5_K_S.gguf"
+            !curl -H "Authorization: Bearer $access_token" "https://www.googleapis.com/drive/v3/files/$file_id?alt=media" -o "$file_name"
 
       - name: Test Code Coverage
         run: pytest --cov=querent -vv --durations=0
