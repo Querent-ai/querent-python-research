@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.BSM_relationfilter import BSMBranch
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
@@ -7,7 +8,9 @@ from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.relation_config import RelationshipExtractorConfig
+from llama_cpp import LlamaGrammar
 from langchain.docstore.document import Document
+from langchain.prompts import PromptTemplate
 import ast
 
 """
@@ -55,13 +58,7 @@ class RelationExtractor():
                 rel_model_path=config.model_path,
                 rel_model_type=config.model_type,
                 )
-            
-            # self.qa_system_bsm_validator = QASystem(
-            #     rel_model_path=config.bsm_validator_model_path,
-            #     rel_model_type=config.bsm_validator_model_type,
-            #     emb_model_name=config.emb_model_name,
-            #     faiss_index_path=config.get_faiss_index_path()
-            #     )
+            self.grammar = LlamaGrammar.from_file(file = config.grammar_file_path)
             self.rag_approach = config.rag_approach
             if  self.rag_approach == True:
                 self.rag_retriever = RAGRetriever(
@@ -69,7 +66,6 @@ class RelationExtractor():
                 emb_model_name=config.emb_model_name,
                 embedding_store=self.create_emb,
                 logger=self.logger)
-            self.bsmbranch = BSMBranch()
             self.sub_tasks = config.dynamic_sub_tasks
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
@@ -141,21 +137,50 @@ class RelationExtractor():
             raise Exception(f"Error in normalizing/building index: {e}")
     
     def create_semantic_triple(self, input1, input2):
-        input1_data = ast.literal_eval(input1)
-        input2_data = ast.literal_eval(input2)
-        triple = (
-            input1_data.get("subject",""),
-            json.dumps({
-                "predicate": input1_data.get("predicate",""),
-                "predicate_type": input1_data.get("predicate_type","Unlabeled"),
-                "context": input2_data.get("context", ""),
-                "file_path": input2_data.get("file_path", ""),
-                "subject_type": input1_data.get("subject_type","Unlabeled"),
-                "object_type": input1_data.get("object_type","Unlabeled")
-            }),
-            input1_data.get("object","")
-        )
-        return triple
+        try:   
+            if not input1.get("predicate") or not input1.get("subject") or not input1.get("object"):
+                raise ValueError("Missing 'subject', 'predicate', or 'object' in llm output") 
+            print("Input1: {}".format(input1))
+            print("Input1_type: {}",type(input1))
+            input2_data = ast.literal_eval(input2)
+            triple = (
+                input1.get("subject",""),
+                json.dumps({
+                    "predicate": input1.get("predicate",""),
+                    "predicate_type": input1.get("predicate_type","Unlabeled"),
+                    "context": input2_data.get("context", ""),
+                    "file_path": input2_data.get("file_path", ""),
+                    "subject_type": input1.get("subject_type","Unlabeled"),
+                    "object_type": input1.get("object_type","Unlabeled")
+                }),
+                input1.get("object","")
+            )
+            return triple
+        except Exception as e:
+            print(f"Error in creating semantic triple: {e}")
+            self.logger.error(f"Error in creating semantic triple: {e}")
+            raise Exception(f"Error in creating semantic triple: {e}")
+        
+    def extract_fields(self, text):
+        # Define a dictionary to hold the extracted data
+        data = {}
+
+        # List of fields to extract
+        fields = ["subject", "object", "subject_type", "object_type", "predicate", "predicate_type"]
+
+        # Regular expression pattern for key-value pairs
+        pattern = r'[\'"‘’]({})[\'"‘’]:\s*[\'"‘’]([^\'"‘’]*)[\'"‘’]'
+
+        # Iterate over each field and use regex to find the corresponding value
+        for field in fields:
+            regex = pattern.format(field)
+            match = re.search(regex, text)
+            if match:
+                data[field] = match.group(2)
+            else:
+                data[field] = None  # or 'Not found' or any default value
+
+        return data
 
     def extract_relationships(self, triples):
         try:
@@ -172,22 +197,38 @@ class RelationExtractor():
                     top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
                     documents = top_docs
                 else:
-                    doc =  Document(page_content=context)
-                    documents.append(doc)   
-                all_tasks.append(("""Entity 1: {entity1} and Entity 2: {entity2}.
-                    Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.""").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                
-                # all_tasks.append((" I want to define a semantic knowledge graph. The Subject is {entity1} and the Object is {entity2}. Please also identify the subject type, predicate type and object type").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                # all_tasks.append(("I want to define a semantic knowledge graph where the subject is {entity1} and the object is {entity2}. Please also identify the subject type, predicate type and object type.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', '')))
-                sub_task_list_llm = self.bsmbranch.create_sub_tasks(llm = self.qa_system.llm, template=self.config.get_template("default1"), tasks=all_tasks,model_type=self.qa_system.rel_model_type)
-                for task in sub_task_list_llm:  
-                    answer_relation = self.qa_system.ask_question(prompt=task[2], top_docs=documents, llm_chain=task[0])
+                    print("--------------------------------", context)
+                    print("--------------------------------", predicate.get('entity1_nn_chunk', ''))
+                    print("--------------------------------", predicate.get('entity2_nn_chunk', ''))
+                    print("templateeeeeee", self.config.qa_template)
+                    if not self.config.qa_template:
+                        print("inside derive")
+                        # query = """Please analyze the provided context and two entities
+                        # Context: {context}
+                        # Entity 1: {entity1} and Entity 2: {entity2}
+                        # Query: Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.
+                        # Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
+                        query = """Please analyze the provided context and the two named entities. Use this information to answer the query in provided json format. No Explanation needed and only fill the json required fields.
+Context: {context}
+Entity 1: {entity1}
+Entity 2: {entity2}
+Query: Determine which entity should be subject and which entity should be object based context along with the along with the predicate. Also identify the subject type, predicate type and object type. Output in the below format and just fill the values.
+Json Format:{{'subject': subject, 'object': object, 'subject_type': subject_type, 'object_type': object_type, 'predicate': predicate, 'predicate_type': predicate_type}}
+Answer:""".format(context=context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
+                    else:
+                        query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
+                      
+                    answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=None)
+                    print("Answer relation------------------------", answer_relation)
+                    choices_text = answer_relation['choices'][0]['text']
+                    answer_relation = self.extract_fields(choices_text)
                     print("Answer relation------------------------", answer_relation)
                     try:
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)
                     except:
-                        continue     
+                        continue
+            print("Updated Triples --------------------------------", updated_triples)
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")

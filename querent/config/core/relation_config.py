@@ -11,35 +11,9 @@ class RelationshipExtractorConfig(BaseModel):
     model_type = 'llama'
     # model_path: str = './tests/llama-2-7b-chat.Q4_K_M.gguf'  # Used as LLaMA model path in BSM
     model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf'  # Used as LLaMA model path in BSM
-    # Using a dictionary for multiple templates
-    qa_templates: Dict[str, str] = Field(default_factory=lambda: {
-        "default": """Use the following pieces of information to answer the user's question.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-        Context: {context}
-        Question: {query}
-        Only return the helpful answer below and nothing else.
-        Helpful answer:""",
+    grammar_file_path = './querent/kg/rel_helperfunctions/json.gbnf'
+    qa_template: str = None
         
-        "default1": """"Please analyze the provided context and two entities
-        Context: {context}
-        {query}
-        Answer:""",
-        
-        "bsm_template": """Use the following context to answer the user's question.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-        Context: {context}
-        {format_instructions}
-        Question: {query}
-        Only return the helpful answer below and nothing else.
-        Helpful answer:""",
-        "template2": """[Content for template 2]""",
-        # Add more templates as needed
-    })
-
-    # Method to select a template dynamically
-    def get_template(self, template_key: str = "default") -> str:
-        return self.qa_templates.get(template_key, self.qa_templates["default"])
-
     # Specific configurations for relationship extraction
     vector_store_path: str = "./querent/kg/rel_helperfunctions/vectorstores/"
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
