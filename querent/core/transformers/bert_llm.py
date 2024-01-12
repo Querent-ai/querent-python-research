@@ -156,7 +156,6 @@ class BERTLLM(BaseEngine):
             else:
                 return
 
-
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:

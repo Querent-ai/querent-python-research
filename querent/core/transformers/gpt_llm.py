@@ -203,11 +203,10 @@ class GPTLLM(BaseEngine):
                     return 
             relationships = []
             filtered_triples, file = await self.bert_instance.process_tokens(data)
-            print("--------------------------------", data)
+            
             if not filtered_triples: return 
             else:
                 modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
-                print("--------------------------------", modified_data)
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")

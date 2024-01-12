@@ -175,8 +175,6 @@ class BaseEngine(ABC):
             if isinstance(new_state, EventState):
                 if new_state.payload == "Terminate":
                     break
-                if new_state.payload == "Terminate":
-                    break
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
                 raise Exception(
