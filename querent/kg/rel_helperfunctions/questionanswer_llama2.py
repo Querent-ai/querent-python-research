@@ -36,10 +36,8 @@ class QASystem:
         try:
             # output = self.custom_stuff_chain(reordered_docs=top_docs, llm_chain=llm_chain, query= prompt)
             output = llm.create_completion(prompt=prompt, grammar=grammar)
-            print("--------------------------", output)
             return output
         
         except Exception as e:
-            print(f"Error asking questions to LLM: {e}")
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error asking questions to LLM: {e}")
             return {}
