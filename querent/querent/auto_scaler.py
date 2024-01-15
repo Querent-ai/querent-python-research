@@ -9,13 +9,14 @@ from querent.querent.resource_manager import ResourceManager
 class AutoScaler:
     def __init__(
         self,
-        resource_manager: ResourceManager,
+        querent_termination_event: asyncio.Event(),
         querenters: List[BaseEngine],
+        max_allowed_workers: int,
     ):
-        self.resource_manager = resource_manager
         self.querenters = querenters
         self.logger = setup_logger(__name__, "auto_scaler")
-        self.querent_termination_event = resource_manager.querent_termination_event
+        self.querent_termination_event = querent_termination_event
+        self.max_allowed_workers = max_allowed_workers
         self.worker_tasks: List[asyncio.Task] = []  # Store the worker tasks
 
     async def scale_querenters(self, total_requested_workers: int):
@@ -56,6 +57,8 @@ class AutoScaler:
             self.querent_termination_event.set()
             self.logger.error(f"An error occurred during AutoScaler execution: {e}")
             raise e
+        finally:
+            self.querent_termination_event.set()
 
     async def start(self):
         try:
@@ -67,10 +70,8 @@ class AutoScaler:
                     querenter.num_workers for querenter in self.querenters
                 )
                 # Get the maximum allowed workers from the resource manager
-                max_allowed_workers = (
-                    await self.resource_manager.get_max_allowed_workers()
-                )
-                if total_requested_workers > max_allowed_workers:
+                max_allowed_workers = self.max_allowed_workers
+                if total_requested_workers > self.max_allowed_workers:
                     self.logger.error(
                         "Total requested workers exceed the maximum allowed workers."
                     )

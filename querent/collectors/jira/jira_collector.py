@@ -1,6 +1,6 @@
 import json
 from typing import AsyncGenerator
-
+from jira import JIRA
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
 from querent.common import common_errors
@@ -10,7 +10,6 @@ from querent.config.collector.collector_config import (
     CollectorBackend,
     JiraCollectorConfig,
 )
-from jira import JIRA
 
 from querent.logging.logger import setup_logger
 

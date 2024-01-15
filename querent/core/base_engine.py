@@ -208,8 +208,8 @@ class BaseEngine(ABC):
                 current_message_total = 0
                 while not self.termination_event.is_set():
                     retries = 0
-                    data = await self.input_queue.get()
                     try:
+                        data = await self.input_queue.get()
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
@@ -249,8 +249,8 @@ class BaseEngine(ABC):
         except Exception as e:
             self.logger.error(f"Error while processing tokens: {e}")
         finally:
+
             self.logger.info(f"Stopping worker for {self.__class__.__name__}")
-            await state_listener
             self.logger.info(f"Stopped worker for {self.__class__.__name__}")
             self.termination_event.set()
 
@@ -261,6 +261,5 @@ class BaseEngine(ABC):
     async def _stop_workers(self):
         try:
             self.termination_event.set()
-            asyncio.gather(*self.workers)
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")

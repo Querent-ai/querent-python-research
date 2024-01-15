@@ -22,15 +22,14 @@ class Querent:
     def __init__(
         self,
         querenters: List[BaseEngine],
-        resource_manager: ResourceManager,
+        querent_termination_event: asyncio.Event() = None,
+        max_allowed_workers: int = 1,
     ):
         self.logger = setup_logger(__name__, "querent")
-        self.resource_manager = resource_manager
         self.querenters = querenters
-        self.auto_scaler = AutoScaler(self.resource_manager, querenters)
-
-        # Create an event to handle termination requests
-        self.querent_termination_event = resource_manager.querent_termination_event
+        self.querent_termination_event = querent_termination_event
+        self.max_allowed_workers = max_allowed_workers
+        self.auto_scaler = AutoScaler(self.querent_termination_event, querenters, self.max_allowed_workers)
 
     async def start(self):
         try:
@@ -67,8 +66,9 @@ class Querent:
 
     def handle_signal(self):
         try:
+            loop = asyncio.get_running_loop()
             shutdown_task = asyncio.create_task(self.graceful_shutdown())
-            asyncio.run(shutdown_task)
+            loop.create_task(shutdown_task)
         except Exception as e:
             print(f"Error during graceful shutdown: {str(e)}")
 
