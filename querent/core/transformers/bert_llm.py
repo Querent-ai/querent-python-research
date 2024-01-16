@@ -49,6 +49,7 @@ class BERTLLM(BaseEngine):
         config: BERTLLMConfig
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
+        self.input_queue = input_queue
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
         if not self.skip_inferences:

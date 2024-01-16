@@ -194,6 +194,7 @@ class BaseEngine(ABC):
 
     async def _worker(self):
         try:
+            print("Worker thread started----------------------------------------------------------------")
             if not self.validate():
                 self.logger.error(
                     f"Invalid {self.__class__.__name__} configuration. Please check the configuration."
@@ -203,17 +204,22 @@ class BaseEngine(ABC):
                 )
 
             state_listener = asyncio.create_task(self._listen_for_state_changes())
+            print("Worker thread started---------------------------------------------------------------- 2")
 
             async def _inner_worker():
                 current_message_total = 0
                 while not self.termination_event.is_set():
+                    print("Worker thread started---------------------------------------------------------------- 3")
                     retries = 0
                     try:
+                        print("-------------------------------------------", )
                         data = await self.input_queue.get()
+                        print("Data----------------------------------------", data, type(data))
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)
                         elif isinstance(data, IngestedTokens):
                             await self.process_tokens(data)
+                            print("Data---------------------------------------- 2")
                         elif isinstance(data, IngestedImages):
                             await self.process_images(data)       
                         elif isinstance(data, IngestedCode):
