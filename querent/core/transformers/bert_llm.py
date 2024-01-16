@@ -4,11 +4,8 @@ from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtract
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.relation_config import RelationshipExtractorConfig
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
-from querent.config.core.relation_config import RelationshipExtractorConfig
-from querent.core.transformers.relationship_extraction_llm import RelationExtractor
-from querent.kg.contextual_predicate import process_data
+from querent.kg.rel_helperfunctions.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
-from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
@@ -27,6 +24,7 @@ from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
+from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
 import psutil
 """
@@ -43,6 +41,7 @@ import psutil
     The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
     """
 
+
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -51,18 +50,18 @@ class BERTLLM(BaseEngine):
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
-        mock_config = RelationshipExtractorConfig()
-        self.semantic_extractor = RelationExtractor(mock_config)
-        self.graph_config = GraphConfig(identifier=config.name)
+        self.skip_inferences=config.skip_inferences
+        if not self.skip_inferences:
+            mock_config = RelationshipExtractorConfig()
+            self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
-        self.ner_llm_instance = NER_LLM(
-            provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model
-        )
+        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+        self.create_emb = EmbeddingStore()
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
@@ -100,13 +99,10 @@ class BERTLLM(BaseEngine):
         return super().process_messages(data)
     
     def process_images(self, data: IngestedImages):
-        return super().process_messages(data)
-    
-    def process_images(self, data: IngestedImages):
-        return super().process_messages(data)
+        return super().process_images(data)
 
     async def process_code(self, data: IngestedCode):
-        return super().process_messages(data)
+        return super().process_code(data)
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
@@ -130,9 +126,8 @@ class BERTLLM(BaseEngine):
         else:
             self.triple_filter = TripleFilter(**kwargs)
     
+    
     async def process_tokens(self, data: IngestedTokens):
-        start_time = time.time()
-        start_memory = psutil.Process().memory_info().rss / (1024 * 1024)  # Memory in MB
         doc_entity_pairs = []
         number_sentences = 0
         try:
@@ -142,7 +137,7 @@ class BERTLLM(BaseEngine):
             else:
                 clean_text = data.data
             if not BERTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()                    
+                    self.set_termination_event()                                      
                     return 
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
@@ -178,6 +173,7 @@ class BERTLLM(BaseEngine):
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
                           
+                          
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples:
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
@@ -185,20 +181,24 @@ class BERTLLM(BaseEngine):
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
-                    filtered_triples = pairs_with_predicates 
-                relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
-                embedding_triples = self.semantic_extractor.generate_embeddings(relationships)
-                if self.sample_relationships:
-                    embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
-                for triple in embedding_triples:
-                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                    if graph_json:
-                        current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                        await self.set_state(new_state=current_state)
-                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                    if vector_json:
-                        current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                        await self.set_state(new_state=current_state)
+                    filtered_triples = pairs_with_predicates
+         
+                if not self.skip_inferences:
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    embedding_triples = self.create_emb.generate_embeddings(relationships)
+                    if self.sample_relationships:
+                        embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                    for triple in embedding_triples:
+                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                        if graph_json:
+                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                            await self.set_state(new_state=current_state)
+                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                        if vector_json:
+                            current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                            await self.set_state(new_state=current_state)
+                else:
+                    return filtered_triples, file
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")
