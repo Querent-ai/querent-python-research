@@ -17,6 +17,8 @@ from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 import time
+from querent.config.core.gpt_llm_config import GPTConfig
+from querent.core.transformers.gpt_llm import GPTLLM
 
 @pytest.mark.asyncio
 async def test_ingest_all_async():
@@ -40,19 +42,18 @@ async def test_ingest_all_async():
     )
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     resource_manager = ResourceManager()
-    bert_llm_config = BERTLLMConfig(
-    ner_model_name="botryan96/GeoBERT",
-    enable_filtering=True,
-    filter_params={
+    gpt_llm_config = GPTConfig(
+        enable_filtering=True,
+        filter_params={
             'score_threshold': 0.5,
             'attention_score_threshold': 0.1,
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
     )
-    llm_instance = BERTLLM(result_queue, bert_llm_config)
+    llm_instance = GPTLLM(result_queue, gpt_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
