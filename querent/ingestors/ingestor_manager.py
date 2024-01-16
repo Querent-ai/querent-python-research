@@ -109,7 +109,7 @@ class IngestorFactoryManager:
             # Add more mappings as needed
         }
         self.file_caches = LRUCache(maxsize=cache_size)
-        self.result_queue = result_queue
+        self.result_queue = asyncio.Queue()
         self.logger = setup_logger(__name__, "IngestorFactoryManager")
 
     async def get_factory(self, file_extension: str) -> IngestorFactory:

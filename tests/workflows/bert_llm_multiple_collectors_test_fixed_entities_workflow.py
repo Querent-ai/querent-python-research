@@ -95,7 +95,7 @@ async def test_multiple_collectors_all_async():
 
     # Start the ingest_all_async in a separate task
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-    resource_manager = ResourceManager()
+    termination_event = asyncio.Event()
     bert_llm_config = BERTLLMConfig(
     ner_model_name="botryan96/GeoBERT",
     enable_filtering=True,
@@ -120,7 +120,7 @@ async def test_multiple_collectors_all_async():
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(
         [llm_instance],
-        resource_manager=resource_manager,
+        querent_termination_event=termination_event,
     )
 
     querent_task = asyncio.create_task(querent.start())

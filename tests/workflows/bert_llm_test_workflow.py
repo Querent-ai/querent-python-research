@@ -38,14 +38,12 @@ async def test_ingest_all_async():
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors, result_queue=result_queue
     )
-
-    # Start the ingest_all_async in a separate task
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-
     # Wait for the task to complete
     # await asyncio.gather(ingest_task)
     # await result_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
-    resource_manager = ResourceManager()
+    termination_event = asyncio.Event()
+
     bert_llm_config = BERTLLMConfig(
     ner_model_name="botryan96/GeoBERT",
     enable_filtering=True,
@@ -68,23 +66,12 @@ async def test_ingest_all_async():
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(
         [llm_instance],
-        resource_manager=resource_manager,
+        querent_termination_event=termination_event,
     )
     querent_task = asyncio.create_task(querent.start())
     await asyncio.gather(ingest_task, querent_task)
 
 if __name__ == "__main__":
-    # Record the start time
-    start_time = time.time()
 
     # Run the async function
     asyncio.run(test_ingest_all_async())
-
-    # Record the end time
-    end_time = time.time()
-
-    # Calculate the duration
-    duration = end_time - start_time
-
-    # Print the duration
-    print(f"Total execution time: {duration} seconds")

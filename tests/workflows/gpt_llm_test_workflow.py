@@ -16,7 +16,9 @@ from querent.common.types.file_buffer import FileBuffer
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
-
+import time
+from querent.config.core.gpt_llm_config import GPTConfig
+from querent.core.transformers.gpt_llm import GPTLLM
 
 @pytest.mark.asyncio
 async def test_ingest_all_async():
@@ -38,25 +40,20 @@ async def test_ingest_all_async():
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors, result_queue=result_queue
     )
-
-    # Start the ingest_all_async in a separate task
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-    termination_event = asyncio.Event()
-    bert_llm_config = BERTLLMConfig(
-    ner_model_name="botryan96/GeoBERT",
-    enable_filtering=True,
-    filter_params={
+    resource_manager = ResourceManager()
+    gpt_llm_config = GPTConfig(
+        enable_filtering=True,
+        filter_params={
             'score_threshold': 0.5,
             'attention_score_threshold': 0.1,
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
-            ,fixed_entities = ['carbon isotope']
-            , sample_entities=['B-GeoPetro']
     )
-    llm_instance = BERTLLM(result_queue, bert_llm_config)
+    llm_instance = GPTLLM(result_queue, gpt_llm_config)
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
@@ -66,10 +63,12 @@ async def test_ingest_all_async():
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(
         [llm_instance],
-        querent_termination_event=termination_event,
+        resource_manager=resource_manager,
     )
     querent_task = asyncio.create_task(querent.start())
     await asyncio.gather(ingest_task, querent_task)
 
 if __name__ == "__main__":
+
+    # Run the async function
     asyncio.run(test_ingest_all_async())
