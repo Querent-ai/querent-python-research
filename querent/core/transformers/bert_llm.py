@@ -129,7 +129,6 @@ class BERTLLM(BaseEngine):
     
     
     async def process_tokens(self, data: IngestedTokens):
-        print("Entered inside ----------", data)
         doc_entity_pairs = []
         number_sentences = 0
         try:
@@ -139,13 +138,12 @@ class BERTLLM(BaseEngine):
             else:
                 clean_text = data.data
             if not BERTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()                                      
-                    return 
+                    self.set_termination_event()
+                    return
             file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text
             )
             if content:
-                print("Content:----------------------- ", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
@@ -162,7 +160,6 @@ class BERTLLM(BaseEngine):
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
-                print("Doc entities pairs----------", doc_entity_pairs)
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
@@ -188,7 +185,6 @@ class BERTLLM(BaseEngine):
                     filtered_triples = pairs_with_predicates
          
                 if not self.skip_inferences:
-                    print("----------------------------------------------------------------", filtered_triples[0])
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:

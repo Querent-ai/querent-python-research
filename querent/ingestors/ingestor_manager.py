@@ -191,8 +191,6 @@ class IngestorFactoryManager:
             self.ingest_collector_async(collector, self.result_queue)
             for collector in self.collectors
         ]
-        print("Data---------------------------------------- Ingestion Task Start")
         await asyncio.gather(*ingestion_tasks)
-        print("Data---------------------------------------- Ingestion Task Complete", len(ingestion_tasks))
         await self.result_queue.put(None)
         
