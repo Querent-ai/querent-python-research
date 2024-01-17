@@ -222,6 +222,8 @@ class BaseEngine(ABC):
                             self.termination_event.set()
                             current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
                             await self.set_state(new_state=current_state)
+                            current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                            await self.set_state(new_state=current_state)
                         else:
                             raise Exception(
                                 f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
