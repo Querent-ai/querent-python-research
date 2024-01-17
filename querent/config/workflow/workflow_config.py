@@ -42,7 +42,7 @@ class WorkflowConfig(BaseModel):
         return value
 
     @validator("event_handler", pre=True, allow_reuse=True)
-    def validate_event_handler(cls, value):
+    def validate_event_handler(self, value):
         # value must have handle_event function
         if not hasattr(value, "handle_event"):
             raise ValueError(
