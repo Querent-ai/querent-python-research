@@ -32,7 +32,7 @@ class WorkflowConfig(BaseModel):
         #     raise ValueError("Please pass config")
 
     @validator("channel", pre=True, allow_reuse=True)
-    def validate_channel(self, value):
+    def validate_channel(cls, value):
         if not hasattr(value, "receive_in_python") or not hasattr(
             value, "send_in_rust"
         ):
@@ -42,7 +42,7 @@ class WorkflowConfig(BaseModel):
         return value
 
     @validator("event_handler", pre=True, allow_reuse=True)
-    def validate_event_handler(self, value):
+    def validate_event_handler(cls, value):
         # value must have handle_event function
         if not hasattr(value, "handle_event"):
             raise ValueError(
