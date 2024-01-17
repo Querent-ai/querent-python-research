@@ -14,6 +14,8 @@ class WorkflowConfig(BaseModel):
     channel: Optional[Any]
     inner_channel_handler: Optional[Any]
     event_handler: Optional[Any]
+    inner_tokens_feader: Optional[Any]
+    tokens_feader: Optional[Any]
 
     def __init__(self, config_source=None, **kwargs):
         # if kwargs:
