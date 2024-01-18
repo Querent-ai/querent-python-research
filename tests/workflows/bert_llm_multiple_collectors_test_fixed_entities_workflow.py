@@ -1,9 +1,7 @@
 import asyncio
-from asyncio import Queue
 import json
 from pathlib import Path
 from querent.callback.event_callback_interface import EventCallbackInterface
-from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.uri import Uri
 from querent.config.core.bert_llm_config import BERTLLMConfig
@@ -109,26 +107,28 @@ async def test_multiple_collectors_all_async():
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     resource_manager = ResourceManager()
     bert_llm_config = BERTLLMConfig(
-    ner_model_name="botryan96/GeoBERT",
-    enable_filtering=True,
-    filter_params={
-            'score_threshold': 0.5,
-            'attention_score_threshold': 0.1,
-            'similarity_threshold': 0.5,
-            'min_cluster_size': 5,
-            'min_samples': 3,
-            'cluster_persistence_threshold':0.1
-        }
-            ,fixed_entities = ['carbon isotope', 'carbon stable isotope']
-            , sample_entities=['B-GeoPetro', 'B-GeoPetro']
+        ner_model_name="botryan96/GeoBERT",
+        enable_filtering=True,
+        filter_params={
+            "score_threshold": 0.5,
+            "attention_score_threshold": 0.1,
+            "similarity_threshold": 0.5,
+            "min_cluster_size": 5,
+            "min_samples": 3,
+            "cluster_persistence_threshold": 0.1,
+        },
+        fixed_entities=["carbon isotope", "carbon stable isotope"],
+        sample_entities=["B-GeoPetro", "B-GeoPetro"],
     )
     llm_instance = BERTLLM(result_queue, bert_llm_config)
+
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))
-            assert isinstance(triple['subject'], str) and triple['subject']
+            assert isinstance(triple["subject"], str) and triple["subject"]
+
     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
     querent = Querent(
         [llm_instance],
@@ -137,6 +137,7 @@ async def test_multiple_collectors_all_async():
 
     querent_task = asyncio.create_task(querent.start())
     await asyncio.gather(ingest_task, querent_task)
+
 
 if __name__ == "__main__":
     asyncio.run(test_multiple_collectors_all_async())
