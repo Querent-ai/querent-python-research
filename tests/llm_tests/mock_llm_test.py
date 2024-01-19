@@ -39,10 +39,10 @@ class MockLLMEngine(BaseEngine):
     async def process_code(self, data: IngestedCode):
         pass
 
-    def process_messages(self, data: IngestedMessages):
+    async def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
 
-    def process_images(self, data: IngestedImages):
+    async def process_images(self, data: IngestedImages):
         return super().process_images(data)
 
     def validate(self):
