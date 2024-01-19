@@ -20,25 +20,22 @@ class CollectorBackend(str, Enum):
     Email = "email"
     Jira = "jira"
 
-
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
     # Use Field with allow_mutation=False to specify the type
     channel: Optional[Any]
     id: str
     name: str
+    uri: str
     config: Dict[str, str]
     inner_channel: Optional[Any]
+    config_source: Optional[Any]
 
     def __init__(self, config_source=None, **kwargs):
-        # if kwargs:
-        #     raise ValueError(
-        #         "Config values must be provided within a dictionary via 'config_source' parameter."
-        #     )
-
-        if config_source:
+         if config_source:
             config_data = self.load_config(config_source)
             super().__init__(**config_data)
+            self.config_source = config_source
             for config_key in CollectorConfigKey:
                 key = config_key.value
                 if key in config_data:
@@ -46,6 +43,17 @@ class CollectorConfig(BaseModel):
 
         # else:
         #     raise ValueError("Please pass config")
+    
+    def resolve(self):
+        if self.config_source and isinstance(self.config_source, dict):
+            backend_type = self.config_source.get('backend')
+            if backend_type in colectorconfig_factories:
+                collector_class = colectorconfig_factories[backend_type]
+                return collector_class(self.config_source)
+            else:
+                raise ValueError(f"Unsupported backend type: {backend_type}")
+        else:
+            raise ValueError("Invalid or missing config source")
 
     # Custom validator for ChannelCommandInterface
     @validator("channel", pre=True, allow_reuse=True)
@@ -94,6 +102,15 @@ class FSCollectorConfig(CollectorConfig):
     chunk_size: int = 1024
     channel: Any
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
     # Custom validator for ChannelCommandInterface
     @validator("channel", pre=True, allow_reuse=True)
     def validate_channel(cls, value):
@@ -118,6 +135,15 @@ class AzureCollectConfig(CollectorConfig):
     prefix: str
     chunk_size: int = 1024
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class S3CollectConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.S3
@@ -128,6 +154,15 @@ class S3CollectConfig(CollectorConfig):
     secret_key: str
     chunk: int = 1024
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class GcsCollectConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Gcs
@@ -135,6 +170,15 @@ class GcsCollectConfig(CollectorConfig):
     bucket: str
     credentials: str
     chunk: int = 1024
+
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
 
 
 class SlackCollectorConfig(CollectorConfig):
@@ -148,6 +192,15 @@ class SlackCollectorConfig(CollectorConfig):
     channel_name: str
     access_token: str
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class DropboxConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.DropBox
@@ -158,6 +211,15 @@ class DropboxConfig(CollectorConfig):
     chunk_size: int
     dropbox_refresh_token: str
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class GithubConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Github
@@ -166,11 +228,29 @@ class GithubConfig(CollectorConfig):
     github_access_token: str
     repository: str
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class WebScraperConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.WebScraper
     id: str
     website_url: str = Field(..., description="The URL of the website to scrape.")
+
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
 
 
 class DriveCollectorConfig(CollectorConfig):
@@ -185,6 +265,15 @@ class DriveCollectorConfig(CollectorConfig):
     specific_file_type: Optional[str] = None
     folder_to_crawl: Optional[str] = None
 
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
 
 class EmailCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Email
@@ -196,6 +285,15 @@ class EmailCollectorConfig(CollectorConfig):
     imap_folder: str
     imap_keyfile: Optional[str] = None
     imap_certfile: Optional[str] = None
+
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
 
 
 class JiraCollectorConfig(CollectorConfig):
@@ -214,3 +312,27 @@ class JiraCollectorConfig(CollectorConfig):
     jira_keyfile: Optional[str] = None
     jira_certfile: Optional[str] = None
     jira_verify: Optional[bool] = True
+
+    def __init__(self, config_source=None, **kwargs):
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config) 
+            super().__init__(config_source=config_source, **kwargs)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
+
+colectorconfig_factories = {
+        CollectorBackend.LocalFile: FSCollectorConfig,
+        CollectorBackend.Drive: DriveCollectorConfig,
+        CollectorBackend.AzureBlobStorage: AzureCollectConfig,
+        CollectorBackend.DropBox: DropboxConfig,
+        CollectorBackend.Email: EmailCollectorConfig,
+        CollectorBackend.Gcs: GcsCollectConfig,
+        CollectorBackend.Github: GithubConfig,
+        CollectorBackend.Jira: JiraCollectorConfig,
+        CollectorBackend.S3: S3CollectConfig,
+        CollectorBackend.WebScraper: WebScraperConfig,
+        CollectorBackend.Slack: SlackCollectorConfig,
+    }

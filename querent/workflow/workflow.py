@@ -3,6 +3,10 @@ import asyncio
 import uuid
 
 from querent.config.config import Config
+from querent.config.workflow.workflow_config import WorkflowConfig
+from querent.config.collector.collector_config import CollectorConfig
+from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.gpt_llm_config import GPTConfig
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
@@ -16,19 +20,37 @@ from querent.querent.resource_manager import ResourceManager
 
 async def start_workflow(config_dict: dict):
     #Start the workflow
+    workflow_config = config_dict.get("workflow")
+    workflow = WorkflowConfig(config_source=workflow_config)
+    collector_configs = config_dict.get("collectors", [])
+    collectors = []
+    for collector_config in collector_configs: 
+        collectors.append(CollectorConfig(config_source=collector_config).resolve())
+
+    engine_configs = config_dict.get("engines", [])
+    engines = []
+    for engine_config in engine_configs:
+        if config_dict["workflow"]["name"] == "openai":
+            engines.append(GPTConfig(config_source = engine_config))
+        elif config_dict["workflow"]["name"] == "llama":
+            engines.append(BERTLLMConfig(config_source=engine_config))
+
+    config_dict["engines"] = engines
+    config_dict["collectors"] = collectors
+    config_dict["workflow"] = workflow
     config = Config(config_source=config_dict)
 
     workflows = {"openai": start_gpt_workflow,
-               "bert_v1": start_bert_workflow}
+               "llama": start_llama_workflow}
 
-    workflow = workflows.get(Config.workflow.name)
+    workflow = workflows.get(config.workflow.name)
     await workflow(config)
 
 
 async def start_gpt_workflow(config: Config):
     collectors = []
     for collector_config in config.collectors:
-        uri = Uri(collector_config.backend+"://")
+        uri = Uri(collector_config.uri)
         collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
 
     for collector in collectors:
@@ -66,10 +88,10 @@ async def receive_token_feeder(resource_manager: ResourceManager, config: Config
         if message_state is not None:
             await state_queue.put(message_state)
 
-async def start_bert_workflow(config: Config):
+async def start_llama_workflow(config: Config):
     collectors = []
     for collector_config in config.collectors:
-        uri = Uri(collector_config.backend+"://")
+        uri = Uri(collector_config.uri)
         collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
 
     for collector in collectors:

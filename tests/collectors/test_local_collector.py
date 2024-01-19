@@ -29,6 +29,7 @@ def test_fs_collector(temp_dir):
             "root_path": uri.path,
             "name": "Local-config",
             "config": {},
+            "uri": "file://",
         }
     )
     collector = resolver.resolve(uri, fileConfig)
@@ -62,6 +63,7 @@ async def main():
             "root_path": uri.path,
             "name": "Local-config",
             "config": {},
+            "uri": "file://",
         }
     )
     collector = resolver.resolve(uri, fileConfig)

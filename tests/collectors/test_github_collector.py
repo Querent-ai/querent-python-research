@@ -20,6 +20,7 @@ def github_config():
             "github_access_token": os.getenv("ACCESS_TOKEN_GITHUB"),
             "name": "Github-config",
             "config": {},
+            "uri": "github://",
         }
     )
 

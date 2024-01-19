@@ -21,6 +21,7 @@ def slack_config():
             "access_token": os.getenv("SLACK_ACCESS_KEY"),
             "name": "Slack-config",
             "config": {},
+            "uri": "slack://",
         }
     )
 

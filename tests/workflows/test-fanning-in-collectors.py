@@ -51,6 +51,7 @@ async def create_workers(directory, output_queue, logger_queue, stop_event):
                 "root_path": directory,
                 "name": "Local-config",
                 "config": {},
+                "uri": "file://",
             }
         )
         collector = collector_factory.resolve(uri, config)

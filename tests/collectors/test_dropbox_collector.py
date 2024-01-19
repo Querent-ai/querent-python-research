@@ -24,6 +24,7 @@ def dropbox_config():
             "folder_path": "",
             "name": "Dropbox-config",
             "config": {},
+            "uri": "dropbox://",
         }
     )
 

@@ -31,6 +31,7 @@ async def test_ingest_all_async():
                     "name": "Local-config",
                     "config": {},
                     "backend": "localfile",
+                    "uri": "file://",
                 }),
         )
         for directory in directories

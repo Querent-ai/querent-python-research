@@ -25,6 +25,7 @@ def drive_config():
             "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
             "name": "Drive-config",
             "config": {},
+            "uri": "drive://",
         }
     )
 

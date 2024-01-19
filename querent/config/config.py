@@ -28,6 +28,7 @@ class Config(BaseModel):
 
         if config_source:
             config_data = self.load_config(config_source)
+            super().__init__(**config_data)
             for config_key in ConfigKey:
                 key = config_key.value
                 if key in config_data:

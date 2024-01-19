@@ -19,6 +19,7 @@ def test_webscrapper_collector():
             "id": str(uuid.uuid4()),
             "name": "Webscrapper-config",
             "config": {},
+            "uri": "https://asecuritysite.com/",
         }
     )
     collector = resolver.resolve(uri, webscrapperConfig)
@@ -39,6 +40,7 @@ def test_scrapping_data():
             "id": str(uuid.uuid4()),
             "name": "Webscrapper-config",
             "config": {},
+            "uri": "https://protocolstreams.xyz/",
         }
     )
     collector = resolver.resolve(uri, webscrapperConfig)

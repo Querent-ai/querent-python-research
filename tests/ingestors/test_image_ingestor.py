@@ -18,6 +18,7 @@ async def test_collect_and_ingest_jpg():
             "root_path": uri.path,
             "name": "Local-config",
             "config": {},
+            "uri": "file://",
         }
     )
     collector = collector_factory.resolve(uri, config)

@@ -24,6 +24,7 @@ def jira_config():
             "jira_query": "project=Querent1",
             "name": "Jira-config",
             "config": {},
+            "uri": "jira://",
         }
     )
 

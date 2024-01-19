@@ -22,6 +22,7 @@ async def test_ingest_all_async():
                     "root_path": directory,
                     "name": "Local-config",
                     "config": {},
+                    "uri": "file://",
                 }
             ),
         )

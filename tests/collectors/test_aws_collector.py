@@ -30,6 +30,7 @@ def aws_config():
             "name": "AWS-config",
             "config": {},
             "backend": "s3",  # Assuming this is a string or relevant enum value
+            "uri": "s3://",
         },
     )
     return config

@@ -1,7 +1,8 @@
 from typing import Any, Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import validator
 import os
-from querent.channel.channel_interface import ChannelCommandInterface
+from pydantic import BaseModel
+
 from querent.common.types.engine_config_keys import EngineConfigKey
 
 

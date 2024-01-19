@@ -23,6 +23,7 @@ async def test_collect_and_ingest_code():
             "github_access_token": os.getenv("ACCESS_TOKEN_GITHUB"),
             "name": "Github-config",
             "config": {},
+            "uri": "github://"
         }
     )
     uri = Uri("github://")

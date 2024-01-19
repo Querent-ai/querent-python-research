@@ -24,6 +24,7 @@ def gcs_config():
             "chunk": 1024,
             "config": {},
             "name": "GCS-config",
+            "uri": "gs://",
         }
     )
 

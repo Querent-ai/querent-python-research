@@ -28,6 +28,7 @@ def email_config():
             "imap_keyfile": None,
             "name": "Email-config",
             "config": {},
+            "uri": "email://",
         }
     )
 

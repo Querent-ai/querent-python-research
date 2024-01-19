@@ -40,6 +40,7 @@ def drive_config():
             "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
             "name": "Drive-config",
             "config": {},
+            "uri": "drive://",
         }
     )
 
@@ -57,6 +58,7 @@ def slack_config():
             "access_token": os.getenv("SLACK_ACCESS_KEY"),
             "name": "Slack-config",
             "config": {},
+            "uri": "slack://",
         }
     )
 
@@ -73,6 +75,7 @@ async def test_multiple_collectors_all_async():
                     "root_path": directory,
                     "name": "Local-config",
                     "config": {},
+                    "uri": "file://",
                 }),
         )
         for directory in directories
