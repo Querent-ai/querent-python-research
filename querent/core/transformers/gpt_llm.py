@@ -4,7 +4,6 @@ from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtract
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
-from querent.kg.rel_helperfunctions.opeai_ratelimiter import RateLimiter
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -18,6 +17,11 @@ from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
 from querent.config.core.bert_llm_config import BERTLLMConfig
 from openai import OpenAI
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 from dotenv import load_dotenv, find_dotenv
 import json
 
@@ -47,7 +51,6 @@ class GPTLLM(BaseEngine):
             sample_entities = config.sample_entities,
             fixed_entities = config.fixed_entities,
             skip_inferences= True)
-            self.rate_limiter = RateLimiter(config.requests_per_minute)
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             if self.fixed_relationships and not self.sample_relationships:
@@ -107,16 +110,16 @@ class GPTLLM(BaseEngine):
         try:
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
+            classify_entity_message = f"""Please analyze the provided context and the two specified entities to identify the roles and types of these entities.
+Context: {context} 
+Entity 1: {entity1} and Entity 2: {entity2}
+"""
 
-            classify_entity_message = (
-                    "Please analyze the provided context and two entities"\
-                    "Determine which entity is the subject and which is the object in the context. Also, identify the type of subject and type of object."
-                    )
+            print("message------------------", classify_entity_message)
             messages_classify_entity = [
                     {"role": "system", "content": classify_entity_message},
-                    {"role": "user", "content": f"Context: {context}"},
-                    {"role": "user", "content": f"Entity 1: {entity1} (Entity 1)"},
-                    {"role": "user", "content": f"Entity 2: {entity2} (Entity 2)"}
+                    {"role": "user", "content": f"Query: Determine which entity is the subject along with its type and which is the object its type."}
+                    
                 ]
                             
             classify_entity_response = self.generate_response(
@@ -125,7 +128,6 @@ class GPTLLM(BaseEngine):
                 "classify_entities"
             )
             subject_info = self.extract_subject_object_info(classify_entity_response)
-            
             identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
             messages_identify_predicate = [
                                             {"role": "system", "content": identify_predicate_message},
@@ -136,9 +138,7 @@ class GPTLLM(BaseEngine):
                 predicate_info_function,
                 "predicate_info"
             )
-
             predicate_info = self.extract_predicate_info(identify_predicate_response)
-
             return {
                 'subject_type': subject_info['subject_type'],
                 'subject': subject_info['subject'],
@@ -152,19 +152,25 @@ class GPTLLM(BaseEngine):
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
             raise Exception(f"An unexpected error occurred while processing triples using GPT: {e}")
 
+    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    def completion_with_backoff(self, **kwargs):
+        return self.gpt_llm.chat.completions.create(**kwargs)
+    
     def generate_response(self, messages, functions, name):
-        self.rate_limiter.wait_for_request_slot()
-        response = self.gpt_llm.chat.completions.create(
+        print("-----------------------------------MESSAGES", messages)
+        response = self.completion_with_backoff(
             model=self.rel_model_name,
+            # response_format={ "type": "json_object" },
             messages=messages,
             temperature=0,
-            functions=functions,
-            function_call={"name": name}
+            tools=functions,
+            tool_choice="auto"
         )
         return response
 
     def extract_subject_object_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+        print("function_call_arguments--------------------------------", function_call_arguments)
         return {
             'subject_type': function_call_arguments.get("subject_type", "Unlabeled"),
             'subject': function_call_arguments.get("subject"),
@@ -173,7 +179,7 @@ class GPTLLM(BaseEngine):
         }
 
     def extract_predicate_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
         return {
             'predicate': function_call_arguments.get("predicate"),
             'predicate_type': function_call_arguments.get("predicate_type", "Unlabeled")
@@ -198,12 +204,12 @@ class GPTLLM(BaseEngine):
       
     async def process_tokens(self, data: IngestedTokens):
         try:
+            print("Processing tokens-------------------------------------")
             if not GPTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                    
                     return 
             relationships = []
-            filtered_triples, file = await self.bert_instance.process_tokens(data)
-            
+            filtered_triples, file = await self.bert_instance.process_tokens(data)           
             if not filtered_triples: return 
             else:
                 modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
@@ -252,14 +258,36 @@ async def main():
         # Create an instance of GPTLLM with the desired configuration
         gpt_llm_instance = GPTLLM(input_queue=None, config=GPTConfig())
 
-        # Call your async function to process context and entities
-        response = await gpt_llm_instance.process_triples(context, entity1, entity2)
+        # # Call your async function to process context and entities
+        # response = await gpt_llm_instance.process_triples(context, entity1, entity2)
 
-        # Process the response or print it as needed
-        if response:
-            print(response)
-        else:
-            print("An error occurred during processing.")
+        # # Process the response or print it as needed
+        # if response:
+        #     print(response)
+        # else:
+        #     print("An error occurred during processing.")
+
+        prompts = [
+            {'role': 'system', 'content': "Given the context, please identify the predicate between the subject 'the GoM basin' and the object 'a shale interval' and determine the predicate type."}, {'role': 'user', 'content': 'Context: We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca.'},
+            {'role': 'system', 'content': "Given the context, please identify the predicate between the subject 'the GoM basin' and the object 'deposition' and determine the predicate type."}, {'role': 'user', 'content': 'Context: We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca.'}
+                ]
+        client = OpenAI() 
+        # batched example, with 10 stories completions per request
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo-1106",
+        messages=prompts,
+        temperature=0,
+    )
+        print("--------------------------------,", response)
+        # match completions to prompts by index
+        stories = [""] * len(prompts)
+        for choice in response.choices:
+            stories[choice.index] = prompts[choice.index] + choice.text
+
+        # print stories
+        for story in stories:
+            print(story)
+
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")

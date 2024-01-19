@@ -1,3 +1,4 @@
+import os
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
@@ -23,5 +24,33 @@ class BERTLLMConfig(BaseModel):
     skip_inferences: bool = False
     fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
     sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
+    
+    def __init__(self, config_source=None, **kwargs):
+        super().__init__(**kwargs) 
+        declared_keys = set(self.__annotations__.keys())
+        if config_source:
+            config_data = self.load_config(config_source)
+            super().__init__(**config_data)
+            for config_key, config_value in config_data.items():
+                if config_key in declared_keys:
+                    setattr(self, config_key, config_value)
+
+        # Apply any additional keyword arguments, if they are declared attributes
+        for key, value in kwargs.items():
+            if key in declared_keys:
+                setattr(self, key, value)
+
+    @classmethod
+    def load_config(cls, config_source) -> dict:
+        if isinstance(config_source, dict):
+            # If config source is a dictionary, use it as the initial config data
+            cls.config_data = config_source
+        else:
+            raise ValueError("Invalid config. Must be a valid dictionary")
+
+        env_vars = dict(os.environ)
+        cls.config_data.update(env_vars)  # Update config data with environment variables
+        return cls.config_data
+
     
 

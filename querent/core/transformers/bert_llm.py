@@ -131,6 +131,7 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
+            print("--------------------------------data: ",data)
             if data.data:
                 single_string = ' '.join(data.data)
                 clean_text = single_string.replace('\n', ' ')

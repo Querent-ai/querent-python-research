@@ -30,6 +30,7 @@ async def test_gptllm_ner_tokenization_and_entity_extraction(input_data, ner_mod
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=None)
     await input_queue.put(ingested_data)
     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
+    print("going to initialize class---------------------------")
     gpt_llm_config = GPTConfig(
         ner_model_name=ner_model_name,
         enable_filtering=filter_entities,
