@@ -1,7 +1,6 @@
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.logging.logger import setup_logger
 import torch
-import umap
 import numpy as np
 import time
 import psutil
