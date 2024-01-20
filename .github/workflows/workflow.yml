@@ -137,9 +137,14 @@ jobs:
       - name: Download spaCy large model
         run: |
             python -m spacy download en_core_web_lg
+      
+      # - name: Run Pytest
+      #   run: python -B -m pytest -v --disable-warnings .
+      #   env:
+      #         PYTHONDONTWRITEBYTECODE: 1
 
       - name: Test Code Coverage
-        run: pytest -s --cov=querent -vv --durations=0
+        run: python -B -m pytest -s --cov=querent -vv --durations=0
         env:
           PYTHONDONTWRITEBYTECODE: 1
 

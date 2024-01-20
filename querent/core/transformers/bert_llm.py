@@ -186,18 +186,20 @@ class BERTLLM(BaseEngine):
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
-                    print("embedding triples length -----------------", len(embedding_triples))
-                    if self.sample_relationships:
-                        embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
-                    for triple in embedding_triples:
-                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                        if graph_json:
-                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            await self.set_state(new_state=current_state)
-                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                        if vector_json:
-                            current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                            await self.set_state(new_state=current_state)
+                    if len(embedding_triples) > 0:
+                        if self.sample_relationships:
+                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                        for triple in embedding_triples:
+                            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                            if graph_json:
+                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                await self.set_state(new_state=current_state)
+                            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                            if vector_json:
+                                current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                await self.set_state(new_state=current_state)
+                    else:
+                        return
                 else:
                     return filtered_triples, file
         except Exception as e:

@@ -31,19 +31,14 @@ class BERTLLMConfig(BaseModel):
     sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
     
     def __init__(self, config_source=None, **kwargs):
-        super().__init__(**kwargs) 
-        declared_keys = set(self.__annotations__.keys())
+        config_data = {}
+        config_data.update(kwargs)
         if config_source:
             config_data = self.load_config(config_source)
-            super().__init__(**config_data)
-            for config_key, config_value in config_data.items():
-                if config_key in declared_keys:
-                    setattr(self, config_key, config_value)
+        if "config" in config_data:
+            config_data.update(config_data["config"])
+        super().__init__(**config_data)
 
-        # Apply any additional keyword arguments, if they are declared attributes
-        for key, value in kwargs.items():
-            if key in declared_keys:
-                setattr(self, key, value)
 
     @classmethod
     def load_config(cls, config_source) -> dict:
