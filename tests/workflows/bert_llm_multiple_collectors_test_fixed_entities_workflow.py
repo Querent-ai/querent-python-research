@@ -28,29 +28,38 @@ load_dotenv()
 
 def drive_config():
     return DriveCollectorConfig(
-        id=str(uuid.uuid4()),
-        drive_refresh_token=os.getenv("DRIVE_REFRESH_TOKEN"),
-        drive_token=os.getenv("DRIVE_TOKEN"),
-        drive_scopes=os.getenv("DRIVE_SCOPES"),
-        chunk_size=1024 * 1024,
-        drive_client_id=os.getenv("DRIVE_CLIENT_ID"),
-        drive_client_secret=os.getenv("DRIVE_CLIENT_SECRET"),
-        specific_file_type="application/pdf",
-        # Remember to put id of the folder you want to crawl
-        folder_to_crawl="1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
+        config_source={
+            "id": str(uuid.uuid4()),
+            "drive_refresh_token": os.getenv("DRIVE_REFRESH_TOKEN"),
+            "drive_token": os.getenv("DRIVE_TOKEN"),
+            "drive_scopes": os.getenv("DRIVE_SCOPES"),
+            "chunk_size": 1024 * 1024,
+            "drive_client_id": os.getenv("DRIVE_CLIENT_ID"),
+            "drive_client_secret": os.getenv("DRIVE_CLIENT_SECRET"),
+            "specific_file_type": "application/pdf",
+            "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
+            "name": "Drive-config",
+            "config": {},
+            "uri": "drive://",
+        }
     )
 
 
 def slack_config():
     return SlackCollectorConfig(
-        id=str(uuid.uuid4()),
-        channel_name="C05TA5R7D88",
-        cursor=None,
-        include_all_metadata=0,
-        inclusive=0,
-        latest=0,
-        limit=100,
-        access_token=os.getenv("SLACK_ACCESS_KEY"),
+        config_source={
+            "id": str(uuid.uuid4()),
+            "channel_name": "C05TA5R7D88",
+            "cursor": None,
+            "include_all_metadata": 0,
+            "inclusive": 0,
+            "latest": 0,
+            "limit": 100,
+            "access_token": os.getenv("SLACK_ACCESS_KEY"),
+            "name": "Slack-config",
+            "config": {},
+            "uri": "slack://",
+        }
     )
 
 
@@ -61,7 +70,13 @@ async def test_multiple_collectors_all_async():
     collectors = [
         CollectorResolver().resolve(
             Uri("file://" + str(Path(directory).resolve())),
-            FSCollectorConfig(root_path=directory, id=str(uuid.uuid4())),
+            FSCollectorConfig(config_source={
+                    "id": str(uuid.uuid4()),
+                    "root_path": directory,
+                    "name": "Local-config",
+                    "config": {},
+                    "uri": "file://",
+                }),
         )
         for directory in directories
     ]

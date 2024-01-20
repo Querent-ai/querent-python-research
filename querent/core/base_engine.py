@@ -12,6 +12,7 @@ from querent.config.engine.engine_config import EngineConfig
 from querent.logging.logger import setup_logger
 from querent.common.types.ingested_images import IngestedImages
 from querent.common.types.ingested_images import IngestedImages
+import uuid
 
 """
     BaseEngine is an abstract base class that provides the foundational structure and methods 
@@ -62,9 +63,12 @@ class BaseEngine(ABC):
         self,
         input_queue: QuerentQueue,
         config: EngineConfig = EngineConfig(
-            name="BaseEngine",
-            description="Base Engine",
-            version="0.0.1",
+            config_source={
+                "id": str(uuid.uuid4()),
+                "name": "BaseEngine",
+                "description": "Base Engine",
+                "version": "0.0.1",
+            }
         ),
         **kwargs,
     ):
@@ -115,7 +119,7 @@ class BaseEngine(ABC):
             of the event and set using `self.set_state(event_state)`.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     async def process_images(self, data: IngestedImages):
         """
@@ -215,7 +219,7 @@ class BaseEngine(ABC):
                         elif isinstance(data, IngestedTokens):
                             await self.process_tokens(data)
                         elif isinstance(data, IngestedImages):
-                            await self.process_images(data)       
+                            await self.process_images(data)
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
                         elif data is None:
@@ -247,6 +251,7 @@ class BaseEngine(ABC):
                     if current_message_total >= self.message_throttle_limit:
                         await asyncio.sleep(self.message_throttle_delay)
                         current_message_total = 0
+
             await asyncio.gather(state_listener, _inner_worker())
         except Exception as e:
             self.logger.error(f"Error while processing tokens: {e}")

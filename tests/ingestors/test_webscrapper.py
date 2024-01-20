@@ -13,7 +13,15 @@ from querent.config.collector.collector_config import CollectorBackend, WebScrap
 def test_webscrapper_collector():
     uri = Uri("https://asecuritysite.com/")
     resolver = CollectorResolver()
-    webscrapperConfig = WebScraperConfig(website_url=uri.uri, id=str(uuid.uuid4()))
+    webscrapperConfig = WebScraperConfig(
+        config_source={
+            "website_url": uri.uri,
+            "id": str(uuid.uuid4()),
+            "name": "Webscrapper-config",
+            "config": {},
+            "uri": "https://asecuritysite.com/",
+        }
+    )
     collector = resolver.resolve(uri, webscrapperConfig)
     assert collector is not None
 
@@ -26,7 +34,15 @@ def test_fs_collector_factory():
 def test_scrapping_data():
     uri = Uri("https://protocolstreams.xyz/")
     resolver = CollectorResolver()
-    webscrapperConfig = WebScraperConfig(id=str(uuid.uuid4()), website_url=uri.uri)
+    webscrapperConfig = WebScraperConfig(
+        config_source={
+            "website_url": uri.uri,
+            "id": str(uuid.uuid4()),
+            "name": "Webscrapper-config",
+            "config": {},
+            "uri": "https://protocolstreams.xyz/",
+        }
+    )
     collector = resolver.resolve(uri, webscrapperConfig)
     assert collector is not None
 

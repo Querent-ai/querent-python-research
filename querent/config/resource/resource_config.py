@@ -1,24 +1,16 @@
-import os
-from pydantic import BaseSettings
-import yaml
+from typing import Optional
 from pydantic import BaseModel
-from typing import Optional, List
+import os
 
-from querent.common.types.config_keys import ConfigKey
-from querent.config.workflow.workflow_config import WorkflowConfig
-from querent.config.collector.collector_config import CollectorConfig
-from querent.config.engine.engine_config import EngineConfig
-from querent.config.resource.resource_config import ResourceConfig
+from querent.common.types.resource_config_keys import ResourceConfigKey
 
 
-class Config(BaseModel):
-    version: float
-    querent_id: str
-    querent_name: str
-    workflow: WorkflowConfig
-    collectors: List[CollectorConfig]
-    engines: List[EngineConfig]
-    resource: Optional[ResourceConfig]
+class ResourceConfig(BaseModel):
+    id: str
+    max_workers_allowed: Optional[int]
+    max_workers_per_collector: Optional[int]
+    max_workers_per_engine: Optional[int]
+    max_workers_per_querent: Optional[int]
 
     def __init__(self, config_source=None, **kwargs):
         # if kwargs:
@@ -28,8 +20,7 @@ class Config(BaseModel):
 
         if config_source:
             config_data = self.load_config(config_source)
-            super().__init__(**config_data)
-            for config_key in ConfigKey:
+            for config_key in ResourceConfigKey:
                 key = config_key.value
                 if key in config_data:
                     setattr(self, key, config_data[key])
@@ -54,7 +45,7 @@ class Config(BaseModel):
         return cls.config_data
 
     @classmethod
-    def get(cls, key: ConfigKey, default=None):
+    def get(cls, key: ResourceConfigKey, default=None):
         """
         Get a specific configuration value by key.
         Args:
@@ -64,14 +55,3 @@ class Config(BaseModel):
             The configuration value if found, otherwise the default value.
         """
         return cls.config_data.get(key, default)
-
-    @classmethod
-    def has(cls, key: ConfigKey):
-        """
-        Check if a specific configuration key exists.
-        Args:
-            key (ConfigKey): The key to check.
-        Returns:
-            bool: True if the key exists, False otherwise.
-        """
-        return key in cls.config_data

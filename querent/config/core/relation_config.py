@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 from typing import Dict
-
 class RelationshipExtractorConfig(BaseModel):
     name: str = "RelationshipExtractor"
     description: str = "An engine for extracting relationships"

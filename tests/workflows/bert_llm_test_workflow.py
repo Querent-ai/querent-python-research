@@ -25,14 +25,20 @@ async def test_ingest_all_async():
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),
-            FSCollectorConfig(root_path=directory, id=str(uuid.uuid4())),
+            FSCollectorConfig(config_source={
+                    "id": str(uuid.uuid4()),
+                    "root_path": directory,
+                    "name": "Local-config",
+                    "config": {},
+                    "backend": "localfile",
+                    "uri": "file://",
+                }),
         )
         for directory in directories
     ]
 
     # Set up the result queue
     result_queue = asyncio.Queue()
-    file_buffer = FileBuffer()
 
     # Create the IngestorFactoryManager
     ingestor_factory_manager = IngestorFactoryManager(

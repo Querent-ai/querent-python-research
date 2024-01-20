@@ -1,6 +1,9 @@
 import os
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
+import os
+
+from querent.config.engine.engine_config import EngineConfig
 
 class BERTLLMConfig(BaseModel):
     name: str = "BERTLLMEngine"
