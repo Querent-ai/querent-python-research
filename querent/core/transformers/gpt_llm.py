@@ -128,23 +128,26 @@ Entity 1: {entity1} and Entity 2: {entity2}
                 classify_entity_function,
                 "classify_entities"
             )
-            print("Subject Message-----------------------------", classify_entity_response)
             subject_info = self.extract_subject_object_info(classify_entity_response)
+            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
+#             identify_predicate_message = f"""Please analyze the provided context. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
+# Context: {context} 
+# Subject: {subject_info['subject']} and Object: {subject_info['object']}
+# """
+#             messages_identify_predicate = [
+#                                             {"role": "system", "content": identify_predicate_message},
+#                                             {"role": "user", "content": f"Query: Determine the predicate and the predicate type between the subject and the object."}
+#                                         ]
             # identify_predicate_message = f"Please analyze the provided context to identify the predicate and predicate type between the subject '{subject_info['subject']}' and the object '{subject_info['object']}'.The predicate will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject."
-            identify_predicate_message = f"""Please analyze the provided context and the subject and the object of a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
-Context: {context} 
-Subject: {subject_info['subject']} and Object: {subject_info['object']}
-"""
             messages_identify_predicate = [
-                                            {"role": "system", "content": identify_predicate_message},
-                                            {"role": "user", "content": f"Query: Determine the predicate and the predicate type between the subject and the object."}
-                                        ]
+                                                {"role": "system", "content": identify_predicate_message},
+                                                {"role": "user", "content": f"Context: {context}"}
+                                            ]
             identify_predicate_response = self.generate_response(
                 messages_identify_predicate,
                 predicate_info_function,
                 "predicate_info"
             )
-            print("Predicate Message-----------------------------",identify_predicate_response)
             predicate_info = self.extract_predicate_info(identify_predicate_response)
             
             return {
@@ -213,7 +216,6 @@ Subject: {subject_info['subject']} and Object: {subject_info['object']}
       
     async def process_tokens(self, data: IngestedTokens):
         try:
-            print("Processing tokens-------------------------------------")
             if not GPTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                    
                     return 
@@ -221,7 +223,7 @@ Subject: {subject_info['subject']} and Object: {subject_info['object']}
             filtered_triples, file = await self.bert_instance.process_tokens(data)           
             if not filtered_triples: return 
             else:
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:5])
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
@@ -288,7 +290,6 @@ async def main():
         messages=prompts,
         temperature=0,
     )
-        print("--------------------------------,", response)
         # match completions to prompts by index
         stories = [""] * len(prompts)
         for choice in response.choices:

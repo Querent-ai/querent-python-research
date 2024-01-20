@@ -187,7 +187,6 @@ Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
 Query: Using the semantic triple framework (Subject, Predicate, Object), determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.
 Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
-                        print("----------------------------------------------------", query)
                     else:
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
                       
