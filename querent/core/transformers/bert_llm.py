@@ -184,8 +184,9 @@ class BERTLLM(BaseEngine):
                     filtered_triples = pairs_with_predicates
          
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:5])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
+                    print("embedding triples length -----------------", len(embedding_triples))
                     if self.sample_relationships:
                         embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                     for triple in embedding_triples:
