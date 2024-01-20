@@ -110,35 +110,43 @@ class GPTLLM(BaseEngine):
         try:
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
-            classify_entity_message = f"""Please analyze the provided context and the two specified entities to identify the roles and types of these entities.
+#             classify_entity_message = f"""Please analyze the provided context and the two specified entities to identify the roles and types of these entities.
+# Context: {context} 
+# Entity 1: {entity1} and Entity 2: {entity2}
+# """
+            classify_entity_message = f"""Please analyze the provided context and two specified entities to identify the roles and types of these entities. These entities will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
 Context: {context} 
 Entity 1: {entity1} and Entity 2: {entity2}
 """
-
-            print("message------------------", classify_entity_message)
             messages_classify_entity = [
                     {"role": "system", "content": classify_entity_message},
                     {"role": "user", "content": f"Query: Determine which entity is the subject along with its type and which is the object its type."}
                     
-                ]
-                            
+                ]             
             classify_entity_response = self.generate_response(
                 messages_classify_entity,
                 classify_entity_function,
                 "classify_entities"
             )
+            print("Subject Message-----------------------------", classify_entity_response)
             subject_info = self.extract_subject_object_info(classify_entity_response)
-            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
+            # identify_predicate_message = f"Please analyze the provided context to identify the predicate and predicate type between the subject '{subject_info['subject']}' and the object '{subject_info['object']}'.The predicate will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject."
+            identify_predicate_message = f"""Please analyze the provided context and the subject and the object of a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
+Context: {context} 
+Subject: {subject_info['subject']} and Object: {subject_info['object']}
+"""
             messages_identify_predicate = [
                                             {"role": "system", "content": identify_predicate_message},
-                                            {"role": "user", "content": f"Context: {context}"}
+                                            {"role": "user", "content": f"Query: Determine the predicate and the predicate type between the subject and the object."}
                                         ]
             identify_predicate_response = self.generate_response(
                 messages_identify_predicate,
                 predicate_info_function,
                 "predicate_info"
             )
+            print("Predicate Message-----------------------------",identify_predicate_response)
             predicate_info = self.extract_predicate_info(identify_predicate_response)
+            
             return {
                 'subject_type': subject_info['subject_type'],
                 'subject': subject_info['subject'],
@@ -150,14 +158,12 @@ Entity 1: {entity1} and Entity 2: {entity2}
 
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
-            raise Exception(f"An unexpected error occurred while processing triples using GPT: {e}")
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def completion_with_backoff(self, **kwargs):
         return self.gpt_llm.chat.completions.create(**kwargs)
     
     def generate_response(self, messages, functions, name):
-        print("-----------------------------------MESSAGES", messages)
         response = self.completion_with_backoff(
             model=self.rel_model_name,
             # response_format={ "type": "json_object" },
@@ -170,7 +176,8 @@ Entity 1: {entity1} and Entity 2: {entity2}
 
     def extract_subject_object_info(self, response):
         function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-        print("function_call_arguments--------------------------------", function_call_arguments)
+        if not function_call_arguments.get("subject") or not function_call_arguments.get("object"):
+                raise ValueError("Missing 'subject',  or 'object' in llm output")
         return {
             'subject_type': function_call_arguments.get("subject_type", "Unlabeled"),
             'subject': function_call_arguments.get("subject"),
@@ -180,6 +187,8 @@ Entity 1: {entity1} and Entity 2: {entity2}
 
     def extract_predicate_info(self, response):
         function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+        if not function_call_arguments.get("predicate"):
+                raise ValueError("Missing 'predicate' in llm output")
         return {
             'predicate': function_call_arguments.get("predicate"),
             'predicate_type': function_call_arguments.get("predicate_type", "Unlabeled")
@@ -188,12 +197,12 @@ Entity 1: {entity1} and Entity 2: {entity2}
     def generate_output_tuple(self,result, context_json):
         context_data = json.loads(context_json)
         context = context_data.get("context", "")
-        subject_type = result.get("subject_type", "")
+        subject_type = result.get("subject_type", "Unlabeled")
         subject = result.get("subject", "")
-        object_type = result.get("object_type", "")
+        object_type = result.get("object_type", "Unlabeled")
         object = result.get("object", "")
         predicate = result.get("predicate", "")
-        predicate_type = result.get("predicate_type", "")
+        predicate_type = result.get("predicate_type", "Unlabled")
         output_tuple = (
             subject,
             f'{{"predicate": "{predicate}", "predicate_type": "{predicate_type}", "context": "{context}", "file": "{context_data.get("file_path", "")}", "subject_type": "{subject_type}", "object_type": "{object_type}"}}',
@@ -212,7 +221,7 @@ Entity 1: {entity1} and Entity 2: {entity2}
             filtered_triples, file = await self.bert_instance.process_tokens(data)           
             if not filtered_triples: return 
             else:
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:5])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
@@ -222,21 +231,22 @@ Entity 1: {entity1} and Entity 2: {entity2}
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)
-                embedding_triples = self.create_emb.generate_embeddings(relationships)
-                if self.sample_relationships:
-                        embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
-                for triple in embedding_triples:
-                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                    if graph_json:
-                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            await self.set_state(new_state=current_state)
-                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                    if vector_json:
-                            current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                            await self.set_state(new_state=current_state)
+                if len(relationships) > 0:
+                    embedding_triples = self.create_emb.generate_embeddings(relationships)
+                    if self.sample_relationships:
+                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                    for triple in embedding_triples:
+                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                        if graph_json:
+                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                await self.set_state(new_state=current_state)
+                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                        if vector_json:
+                                current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
-            raise Exception(f"An unexpected error occurred while extracting predicates using GPT: {e}")
+            raise Exception(f"An error occurred while extracting predicates using GPT: {e}")
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError

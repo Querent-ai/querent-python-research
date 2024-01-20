@@ -182,11 +182,12 @@ class RelationExtractor():
                     documents = top_docs
                 else:
                     if not self.config.qa_template:
-                        query = """Please analyze the provided context and two entities
+                        query = """Please analyze the provided context and two specified entities to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject.
 Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
-Query: Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.
+Query: Using the semantic triple framework (Subject, Predicate, Object), determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.
 Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
+                        print("----------------------------------------------------", query)
                     else:
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
                       
