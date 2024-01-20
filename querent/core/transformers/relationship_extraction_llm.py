@@ -191,6 +191,7 @@ Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', '
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
                       
                     answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
+                    print("--------------------------------", answer_relation)
                     try:
                         choices_text = answer_relation['choices'][0]['text']
                         answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))

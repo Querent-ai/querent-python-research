@@ -139,7 +139,7 @@ jobs:
             python -m spacy download en_core_web_lg
 
       - name: Test Code Coverage
-        run: pytest --cov=querent -vv --durations=0
+        run: pytest -s --cov=querent -vv --durations=0
         env:
           PYTHONDONTWRITEBYTECODE: 1
 
