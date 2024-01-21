@@ -64,7 +64,10 @@ class GPTLLM(BaseEngine):
             self.create_emb = EmbeddingStore()
             self.bert_instance = BERTLLM(input_queue, bert_llm_config)
             self.rel_model_name = config.rel_model_name
-            self.gpt_llm = OpenAI()
+            if config.open_ai_key:
+                self.gpt_llm = OpenAI(api_key=config.open_ai_key)
+            else:
+                self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
             
         except Exception as e:
@@ -110,17 +113,13 @@ class GPTLLM(BaseEngine):
         try:
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
-#             classify_entity_message = f"""Please analyze the provided context and the two specified entities to identify the roles and types of these entities.
-# Context: {context} 
-# Entity 1: {entity1} and Entity 2: {entity2}
-# """
             classify_entity_message = f"""Please analyze the provided context and two specified entities to identify the roles and types of these entities. These entities will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
 Context: {context} 
 Entity 1: {entity1} and Entity 2: {entity2}
 """
             messages_classify_entity = [
-                    {"role": "system", "content": classify_entity_message},
-                    {"role": "user", "content": f"Query: Determine which entity is the subject along with its type and which is the object its type."}
+                    {"role": "user", "content": classify_entity_message},
+                    {"role": "user", "content": f"Query: Determine which entity is the subject and its type, also which entity is the object and its type."}
                     
                 ]             
             classify_entity_response = self.generate_response(
@@ -130,15 +129,6 @@ Entity 1: {entity1} and Entity 2: {entity2}
             )
             subject_info = self.extract_subject_object_info(classify_entity_response)
             identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
-#             identify_predicate_message = f"""Please analyze the provided context. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
-# Context: {context} 
-# Subject: {subject_info['subject']} and Object: {subject_info['object']}
-# """
-#             messages_identify_predicate = [
-#                                             {"role": "system", "content": identify_predicate_message},
-#                                             {"role": "user", "content": f"Query: Determine the predicate and the predicate type between the subject and the object."}
-#                                         ]
-            # identify_predicate_message = f"Please analyze the provided context to identify the predicate and predicate type between the subject '{subject_info['subject']}' and the object '{subject_info['object']}'.The predicate will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject."
             messages_identify_predicate = [
                                                 {"role": "system", "content": identify_predicate_message},
                                                 {"role": "user", "content": f"Context: {context}"}
@@ -169,7 +159,6 @@ Entity 1: {entity1} and Entity 2: {entity2}
     def generate_response(self, messages, functions, name):
         response = self.completion_with_backoff(
             model=self.rel_model_name,
-            # response_format={ "type": "json_object" },
             messages=messages,
             temperature=0,
             tools=functions,
@@ -252,56 +241,3 @@ Entity 1: {entity1} and Entity 2: {entity2}
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError
-
-
-
-
-# Define your context, entity1, and entity2 here
-context = "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca."
-entity1 = "the GoM basin"
-entity2 = "deposition"
-
-# context = "Nishant is working in India and living in New Delhi"
-# entity1 = "Nihant"
-# entity2 = "New Delhi"
-
-async def main():
-    try:
-        # Create an instance of GPTLLM with the desired configuration
-        gpt_llm_instance = GPTLLM(input_queue=None, config=GPTConfig())
-
-        # # Call your async function to process context and entities
-        # response = await gpt_llm_instance.process_triples(context, entity1, entity2)
-
-        # # Process the response or print it as needed
-        # if response:
-        #     print(response)
-        # else:
-        #     print("An error occurred during processing.")
-
-        prompts = [
-            {'role': 'system', 'content': "Given the context, please identify the predicate between the subject 'the GoM basin' and the object 'a shale interval' and determine the predicate type."}, {'role': 'user', 'content': 'Context: We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca.'},
-            {'role': 'system', 'content': "Given the context, please identify the predicate between the subject 'the GoM basin' and the object 'deposition' and determine the predicate type."}, {'role': 'user', 'content': 'Context: We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca.'}
-                ]
-        client = OpenAI() 
-        # batched example, with 10 stories completions per request
-        response = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages=prompts,
-        temperature=0,
-    )
-        # match completions to prompts by index
-        stories = [""] * len(prompts)
-        for choice in response.choices:
-            stories[choice.index] = prompts[choice.index] + choice.text
-
-        # print stories
-        for story in stories:
-            print(story)
-
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -18,7 +18,7 @@ class FunctionRegistry:
                                 'description': 'The type of the relationship (predicate type).'
                             },
 
-                        }
+                        }, "required": ["predicate", "predicate_type"],
                     }
                 }
             }
@@ -39,7 +39,7 @@ class FunctionRegistry:
                         },
                         'subject_type': {
                             'type': 'string',
-                            'description': 'The type of the subject.'
+                            'description': 'The subject type.'
                         },
                         'object': {
                             'type': 'string',
@@ -48,10 +48,10 @@ class FunctionRegistry:
                         
                         'object_type': {
                             'type': 'string',
-                            'description': 'The type of the object.'
+                            'description': 'The type of the object entity.'
                         }
                     
-                    },
+                    }, "required": ["subject","subject_type", "object", "object_type"],
                 }
             }    
         }
@@ -62,3 +62,5 @@ class FunctionRegistry:
 
     def get_classifyentity_function(self):
         return self._classifyentity_functions
+
+
