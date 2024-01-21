@@ -144,7 +144,7 @@ jobs:
       #         PYTHONDONTWRITEBYTECODE: 1
 
       - name: Test Code Coverage
-        run: python -B -m pytest -s --cov=querent -vv --durations=0
+        run: pytest -s --cov=querent -vv --durations=0
         env:
           PYTHONDONTWRITEBYTECODE: 1
 
