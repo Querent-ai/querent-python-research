@@ -28,7 +28,7 @@ requirements = [
     "newspaper3k==0.2.8",
     "nltk==3.8.1",
     "numpy==1.24.3",
-    "Pillow==10.0.1",
+    "Pillow==10.2.0",
     "pydantic==1.10.8",
     "PyJWT==2.4.0",
     "PyPDF2==3.0.1",
