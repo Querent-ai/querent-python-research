@@ -55,7 +55,7 @@ async def test_ingest_all_async():
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
     )
     llm_instance = BERTLLM(result_queue, bert_llm_config)

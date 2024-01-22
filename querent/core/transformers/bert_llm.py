@@ -1,4 +1,5 @@
 import json
+import spacy
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -61,6 +62,7 @@ class BERTLLM(BaseEngine):
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
         self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+        self.nlp_model = NER_LLM.get_class_variable()
         self.create_emb = EmbeddingStore()
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
         self.enable_filtering = config.enable_filtering
@@ -73,9 +75,9 @@ class BERTLLM(BaseEngine):
         if self.fixed_entities and not self.sample_entities:
             raise ValueError("If specific entities are provided, their types should also be provided.")
         if self.fixed_entities and self.sample_entities:
-            self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities)
+            self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities,model = self.nlp_model)
         elif self.sample_entities:
-            self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities)
+            self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities, model = self.nlp_model)
         else:
             self.entity_context_extractor = None
         self.fixed_relationships = config.fixed_relationships
@@ -83,13 +85,14 @@ class BERTLLM(BaseEngine):
         if self.fixed_relationships and not self.sample_relationships:
             raise ValueError("If specific predicates are provided, their types should also be provided.")
         if self.fixed_relationships and self.sample_relationships:
-            self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships)
+            self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
         elif self.sample_relationships:
-            self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
+            self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
         else:
             self.predicate_context_extractor = None
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
+        
  
 
     def validate(self) -> bool:
@@ -182,9 +185,8 @@ class BERTLLM(BaseEngine):
                         self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates
-         
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:5])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if len(embedding_triples) > 0:
                         if self.sample_relationships:

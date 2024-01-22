@@ -1,4 +1,3 @@
-import spacy
 import re
 from typing import List
 
@@ -18,9 +17,9 @@ from typing import List
     """
 
 class FixedEntityExtractor:
-    def __init__(self, fixed_entities: List[str] = None, entity_types: List[str] = None, model="en_core_web_lg"):
+    def __init__(self, fixed_entities: List[str] = None, entity_types: List[str] = None, model=None):
         try:
-            self.nlp = spacy.load(model)
+            self.nlp = model
         except Exception as e:
             raise Exception(f"Error loading spaCy model: {e}")
 

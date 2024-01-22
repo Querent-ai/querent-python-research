@@ -1,3 +1,4 @@
+import spacy
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 import torch
 import nltk
@@ -6,6 +7,7 @@ from typing import Any, List, Tuple
 from querent.logging.logger import setup_logger
 import os
 from querent.kg.ner_helperfunctions.dependency_parsing import Dependency_Parsing
+from unidecode import unidecode
 
 
 # nltk.data.path.append(
@@ -45,12 +47,13 @@ from querent.kg.ner_helperfunctions.dependency_parsing import Dependency_Parsing
 
 
 class NER_LLM:
+    nlp = spacy.load('en_core_web_lg')
     def __init__(
         self, ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
         filler_tokens=None,
         provided_tokenizer=None,
-        provided_model=None
-    ):
+        provided_model=None,
+    ):  
         self.logger = setup_logger(__name__, "NER_LLM")
         if provided_tokenizer:
             self.ner_tokenizer = provided_tokenizer
@@ -61,6 +64,8 @@ class NER_LLM:
         else:
             self.ner_model = NER_LLM.load_model(ner_model_name, "NER")
         self.filler_tokens = filler_tokens or ["of", "a", "the", "in", "on", "at", "and", "or", "with","(",")","-"]
+        
+        
 
     def load_model(model_name, model_type):
         """Load the model, handling potential TensorFlow weights."""
@@ -82,17 +87,21 @@ class NER_LLM:
     def validate(self) -> bool:
         return self.ner_model is not None and self.ner_tokenizer is not None
 
+    @classmethod
+    def get_class_variable(cls):
+        return cls.nlp
+    
     @staticmethod
     def split_into_sentences(document) -> List[str]:
-        document = document.replace("\n", " ")
+        document = unidecode(document)
         sentences = []
         try:
-            sentences = sent_tokenize(document)
+            doc = NER_LLM.nlp(document)
+            sentences = [sent.text for sent in doc.sents]
         except Exception as e:
             raise Exception(
                 f"An unexpected error occurred while splitting the document into sentences: {e}"
             )
-
         return sentences
 
     def tokenize_sentence(self, sentence: str):
@@ -289,7 +298,7 @@ class NER_LLM:
                     entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
                 all_entities.extend(entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
-            parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence)
+            parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence, model=NER_LLM.nlp)
             binary_pairs = self.extract_binary_pairs(parsed_entities.entities, tokens, all_sentences, sentence_idx)
             return parsed_entities.entities, binary_pairs
         except Exception as e:
@@ -306,6 +315,8 @@ class NER_LLM:
                 noun_chunk1 = sub_item[3]['entity1_nn_chunk']
                 noun_chunk2 = sub_item[3]['entity2_nn_chunk']
                 sentence = sub_item[1]
+                if noun_chunk1 == noun_chunk2:
+                    continue
                 unique_key = (noun_chunk1, noun_chunk2, sentence)
                 if unique_key not in seen:
                     seen.add(unique_key)
