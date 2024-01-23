@@ -1,6 +1,8 @@
 """File to start workflow"""
 import asyncio
+import json
 import uuid
+from querent.callback.event_callback_interface import EventCallbackInterface
 
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
@@ -12,7 +14,7 @@ from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.core.transformers.gpt_llm import GPTLLM
-from querent.common.types.querent_event import  EventType
+from querent.common.types.querent_event import  EventState, EventType
 from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 
@@ -115,5 +117,55 @@ async def start_llama_workflow(config: Config):
         resource_manager=resource_manager,
     )
     querent_task = asyncio.create_task(querent.start())
-    token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
-    await asyncio.gather(ingest_task, querent_task, token_feeder)
+    # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
+    await asyncio.gather(ingest_task, querent_task)
+    print("------------------Both finished") 
+    # , token_feeder)
+
+
+
+
+async def main():
+    class StateChangeCallback(EventCallbackInterface):
+        def handle_event(self, event_type: EventType, event_state: EventState):
+            assert event_state.event_type == EventType.Graph
+            triple = json.loads(event_state.payload)
+            print("triple: {}".format(triple))
+            assert isinstance(triple['subject'], str) and triple['subject']
+    config_source={
+        "id": "ahdbfvd",
+        "workflow": {
+        "name": "llama",
+        "id": str(uuid.uuid4()),
+        "config": {},
+        "event_handler": StateChangeCallback
+    },
+        "engines": [{
+        "ner_model_name":"botryan96/GeoBERT",
+        "enable_filtering": True,
+        "filter_params": {
+                'score_threshold': 0.5,
+                'attention_score_threshold': 0.1,
+                'similarity_threshold': 0.5,
+                'min_cluster_size': 5,
+                'min_samples': 3,
+                'cluster_persistence_threshold':0.1
+        }
+    }],
+        "collectors": [{
+            "id": str(uuid.uuid4()),
+            "name": "Local-config",
+            "config": {
+                "root_path": "./tests/data/llm/pdf",
+            },
+            "backend":"localfile",
+            "uri": "file://"
+        }],
+        "querent_name": "llama",
+        "version": 1.0,
+        "querent_id": 12345
+    }
+
+    await start_workflow(config_source)
+    
+asyncio.run(main())

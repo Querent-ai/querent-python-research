@@ -186,7 +186,7 @@ class BERTLLM(BaseEngine):
                 else:
                     filtered_triples = pairs_with_predicates
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:5])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if len(embedding_triples) > 0:
                         if self.sample_relationships:
@@ -200,6 +200,8 @@ class BERTLLM(BaseEngine):
                             if vector_json:
                                 current_state = EventState(EventType.Vector,1.0, vector_json, file)
                                 await self.set_state(new_state=current_state)
+                            
+                            print("Ending BERT------------------------------")
                     else:
                         return
                 else:
