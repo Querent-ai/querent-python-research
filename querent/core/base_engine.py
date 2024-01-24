@@ -178,7 +178,6 @@ class BaseEngine(ABC):
             new_state = await self.state_queue.get()
             if isinstance(new_state, EventState):
                 if new_state.payload == "Terminate":
-                    print("listening and terminating -------------------------------")
                     break
                 await self._notify_subscribers(new_state.event_type, new_state)
             else:
@@ -227,7 +226,6 @@ class BaseEngine(ABC):
                             self.termination_event.set()
                             current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
                             await self.set_state(new_state=current_state)
-                            print("Terminating----------------------------------")
 
                         else:
                             raise Exception(
@@ -254,12 +252,9 @@ class BaseEngine(ABC):
                         current_message_total = 0
 
             await asyncio.gather(state_listener, _inner_worker())
-            print("Entering finallly...11111111111111111")
         except Exception as e:
-            print("Exception ----------------------", e)
             self.logger.error(f"Error while processing tokens: {e}")
         finally:
-            print("Entering finallly...")
             self.logger.info(f"Stopping worker for {self.__class__.__name__}")
             self.logger.info(f"Stopped worker for {self.__class__.__name__}")
             self.termination_event.set()

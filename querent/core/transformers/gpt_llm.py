@@ -64,8 +64,8 @@ class GPTLLM(BaseEngine):
             self.create_emb = EmbeddingStore()
             self.bert_instance = BERTLLM(input_queue, bert_llm_config)
             self.rel_model_name = config.rel_model_name
-            if config.open_ai_key:
-                self.gpt_llm = OpenAI(api_key=config.open_ai_key)
+            if config.openai_apikey:
+                self.gpt_llm = OpenAI(api_key=config.openai_apikey)
             else:
                 self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
@@ -209,9 +209,10 @@ Entity 1: {entity1} and Entity 2: {entity2}
                     self.set_termination_event()                    
                     return 
             relationships = []
-            filtered_triples, file = await self.bert_instance.process_tokens(data)           
-            if not filtered_triples: return 
+            result = await self.bert_instance.process_tokens(data)           
+            if not result: return 
             else:
+                filtered_triples, file = result
                 modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)

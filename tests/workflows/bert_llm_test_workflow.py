@@ -21,7 +21,7 @@ import time
 @pytest.mark.asyncio
 async def test_ingest_all_async():
     # Set up the collectors
-    directories = [ "./tests/data/llm/pdf/"]
+    directories = [ "./tests/data/llm/research_papers/"]
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),

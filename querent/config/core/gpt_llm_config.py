@@ -8,7 +8,7 @@ class GPTConfig(BERTLLMConfig):
     ner_model_name: str = "botryan96/GeoBERT"
     rel_model_name: str = "gpt-3.5-turbo"
     requests_per_minute: int = 3
-    open_ai_key: str = ""
+    openai_apikey: str = ""
 
     def __init__(self, config_source=None, **kwargs):
         config_data = {}

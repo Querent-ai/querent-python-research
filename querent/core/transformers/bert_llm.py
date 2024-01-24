@@ -182,11 +182,12 @@ class BERTLLM(BaseEngine):
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
                     else:
                         filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
-                        self.logger.log(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
+                        self.logger.error(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                 else:
                     filtered_triples = pairs_with_predicates
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
+                    print("Filtering-----------------------------------", len(filtered_triples))
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if len(embedding_triples) > 0:
                         if self.sample_relationships:
@@ -201,11 +202,12 @@ class BERTLLM(BaseEngine):
                                 current_state = EventState(EventType.Vector,1.0, vector_json, file)
                                 await self.set_state(new_state=current_state)
                             
-                            print("Ending BERT------------------------------")
+                        print("Ending BERT------------------------------")
                     else:
                         return
                 else:
                     return filtered_triples, file
         except Exception as e:
+            print("Exception : {}".format(e))
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")
