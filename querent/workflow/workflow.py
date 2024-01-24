@@ -148,7 +148,6 @@ async def start_llama_workflow(config: Config):
 #                 "root_path": "./tests/data/llm/pdf",
 #             },
 #             "backend":"localfile",
-#             "uri": "file://"  # Not sending uri from rust
 #         },
 #         {
 #             "id": str(uuid.uuid4()),
@@ -164,7 +163,6 @@ async def start_llama_workflow(config: Config):
 #                 "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
 #             },
 #             "backend": "drive",
-#             "uri": "drive://",
 #         }],
         
 #         "engines": [{ 

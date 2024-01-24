@@ -26,14 +26,19 @@ class CollectorConfig(BaseModel):
     channel: Optional[Any]
     id: str
     name: str
-    uri: str
+    uri: Optional[Any]
     config: Dict[str, str]
     inner_channel: Optional[Any]
     config_source: Optional[Any]
 
     def __init__(self, config_source=None, **kwargs):
+         
          if config_source:
             config_data = self.load_config(config_source)
+
+            if "uri" not in config_data or not config_data["uri"]:
+                config_data["uri"] = uri_backend_mapping[config_data.get("backend")]
+
             super().__init__(**config_data)
             self.config_source = config_source
             for config_key in CollectorConfigKey:
@@ -336,3 +341,17 @@ colectorconfig_factories = {
         CollectorBackend.WebScraper: WebScraperConfig,
         CollectorBackend.Slack: SlackCollectorConfig,
     }
+
+uri_backend_mapping = {
+    "localfile": "file://",
+    "webscraper": "https://",
+    "s3": "s3://",
+    "gs": "gs://",
+    "azure": "azure://",
+    "slack": "slack://",
+    "dropbox": "dropbox://",
+    "github": "github://",
+    "drive": "drive://",
+    "email": "email://",
+    "jira": "jira://",
+}
