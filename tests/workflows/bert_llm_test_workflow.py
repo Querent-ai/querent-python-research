@@ -8,7 +8,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
@@ -21,7 +21,7 @@ import time
 @pytest.mark.asyncio
 async def test_ingest_all_async():
     # Set up the collectors
-    directories = [ "./tests/data/llm/research_papers/"]
+    directories = [ "./tests/data/llm/pdf/"]
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),
@@ -46,7 +46,7 @@ async def test_ingest_all_async():
     )
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     resource_manager = ResourceManager()
-    bert_llm_config = BERTLLMConfig(
+    bert_llm_config = LLM_Config(
     ner_model_name="botryan96/GeoBERT",
     enable_filtering=True,
     filter_params={
@@ -60,7 +60,7 @@ async def test_ingest_all_async():
     )
     llm_instance = BERTLLM(result_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))

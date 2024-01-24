@@ -8,7 +8,7 @@ from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
 from querent.config.collector.collector_config import CollectorConfig
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
@@ -34,13 +34,13 @@ async def start_workflow(config_dict: dict):
     engines = []
     for engine_config in engine_configs:
         engine_config_source = engine_config.get("config",{})
-        if engine_config["name"] == "knowledge_graph_using_openai": #match from WorkflowConfig
+        if engine_config["name"] == "knowledge_graph_using_openai_v1":
             engines.append(GPTConfig(config_source = engine_config_source))
-        elif engine_config["name"] == "knowledge_graph_using_llama2_v1": #match from WorkflowConfig
-            engines.append(BERTLLMConfig(config_source=engine_config_source))
-    config_dict["engines"] = engines #use config .keys instead of "engines"
-    config_dict["collectors"] = collectors #use config .keys instead of "engines"
-    config_dict["workflow"] = workflow #use config .keys instead of "engines"
+        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+            engines.append(LLM_Config(config_source=engine_config_source))
+    config_dict["engines"] = engines 
+    config_dict["collectors"] = collectors 
+    config_dict["workflow"] = workflow
     config = Config(config_source=config_dict)
 
     workflows = {"openai": start_gpt_workflow,
@@ -121,8 +121,6 @@ async def start_llama_workflow(config: Config):
     # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
     await asyncio.gather(ingest_task, querent_task) # Loop and do config.workflow.channel for termination event messageType = "stop"
     # , token_feeder)
-
-
 
 
 # async def main():

@@ -5,7 +5,7 @@ from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
 from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
-from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.config.core.opensource_llm_config import Opensource_LLM_Config
 from llama_cpp import LlamaGrammar
 from langchain.docstore.document import Document
 import ast
@@ -18,7 +18,7 @@ import ast
     and trimming triples.
 
     Attributes:
-        config (RelationshipExtractorConfig): Configuration settings for the relationship extractor.
+        config (Opensource_LLM_Config): Configuration settings for the relationship extractor.
         logger (Logger): Logger for logging messages and errors.
         create_emb (EmbeddingStore): An instance of EmbeddingStore for generating embeddings.
         qa_system (QASystem): A question-answering system for extracting relationships.
@@ -44,7 +44,7 @@ import ast
     """
 
 class RelationExtractor():
-    def __init__(self, config: RelationshipExtractorConfig):  
+    def __init__(self, config: Opensource_LLM_Config):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
             super().__init__()
@@ -189,7 +189,6 @@ Query: In a semantic triple (Subject, Predicate & Object) framework, determine w
 Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
                     else:
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
-                      
                     answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
                     try:
                         choices_text = answer_relation['choices'][0]['text']

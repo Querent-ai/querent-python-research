@@ -6,7 +6,6 @@ from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_queue import QuerentQueue
-from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.gpt_llm import GPTLLM
 from querent.querent.resource_manager import ResourceManager
@@ -43,7 +42,7 @@ async def test_gptllm_ner_tokenization_and_entity_extraction(input_data, ner_mod
     print("going to initialize class")
     llm_instance = llm_class(input_queue, gpt_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))
