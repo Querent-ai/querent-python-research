@@ -117,6 +117,7 @@ async def start_llama_workflow(config: Config):
         resource_manager=resource_manager,
     )
     querent_task = asyncio.create_task(querent.start())
+<<<<<<< HEAD
     # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
     await asyncio.gather(ingest_task, querent_task) # Loop and do config.workflow.channel for termination event messageType = "stop"
     # , token_feeder)
@@ -174,3 +175,7 @@ async def main():
     await start_workflow(config_source)
     
 asyncio.run(main())
+=======
+    token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
+    await asyncio.gather(ingest_task, querent_task, token_feeder)
+>>>>>>> ebe7b8d8ed68184b92357f66a90e75e3dc53ff8c

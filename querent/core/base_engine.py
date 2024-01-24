@@ -242,7 +242,7 @@ class BaseEngine(ABC):
                                 f"Error processing tokens: {e}. Max retries reached. Terminating."
                             )
                             break
-
+                        
                         await asyncio.sleep(self.retry_interval)
                     self.input_queue.task_done()
                     current_message_total += 1
@@ -266,6 +266,5 @@ class BaseEngine(ABC):
     async def _stop_workers(self):
         try:
             self.termination_event.set()
-            asyncio.gather(*self.workers)
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")
