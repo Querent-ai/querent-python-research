@@ -2,6 +2,7 @@
 import asyncio
 import json
 import uuid
+import os
 from querent.callback.event_callback_interface import EventCallbackInterface
 
 from querent.config.config import Config
@@ -122,3 +123,67 @@ async def start_llama_workflow(config: Config):
     # , token_feeder)
 
 
+# async def main():
+#     class StateChangeCallback(EventCallbackInterface):
+#         def handle_event(self, event_type: EventType, event_state: EventState):
+#             assert event_state.event_type == EventType.Graph
+#             triple = json.loads(event_state.payload)
+#             print("triple: {}".format(triple))
+#             assert isinstance(triple['subject'], str) and triple['subject']
+#     config_source={
+#         "version": 1.0,
+#         "id": "ahdbfvd",
+#         "querent_id": 12345,
+#         "querent_name": "llama",
+#         "workflow": {
+#         "name": "llama",
+#         "id": str(uuid.uuid4()),
+#         "config": {},
+#         "event_handler": StateChangeCallback
+#     },
+#         "collectors": [{
+#             "id": str(uuid.uuid4()),
+#             "name": "Local-config",
+#             "config": {
+#                 "root_path": "./tests/data/llm/pdf",
+#             },
+#             "backend":"localfile",
+#             "uri": "file://"  # Not sending uri from rust
+#         },
+#         {
+#             "id": str(uuid.uuid4()),
+#             "name": "Drive-config",
+#             "config": {
+#                 "drive_refresh_token": os.getenv("DRIVE_REFRESH_TOKEN"),
+#                 "drive_token": os.getenv("DRIVE_TOKEN"),
+#                 "drive_scopes": os.getenv("DRIVE_SCOPES"),
+#                 "chunk_size": 1024 * 1024,
+#                 "drive_client_id": os.getenv("DRIVE_CLIENT_ID"),
+#                 "drive_client_secret": os.getenv("DRIVE_CLIENT_SECRET"),
+#                 "specific_file_type": "application/pdf",
+#                 "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
+#             },
+#             "backend": "drive",
+#             "uri": "drive://",
+#         }],
+        
+#         "engines": [{ 
+#         #https://github.com/Querent-ai/querent-rs/blob/main/src/config/config.rs#L172 con
+#         "id": str(uuid.uuid4()),
+#         "name": "knowledge_graph_using_llama2_v1",
+#         "config": {"ner_model_name":"botryan96/GeoBERT",
+#         "enable_filtering": True,
+#         "filter_params": {
+#                 'score_threshold': 0.5,
+#                 'attention_score_threshold': 0.1,
+#                 'similarity_threshold': 0.5,
+#                 'min_cluster_size': 5,
+#                 'min_samples': 3,
+#                 'cluster_persistence_threshold':0.1
+#         }
+#     }}],        
+#     }
+
+#     await start_workflow(config_source)
+    
+# asyncio.run(main())
