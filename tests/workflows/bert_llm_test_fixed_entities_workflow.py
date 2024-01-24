@@ -8,7 +8,7 @@
 # from querent.common.types.querent_event import EventState, EventType
 # from querent.config.collector.collector_config import FSCollectorConfig
 # from querent.common.uri import Uri
-# from querent.config.core.bert_llm_config import BERTLLMConfig
+# from querent.config.core.bert_llm_config import LLM_Config
 # from querent.ingestors.ingestor_manager import IngestorFactoryManager
 # import pytest
 # import uuid
@@ -48,7 +48,7 @@
 #     # Start the ingest_all_async in a separate task
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
-#     bert_llm_config = BERTLLMConfig(
+#     bert_llm_config = LLM_Config(
 #     ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
 #     filter_params={

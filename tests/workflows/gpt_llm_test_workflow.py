@@ -54,7 +54,8 @@ async def test_ingest_all_async():
     )
     llm_instance = GPTLLM(result_queue, gpt_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
+            print("StateChange---------------------------")
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))

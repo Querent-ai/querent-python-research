@@ -7,7 +7,7 @@ from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
 from querent.config.collector.collector_config import CollectorConfig
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
@@ -33,13 +33,13 @@ async def start_workflow(config_dict: dict):
     engines = []
     for engine_config in engine_configs:
         engine_config_source = engine_config.get("config",{})
-        if engine_config["name"] == "knowledge_graph_using_openai": #match from WorkflowConfig
+        if engine_config["name"] == "knowledge_graph_using_openai_v1":
             engines.append(GPTConfig(config_source = engine_config_source))
-        elif engine_config["name"] == "knowledge_graph_using_llama2_v1": #match from WorkflowConfig
-            engines.append(BERTLLMConfig(config_source=engine_config_source))
-    config_dict["engines"] = engines #use config .keys instead of "engines"
-    config_dict["collectors"] = collectors #use config .keys instead of "engines"
-    config_dict["workflow"] = workflow #use config .keys instead of "engines"
+        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+            engines.append(LLM_Config(config_source=engine_config_source))
+    config_dict["engines"] = engines 
+    config_dict["collectors"] = collectors 
+    config_dict["workflow"] = workflow
     config = Config(config_source=config_dict)
 
     workflows = {"openai": start_gpt_workflow,
@@ -117,65 +117,8 @@ async def start_llama_workflow(config: Config):
         resource_manager=resource_manager,
     )
     querent_task = asyncio.create_task(querent.start())
-<<<<<<< HEAD
     # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
     await asyncio.gather(ingest_task, querent_task) # Loop and do config.workflow.channel for termination event messageType = "stop"
     # , token_feeder)
 
 
-
-
-async def main():
-    class StateChangeCallback(EventCallbackInterface):
-        def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.Graph
-            triple = json.loads(event_state.payload)
-            print("triple: {}".format(triple))
-            assert isinstance(triple['subject'], str) and triple['subject']
-    config_source={
-        "version": 1.0,
-        "id": "ahdbfvd",
-        "querent_id": 12345,
-        "querent_name": "llama",
-        "workflow": {
-        "name": "llama",
-        "id": str(uuid.uuid4()),
-        "config": {},
-        "event_handler": StateChangeCallback
-    },
-        "collectors": [{
-            "id": str(uuid.uuid4()),
-            "name": "Local-config",
-            "config": {
-                "root_path": "./tests/data/llm/pdf",
-            },
-            "backend":"localfile",
-            "uri": "file://"  # Not sending uri from rust
-        }],
-        
-        "engines": [{ 
-        #https://github.com/Querent-ai/querent-rs/blob/main/src/config/config.rs#L172 con
-        "id": str(uuid.uuid4()),
-        "name": "knowledge_graph_using_llama2_v1",
-        "config": {"ner_model_name":"botryan96/GeoBERT",
-        "enable_filtering": True,
-        "filter_params": {
-                'score_threshold': 0.5,
-                'attention_score_threshold': 0.1,
-                'similarity_threshold': 0.5,
-                'min_cluster_size': 5,
-                'min_samples': 3,
-                'cluster_persistence_threshold':0.1
-        }
-    }}],
-        
-        
-    }
-
-    await start_workflow(config_source)
-    
-asyncio.run(main())
-=======
-    token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
-    await asyncio.gather(ingest_task, querent_task, token_feeder)
->>>>>>> ebe7b8d8ed68184b92357f66a90e75e3dc53ff8c

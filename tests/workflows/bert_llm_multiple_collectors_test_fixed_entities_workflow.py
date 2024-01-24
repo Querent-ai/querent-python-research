@@ -4,7 +4,7 @@ from pathlib import Path
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.uri import Uri
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
@@ -109,7 +109,7 @@ async def test_multiple_collectors_all_async():
     # Start the ingest_all_async in a separate task
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     resource_manager = ResourceManager()
-    bert_llm_config = BERTLLMConfig(
+    bert_llm_config = LLM_Config(
         ner_model_name="botryan96/GeoBERT",
         enable_filtering=True,
         filter_params={

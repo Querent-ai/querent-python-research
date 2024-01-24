@@ -1,6 +1,6 @@
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 
-class GPTConfig(BERTLLMConfig):
+class GPTConfig(LLM_Config):
     name: str = "OPENAIEngine"
     description: str = "An engine for NER using BERT and knowledge graph operations using OPENAI"
     version: str = "0.0.1"

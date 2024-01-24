@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict
-class RelationshipExtractorConfig(BaseModel):
+
+class Opensource_LLM_Config(BaseModel):
     name: str = "RelationshipExtractor"
     description: str = "An engine for extracting relationships"
     version: str = "0.0.1"

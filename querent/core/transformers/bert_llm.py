@@ -3,7 +3,7 @@ import spacy
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
-from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.config.core.opensource_llm_config import Opensource_LLM_Config
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.rel_helperfunctions.contextual_predicate import process_data
 from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
@@ -23,7 +23,7 @@ from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
 from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
@@ -47,13 +47,17 @@ class BERTLLM(BaseEngine):
     def __init__(
         self,
         input_queue:QuerentQueue,
-        config: BERTLLMConfig
+        config: LLM_Config
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
         if not self.skip_inferences:
-            mock_config = RelationshipExtractorConfig()
+            mock_config = Opensource_LLM_Config(qa_template=config.user_context,
+                                                model_type = config.rel_model_type,
+                                                model_path = config.rel_model_path,
+                                                grammar_file_path = config.grammar_file_path,
+                                                emb_model_name = config.emb_model_name)
             self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
@@ -186,10 +190,9 @@ class BERTLLM(BaseEngine):
                 else:
                     filtered_triples = pairs_with_predicates
                 if not self.skip_inferences:
-                    print("Filtering-----------------------------------", len(filtered_triples))
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
-                    embedding_triples = self.create_emb.generate_embeddings(relationships)
-                    if len(embedding_triples) > 0:
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
+                    if len(relationships) > 0:
+                        embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
                             embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
                         for triple in embedding_triples:
@@ -201,13 +204,10 @@ class BERTLLM(BaseEngine):
                             if vector_json:
                                 current_state = EventState(EventType.Vector,1.0, vector_json, file)
                                 await self.set_state(new_state=current_state)
-                            
-                        print("Ending BERT------------------------------")
                     else:
                         return
                 else:
                     return filtered_triples, file
         except Exception as e:
-            print("Exception : {}".format(e))
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")

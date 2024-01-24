@@ -5,13 +5,17 @@ import os
 
 from querent.config.engine.engine_config import EngineConfig
 
-class BERTLLMConfig(BaseModel):
-    name: str = "BERTLLMEngine"
-    description: str = "An engine for NER and knowledge graph operations using BERT"
+class LLM_Config(BaseModel):
+    name: str = "LLMEngine"
+    description: str = "An engine for NER and knowledge graph operations."
     version: str = "0.0.1"
-    logger: str = "BERTLLM.engine_config"
+    logger: str = "LLM.engine_config"
     ner_model_name: str = "dbmdz/bert-large-cased-finetuned-conll03-english"
-    user_context: Dict[str, Any] = Field(default_factory=dict, description="User-specific context information")
+    rel_model_type: str = 'llama'
+    rel_model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf'
+    grammar_file_path: str = './querent/kg/rel_helperfunctions/json.gbnf'
+    emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
+    user_context: str = Field(default=None)
     enable_filtering: bool = False
     filter_params: dict = Field(default_factory=lambda: {
         'score_threshold': 0.6,

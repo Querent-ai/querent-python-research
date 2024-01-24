@@ -193,4 +193,3 @@ class IngestorFactoryManager:
         ]
         await asyncio.gather(*ingestion_tasks)
         await self.result_queue.put(None)
-        print("Done ingesting---------------------------------")

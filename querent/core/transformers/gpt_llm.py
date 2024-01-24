@@ -15,7 +15,7 @@ from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from openai import OpenAI
 from tenacity import (
     retry,
@@ -37,7 +37,7 @@ class GPTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
-            bert_llm_config = BERTLLMConfig(
+            bert_llm_config = LLM_Config(
             ner_model_name=config.ner_model_name,
             enable_filtering=config.enable_filtering,
             filter_params={
