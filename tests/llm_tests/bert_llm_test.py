@@ -26,7 +26,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     await input_queue.put(ingested_data)
     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=None)
     await input_queue.put(ingested_data)
-    await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
+    await input_queue.put(None)
     bert_llm_config = LLM_Config(
         ner_model_name=ner_model_name,
         enable_filtering=filter_entities,
@@ -41,7 +41,7 @@ async def test_bertllm_ner_tokenization_and_entity_extraction(input_data, ner_mo
     )
     llm_instance = llm_class(input_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))

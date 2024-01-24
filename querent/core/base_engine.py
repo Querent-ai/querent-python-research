@@ -213,6 +213,7 @@ class BaseEngine(ABC):
                 while not self.termination_event.is_set():
                     retries = 0
                     data = await self.input_queue.get()
+                    print("data: ", data)
                     try:
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)

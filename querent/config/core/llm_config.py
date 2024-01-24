@@ -15,7 +15,11 @@ class LLM_Config(BaseModel):
     rel_model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf'
     grammar_file_path: str = './querent/kg/rel_helperfunctions/json.gbnf'
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
-    user_context: str = Field(default=None)
+    user_context: str = Field(default="""Please analyze the provided context and two entities. Use this information to answer the users query below.
+Context: {context}
+Entity 1: {entity1} and Entity 2: {entity2}
+Query: In a semantic triple (Subject, Predicate & Object) framework, determine which of the above entity is the subject and which is the object based on the context along with the predicate between these entities. Please also identify the subject type, object type & predicate type.
+Answer:""")
     enable_filtering: bool = False
     filter_params: dict = Field(default_factory=lambda: {
         'score_threshold': 0.6,
