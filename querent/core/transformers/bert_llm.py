@@ -113,7 +113,6 @@ class BERTLLM(BaseEngine):
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
-        print("validating-------------------------------------------")
         if data.is_error():
             
             return False
@@ -193,7 +192,6 @@ class BERTLLM(BaseEngine):
                     filtered_triples = pairs_with_predicates
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
-                    print(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
@@ -207,9 +205,7 @@ class BERTLLM(BaseEngine):
                             if vector_json:
                                 current_state = EventState(EventType.Vector,1.0, vector_json, file)
                                 await self.set_state(new_state=current_state)
-                        print("Ending Bert ..........................")
                     else:
-                        print("No relationships found---------------------------------------------")
                         return
                 else:
                     return filtered_triples, file
