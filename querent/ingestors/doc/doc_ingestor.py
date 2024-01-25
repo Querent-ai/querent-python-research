@@ -48,12 +48,10 @@ class DocIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
-                    async for paragraph in self.extract_and_process_doc(
+                    async for ingested_data in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
-                        yield IngestedTokens(
-                            file=current_file, data=[paragraph], error=None
-                        )
+                        yield ingested_data
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
@@ -66,20 +64,17 @@ class DocIngestor(BaseIngestor):
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
             # process the last file
-            async for paragraph in self.extract_and_process_doc(
+            async for ingested_data in self.extract_and_process_doc(
                 CollectedBytes(file=current_file, data=collected_bytes)
             ):
-                yield IngestedTokens(file=current_file, data=[paragraph], error=None)
+                yield ingested_data
             yield IngestedTokens(file=current_file, data=None, error=None)
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_doc(collected_bytes)
-        paragraphs = text.split("\n\n")  # Split by paragraphs
-        for paragraph in paragraphs:
-            processed_data = await self.process_data(paragraph)
-            yield processed_data
+        async for paragraph in self.extract_text_from_doc(collected_bytes):            
+            yield paragraph
 
     async def extract_text_from_doc(self, collected_bytes: CollectedBytes) -> str:
         # Determine file extension
@@ -90,11 +85,16 @@ class DocIngestor(BaseIngestor):
             text = ""
             for paragraph in doc.paragraphs:
                 text += paragraph.text + "\n"
-            return text
+            yield IngestedTokens(
+                file=collected_bytes.file, data=[text], error=None
+            )
+
         elif file_extension == "doc":
             # For DOC files, use pyextract library
             current_doc_text = await self.temp_extract_from(collected_bytes)
-            return current_doc_text
+            yield IngestedTokens(
+                file=collected_bytes.file, data=[current_doc_text], error=None
+            )
         else:
             raise common_errors.UnknownError(
                 f"Not a doc or docx file {collected_bytes.file}"
