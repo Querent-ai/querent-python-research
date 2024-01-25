@@ -16,7 +16,15 @@ async def test_ingest_all_async():
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),
-            FSCollectorConfig(root_path=directory, id=str(uuid.uuid4())),
+            FSCollectorConfig(
+                config_source={
+                    "id": str(uuid.uuid4()),
+                    "root_path": directory,
+                    "name": "Local-config",
+                    "config": {},
+                    "uri": "file://",
+                }
+            ),
         )
         for directory in directories
     ]

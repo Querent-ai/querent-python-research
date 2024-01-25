@@ -2,7 +2,6 @@ import spacy
 import re
 from typing import List
 from nltk.corpus import wordnet as wn
-from nltk.tokenize import PunktSentenceTokenizer
 import json
 
 """
@@ -22,10 +21,9 @@ import json
 
 
 class FixedPredicateExtractor:
-    def __init__(self, fixed_predicates: List[str] = None, predicate_types: List[str] = None, model="en_core_web_lg"):
+    def __init__(self, fixed_predicates: List[str] = None, predicate_types: List[str] = None, model=None):
         try:
-            self.nlp = spacy.load(model)
-            self.sentence_tokenizer = PunktSentenceTokenizer()
+            self.nlp = model
             self.predicate_types = predicate_types
             self.fixed_predicates = fixed_predicates
 

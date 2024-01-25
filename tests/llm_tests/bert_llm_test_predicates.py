@@ -6,7 +6,7 @@
 # from querent.common.types.querent_event import EventState, EventType
 # from querent.common.types.ingested_tokens import IngestedTokens
 # from querent.common.types.querent_queue import QuerentQueue
-# from querent.config.core.bert_llm_config import BERTLLMConfig
+# from querent.config.core.bert_llm_config import LLM_Config
 # from querent.core.transformers.bert_llm import BERTLLM
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
@@ -29,7 +29,7 @@
 #     ingested_data = IngestedTokens(file="dummy_1_file.txt", data=None)
 #     await input_queue.put(ingested_data)
 #     await input_queue.put(IngestedTokens(file="dummy_2_file.txt", data=None, error="error"))
-#     bert_llm_config = BERTLLMConfig(
+#     bert_llm_config = LLM_Config(
 #         ner_model_name=ner_model_name,
 #         enable_filtering=filter_entities,
 #         filter_params={

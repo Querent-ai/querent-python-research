@@ -41,7 +41,6 @@ class Querent:
 
             # Start handling signals
             self.setup_signal_handlers()
-
             # Start the tasks above and wait for them to finish
             await asyncio.gather(auto_scale_task, self.wait_for_termination())
 

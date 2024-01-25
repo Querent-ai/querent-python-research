@@ -1,4 +1,3 @@
-import spacy
 import re
 from typing import List
 from nltk.corpus import wordnet as wn
@@ -30,8 +29,8 @@ from nltk.corpus import wordnet as wn
 """
 
 class FixedRelationshipExtractor:
-    def __init__(self, fixed_relationships: List[str], model="en_core_web_lg"):
-        self.nlp = spacy.load(model)
+    def __init__(self, fixed_relationships: List[str], model=None):
+        self.nlp = model
         self.fixed_relationships = fixed_relationships
         self.relationship_pattern = self.create_combined_pattern_with_synonyms(fixed_relationships)
 
