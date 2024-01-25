@@ -34,15 +34,14 @@ from querent.logging.logger import setup_logger
     process_entities():
         Processes the entities, groups them by noun chunks, and calculates average scores.
     """
-nlp_model = spacy.load('en_core_web_lg')
 
 class Dependency_Parsing():
-    def __init__(self, entities=None, sentence=None, nlp=nlp_model):
+    def __init__(self, entities=None, sentence=None, model=None):
         self.logger = setup_logger(__name__, "Dependency_Parsing")
         try:
             self.entities = entities
             self.sentence = sentence.replace("\n", " ")
-            self.nlp = nlp
+            self.nlp = model
             self.doc = self.nlp(self.sentence)
             self.noun_chunks = list(self.doc.noun_chunks)
             self.filtered_chunks = self.filter_chunks()
@@ -52,22 +51,21 @@ class Dependency_Parsing():
         except Exception as e:
             self.logger.info(f"Error Initializing Dependency Parsing Class: {e}")
             raise Exception(f"Error Initializing Dependency Parsing Class: {e}")
-            
-
-    def load_spacy_model(self):
-        try:
-            # return spacy.load('/home/nishantg/querent/querent/nltk_resources/tokenizers/punkt/en_core_web_lg') ##need to configure this path
-            return spacy.load('en_core_web_lg')
-        except Exception as e:
-            self.logger.info(f"Error loading SpaCy model: {e}")
-            raise Exception(f"Error loading SpaCy model: {e}")
 
     def filter_chunks(self):
         try:
-            return [chunk for chunk in self.noun_chunks if len(chunk) > 1 and not chunk.root.is_stop and chunk.root.pos_ == "NOUN"]
+            filtered_chunks = []
+            relevant_pos_tags = {"NOUN", "PROPN", "ADJ"}
+            for chunk in self.noun_chunks:
+                # Filtering logic
+                if len(chunk) > 1 and not chunk.root.is_stop and chunk.root.pos_ in relevant_pos_tags:
+                    filtered_chunks.append(chunk)
+            return filtered_chunks
+
         except Exception as e:
             self.logger.info(f"Error filtering chunks: {e}")
             raise Exception(f"Error filtering chunks: {e}")
+
 
     def merge_overlapping_entities(self):
         try:
@@ -92,6 +90,7 @@ class Dependency_Parsing():
                     if entity['entity'].lower() in chunk.text.lower():
                         entity['noun_chunk'] = chunk.text
                         entity['noun_chunk_length'] = len(chunk.text.split())
+                        break
         except Exception as e:
             self.logger.info(f"Error comparing entities with chunks: {e}")
             raise Exception(f"Error comparing entities with chunks: {e}")

@@ -7,7 +7,10 @@ import pytest
 import uuid
 
 from querent.common.uri import Uri
-from querent.config.collector.collector_config import CollectorBackend, FSCollectorConfig
+from querent.config.collector.collector_config import (
+    CollectorBackend,
+    FSCollectorConfig,
+)
 
 
 @pytest.fixture
@@ -20,7 +23,15 @@ def temp_dir():
 def test_fs_collector(temp_dir):
     uri = Uri("file://" + temp_dir)
     resolver = CollectorResolver()
-    fileConfig = FSCollectorConfig(id=str(uuid.uuid4()), root_path=uri.path)
+    fileConfig = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = resolver.resolve(uri, fileConfig)
     assert collector is not None
 
@@ -46,7 +57,15 @@ async def main():
     temp_dir = tempfile.TemporaryDirectory()
     uri = Uri("file://" + temp_dir.name)
     resolver = CollectorResolver()
-    fileConfig = FSCollectorConfig(id=str(uuid.uuid4()), root_path=uri.path)
+    fileConfig = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = resolver.resolve(uri, fileConfig)
     assert collector is not None
 

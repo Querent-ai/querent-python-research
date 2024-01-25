@@ -17,10 +17,15 @@ def gcs_config():
     credentials_info = json.load(open(cred_file))
     credential_json_str = json.dumps(credentials_info)
     return GcsCollectConfig(
-        id=str(uuid.uuid4()),
-        bucket="querent-test",
-        credentials=credential_json_str,
-        chunk=1024,
+        config_source={
+            "id": str(uuid.uuid4()),
+            "bucket": "querent-test",
+            "credentials": credential_json_str,
+            "chunk": 1024,
+            "config": {},
+            "name": "GCS-config",
+            "uri": "gs://",
+        }
     )
 
 

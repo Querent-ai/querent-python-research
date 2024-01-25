@@ -1,22 +1,16 @@
 import asyncio
-from asyncio import Queue
 import json
 from pathlib import Path
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.collectors.fs.fs_collector import FSCollectorFactory
-from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
-from querent.config.core.bert_llm_config import BERTLLMConfig
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
-from querent.common.types.file_buffer import FileBuffer
-from querent.core.transformers.bert_llm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
-import time
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.gpt_llm import GPTLLM
 
@@ -27,14 +21,19 @@ async def test_ingest_all_async():
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),
-            FSCollectorConfig(root_path=directory, id=str(uuid.uuid4())),
+            FSCollectorConfig(config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": directory,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }),
         )
         for directory in directories
     ]
 
     # Set up the result queue
     result_queue = asyncio.Queue()
-    file_buffer = FileBuffer()
 
     # Create the IngestorFactoryManager
     ingestor_factory_manager = IngestorFactoryManager(
@@ -55,7 +54,8 @@ async def test_ingest_all_async():
     )
     llm_instance = GPTLLM(result_queue, gpt_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
+            print("StateChange---------------------------")
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))

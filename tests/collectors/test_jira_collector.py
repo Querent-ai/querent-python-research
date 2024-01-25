@@ -13,12 +13,17 @@ load_dotenv()
 @pytest.fixture
 def jira_config():
     return JiraCollectorConfig(
-        id=str(uuid.uuid4()),
-        jira_server="https://querent.atlassian.net/",
-        jira_username="puneet@querent.xyz",
-        jira_api_token=os.getenv("JIRA_API_TOKEN"),
-        jira_project="Querent1",
-        jira_query="project=Querent1",
+        config_source={
+            "id": str(uuid.uuid4()),
+            "jira_server": "https://querent.atlassian.net/",
+            "jira_username": "puneet@querent.xyz",
+            "jira_api_token": os.getenv("JIRA_API_TOKEN"),
+            "jira_project": "Querent1",
+            "jira_query": "project=Querent1",
+            "name": "Jira-config",
+            "config": {},
+            "uri": "jira://",
+        }
     )
 
 

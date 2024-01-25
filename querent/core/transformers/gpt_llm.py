@@ -4,7 +4,6 @@ from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtract
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_llm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
-from querent.kg.rel_helperfunctions.opeai_ratelimiter import RateLimiter
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -16,8 +15,13 @@ from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from openai import OpenAI
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 from dotenv import load_dotenv, find_dotenv
 import json
 
@@ -33,7 +37,7 @@ class GPTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
-            bert_llm_config = BERTLLMConfig(
+            bert_llm_config = LLM_Config(
             ner_model_name=config.ner_model_name,
             enable_filtering=config.enable_filtering,
             filter_params={
@@ -47,7 +51,6 @@ class GPTLLM(BaseEngine):
             sample_entities = config.sample_entities,
             fixed_entities = config.fixed_entities,
             skip_inferences= True)
-            self.rate_limiter = RateLimiter(config.requests_per_minute)
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             if self.fixed_relationships and not self.sample_relationships:
@@ -61,7 +64,10 @@ class GPTLLM(BaseEngine):
             self.create_emb = EmbeddingStore()
             self.bert_instance = BERTLLM(input_queue, bert_llm_config)
             self.rel_model_name = config.rel_model_name
-            self.gpt_llm = OpenAI()
+            if config.openai_apikey:
+                self.gpt_llm = OpenAI(api_key=config.openai_apikey)
+            else:
+                self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
             
         except Exception as e:
@@ -107,38 +113,33 @@ class GPTLLM(BaseEngine):
         try:
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
-
-            classify_entity_message = (
-                    "Please analyze the provided context and two entities"\
-                    "Determine which entity is the subject and which is the object in the context. Also, identify the type of subject and type of object."
-                    )
+            classify_entity_message = f"""Please analyze the provided context and two specified entities to identify the roles and types of these entities. These entities will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
+Context: {context} 
+Entity 1: {entity1} and Entity 2: {entity2}
+"""
             messages_classify_entity = [
-                    {"role": "system", "content": classify_entity_message},
-                    {"role": "user", "content": f"Context: {context}"},
-                    {"role": "user", "content": f"Entity 1: {entity1} (Entity 1)"},
-                    {"role": "user", "content": f"Entity 2: {entity2} (Entity 2)"}
-                ]
-                            
+                    {"role": "user", "content": classify_entity_message},
+                    {"role": "user", "content": f"Query: Determine which entity is the subject and its type, also which entity is the object and its type."}
+                    
+                ]             
             classify_entity_response = self.generate_response(
                 messages_classify_entity,
                 classify_entity_function,
                 "classify_entities"
             )
             subject_info = self.extract_subject_object_info(classify_entity_response)
-            
             identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
             messages_identify_predicate = [
-                                            {"role": "system", "content": identify_predicate_message},
-                                            {"role": "user", "content": f"Context: {context}"}
-                                        ]
+                                                {"role": "system", "content": identify_predicate_message},
+                                                {"role": "user", "content": f"Context: {context}"}
+                                            ]
             identify_predicate_response = self.generate_response(
                 messages_identify_predicate,
                 predicate_info_function,
                 "predicate_info"
             )
-
             predicate_info = self.extract_predicate_info(identify_predicate_response)
-
+            
             return {
                 'subject_type': subject_info['subject_type'],
                 'subject': subject_info['subject'],
@@ -150,21 +151,25 @@ class GPTLLM(BaseEngine):
 
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
-            raise Exception(f"An unexpected error occurred while processing triples using GPT: {e}")
 
+    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    def completion_with_backoff(self, **kwargs):
+        return self.gpt_llm.chat.completions.create(**kwargs)
+    
     def generate_response(self, messages, functions, name):
-        self.rate_limiter.wait_for_request_slot()
-        response = self.gpt_llm.chat.completions.create(
+        response = self.completion_with_backoff(
             model=self.rel_model_name,
             messages=messages,
             temperature=0,
-            functions=functions,
-            function_call={"name": name}
+            tools=functions,
+            tool_choice="auto"
         )
         return response
 
     def extract_subject_object_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+        if not function_call_arguments.get("subject") or not function_call_arguments.get("object"):
+                raise ValueError("Missing 'subject',  or 'object' in llm output")
         return {
             'subject_type': function_call_arguments.get("subject_type", "Unlabeled"),
             'subject': function_call_arguments.get("subject"),
@@ -173,7 +178,9 @@ class GPTLLM(BaseEngine):
         }
 
     def extract_predicate_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.function_call.arguments)
+        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+        if not function_call_arguments.get("predicate"):
+                raise ValueError("Missing 'predicate' in llm output")
         return {
             'predicate': function_call_arguments.get("predicate"),
             'predicate_type': function_call_arguments.get("predicate_type", "Unlabeled")
@@ -182,12 +189,12 @@ class GPTLLM(BaseEngine):
     def generate_output_tuple(self,result, context_json):
         context_data = json.loads(context_json)
         context = context_data.get("context", "")
-        subject_type = result.get("subject_type", "")
+        subject_type = result.get("subject_type", "Unlabeled")
         subject = result.get("subject", "")
-        object_type = result.get("object_type", "")
+        object_type = result.get("object_type", "Unlabeled")
         object = result.get("object", "")
         predicate = result.get("predicate", "")
-        predicate_type = result.get("predicate_type", "")
+        predicate_type = result.get("predicate_type", "Unlabled")
         output_tuple = (
             subject,
             f'{{"predicate": "{predicate}", "predicate_type": "{predicate_type}", "context": "{context}", "file": "{context_data.get("file_path", "")}", "subject_type": "{subject_type}", "object_type": "{object_type}"}}',
@@ -202,10 +209,10 @@ class GPTLLM(BaseEngine):
                     self.set_termination_event()                    
                     return 
             relationships = []
-            filtered_triples, file = await self.bert_instance.process_tokens(data)
-            
-            if not filtered_triples: return 
+            result = await self.bert_instance.process_tokens(data)           
+            if not result: return 
             else:
+                filtered_triples, file = result
                 modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
@@ -216,53 +223,22 @@ class GPTLLM(BaseEngine):
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)
-                embedding_triples = self.create_emb.generate_embeddings(relationships)
-                if self.sample_relationships:
-                        embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
-                for triple in embedding_triples:
-                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                    if graph_json:
-                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            await self.set_state(new_state=current_state)
-                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                    if vector_json:
-                            current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                            await self.set_state(new_state=current_state)
+                if len(relationships) > 0:
+                    embedding_triples = self.create_emb.generate_embeddings(relationships)
+                    if self.sample_relationships:
+                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                    for triple in embedding_triples:
+                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                        if graph_json:
+                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                await self.set_state(new_state=current_state)
+                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                        if vector_json:
+                                current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                await self.set_state(new_state=current_state)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
-            raise Exception(f"An unexpected error occurred while extracting predicates using GPT: {e}")
+            raise Exception(f"An error occurred while extracting predicates using GPT: {e}")
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError
-
-
-
-
-# Define your context, entity1, and entity2 here
-context = "We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca."
-entity1 = "the GoM basin"
-entity2 = "deposition"
-
-# context = "Nishant is working in India and living in New Delhi"
-# entity1 = "Nihant"
-# entity2 = "New Delhi"
-
-async def main():
-    try:
-        # Create an instance of GPTLLM with the desired configuration
-        gpt_llm_instance = GPTLLM(input_queue=None, config=GPTConfig())
-
-        # Call your async function to process context and entities
-        response = await gpt_llm_instance.process_triples(context, entity1, entity2)
-
-        # Process the response or print it as needed
-        if response:
-            print(response)
-        else:
-            print("An error occurred during processing.")
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    asyncio.run(main())

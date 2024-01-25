@@ -10,14 +10,19 @@ import uuid
 @pytest.fixture
 def slack_config():
     return SlackCollectorConfig(
-        id=str(uuid.uuid4()),
-        channel_name="C05TA5R7D88",
-        cursor=None,
-        include_all_metadata=0,
-        inclusive=0,
-        latest=0,
-        limit=100,
-        access_token=os.getenv("SLACK_ACCESS_KEY"),
+        config_source={
+            "id": str(uuid.uuid4()),
+            "channel_name": "C05TA5R7D88",
+            "cursor": None,
+            "include_all_metadata": 0,
+            "inclusive": 0,
+            "latest": 0,
+            "limit": 100,
+            "access_token": os.getenv("SLACK_ACCESS_KEY"),
+            "name": "Slack-config",
+            "config": {},
+            "uri": "slack://",
+        }
     )
 
 

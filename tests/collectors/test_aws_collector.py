@@ -20,12 +20,18 @@ aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 @pytest.fixture
 def aws_config():
     config = S3CollectConfig(
-        id=str(uuid.uuid4()),
-        bucket="pstreamsbucket1",
-        region="ap-south-1",
-        access_key=aws_access_key_id,
-        secret_key=aws_secret_access_key,
-        chunk=1024,
+        config_source={
+            "id": str(uuid.uuid4()),
+            "bucket": "pstreamsbucket1",
+            "region": "ap-south-1",
+            "access_key": aws_access_key_id,
+            "secret_key": aws_secret_access_key,
+            "chunk": 1024,
+            "name": "AWS-config",
+            "config": {},
+            "backend": "s3",  # Assuming this is a string or relevant enum value
+            "uri": "s3://",
+        },
     )
     return config
 

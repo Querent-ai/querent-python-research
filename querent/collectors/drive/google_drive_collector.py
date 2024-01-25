@@ -132,7 +132,7 @@ class DriveCollector(Collector):
 
 class DriveCollectorFactory(CollectorFactory):
     def backend(self) -> CollectorBackend:
-        return CollectorBackend.LocalFile
+        return CollectorBackend.Drive
 
     def resolve(self, uri: Uri, config: DriveCollectorConfig) -> Collector:
         return DriveCollector(config)

@@ -8,7 +8,7 @@ from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
-from querent.config.core.bert_llm_config import BERTLLMConfig
+from querent.config.core.llm_config import LLM_Config
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
@@ -25,14 +25,20 @@ async def test_ingest_all_async():
     collectors = [
         FSCollectorFactory().resolve(
             Uri("file://" + str(Path(directory).resolve())),
-            FSCollectorConfig(root_path=directory, id=str(uuid.uuid4())),
+            FSCollectorConfig(config_source={
+                    "id": str(uuid.uuid4()),
+                    "root_path": directory,
+                    "name": "Local-config",
+                    "config": {},
+                    "backend": "localfile",
+                    "uri": "file://",
+                }),
         )
         for directory in directories
     ]
 
     # Set up the result queue
     result_queue = asyncio.Queue()
-    file_buffer = FileBuffer()
 
     # Create the IngestorFactoryManager
     ingestor_factory_manager = IngestorFactoryManager(
@@ -40,7 +46,7 @@ async def test_ingest_all_async():
     )
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     resource_manager = ResourceManager()
-    bert_llm_config = BERTLLMConfig(
+    bert_llm_config = LLM_Config(
     ner_model_name="botryan96/GeoBERT",
     enable_filtering=True,
     filter_params={
@@ -49,12 +55,12 @@ async def test_ingest_all_async():
             'similarity_threshold': 0.5,
             'min_cluster_size': 5,
             'min_samples': 3,
-            'cluster_persistence_threshold':0.1
+            'cluster_persistence_threshold':0.2
         }
     )
     llm_instance = BERTLLM(result_queue, bert_llm_config)
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
+        def handle_event(self, event_type: EventType, event_state: EventState):
             assert event_state.event_type == EventType.Graph
             triple = json.loads(event_state.payload)
             print("triple: {}".format(triple))

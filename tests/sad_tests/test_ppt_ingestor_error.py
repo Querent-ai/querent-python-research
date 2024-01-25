@@ -14,7 +14,15 @@ async def test_collect_and_ingest_ppt():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/html/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
+    config = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
