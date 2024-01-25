@@ -4,6 +4,10 @@ from typing import List, AsyncGenerator
 import os
 from docx import Document
 import pytextract
+import base64
+import pytesseract
+import uuid
+from PIL import Image
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -11,6 +15,7 @@ from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common import common_errors
 from querent.common.types.ingested_tokens import IngestedTokens
+from querent.common.types.ingested_images import IngestedImages
 from querent.logging.logger import setup_logger
 
 
@@ -80,17 +85,26 @@ class DocIngestor(BaseIngestor):
         # Determine file extension
         file_extension = collected_bytes.extension.lower()
         if file_extension == "docx":
-            # For DOCX files, use python-docx library
             doc = Document(io.BytesIO(collected_bytes.data))
             text = ""
             for paragraph in doc.paragraphs:
                 text += paragraph.text + "\n"
+
+            text = await self.process_data(text)
             yield IngestedTokens(
-                file=collected_bytes.file, data=[text], error=None
+                file=collected_bytes.file, data=text, error=None
             )
 
+            i = 1
+            for rel in doc.part.rels.values():
+                if "image" in rel.reltype:
+                    image = rel.target_part.blob 
+                    ocr_text = await self.process_image(image)
+                    encoded_image = base64.b64encode(image)
+                    yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=ocr_text, error=None, coordinates=None)
+                    i += 1
+
         elif file_extension == "doc":
-            # For DOC files, use pyextract library
             current_doc_text = await self.temp_extract_from(collected_bytes)
             yield IngestedTokens(
                 file=collected_bytes.file, data=[current_doc_text], error=None
@@ -134,7 +148,7 @@ class DocIngestor(BaseIngestor):
 
     async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:
-            return text
+            return [text]
         try:
             processed_data = text
             for processor in self.processors:
@@ -142,3 +156,16 @@ class DocIngestor(BaseIngestor):
             return processed_data
         except Exception as e:
             self.logger.error(f"Error while processing text: {e}")
+
+    async def process_image(self, image_blob):
+        try:
+            image_stream = io.BytesIO(image_blob)
+
+            image = Image.open(image_stream)
+
+            ocr_text = pytesseract.image_to_string(image)
+
+            return ocr_text
+        except Exception as e:
+            self.logger.error(f"Error during image processing: {e}")
+            return ""

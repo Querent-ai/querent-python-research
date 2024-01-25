@@ -34,7 +34,7 @@ async def test_collect_and_ingest_audio():
             assert ingested.file is not None
             counter += 1
         # 2 extra IngestedTokens are repreenting end of files
-        assert counter == 4
+        assert counter == 5
 
     await poll_and_print()
 
