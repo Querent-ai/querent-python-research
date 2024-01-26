@@ -214,7 +214,8 @@ class BaseEngine(ABC):
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=120)
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=60)
+                        print("--------------------------------data: ", data)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)
@@ -250,7 +251,10 @@ class BaseEngine(ABC):
                         await asyncio.sleep(self.retry_interval)
 
                     except asyncio.TimeoutError:
-                        break
+                        print("Timeout-------------------------")
+                        self.termination_event.set()
+                        current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                        await self.set_state(new_state=current_state)
                     self.input_queue.task_done()
                     current_message_total += 1
 

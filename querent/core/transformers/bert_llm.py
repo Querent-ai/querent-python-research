@@ -175,13 +175,19 @@ class BERTLLM(BaseEngine):
                 else:
                     pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
+                print(f"Condition 'self.enable_filtering == True': {self.enable_filtering == True}")
+                print(f"Condition 'not self.entity_context_extractor': {not self.entity_context_extractor}")
+                print(f"Condition 'self.count_entity_pairs(pairs_withattn) > 1': {self.count_entity_pairs(pairs_withattn) > 1}")
+                print(f"Condition 'not self.predicate_context_extractor': {not self.predicate_context_extractor}")
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
-                          
-                          
+                    print("Original Triples :",len(pairs_with_predicates))      
+                    print("Reduction :", cluster_output['reduction_count'])
+                    print("Cluster Labels :",cluster_labels )
+                    print("Cluster Persistence :", cluster_persistence) 
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples:
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
@@ -191,7 +197,9 @@ class BERTLLM(BaseEngine):
                 else:
                     filtered_triples = pairs_with_predicates
                 if not self.skip_inferences:
+                    print("-------------------------------------------")
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    print("-------------------------------------------", len(relationships))
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
