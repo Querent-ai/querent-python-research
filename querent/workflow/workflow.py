@@ -126,77 +126,77 @@ async def start_llama_workflow(config: Config):
 
 
 
-async def main():
-    class StateChangeCallback(EventCallbackInterface):
-        def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.Graph
-            triple = json.loads(event_state.payload)
-            print("triple: {}".format(triple))
-            assert isinstance(triple['subject'], str) and triple['subject']
+# async def main():
+#     class StateChangeCallback(EventCallbackInterface):
+#         def handle_event(self, event_type: EventType, event_state: EventState):
+#             assert event_state.event_type == EventType.Graph
+#             triple = json.loads(event_state.payload)
+#             print("triple: {}".format(triple))
+#             assert isinstance(triple['subject'], str) and triple['subject']
 
-    class TokensFeader(ChannelCommandInterface):
-        def receive_tokens_in_python(self) -> IngestedTokens:
-            return IngestedTokens(file=None, data="This is the sample data", error=None)
+#     class TokensFeader(ChannelCommandInterface):
+#         def receive_tokens_in_python(self) -> IngestedTokens:
+#             return IngestedTokens(file=None, data="This is the sample data", error=None)
         
-        def receive_in_python(self) -> EventState:
-            return EventState(event_type="Graph", timestamp=1.0, payload="Dummy_event", file=None)
-        def send_in_rust(self, message_type: EventType, message_data: Any) -> None:
-            pass
+#         def receive_in_python(self) -> EventState:
+#             return EventState(event_type="Graph", timestamp=1.0, payload="Dummy_event", file=None)
+#         def send_in_rust(self, message_type: EventType, message_data: Any) -> None:
+#             pass
             
-    config_source={
-        "version": 1.0,
-        "id": "ahdbfvd",
-        "querent_id": 12345,
-        "querent_name": "llama",
-        "workflow": {
-        "name": "llama",
-        "id": str(uuid.uuid4()),
-        "config": {},
-        "event_handler": StateChangeCallback,
-        "tokens_feader": TokensFeader(),
-        "channel": TokensFeader(),
-        },
-        "collectors": [{
-            "id": str(uuid.uuid4()),
-            "name": "Local-config",
-            "config": {
-                "root_path": "./tests/data/llm/pdf",
-            },
-            "backend":"localfile",
-        },
-        # {
-        #     "id": str(uuid.uuid4()),
-        #     "name": "Drive-config",
-        #     "config": {
-        #         "drive_refresh_token": os.getenv("DRIVE_REFRESH_TOKEN"),
-        #         "drive_token": os.getenv("DRIVE_TOKEN"),
-        #         "drive_scopes": os.getenv("DRIVE_SCOPES"),
-        #         "chunk_size": 1024 * 1024,
-        #         "drive_client_id": os.getenv("DRIVE_CLIENT_ID"),
-        #         "drive_client_secret": os.getenv("DRIVE_CLIENT_SECRET"),
-        #         "specific_file_type": "application/pdf",
-        #         "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
-        #     },
-        #     "backend": "drive",
-        # }
-        ],
+#     config_source={
+#         "version": 1.0,
+#         "id": "ahdbfvd",
+#         "querent_id": 12345,
+#         "querent_name": "llama",
+#         "workflow": {
+#         "name": "llama",
+#         "id": str(uuid.uuid4()),
+#         "config": {},
+#         "event_handler": StateChangeCallback,
+#         "tokens_feader": TokensFeader(),
+#         "channel": TokensFeader(),
+#         },
+#         "collectors": [{
+#             "id": str(uuid.uuid4()),
+#             "name": "Local-config",
+#             "config": {
+#                 "root_path": "./tests/data/llm/pdf",
+#             },
+#             "backend":"localfile",
+#         },
+#         # {
+#         #     "id": str(uuid.uuid4()),
+#         #     "name": "Drive-config",
+#         #     "config": {
+#         #         "drive_refresh_token": os.getenv("DRIVE_REFRESH_TOKEN"),
+#         #         "drive_token": os.getenv("DRIVE_TOKEN"),
+#         #         "drive_scopes": os.getenv("DRIVE_SCOPES"),
+#         #         "chunk_size": 1024 * 1024,
+#         #         "drive_client_id": os.getenv("DRIVE_CLIENT_ID"),
+#         #         "drive_client_secret": os.getenv("DRIVE_CLIENT_SECRET"),
+#         #         "specific_file_type": "application/pdf",
+#         #         "folder_to_crawl": "1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8",
+#         #     },
+#         #     "backend": "drive",
+#         # }
+#         ],
         
-        "engines": [{ 
-        "id": str(uuid.uuid4()),
-        "name": "knowledge_graph_using_llama2_v1",
-        "config": {"ner_model_name":"botryan96/GeoBERT",
-        "enable_filtering": True,
-        "filter_params": {
-                'score_threshold': 0.5,
-                'attention_score_threshold': 0.1,
-                'similarity_threshold': 0.5,
-                'min_cluster_size': 5,
-                'min_samples': 3,
-                'cluster_persistence_threshold':0.1
-        }
-    }}],        
-    }
+#         "engines": [{ 
+#         "id": str(uuid.uuid4()),
+#         "name": "knowledge_graph_using_llama2_v1",
+#         "config": {"ner_model_name":"botryan96/GeoBERT",
+#         "enable_filtering": True,
+#         "filter_params": {
+#                 'score_threshold': 0.5,
+#                 'attention_score_threshold': 0.1,
+#                 'similarity_threshold': 0.5,
+#                 'min_cluster_size': 5,
+#                 'min_samples': 3,
+#                 'cluster_persistence_threshold':0.1
+#         }
+#     }}],        
+#     }
 
-    await start_workflow(config_source)
+#     await start_workflow(config_source)
     
-asyncio.run(main())
+# asyncio.run(main())
