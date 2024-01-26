@@ -182,7 +182,6 @@ async def main():
         ],
         
         "engines": [{ 
-        #https://github.com/Querent-ai/querent-rs/blob/main/src/config/config.rs#L172 con
         "id": str(uuid.uuid4()),
         "name": "knowledge_graph_using_llama2_v1",
         "config": {"ner_model_name":"botryan96/GeoBERT",
