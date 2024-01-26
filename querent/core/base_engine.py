@@ -212,38 +212,45 @@ class BaseEngine(ABC):
                 current_message_total = 0
                 while not self.termination_event.is_set():
                     retries = 0
-                    data = await self.input_queue.get()
+                    none_counter = 0
                     try:
-                        if isinstance(data, IngestedMessages):
-                            await self.process_messages(data)
-                        elif isinstance(data, IngestedTokens):
-                            await self.process_tokens(data)
-                        elif isinstance(data, IngestedImages):
-                            await self.process_images(data)
-                        elif isinstance(data, IngestedCode):
-                            await self.process_code(data)
-                        elif data is None:
-                            self.termination_event.set()
-                            current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
-                            await self.set_state(new_state=current_state)
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=120)
+                        try:
+                            if isinstance(data, IngestedMessages):
+                                await self.process_messages(data)
+                            elif isinstance(data, IngestedTokens):
+                                await self.process_tokens(data)
+                            elif isinstance(data, IngestedImages):
+                                await self.process_images(data)
+                            elif isinstance(data, IngestedCode):
+                                await self.process_code(data)
+                            elif data is None:
+                                none_counter += 1
+                                if none_counter >= 2:
+                                    self.termination_event.set()
+                                    current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                                    await self.set_state(new_state=current_state)
 
-                        else:
-                            raise Exception(
-                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
-                            )
-                    except Exception as e:
-                        self.logger.error(
-                            f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
-                        )
-                        retries += 1
-
-                        if retries > self.max_retries:
+                            else:
+                                raise Exception(
+                                    f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
+                                )
+                        except Exception as e:
                             self.logger.error(
-                                f"Error processing tokens: {e}. Max retries reached. Terminating."
+                                f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
                             )
-                            break
+                            retries += 1
+
+                            if retries > self.max_retries:
+                                self.logger.error(
+                                    f"Error processing tokens: {e}. Max retries reached. Terminating."
+                                )
+                                break
                         
                         await asyncio.sleep(self.retry_interval)
+
+                    except asyncio.TimeoutError:
+                        break
                     self.input_queue.task_done()
                     current_message_total += 1
 
