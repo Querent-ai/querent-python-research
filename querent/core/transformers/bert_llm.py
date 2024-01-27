@@ -146,10 +146,12 @@ class BERTLLM(BaseEngine):
                 clean_text = single_string.replace('\n', ' ')
             else:
                 clean_text = data.data
-             
-            file, content = self.file_buffer.add_chunk(
-                data.get_file_path(), clean_text
-            )
+            if not data.is_token_stream : 
+                file, content = self.file_buffer.add_chunk(
+                data.get_file_path(), clean_text)
+            else:
+                content = clean_text
+                file = data.get_file_path()
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
