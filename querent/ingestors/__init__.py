@@ -4,19 +4,3 @@
 #              to allow for high throughput and scalability.
 
 # Version: 0.1.0
-
-from .audio import *
-from .code import *
-from .csv import *
-from .doc import *
-from .email import *
-from .github import *
-from .html import *
-from .images import *
-from .json import *
-from .pdfs import *
-from .ppt import *
-from .texts import *
-from .video import *
-from .xlsx import *
-from .xml import *
