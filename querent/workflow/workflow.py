@@ -25,7 +25,7 @@ from querent.querent.resource_manager import ResourceManager
 
 async def start_workflow(config_dict: dict):
     #Start the workflow
-    print("----------------------------------------------------------------Print the configuration :", config_dict)
+    # print("----------------------------------------------------------------Print the configuration :", config_dict)
     workflow_config = config_dict.get("workflow")
     workflow = WorkflowConfig(config_source=workflow_config)
     collector_configs = config_dict.get("collectors", [])
