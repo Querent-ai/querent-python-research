@@ -27,7 +27,7 @@ from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
-import psutil
+
 """
     BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
@@ -146,10 +146,12 @@ class BERTLLM(BaseEngine):
                 clean_text = single_string.replace('\n', ' ')
             else:
                 clean_text = data.data
-             
-            file, content = self.file_buffer.add_chunk(
-                data.get_file_path(), clean_text
-            )
+            if not data.is_token_stream : 
+                file, content = self.file_buffer.add_chunk(
+                data.get_file_path(), clean_text)
+            else:
+                content = clean_text
+                file = data.get_file_path()
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
@@ -180,8 +182,6 @@ class BERTLLM(BaseEngine):
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
-                          
-                          
                     final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if final_clustered_triples:
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)

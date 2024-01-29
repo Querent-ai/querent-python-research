@@ -1,10 +1,12 @@
 """File to start workflow"""
 import asyncio
 import json
+from typing import Any
 import uuid
 import os
 from querent.callback.event_callback_interface import EventCallbackInterface
-
+from querent.channel.channel_interface import ChannelCommandInterface
+from querent.common.types.ingested_tokens import IngestedTokens
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
 from querent.config.collector.collector_config import CollectorConfig
@@ -23,6 +25,7 @@ from querent.querent.resource_manager import ResourceManager
 
 async def start_workflow(config_dict: dict):
     #Start the workflow
+    # print("----------------------------------------------------------------Print the configuration :", config_dict)
     workflow_config = config_dict.get("workflow")
     workflow = WorkflowConfig(config_source=workflow_config)
     collector_configs = config_dict.get("collectors", [])
@@ -87,9 +90,10 @@ async def receive_token_feeder(resource_manager: ResourceManager, config: Config
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         message_state = config.workflow.channel.receive_in_python()
         if tokens is not None:
-            await result_queue.put(tokens)
+            #we will get a dictionary here
+            result_queue.put_nowait(tokens)
         if message_state is not None:
-            await state_queue.put(message_state)
+            state_queue.put_nowait(message_state)
 
 async def start_llama_workflow(config: Config):
     collectors = []
@@ -118,9 +122,10 @@ async def start_llama_workflow(config: Config):
         resource_manager=resource_manager,
     )
     querent_task = asyncio.create_task(querent.start())
-    # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=BERTLLM.state_queue))
-    await asyncio.gather(ingest_task, querent_task) # Loop and do config.workflow.channel for termination event messageType = "stop"
-    # , token_feeder)
+    # token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
+    await asyncio.gather(ingest_task, querent_task)
+    # , token_feeder) # Loop and do config.workflow.channel for termination event messageType = "stop"
+
 
 
 # async def main():
