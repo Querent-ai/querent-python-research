@@ -27,7 +27,7 @@ from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
-import psutil
+
 """
     BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
 
