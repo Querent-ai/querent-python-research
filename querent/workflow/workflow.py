@@ -128,58 +128,58 @@ async def start_llama_workflow(config: Config):
 
 
 
-async def main():
-    class StateChangeCallback(EventCallbackInterface):
-        def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.Graph
-            triple = json.loads(event_state.payload)
-            print("triple: {}".format(triple))
-            assert isinstance(triple['subject'], str) and triple['subject']
-    config_source={
-    'version': 0.0,
-    'querent_id': '7b0e11f3-955c-4402-947d-78ec96d54131',
-    'querent_name': 'knowledge_graph_using_llama2_v1',
-    'workflow': {
-        'name': 'knowledge_graph_using_llama2_v1',
-        'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
-        'config': {
+# async def main():
+#     class StateChangeCallback(EventCallbackInterface):
+#         def handle_event(self, event_type: EventType, event_state: EventState):
+#             assert event_state.event_type == EventType.Graph
+#             triple = json.loads(event_state.payload)
+#             print("triple: {}".format(triple))
+#             assert isinstance(triple['subject'], str) and triple['subject']
+#     config_source={
+#     'version': 0.0,
+#     'querent_id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#     'querent_name': 'knowledge_graph_using_llama2_v1',
+#     'workflow': {
+#         'name': 'knowledge_graph_using_llama2_v1',
+#         'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#         'config': {
             
-        },
-        # 'channel': None,
-        'event_handler': StateChangeCallback,
-        'tokens_feader': None 
-    },
-    'collectors': [
-        {
-            'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
-            'name': 'Drive-config',
-            'backend': 'drive',
-            'config': {
-                'drive_token': 'ya29.a0AfB_byAMnws17-UAYR2hU29zC83Rw4bxn2LsF5i_sWQ5xDMI00li205pXlA-JrwVmBh0kNBK7sKP33urPZ9-DM9DDKMv6EQsaqJsy57aHQYUwddT42SwuZAVINyTwp340Qiy_hSaVG5ezT9PIYRO5Qd1Yn9wm5rd7Aq-',
-                'chunk_size': 1048576,
-                'drive_refresh_token': '1//0g7Sd9WayGH-yCgYIARAAGBASNwF-L9Irh8XWYJ_zz43V0Ema-OqTCaHzdJKrNtgJDrrrRSs8z6iJU9dgR8tA1fucRKjwUVggwy8',
-                'drive_client_id': '4402204563-lso0f98dve9k33durfvqdt6dppl7iqn5.apps.googleusercontent.com',
-                'specific_file_type': 'application/pdf',
-                'folder_to_crawl': '1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8',
-                'drive_client_secret': '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',
-                'drive_scopes': 'https://www.googleapis.com/auth/drive'
-            },
-            # 'channel': None,
-        }
-    ],
-    'engines': [
-        {
-            'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
-            'name': 'knowledge_graph_using_llama2_v1',
-            'config': {
+#         },
+#         # 'channel': None,
+#         'event_handler': StateChangeCallback,
+#         'tokens_feader': None 
+#     },
+#     'collectors': [
+#         {
+#             'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#             'name': 'Drive-config',
+#             'backend': 'drive',
+#             'config': {
+#                 'drive_token': 'ya29.a0AfB_byAMnws17-UAYR2hU29zC83Rw4bxn2LsF5i_sWQ5xDMI00li205pXlA-JrwVmBh0kNBK7sKP33urPZ9-DM9DDKMv6EQsaqJsy57aHQYUwddT42SwuZAVINyTwp340Qiy_hSaVG5ezT9PIYRO5Qd1Yn9wm5rd7Aq-',
+#                 'chunk_size': 1048576,
+#                 'drive_refresh_token': '1//0g7Sd9WayGH-yCgYIARAAGBASNwF-L9Irh8XWYJ_zz43V0Ema-OqTCaHzdJKrNtgJDrrrRSs8z6iJU9dgR8tA1fucRKjwUVggwy8',
+#                 'drive_client_id': '4402204563-lso0f98dve9k33durfvqdt6dppl7iqn5.apps.googleusercontent.com',
+#                 'specific_file_type': 'application/pdf',
+#                 'folder_to_crawl': '1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8',
+#                 'drive_client_secret': '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',
+#                 'drive_scopes': 'https://www.googleapis.com/auth/drive'
+#             },
+#             # 'channel': None,
+#         }
+#     ],
+#     'engines': [
+#         {
+#             'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#             'name': 'knowledge_graph_using_llama2_v1',
+#             'config': {
                 
-            },
-            # 'channel': None
-        }
-    ],
-    'resource': None
-    }
+#             },
+#             # 'channel': None
+#         }
+#     ],
+#     'resource': None
+#     }
 
-    await start_workflow(config_source)
+#     await start_workflow(config_source)
     
-asyncio.run(main())
+# asyncio.run(main())
