@@ -17,7 +17,9 @@ class DropboxCollector(Collector):
         self.dropbox_app_key = config.dropbox_app_key
         self.dropbox_app_secret = config.dropbox_app_secret
         self.folder_path = config.folder_path
-        self.chunk_size = config.chunk_size
+        self.chunk_size = 1024
+        if config.chunk_size and config.chunk_size.isdigit():
+            self.chunk_size = int(config.chunk_size)
         self.refresh_token = config.dropbox_refresh_token
         self.logger = setup_logger(__name__, "DropboxCollector")
         self.dbx = None

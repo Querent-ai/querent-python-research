@@ -22,7 +22,9 @@ class GCSCollector(Collector):
         self.bucket_name = config.bucket
         self.credentials = json.loads(config.credentials)
         self.client = None
-        self.chunk_size = 1024  # Set an appropriate chunk size
+        self.chunk_size = 1024
+        if config.chunk_size and config.chunk_size.isdigit():
+            self.chunk_size = int(config.chunk_size)
         self.logger = setup_logger(__name__, "GCSCollector")
 
     async def connect(self):

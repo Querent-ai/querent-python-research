@@ -24,7 +24,6 @@ from querent.logging.logger import setup_logger
 class DriveCollector(Collector):
     def __init__(self, config: DriveCollectorConfig):
         self.items_to_ignore = []
-        self.chunk_size = config.chunk_size
         self.refresh_token = config.drive_refresh_token
         self.token = config.drive_token
         self.scopes = config.drive_scopes
@@ -32,7 +31,9 @@ class DriveCollector(Collector):
         self.client_secret = config.drive_client_secret
         self.creds = None
         self.drive_service = None
-        self.chunk_size = config.chunk_size
+        self.chunk_size = 1024
+        if config.chunk_size and config.chunk_size.isdigit():
+            self.chunk_size = int(config.chunk_size)
         self.specific_file_type = config.specific_file_type
         self.folder_to_crawl = config.folder_to_crawl
         self.logger = setup_logger(__name__, "DriveCollector")
