@@ -25,33 +25,31 @@ from querent.querent.resource_manager import ResourceManager
 
 async def start_workflow(config_dict: Any):
     #Start the workflow
-    print("----------------------------------------------------------------Print the configuration :", config_dict)
-    workflow_config = config_dict.get("workflow")
-    workflow = WorkflowConfig(config_source=workflow_config)
-    collector_configs = config_dict.get("collectors", [])
-    collectors = []
-    for collector_config in collector_configs: 
-        collectors.append(CollectorConfig(config_source=collector_config).resolve())
-
-    engine_configs = config_dict.get("engines", [])
-    engines = []
-    for engine_config in engine_configs:
-        engine_config_source = engine_config.get("config",{})
-        if engine_config["name"] == "knowledge_graph_using_openai_v1":
-            engines.append(GPTConfig(config_source = engine_config_source))
-        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
-            engines.append(LLM_Config(config_source=engine_config_source))
-    config_dict["engines"] = engines 
-    config_dict["collectors"] = collectors 
-    config_dict["workflow"] = workflow
-    config = Config(config_source=config_dict)
-
-    workflows = {"openai": start_gpt_workflow,
-               "llama": start_llama_workflow}
-
-    workflow = workflows.get(config.workflow.name)
-    await workflow(config)
-
+    try:
+        workflow_config = config_dict.get("workflow")
+        workflow = WorkflowConfig(config_source=workflow_config)
+        collector_configs = config_dict.get("collectors", [])
+        collectors = []
+        for collector_config in collector_configs: 
+            collectors.append(CollectorConfig(config_source=collector_config).resolve())
+        engine_configs = config_dict.get("engines", [])
+        engines = []
+        for engine_config in engine_configs:
+            engine_config_source = engine_config.get("config",{})
+            if engine_config["name"] == "knowledge_graph_using_openai_v1":
+                engines.append(GPTConfig(config_source = engine_config_source))
+            elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+                engines.append(LLM_Config(config_source=engine_config_source))
+        config_dict["engines"] = engines 
+        config_dict["collectors"] = collectors 
+        config_dict["workflow"] = workflow
+        config = Config(config_source=config_dict)
+        workflows = {"knowledge_graph_using_openai_v1": start_gpt_workflow,
+                "knowledge_graph_using_llama2_v1": start_llama_workflow}
+        workflow = workflows.get(config.workflow.name)
+        await workflow(config)
+    except Exception as e:
+        raise("Exception while starting workflow", e)
 
 async def start_gpt_workflow(config: Config):
     collectors = []
@@ -116,7 +114,7 @@ async def start_llama_workflow(config: Config):
 
     llm_instance = BERTLLM(result_queue, config.engines[0])
 
-    llm_instance.subscribe(EventType.Graph, config.workflow.event_handler.handle_event())
+    llm_instance.subscribe(EventType.Graph, config.workflow.event_handler())
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
@@ -126,6 +124,59 @@ async def start_llama_workflow(config: Config):
     await asyncio.gather(ingest_task, querent_task)
     # , token_feeder) # Loop and do config.workflow.channel for termination event messageType = "stop"
 
+# async def main():
+#     class StateChangeCallback(EventCallbackInterface):
+#         def handle_event(self, event_type: EventType, event_state: EventState):
+#             assert event_state.event_type == EventType.Graph
+#             triple = json.loads(event_state.payload)
+#             assert isinstance(triple['subject'], str) and triple['subject']
+#     config_source = {
+#     'version': 0.0,
+#     'querent_id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#     'querent_name': 'knowledge_graph_using_llama2_v1',
+#     'workflow': {
+#         'name': 'knowledge_graph_using_llama2_v1',
+#         'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#         'config': {
+            
+#         },
+#         # 'channel': None,
+#         'event_handler': StateChangeCallback,
+#         'tokens_feader': None 
+#     },
+#     'collectors': [
+#         {
+#             'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#             'name': 'Drive-config',
+#             'backend': 'drive',
+#             'config': {
+#                 'drive_token': 'ya29.a0AfB_byAMnws17-UAYR2hU29zC83Rw4bxn2LsF5i_sWQ5xDMI00li205pXlA-JrwVmBh0kNBK7sKP33urPZ9-DM9DDKMv6EQsaqJsy57aHQYUwddT42SwuZAVINyTwp340Qiy_hSaVG5ezT9PIYRO5Qd1Yn9wm5rd7Aq-',
+#                 'chunk_size': 1048576,
+#                 'drive_refresh_token': '1//0g7Sd9WayGH-yCgYIARAAGBASNwF-L9Irh8XWYJ_zz43V0Ema-OqTCaHzdJKrNtgJDrrrRSs8z6iJU9dgR8tA1fucRKjwUVggwy8',
+#                 'drive_client_id': '4402204563-lso0f98dve9k33durfvqdt6dppl7iqn5.apps.googleusercontent.com',
+#                 'specific_file_type': 'application/pdf',
+#                 'folder_to_crawl': '1BtLKXcYBrS16CX0R4V1X7Y4XyO9Ct7f8',
+#                 'drive_client_secret': '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',
+#                 'drive_scopes': 'https://www.googleapis.com/auth/drive'
+#             },
+#             # 'channel': None,
+#         }
+#     ],
+#     'engines': [
+#         {
+#             'id': '7b0e11f3-955c-4402-947d-78ec96d54131',
+#             'name': 'knowledge_graph_using_llama2_v1',
+#             'config': {
+                
+#             },
+#             # 'channel': None
+#         }
+#     ],
+#     'resource': None
+#     }
+#     await start_workflow(config_source)
+    
+# asyncio.run(main())
 
 
 # async def main():
