@@ -104,7 +104,7 @@ class FSCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.LocalFile
     id: str
     root_path: str
-    chunk_size: str
+    chunk_size: str = "1024"
     channel: Any
 
     def __init__(self, config_source=None, **kwargs):
@@ -138,7 +138,7 @@ class AzureCollectConfig(CollectorConfig):
     credentials: str
     container: str
     prefix: str
-    chunk_size: str
+    chunk_size: str = "1024"
 
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
@@ -157,7 +157,7 @@ class S3CollectConfig(CollectorConfig):
     region: str
     access_key: str
     secret_key: str
-    chunk: str
+    chunk: str = "1024"
 
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
@@ -174,7 +174,7 @@ class GcsCollectConfig(CollectorConfig):
     id: str
     bucket: str
     credentials: str
-    chunk: str
+    chunk: str = "1024"
 
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
@@ -213,7 +213,7 @@ class DropboxConfig(CollectorConfig):
     dropbox_app_key: str
     dropbox_app_secret: str
     folder_path: str
-    chunk_size: str
+    chunk_size: str = "1024"
     dropbox_refresh_token: str
 
     def __init__(self, config_source=None, **kwargs):
@@ -266,7 +266,7 @@ class DriveCollectorConfig(CollectorConfig):
     drive_scopes: str
     drive_client_id: str
     drive_client_secret: str
-    chunk_size: str
+    chunk_size: str = "1024"
     specific_file_type: Optional[str] = None
     folder_to_crawl: Optional[str] = None
 
