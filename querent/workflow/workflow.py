@@ -46,8 +46,8 @@ async def start_workflow(config_dict: dict):
     config_dict["workflow"] = workflow
     config = Config(config_source=config_dict)
 
-    workflows = {"openai": start_gpt_workflow,
-               "llama": start_llama_workflow}
+    workflows = {"knowledge_graph_using_openai_v1": start_gpt_workflow,
+               "knowledge_graph_using_llama2_v1": start_llama_workflow}
 
     workflow = workflows.get(config.workflow.name)
     await workflow(config)

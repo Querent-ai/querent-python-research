@@ -253,7 +253,7 @@ class BaseEngine(ABC):
                         self.termination_event.set()
                         current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
                         await self.set_state(new_state=current_state)
-                    self.input_queue.task_done()
+
                     current_message_total += 1
 
                     if current_message_total >= self.message_throttle_limit:
