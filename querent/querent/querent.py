@@ -66,8 +66,9 @@ class Querent:
 
     def handle_signal(self):
         try:
+            loop = asyncio.get_running_loop()
             shutdown_task = asyncio.create_task(self.graceful_shutdown())
-            asyncio.run(shutdown_task)
+            loop.create_task(shutdown_task)
         except Exception as e:
             print(f"Error during graceful shutdown: {str(e)}")
 

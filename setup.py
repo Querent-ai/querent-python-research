@@ -149,7 +149,7 @@ setup(
         "Typing :: Typed",
     ],
     python_requires=">=3.9, <4",
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=requirements,
     license="Business Source License 1.1",
 )
