@@ -20,7 +20,7 @@ def dropbox_config():
             "dropbox_app_key": os.getenv("DROPBOX_APP_KEY"),
             "dropbox_refresh_token": os.getenv("DROPBOX_REFRESH_TOKEN"),
             "dropbox_app_secret": os.getenv("DROPBOX_APP_SECRET"),
-            "chunk_size": 1024,
+            "chunk_size": "1024",
             "folder_path": "",
             "name": "Dropbox-config",
             "config": {},

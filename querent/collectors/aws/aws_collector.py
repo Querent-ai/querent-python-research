@@ -21,7 +21,9 @@ class AWSCollector(Collector):
         self.region = config.region
         self.access_key = config.access_key
         self.secret_key = config.secret_key
-        self.chunk_size = 1024
+        self.chunk_size = 1024  # Default value
+        if config.chunk and config.chunk.isdigit():
+            self.chunk_size = int(config.chunk)
         self.logger = setup_logger(__name__, "AWSCollector")
 
     async def connect(self):
