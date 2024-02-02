@@ -4,6 +4,8 @@ import json
 from typing import Any
 import uuid
 import os
+from concurrent.futures import ThreadPoolExecutor
+
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.channel.channel_interface import ChannelCommandInterface
 from querent.common.types.ingested_tokens import IngestedTokens
@@ -33,6 +35,7 @@ class MockLLMEngine(BaseEngine):
         if data is None or data.is_error():
             self.set_termination_event()
             return
+        print("Data1-------------", data)
 
         current_state = EventState(EventType.Graph, 1.0, "anything", "dummy.txt")
         await self.set_state(new_state=current_state)
@@ -123,32 +126,45 @@ async def receive_token_feeder(resource_manager: ResourceManager, config: Config
             state_queue.put_nowait(message_state)
 
 async def start_llama_workflow(config: Config):
-    collectors = []
-    for collector_config in config.collectors:
-        uri = Uri(collector_config.uri)
-        collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
+    try:
+        executor = ThreadPoolExecutor()
+        loop = asyncio.get_event_loop()
 
-    for collector in collectors:
-        await collector.connect()
+        collectors = []
+        for collector_config in config.collectors:
+            uri = Uri(collector_config.uri)
+            collectors.append(CollectorResolver().resolve(uri=uri, config=collector_config))
 
-    result_queue = asyncio.Queue()
+        # Connect collectors in separate threads
+        await asyncio.gather(*(loop.run_in_executor(executor, collector.connect) for collector in collectors))
 
-    ingestor_factory_manager = IngestorFactoryManager(
-        collectors=collectors, result_queue=result_queue
-    )
+        result_queue = asyncio.Queue()
 
-    ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
+        ingestor_factory_manager = IngestorFactoryManager(
+            collectors=collectors, result_queue=result_queue
+        )
 
-    resource_manager = ResourceManager()
-    llm_instance = MockLLMEngine(result_queue)
+        # Run ingest_all_async in a separate thread if it's blocking
+        await loop.run_in_executor(executor, ingestor_factory_manager.ingest_all_async)
 
-    querent = Querent(
-        [llm_instance],
-        resource_manager=resource_manager,
-    )
+        resource_manager = ResourceManager()
+        llm_instance = MockLLMEngine(result_queue)
 
-    querent_task = asyncio.create_task(querent.start())
+        querent = Querent(
+            [llm_instance],
+            resource_manager=resource_manager,
+        )
+
+        # Assuming querent.start is blocking and needs to run in a thread
+        await loop.run_in_executor(executor, querent.start)
+
+        # Shutdown executor if not using `with` context
+        executor.shutdown()
+    except Exception as e:
+        print("Exception------------------------", e)
+
+    # querent_task = asyncio.create_task(querent.start())
     
     #token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
-    await asyncio.gather(ingest_task, querent_task)
+    # await asyncio.gather(ingest_task, querent_task)
     #, token_feeder) # Loop and do config.workflow.channel for termination event messageType = "stop"
