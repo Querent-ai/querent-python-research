@@ -2,6 +2,7 @@ import asyncio
 from asyncio import Queue
 from typing import AsyncGenerator, List, Optional
 from cachetools import LRUCache, cachedmethod
+from querent.channel.channel_interface import ChannelCommandInterface
 
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
@@ -78,6 +79,7 @@ class IngestorFactoryManager:
         processors: Optional[List[AsyncProcessor]] = None,
         cache_size: Optional[int] = 100,
         result_queue: Optional[Queue] = None,
+        tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
         self.collectors = collectors
         self.processors = processors
@@ -110,6 +112,7 @@ class IngestorFactoryManager:
         }
         self.file_caches = LRUCache(maxsize=cache_size)
         self.result_queue = result_queue
+        self.tokens_feader = tokens_feader
         self.logger = setup_logger(__name__, "IngestorFactoryManager")
 
     async def get_factory(self, file_extension: str) -> IngestorFactory:
@@ -134,7 +137,8 @@ class IngestorFactoryManager:
 
     @cachedmethod(cache=lambda self: self.file_caches)
     async def ingest_file_async(
-        self, file_id: str, result_queue: Optional[Queue] = None
+        self, file_id: str, result_queue: Optional[Queue] = None,
+        tokens_feader: Optional[ChannelCommandInterface] = None
     ):
         try:
             collected_bytes_list = self.file_caches.pop(file_id)
@@ -149,7 +153,10 @@ class IngestorFactoryManager:
                         yield chunk
 
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
-                    result_queue.put_nowait(chunk_tokens)
+                    if result_queue is not None:
+                        result_queue.put_nowait(chunk_tokens)
+                    if tokens_feader is not None:
+                        tokens_feader.send_tokens_in_rust(chunk_tokens)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"

@@ -23,3 +23,8 @@ class ChannelCommandInterface(ABC):
     def receive_tokens_in_python(self) -> IngestedTokens:
         """Receive tokens in Python from Rust."""
         raise NotImplementedError
+    
+    @abstractmethod
+    def send_tokens_in_rust(self, tokens: IngestedTokens) -> None:
+        """Send tokens in Rust from Python."""
+        raise NotImplementedError
