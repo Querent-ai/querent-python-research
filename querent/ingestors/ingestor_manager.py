@@ -199,4 +199,5 @@ class IngestorFactoryManager:
             for collector in self.collectors
         ]
         await asyncio.gather(*ingestion_tasks)
-        await self.result_queue.put(None)
+        if self.result_queue is not None:
+            await self.result_queue.put(None)

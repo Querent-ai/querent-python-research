@@ -115,3 +115,21 @@ async def start_llama_workflow(config: Config):
     querent_task = asyncio.create_task(querent.start())
     token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
     await asyncio.gather(ingest_task, querent_task, token_feeder) # Loop and do config.workflow.channel for termination event messageType = "stop"
+
+async def start_ingestion(config: Config):
+    collectors = []
+    for collector_config in config.collectors:
+        uri = Uri(collector_config.uri)
+        collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
+
+    for collector in collectors:
+        await collector.connect()
+
+    ingestor_factory_manager = IngestorFactoryManager(
+        collectors=collectors, result_queue=None,
+        tokens_feader= config.workflow.tokens_feader
+    )
+
+    ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
+
+    await ingest_task
