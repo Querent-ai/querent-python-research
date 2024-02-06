@@ -1,8 +1,9 @@
 import asyncio
 import json
+from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
-from querent.core.transformers.bert_llm import BERTLLM
+from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
@@ -37,7 +38,7 @@ class GPTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
-            bert_llm_config = LLM_Config(
+            llm_config = LLM_Config(
             ner_model_name=config.ner_model_name,
             enable_filtering=config.enable_filtering,
             filter_params={
@@ -50,7 +51,9 @@ class GPTLLM(BaseEngine):
             },
             sample_entities = config.sample_entities,
             fixed_entities = config.fixed_entities,
-            skip_inferences= True)
+            skip_inferences= True,
+            is_confined_search = config.is_confined_search,
+            huggingface_token = config.huggingface_token)
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             if self.fixed_relationships and not self.sample_relationships:
@@ -61,8 +64,11 @@ class GPTLLM(BaseEngine):
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore()
-            self.bert_instance = BERTLLM(input_queue, bert_llm_config)
+            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            if config.is_confined_search:
+                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
+            else :
+                self.llm_instance = BERTLLM(input_queue, llm_config)
             self.rel_model_name = config.rel_model_name
             if config.openai_apikey:
                 self.gpt_llm = OpenAI(api_key=config.openai_apikey)
@@ -75,7 +81,7 @@ class GPTLLM(BaseEngine):
             raise Exception(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
     
     def validate(self) -> bool:
-        return isinstance(self.bert_instance, BERTLLM)
+        return isinstance(self.llm_instance, BERTLLM) or isinstance(self.llm_instance, Fixed_Entities_LLM)
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
@@ -209,7 +215,7 @@ Entity 1: {entity1} and Entity 2: {entity2}
                     self.set_termination_event()                    
                     return 
             relationships = []
-            result = await self.bert_instance.process_tokens(data)           
+            result = await self.llm_instance.process_tokens(data)           
             if not result: return 
             else:
                 filtered_triples, file = result

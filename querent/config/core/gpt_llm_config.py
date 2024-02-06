@@ -9,6 +9,8 @@ class GPTConfig(LLM_Config):
     rel_model_name: str = "gpt-3.5-turbo"
     requests_per_minute: int = 3
     openai_apikey: str = ""
+    user_context: str = None
+    huggingface_token: str = None
 
     def __init__(self, config_source=None, **kwargs):
         config_data = {}

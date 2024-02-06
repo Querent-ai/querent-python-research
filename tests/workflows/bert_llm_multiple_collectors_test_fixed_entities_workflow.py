@@ -8,7 +8,7 @@ from querent.config.core.llm_config import LLM_Config
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
-from querent.core.transformers.bert_llm import BERTLLM
+from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.querent.resource_manager import ResourceManager
 from querent.querent.querent import Querent
 

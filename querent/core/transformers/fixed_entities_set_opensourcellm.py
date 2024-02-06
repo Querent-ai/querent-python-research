@@ -43,13 +43,13 @@ import time
     """
 
 
-class BERTLLM(BaseEngine):
+class Fixed_Entities_LLM(BaseEngine):
     def __init__(
         self,
         input_queue:QuerentQueue,
         config: LLM_Config
     ):  
-        self.logger = setup_logger(__name__, "BERTLLM")
+        self.logger = setup_logger(__name__, "Fixed_Entities_LLM")
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
         if not self.skip_inferences:
@@ -64,11 +64,10 @@ class BERTLLM(BaseEngine):
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
-        self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
-        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model= "dummy")
         self.nlp_model = NER_LLM.get_class_variable()
-        self.create_emb = EmbeddingStore()
-        self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
+        huggingface_token = config.huggingface_token
+        self.create_emb = EmbeddingStore(inference_api_key=huggingface_token)
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
         self.triple_filter = None
@@ -100,7 +99,7 @@ class BERTLLM(BaseEngine):
  
 
     def validate(self) -> bool:
-        return self.ner_model is not None and self.ner_tokenizer is not None
+        return self.ner_tokenizer is not None
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
@@ -138,7 +137,7 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
-            if not BERTLLM.validate_ingested_tokens(data):
+            if not Fixed_Entities_LLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      
                     return
             if data.data:
@@ -170,26 +169,9 @@ class BERTLLM(BaseEngine):
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs:
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
-                pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
-                    pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                else:
-                    pairs_withemb = pairs_withattn
-                pairs_with_predicates = process_data(pairs_withemb, file)
-                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
-                    clustered_triples = cluster_output['filtered_triples']
-                    cluster_labels = cluster_output['cluster_labels']
-                    cluster_persistence = cluster_output['cluster_persistence']
-                    final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
-                    if final_clustered_triples:
-                        filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
-                    else:
-                        filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
-                        self.logger.error(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
-                else:
-                    filtered_triples = pairs_with_predicates
+                filtered_triples = process_data(doc_entity_pairs, file)
+                if not filtered_triples:
+                    raise Exception("No entity pairs found")
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
                     if len(relationships) > 0:
@@ -209,6 +191,8 @@ class BERTLLM(BaseEngine):
                         return
                 else:
                     return filtered_triples, file
+            else:
+                return
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")
