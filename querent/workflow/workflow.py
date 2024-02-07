@@ -1,52 +1,29 @@
 """File to start workflow"""
 import asyncio
+from querent.common.types.querent_queue import QuerentQueue
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
-from querent.config.resource.resource_config import ResourceConfig
 from querent.config.collector.collector_config import CollectorConfig
 from querent.config.core.llm_config import LLM_Config
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
-from querent.core.transformers.bert_llm import BERTLLM
-from querent.core.transformers.gpt_llm import GPTLLM
+from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
+from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
 from querent.common.types.querent_event import EventType
 from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 
 async def start_workflow(config_dict: dict):
-    print("Starting workflow with configuration:", config_dict)
-    from huggingface_hub import InferenceClient
-    client = InferenceClient(model = "botryan96/GeoBERT", token="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")
-
-    tokens = client.token_classification("In this study, we present evidence of a Paleocene–Eocene Thermal Maximum (PETM) record within a 543-m-thick (1780 ft) deep-marine section in the Gulf of Mexico (GoM) using organic carbon stable isotopes and biostratigraphic constraints. We suggest that climate and tectonic perturbations in the upstream North American catchments can induce a substantial response in the downstream sectors of the Gulf Coastal Plain and ultimately in the GoM. This relationship is illustrated in the deep-water basin by (1) a high accommodation and deposition of a shale interval when coarse-grained terrigenous material was trapped upstream at the onset of the PETM, and (2) a considerable increase in sediment supply during the PETM, which is archived as a particularly thick sedimentary section in  the deep-sea fans of the GoM basin. The Paleocene–Eocene Thermal Maximum (PETM) (ca. 56 Ma) was a rapid global warming event characterized by the rise of temperatures to5–9 °C (Kennett and Stott, 1991), which caused substantial environmental changes around the globe.")
-    print ("Tokens Produced ------------------------------------", tokens)
-
-    
-    # Create tasks
-    # task_1 = asyncio.create_task(task1())
-    # task_2 = asyncio.create_task(task2())
-    # task2()
-    # Gather and run tasks concurrently
-    # await asyncio.gather(task_1, task_2)
-
-    print("Workflow completed. Results:")
-
-
-
-
-
-# async def start_workflow(config_dict: Any):
-#     #Start the workflow
-#     print("----------------------------------------------------------------Print the configuration :", config_dict)
-#     print(f"In Workflow thread11111111111111: {threading.current_thread().name}")
-#     workflow_config = config_dict.get("workflow")
-#     workflow = WorkflowConfig(config_source=workflow_config)
-#     collector_configs = config_dict.get("collectors", [])
-#     collectors = []
-#     for collector_config in collector_configs: 
-#         collectors.append(CollectorConfig(config_source=collector_config).resolve())
+    #Start the workflow
+    # print("----------------------------------------------------------------Print the configuration :", config_dict)
+    workflow_config = config_dict.get("workflow")
+    workflow = WorkflowConfig(config_source=workflow_config)
+    collector_configs = config_dict.get("collectors", [])
+    collectors = []
+    for collector_config in collector_configs: 
+        collectors.append(CollectorConfig(config_source=collector_config).resolve())
 
     engine_configs = config_dict.get("engines", [])
     engines = []
@@ -68,69 +45,33 @@ async def start_workflow(config_dict: dict):
     await workflow(config)
 
 
-async def start_gpt_workflow(config: Config):
-    collectors = []
-    for collector_config in config.collectors:
-        uri = Uri(collector_config.uri)
-        collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
+async def start_gpt_workflow(resource_manager, config: Config, result_queue,  state_queue):
+    llm_instance = GPTLLM(result_queue, config.engines[0])
 
-#     for collector in collectors:
-#         await collector.connect()
-
-#     result_queue = asyncio.Queue()
-
-#     ingestor_factory_manager = IngestorFactoryManager(
-#         collectors=collectors, result_queue=result_queue
-#     )
-
-#     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-
-#     resource_manager = ResourceManager()
-
-#     llm_instance = GPTLLM(result_queue, config.engines[0])
-
-#     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler())
-#     querent = Querent(
-#         [llm_instance],
-#         resource_manager=resource_manager,
-#     )
-#     querent_task = asyncio.create_task(querent.start())
-#     token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=GPTLLM.state_queue))
-#     await asyncio.gather(ingest_task, querent_task, token_feeder)
-
-
-# #Config workflow channel for setting termination event
-# async def receive_token_feeder(resource_manager: ResourceManager, config: Config, result_queue: asyncio.Queue, state_queue: asyncio.Queue):
-#     while not resource_manager.querent_termination_event.is_set():
-#         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
-#         message_state = config.workflow.channel.receive_in_python()
-#         if tokens is not None:
-#             #we will get a dictionary here
-#             result_queue.put_nowait(tokens)
-#         if message_state is not None:
-#             state_queue.put_nowait(message_state)
-
-# async def start_llama_workflow(config: Config):
-#     print("Inside llama Configuration ------------------", config)
-#     collectors = []
-#     for collector_config in config.collectors:
-#         uri = Uri(collector_config.uri)
-#         collectors.append(CollectorResolver().resolve(uri=uri, config = collector_config))
-
-#     for collector in collectors:
-#         await collector.connect()
-#         print("Inside llama Collector ------------------")
-
-#     result_queue = asyncio.Queue()
-
-    ingestor_factory_manager = IngestorFactoryManager(
-        collectors=collectors, result_queue=result_queue
+    llm_instance.subscribe(EventType.Graph, config.workflow.event_handler())
+    querent = Querent(
+        [llm_instance],
+        resource_manager=resource_manager,
     )
+    querent_task = asyncio.create_task(querent.start())
+    token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
+    await asyncio.gather(querent_task, token_feeder)
 
-    ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 
-    resource_manager = ResourceManager()
+#Config workflow channel for setting termination event
+async def receive_token_feeder(resource_manager: ResourceManager, config: Config, result_queue: asyncio.Queue, state_queue: asyncio.Queue):
+    while not resource_manager.querent_termination_event.is_set():
+        tokens = config.workflow.tokens_feader.receive_tokens_in_python()
+        message_state = config.workflow.channel.receive_in_python()
+        if tokens is not None:
+            #we will get a dictionary here
+            result_queue.put_nowait(tokens)
+            print("Type of token: ", type(tokens))
+            print("is data stream true ", tokens.is_data_stream)
+        if message_state is not None:
+            state_queue.put_nowait(message_state)
 
+async def start_llama_workflow(resource_manager, config: Config, result_queue,  state_queue):
     llm_instance = BERTLLM(result_queue, config.engines[0])
 
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler())
@@ -140,7 +81,7 @@ async def start_gpt_workflow(config: Config):
     )
     querent_task = asyncio.create_task(querent.start())
     token_feeder = asyncio.create_task(receive_token_feeder(resource_manager=resource_manager, config=config, result_queue=result_queue, state_queue=llm_instance.state_queue))
-    await asyncio.gather(ingest_task, querent_task, token_feeder) # Loop and do config.workflow.channel for termination event messageType = "stop"
+    await asyncio.gather(querent_task, token_feeder)
 
 async def start_ingestion(config: Config):
     collectors = []
@@ -159,3 +100,28 @@ async def start_ingestion(config: Config):
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 
     await ingest_task
+    
+    
+async def start_workflow_engine(config_dict: Config):
+    # print("----------------------------------------------------------------Print the configuration :", config_dict)
+    result_queue = QuerentQueue()
+    state_queue = QuerentQueue()
+    workflow_config = config_dict.get("workflow")
+    workflow = WorkflowConfig(config_source=workflow_config)
+    engine_configs = config_dict.get("engines", [])
+    engines = []
+    for engine_config in engine_configs:
+        engine_config_source = engine_config.get("config",{})
+        if engine_config["name"] == "knowledge_graph_using_openai_v1":
+            engines.append(GPTConfig(config_source = engine_config_source))
+        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+            engines.append(LLM_Config(config_source=engine_config_source))
+    config_dict["engines"] = engines 
+    config_dict["collectors"] = None 
+    config_dict["workflow"] = workflow
+    config = Config(config_source=config_dict)
+    workflows = {"knowledge_graph_using_openai_v1": start_gpt_workflow,
+               "knowledge_graph_using_llama2_v1": start_llama_workflow}
+    
+    workflow = workflows.get(config.workflow.name)
+    await workflow(ResourceManager(), config, result_queue, state_queue)

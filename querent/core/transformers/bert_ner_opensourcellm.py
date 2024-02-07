@@ -165,10 +165,10 @@ class BERTLLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-
+            print("Content ---------------------", doc_entity_pairs)
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
-            if doc_entity_pairs:
+            if doc_entity_pairs and any(doc_entity_pairs):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
