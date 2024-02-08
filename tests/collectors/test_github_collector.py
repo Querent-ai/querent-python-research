@@ -13,10 +13,15 @@ load_dotenv()
 @pytest.fixture
 def github_config():
     return GithubConfig(
-        id=str(uuid.uuid4()),
-        github_username=os.getenv("USERNAME_GITHUB"),
-        repository=os.getenv("REPOSITORY_NAME_GITHUB"),
-        github_access_token=os.getenv("ACCESS_TOKEN_GITHUB"),
+        config_source={
+            "id": str(uuid.uuid4()),
+            "github_username": os.getenv("USERNAME_GITHUB"),
+            "repository": os.getenv("REPOSITORY_NAME_GITHUB"),
+            "github_access_token": os.getenv("ACCESS_TOKEN_GITHUB"),
+            "name": "Github-config",
+            "config": {},
+            "uri": "github://",
+        }
     )
 
 

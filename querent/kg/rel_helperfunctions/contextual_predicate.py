@@ -58,9 +58,9 @@ class ContextualPredicate(BaseModel):
                 entity2_label=data[3].get('entity2_label'),
                 entity1_nn_chunk=data[3].get('entity1_nn_chunk'),
                 entity2_nn_chunk=data[3].get('entity2_nn_chunk'),
-                entity1_attnscore=data[3].get('entity1_attnscore',''),
-                entity2_attnscore=data[3].get('entity2_attnscore',''), 
-                pair_attnscore=data[3].get('pair_attnscore'), 
+                entity1_attnscore=data[3].get('entity1_attnscore',1),
+                entity2_attnscore=data[3].get('entity2_attnscore',1), 
+                pair_attnscore=data[3].get('pair_attnscore',1), 
                 entity1_embedding=entity1_embedding,
                 entity2_embedding=entity2_embedding,
                 file_path=data[4]

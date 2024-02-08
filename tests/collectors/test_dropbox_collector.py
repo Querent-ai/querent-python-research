@@ -14,12 +14,18 @@ load_dotenv()
 @pytest.fixture
 def dropbox_config():
     return DropboxConfig(
-        id=str(uuid.uuid4()),
-        dropbox_app_key=os.getenv("DROPBOX_APP_KEY"),
-        dropbox_app_secret=os.getenv("DROPBOX_APP_SECRET"),
-        dropbox_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
-        folder_path="",
-        chunk_size=1024,
+        config_source={
+            "backend": "dropbox",
+            "id": str(uuid.uuid4()),
+            "dropbox_app_key": os.getenv("DROPBOX_APP_KEY"),
+            "dropbox_refresh_token": os.getenv("DROPBOX_REFRESH_TOKEN"),
+            "dropbox_app_secret": os.getenv("DROPBOX_APP_SECRET"),
+            "chunk_size": "1024",
+            "folder_path": "",
+            "name": "Dropbox-config",
+            "config": {},
+            "uri": "dropbox://",
+        }
     )
 
 

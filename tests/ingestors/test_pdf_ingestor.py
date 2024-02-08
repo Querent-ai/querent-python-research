@@ -15,7 +15,15 @@ async def test_collect_and_ingest_pdf():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/pdf/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
+    config = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
@@ -36,8 +44,6 @@ async def test_collect_and_ingest_pdf():
             assert ingested is not None
             if ingested is not "" or ingested is not None:
                 counter += 1
-                if isinstance(ingested, IngestedImages):
-                    print(ingested.page_num)
         assert (
             counter == 31
         )  # 30 pages in the PDF and 1 empty IngestedTokens to signify end of file

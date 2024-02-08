@@ -1,14 +1,8 @@
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.logging.logger import setup_logger
 import torch
-import umap
 import numpy as np
 import time
-import psutil
-
-def get_memory():
-    process = psutil.Process()
-    return process.memory_info().rss / (1024 * 1024)  # Memory in MB
 
 """
     EntityEmbeddingExtractor: A class designed to extract embeddings for entities within a given context.
@@ -75,8 +69,6 @@ class EntityEmbeddingExtractor:
 
     def extract_and_append_entity_embeddings(self, doc_entity_pairs):
         try:
-            start_time = time.time()
-            start_memory = get_memory()
             for inner_list_index, inner_list in enumerate(doc_entity_pairs):
                 to_remove = []  # List to hold indices of pairs to remove
                 for pair_index, pair in enumerate(inner_list):

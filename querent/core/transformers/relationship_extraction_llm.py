@@ -5,9 +5,9 @@ from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
 from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
-from querent.config.core.relation_config import RelationshipExtractorConfig
+from querent.config.core.opensource_llm_config import Opensource_LLM_Config
 from llama_cpp import LlamaGrammar
-from langchain.docstore.document import Document
+
 import ast
 
 """
@@ -18,7 +18,7 @@ import ast
     and trimming triples.
 
     Attributes:
-        config (RelationshipExtractorConfig): Configuration settings for the relationship extractor.
+        config (Opensource_LLM_Config): Configuration settings for the relationship extractor.
         logger (Logger): Logger for logging messages and errors.
         create_emb (EmbeddingStore): An instance of EmbeddingStore for generating embeddings.
         qa_system (QASystem): A question-answering system for extracting relationships.
@@ -44,7 +44,7 @@ import ast
     """
 
 class RelationExtractor():
-    def __init__(self, config: RelationshipExtractorConfig):  
+    def __init__(self, config: Opensource_LLM_Config):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
             super().__init__()
@@ -62,6 +62,7 @@ class RelationExtractor():
                 emb_model_name=config.emb_model_name,
                 embedding_store=self.create_emb,
                 logger=self.logger)
+            self.is_confined_search = config.is_confined_search
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
@@ -148,6 +149,33 @@ class RelationExtractor():
                 }),
                 input1.get("object","")
             )
+            # else:
+            #         if input1.get("subject","").lower() in input2_data.get("entity1_nn_chunk","").lower or input2_data.get("entity1_nn_chunk","").lower in input1.get("subject","").lower() or input2_data.get("entity1_nn_chunk","").lower == input1.get("subject","").lower():
+            #             triple = (
+            #             input1.get("subject",""),
+            #             json.dumps({
+            #                 "predicate": input1.get("predicate",""),
+            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
+            #                 "context": input2_data.get("context", ""),
+            #                 "file_path": input2_data.get("file_path", ""),
+            #                 "subject_type": input2_data.get("entity1_label","Unlabeled"),
+            #                 "object_type": input2_data.get("entity2_label","Unlabeled")
+            #             }),
+            #             input1.get("object","")
+            #         )
+            #         else:
+            #             triple = (
+            #             input1.get("subject",""),
+            #             json.dumps({
+            #                 "predicate": input1.get("predicate",""),
+            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
+            #                 "context": input2_data.get("context", ""),
+            #                 "file_path": input2_data.get("file_path", ""),
+            #                 "subject_type": input2.get("entity2_label","Unlabeled"),
+            #                 "object_type": input1.get("entity1_label","Unlabeled")
+            #             }),
+            #             input1.get("object","")
+                    # )
             return triple
         except Exception as e:
             self.logger.error(f"Error in creating semantic triple: {e}")
@@ -169,6 +197,7 @@ class RelationExtractor():
 
     def extract_relationships(self, triples):
         try:
+            self.logger.info(f"Length of identified triples {len(triples)}")
             updated_triples = []
             for _, predicate_str, _ in triples:
                 documents=[]
@@ -182,14 +211,13 @@ class RelationExtractor():
                     documents = top_docs
                 else:
                     if not self.config.qa_template:
-                        query = """Please analyze the provided context and two entities
+                        query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
 Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
-Query: Determine which entity is the subject and which is the object in the context along with the predicate between the entities. Please also identify the subject type, predicate type and object type.
+Query: In a semantic triple (Subject, Predicate & Object) framework, determine which of the above entity is the subject and which is the object based on the context along with the predicate between these entities. Please also identify the subject type, object type & predicate type.
 Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
                     else:
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
-                      
                     answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
                     try:
                         choices_text = answer_relation['choices'][0]['text']

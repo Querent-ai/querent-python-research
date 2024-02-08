@@ -1,4 +1,3 @@
-import spacy
 import re
 from typing import List
 
@@ -18,9 +17,9 @@ from typing import List
     """
 
 class FixedEntityExtractor:
-    def __init__(self, fixed_entities: List[str] = None, entity_types: List[str] = None, model="en_core_web_lg"):
+    def __init__(self, fixed_entities: List[str] = None, entity_types: List[str] = None, model=None):
         try:
-            self.nlp = spacy.load(model)
+            self.nlp = model
         except Exception as e:
             raise Exception(f"Error loading spaCy model: {e}")
 
@@ -102,10 +101,13 @@ class FixedEntityExtractor:
         try:
             filtered_entities = []
             def matches_criteria(entity_chunk, entity_labels):
+                entity_chunk_lower = entity_chunk.lower()
                 if self.fixed_entities:
-                    return any(entity in entity_chunk for entity in self.fixed_entities) and \
+                    fixed_entities_lower = [entity.lower() for entity in self.fixed_entities]
+                    return any(entity in entity_chunk_lower for entity in fixed_entities_lower) and \
                         any(label in self.entity_types for label in entity_labels)
                 return any(label in self.entity_types for label in entity_labels)
+
 
             for entity_group in doc_entities:
                 for entity_data in entity_group:

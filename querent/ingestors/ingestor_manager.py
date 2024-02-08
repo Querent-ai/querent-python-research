@@ -2,6 +2,7 @@ import asyncio
 from asyncio import Queue
 from typing import AsyncGenerator, List, Optional
 from cachetools import LRUCache, cachedmethod
+from querent.channel.channel_interface import ChannelCommandInterface
 
 from querent.collectors.collector_base import Collector
 from querent.common.types.collected_bytes import CollectedBytes
@@ -78,6 +79,7 @@ class IngestorFactoryManager:
         processors: Optional[List[AsyncProcessor]] = None,
         cache_size: Optional[int] = 100,
         result_queue: Optional[Queue] = None,
+        tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
         self.collectors = collectors
         self.processors = processors
@@ -110,6 +112,7 @@ class IngestorFactoryManager:
         }
         self.file_caches = LRUCache(maxsize=cache_size)
         self.result_queue = result_queue
+        self.tokens_feader = tokens_feader
         self.logger = setup_logger(__name__, "IngestorFactoryManager")
 
     async def get_factory(self, file_extension: str) -> IngestorFactory:
@@ -134,7 +137,10 @@ class IngestorFactoryManager:
 
     @cachedmethod(cache=lambda self: self.file_caches)
     async def ingest_file_async(
-        self, file_id: str, result_queue: Optional[Queue] = None
+        self,
+        file_id: str,
+        result_queue: Optional[Queue] = None,
+        tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
         try:
             collected_bytes_list = self.file_caches.pop(file_id)
@@ -149,7 +155,10 @@ class IngestorFactoryManager:
                         yield chunk
 
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
-                    result_queue.put_nowait(chunk_tokens)
+                    if result_queue is not None:
+                        result_queue.put_nowait(chunk_tokens)
+                    if tokens_feader is not None:
+                        tokens_feader.send_tokens_in_rust(chunk_tokens)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
@@ -160,7 +169,10 @@ class IngestorFactoryManager:
             )
 
     async def ingest_collector_async(
-        self, collector: Collector, result_queue: Optional[Queue] = None
+        self,
+        collector: Collector,
+        result_queue: Optional[Queue] = None,
+        token_feader: Optional[ChannelCommandInterface] = None,
     ):
         """Asynchronously ingest data from a single collector."""
         async for collected_bytes in collector.poll():
@@ -177,7 +189,9 @@ class IngestorFactoryManager:
             if collected_bytes.eof:
                 # Try to ingest the ongoing file even if the cache is full
                 try:
-                    await self.ingest_file_async(current_file, result_queue)
+                    await self.ingest_file_async(
+                        current_file, result_queue, token_feader
+                    )
                 except Exception as e:
                     self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
 
@@ -188,8 +202,11 @@ class IngestorFactoryManager:
     async def ingest_all_async(self):
         """Asynchronously ingest data from all collectors concurrently."""
         ingestion_tasks = [
-            self.ingest_collector_async(collector, self.result_queue)
+            self.ingest_collector_async(
+                collector, self.result_queue, self.tokens_feader
+            )
             for collector in self.collectors
         ]
         await asyncio.gather(*ingestion_tasks)
-        await self.result_queue.put(None)
+        if self.result_queue is not None:
+            await self.result_queue.put(None)

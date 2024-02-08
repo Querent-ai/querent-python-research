@@ -13,7 +13,15 @@ async def test_collect_and_ingest_html():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/html/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
+    config = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
@@ -31,7 +39,7 @@ async def test_collect_and_ingest_html():
             if ingested != "" or ingested is not None:
                 counter += 1
         # 1 extra IngestedToken signifying end of file
-        assert counter == 17
+        assert counter == 18
 
     await poll_and_print()
 

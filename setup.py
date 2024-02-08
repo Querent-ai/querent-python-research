@@ -23,7 +23,6 @@ requirements = [
     "jsonschema==4.17.3",
     "kombu==5.2.4",
     "llama_cpp_python==0.2.15",
-    "llama-index==0.8.38",
     "lxml==4.9.2",
     "newspaper3k==0.2.8",
     "nltk==3.8.1",
@@ -85,7 +84,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="0.1.3",
+    version="0.1.6",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
@@ -149,7 +148,7 @@ setup(
         "Typing :: Typed",
     ],
     python_requires=">=3.9, <4",
-    packages=find_packages(),
+    packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
     license="Business Source License 1.1",
 )

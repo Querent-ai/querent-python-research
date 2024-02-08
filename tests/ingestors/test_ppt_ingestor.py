@@ -13,7 +13,15 @@ async def test_collect_and_ingest_ppt():
     # Set up the collector
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/ppt/").resolve()))
-    config = FSCollectorConfig(root_path=uri.path, id=str(uuid.uuid4()))
+    config = FSCollectorConfig(
+        config_source={
+            "id": str(uuid.uuid4()),
+            "root_path": uri.path,
+            "name": "Local-config",
+            "config": {},
+            "uri": "file://",
+        }
+    )
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
@@ -30,8 +38,7 @@ async def test_collect_and_ingest_ppt():
         async for ingested in ingested_call:
             if ingested != "" or ingested is not None:
                 counter += 1
-        # 2 extra empty IngestedTokens to signify end of file
-        assert counter == 12
+        assert counter == 14
 
     await poll_and_print()
 
