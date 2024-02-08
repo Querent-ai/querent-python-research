@@ -165,7 +165,6 @@ class BERTLLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-            print("Content ---------------------", doc_entity_pairs)
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):

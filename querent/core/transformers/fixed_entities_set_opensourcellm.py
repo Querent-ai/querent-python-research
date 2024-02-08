@@ -57,7 +57,8 @@ class Fixed_Entities_LLM(BaseEngine):
                                                 model_type = config.rel_model_type,
                                                 model_path = config.rel_model_path,
                                                 grammar_file_path = config.grammar_file_path,
-                                                emb_model_name = config.emb_model_name)
+                                                emb_model_name = config.emb_model_name,
+                                                is_confined_search = config.is_confined_search)
             self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
@@ -167,13 +168,14 @@ class Fixed_Entities_LLM(BaseEngine):
 
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
-            if doc_entity_pairs:
+            if doc_entity_pairs and any(doc_entity_pairs):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 filtered_triples = process_data(doc_entity_pairs, file)
                 if not filtered_triples:
                     raise Exception("No entity pairs found")
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
+                    self.logger.info(f"length of relationships {len(relationships)}")
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:

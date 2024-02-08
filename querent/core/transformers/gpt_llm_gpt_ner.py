@@ -231,7 +231,6 @@ class GPTNERLLM(BaseEngine):
                             {"role": "user", "content": identify_entity_message},
                             {"role": "user", "content": self.user_context},
                         ]
-                    print(messages_classify_entity)
                     identify_entity_response = self.generate_response(messages_classify_entity)
                     try:
                         semantic_triples = self.extract_semantic_triples(identify_entity_response)
