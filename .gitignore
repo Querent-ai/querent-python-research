@@ -173,3 +173,6 @@ tests/llama-2-7b-chat.Q5_K_M.gguf
 querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.faiss
 querent/kg/rel_helperfunctions/vectorstores/my_FAISS_index/index.pkl
 tests/llama-2-7b.Q4_K_M.gguf
+volumes/
+embedEtcd.yaml
+standalone_embed.sh

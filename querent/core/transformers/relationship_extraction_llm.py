@@ -7,7 +7,7 @@ from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
 from llama_cpp import LlamaGrammar
-from langchain.docstore.document import Document
+
 import ast
 
 """
@@ -62,6 +62,7 @@ class RelationExtractor():
                 emb_model_name=config.emb_model_name,
                 embedding_store=self.create_emb,
                 logger=self.logger)
+            self.is_confined_search = config.is_confined_search
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
             raise Exception(f"Initialization failed: {e}")
@@ -148,6 +149,33 @@ class RelationExtractor():
                 }),
                 input1.get("object","")
             )
+            # else:
+            #         if input1.get("subject","").lower() in input2_data.get("entity1_nn_chunk","").lower or input2_data.get("entity1_nn_chunk","").lower in input1.get("subject","").lower() or input2_data.get("entity1_nn_chunk","").lower == input1.get("subject","").lower():
+            #             triple = (
+            #             input1.get("subject",""),
+            #             json.dumps({
+            #                 "predicate": input1.get("predicate",""),
+            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
+            #                 "context": input2_data.get("context", ""),
+            #                 "file_path": input2_data.get("file_path", ""),
+            #                 "subject_type": input2_data.get("entity1_label","Unlabeled"),
+            #                 "object_type": input2_data.get("entity2_label","Unlabeled")
+            #             }),
+            #             input1.get("object","")
+            #         )
+            #         else:
+            #             triple = (
+            #             input1.get("subject",""),
+            #             json.dumps({
+            #                 "predicate": input1.get("predicate",""),
+            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
+            #                 "context": input2_data.get("context", ""),
+            #                 "file_path": input2_data.get("file_path", ""),
+            #                 "subject_type": input2.get("entity2_label","Unlabeled"),
+            #                 "object_type": input1.get("entity1_label","Unlabeled")
+            #             }),
+            #             input1.get("object","")
+                    # )
             return triple
         except Exception as e:
             self.logger.error(f"Error in creating semantic triple: {e}")
@@ -169,6 +197,7 @@ class RelationExtractor():
 
     def extract_relationships(self, triples):
         try:
+            self.logger.info(f"Length of identified triples {len(triples)}")
             updated_triples = []
             for _, predicate_str, _ in triples:
                 documents=[]
