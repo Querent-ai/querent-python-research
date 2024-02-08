@@ -1,8 +1,9 @@
 import asyncio
 import json
+from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
-from querent.core.transformers.bert_llm import BERTLLM
+from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
@@ -21,6 +22,7 @@ from tenacity import (
     retry,
     stop_after_attempt,
     wait_random_exponential,
+    wait_fixed
 )
 from dotenv import load_dotenv, find_dotenv
 import json
@@ -37,7 +39,7 @@ class GPTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
-            bert_llm_config = LLM_Config(
+            llm_config = LLM_Config(
             ner_model_name=config.ner_model_name,
             enable_filtering=config.enable_filtering,
             filter_params={
@@ -50,7 +52,10 @@ class GPTLLM(BaseEngine):
             },
             sample_entities = config.sample_entities,
             fixed_entities = config.fixed_entities,
-            skip_inferences= True)
+            skip_inferences= True,
+            is_confined_search = config.is_confined_search,
+            huggingface_token = config.huggingface_token)
+            self.is_confined_search = config.is_confined_search
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             if self.fixed_relationships and not self.sample_relationships:
@@ -61,8 +66,11 @@ class GPTLLM(BaseEngine):
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore()
-            self.bert_instance = BERTLLM(input_queue, bert_llm_config)
+            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            if config.is_confined_search:
+                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
+            else :
+                self.llm_instance = BERTLLM(input_queue, llm_config)
             self.rel_model_name = config.rel_model_name
             if config.openai_apikey:
                 self.gpt_llm = OpenAI(api_key=config.openai_apikey)
@@ -75,7 +83,7 @@ class GPTLLM(BaseEngine):
             raise Exception(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
     
     def validate(self) -> bool:
-        return isinstance(self.bert_instance, BERTLLM)
+        return isinstance(self.llm_instance, BERTLLM) or isinstance(self.llm_instance, Fixed_Entities_LLM)
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
@@ -109,7 +117,7 @@ class GPTLLM(BaseEngine):
 
         return result
     
-    async def process_triples(self, context, entity1, entity2):
+    async def process_triples(self, context, entity1, entity2, entity1_label, entity2_label):
         try:
             classify_entity_function = self.function_registry.get_classifyentity_function()
             predicate_info_function = self.function_registry.get_predicate_info_function()
@@ -119,7 +127,7 @@ Entity 1: {entity1} and Entity 2: {entity2}
 """
             messages_classify_entity = [
                     {"role": "user", "content": classify_entity_message},
-                    {"role": "user", "content": f"Query: Determine which entity is the subject and its type, also which entity is the object and its type."}
+                    {"role": "user", "content": f"Query: Determine which entity is the subject and its respective type or category, also which entity is the object and its type or category e.g. location, time-period, rock, fossil , person, event, material, process etc."}
                     
                 ]             
             classify_entity_response = self.generate_response(
@@ -128,7 +136,7 @@ Entity 1: {entity1} and Entity 2: {entity2}
                 "classify_entities"
             )
             subject_info = self.extract_subject_object_info(classify_entity_response)
-            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type."
+            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type e.g. causative, action, ownership, occurance etc."
             messages_identify_predicate = [
                                                 {"role": "system", "content": identify_predicate_message},
                                                 {"role": "user", "content": f"Context: {context}"}
@@ -139,20 +147,39 @@ Entity 1: {entity1} and Entity 2: {entity2}
                 "predicate_info"
             )
             predicate_info = self.extract_predicate_info(identify_predicate_response)
-            
-            return {
-                'subject_type': subject_info['subject_type'],
-                'subject': subject_info['subject'],
-                'object_type': subject_info['object_type'],
-                'object': subject_info['object'],
-                'predicate': predicate_info['predicate'],
-                'predicate_type': predicate_info['predicate_type']
-            }
-
+            if not self.is_confined_search:
+                return {
+                    'subject_type': subject_info['subject_type'],
+                    'subject': subject_info['subject'],
+                    'object_type': subject_info['object_type'],
+                    'object': subject_info['object'],
+                    'predicate': predicate_info['predicate'],
+                    'predicate_type': predicate_info['predicate_type']
+                }
+            else:
+                if subject_info['subject'].lower() in entity1.lower() or entity1.lower() in subject_info['subject'].lower() or entity1.lower() == subject_info['subject'].lower():
+                    return {
+                    'subject_type': entity1_label,
+                    'subject': subject_info['subject'],
+                    'object_type': entity2_label,
+                    'object': subject_info['object'],
+                    'predicate': predicate_info['predicate'],
+                    'predicate_type': predicate_info['predicate_type']
+                }
+                else:
+                    return {
+                    'subject_type': entity2_label,
+                    'subject': subject_info['subject'],
+                    'object_type': entity1_label,
+                    'object': subject_info['object'],
+                    'predicate': predicate_info['predicate'],
+                    'predicate_type': predicate_info['predicate_type']
+                }
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    @retry(wait=wait_fixed(60), stop=stop_after_attempt(3))
     def completion_with_backoff(self, **kwargs):
         return self.gpt_llm.chat.completions.create(**kwargs)
     
@@ -209,17 +236,19 @@ Entity 1: {entity1} and Entity 2: {entity2}
                     self.set_termination_event()                    
                     return 
             relationships = []
-            result = await self.bert_instance.process_tokens(data)           
+            result = await self.llm_instance.process_tokens(data)           
             if not result: return 
             else:
                 filtered_triples, file = result
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:2])
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples)
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
+                    entity1_label = context_data.get("entity1_label", "")
+                    entity2_label = context_data.get("entity2_label", "")
                     entity1_nn_chunk = context_data.get("entity1_nn_chunk","")
                     entity2_nn_chunk = context_data.get("entity2_nn_chunk","")
-                    result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk)
+                    result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk, entity1_label, entity2_label)
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)

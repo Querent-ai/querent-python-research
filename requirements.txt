@@ -15,8 +15,9 @@ json5==0.9.14
 jsonmerge==1.9.0
 jsonschema==4.17.3
 kombu==5.2.4
+langchain==0.1.4
+langchain-community==0.0.16
 llama_cpp_python==0.2.15
-llama-index==0.8.38
 lxml==4.9.2
 newspaper3k==0.2.8
 nltk==3.8.1

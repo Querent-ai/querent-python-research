@@ -101,10 +101,13 @@ class FixedEntityExtractor:
         try:
             filtered_entities = []
             def matches_criteria(entity_chunk, entity_labels):
+                entity_chunk_lower = entity_chunk.lower()
                 if self.fixed_entities:
-                    return any(entity in entity_chunk for entity in self.fixed_entities) and \
+                    fixed_entities_lower = [entity.lower() for entity in self.fixed_entities]
+                    return any(entity in entity_chunk_lower for entity in fixed_entities_lower) and \
                         any(label in self.entity_types for label in entity_labels)
                 return any(label in self.entity_types for label in entity_labels)
+
 
             for entity_group in doc_entities:
                 for entity_data in entity_group:

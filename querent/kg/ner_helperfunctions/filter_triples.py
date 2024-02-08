@@ -106,7 +106,11 @@ class TripleFilter:
 
     @staticmethod
     def combine_embeddings(entity1_embedding: np.ndarray, entity2_embedding: np.ndarray) -> np.ndarray:
-        return np.concatenate((entity1_embedding, entity2_embedding))
+        # Check if the two embeddings are the same
+        if np.array_equal(entity1_embedding, entity2_embedding):
+            return entity1_embedding
+        else:
+            return np.concatenate((entity1_embedding, entity2_embedding))
 
     def cluster_triples(self, triples: List[Tuple[str, str, str]]) -> Dict[str, any]:
         try:

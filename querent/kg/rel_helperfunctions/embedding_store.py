@@ -1,10 +1,13 @@
 import json
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import SentenceTransformersTokenTextSplitter
 from langchain.docstore.document import Document
 from nltk.tokenize import sent_tokenize
 import os
+
+import requests
 
 from querent.logging.logger import setup_logger
 
@@ -46,18 +49,27 @@ from querent.logging.logger import setup_logger
     """
 
 class EmbeddingStore:
-    def __init__(self, model_name='sentence-transformers/all-MiniLM-L6-v2', vector_store_path='./querent/kg/rel_helperfunctions/vectorstores/'):
+    def __init__(self, inference_api_key=None, model_name='sentence-transformers/all-MiniLM-L6-v2', vector_store_path='./querent/kg/rel_helperfunctions/vectorstores/'):
         self.logger = setup_logger("EmbeddingStore_config", "EmbeddingStore")
         try:
             self.model_name = model_name
-            self.embeddings = HuggingFaceEmbeddings(model_name=model_name, model_kwargs={'device': 'cpu'})
+            if not inference_api_key:
+                self.embeddings = HuggingFaceEmbeddings(model_name=model_name, model_kwargs={'device': 'cpu'})
+            else:
+                print("using Inference API--------------------------------------")
+                self.API_URL = "https://api-inference.huggingface.co/models/"+ model_name
+                self.headers = {"Authorization": f"Bearer {inference_api_key}"}
+                self.embeddings = HuggingFaceInferenceAPIEmbeddings(api_key= inference_api_key, model_name=model_name)
             self.vector_store_path = vector_store_path
             self.db = None
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to initialize EmbeddingStore: {e}")
             raise Exception(f"Failed to initialize EmbeddingStore: {e}")
 
-
+    def query(self,payload):
+        response = requests.post(self.API_URL, headers=self.headers, json=payload)
+        return response.json()
+    
     def create_index(self, texts, verbose=False):
         try:
             text_splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=0)
@@ -118,8 +130,12 @@ class EmbeddingStore:
         try:
             embeddings = []
             for text in texts:
-                embedding = self.embeddings.embed_query(text)
-                embeddings.append(embedding)
+                if isinstance(self.embeddings,HuggingFaceEmbeddings) or isinstance(self.embeddings, HuggingFaceInferenceAPIEmbeddings) :
+                    embedding = self.embeddings.embed_query(text)
+                    embeddings.append(embedding)
+                else:
+                    payload = {"inputs": text}
+                    embedding = self.query(payload)
             return embeddings
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
