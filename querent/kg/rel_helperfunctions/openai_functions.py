@@ -57,10 +57,47 @@ class FunctionRegistry:
         }
     ]
 
+        self._identify_entities_functions = [
+                {
+                    "type": "function",
+                    "function": {
+                        'name': 'identify_entities',
+                        'description': 'Identify all the entities and their respective Named Entity Recognition type/label based on the context.',
+                        'parameters': {
+                            "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "entity": {
+                            "type": "string",
+                            "description": "The extracted entity."
+                        },
+                        "label": {
+                            "type": "string",
+                            "description": "The type or category of the entity (e.g., GeoEvent, GeoLoc)."
+                        },
+                        "score": {
+                            "type": "number",
+                            "description": "The confidence score of the entity extraction and classification."
+                        },
+                        "start_idx": {
+                            "type": "integer",
+                            "description": "The start index of the entity in the provided text."
+                        }
+                    }, "required": ["entity", "label", "score", "start_idx"]},
+                
+                        }
+                    }
+                }
+            ]
+
     def get_predicate_info_function(self):
         return self._predicate_info_functions
 
     def get_classifyentity_function(self):
         return self._classifyentity_functions
+    
+    def get_identifyentities_function(self):
+        return self._identify_entities_functions
 
 

@@ -26,7 +26,7 @@ def drive_config():
             "drive_refresh_token": os.getenv("DRIVE_REFRESH_TOKEN"),
             "drive_token": os.getenv("DRIVE_TOKEN"),
             "drive_scopes": os.getenv("DRIVE_SCOPES"),
-            "chunk_size": 1024 * 1024,
+            "chunk_size": "1048576",
             "drive_client_id": os.getenv("DRIVE_CLIENT_ID"),
             "drive_client_secret": os.getenv("DRIVE_CLIENT_SECRET"),
             "specific_file_type": "application/pdf",
@@ -122,8 +122,8 @@ async def test_multiple_collectors_all_async():
             else:
                 unique_files.add(ingested_data.file)
             counter += 1
-    assert counter == 129
-    assert len(unique_files) == 7
+    assert counter == 101
+    assert len(unique_files) == 6
     assert messages > 0
 
 

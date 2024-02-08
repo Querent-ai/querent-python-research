@@ -8,6 +8,7 @@ from querent.logging.logger import setup_logger
 import os
 from querent.kg.ner_helperfunctions.dependency_parsing import Dependency_Parsing
 from unidecode import unidecode
+import re
 
 
 # nltk.data.path.append(
@@ -252,7 +253,7 @@ class NER_LLM:
                     if entities[i]["start_idx"] + 1 == entities[j]["start_idx"]:
                         continue
                     distance = self._token_distance(tokens, entities[i]["start_idx"], entities[j]["start_idx"],entities[i]["noun_chunk"], entities[j]["noun_chunk"])
-                    if distance <= 10:
+                    if distance <= 30:
                         pair = (entities[i], entities[j])
                         if pair not in binary_pairs:
                             metadata = {
@@ -268,23 +269,53 @@ class NER_LLM:
     
     def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=1.0):
         results = []
+        merged_chunk = []  # List to hold merged tokens
+        current_word = ""  # String to accumulate current word pieces
+
+        # Preprocess chunk to merge tokens
+        for token in chunk:
+            if token.startswith("##"):
+                current_word += token[2:] 
+            else:
+                if current_word:
+                    merged_chunk.append(current_word)
+                current_word = token
+        if current_word: 
+            merged_chunk.append(current_word)
+
         try:
-            for idx, token in enumerate(chunk):
-                for entity_idx, entity in enumerate(fixed_entities):
-                    if token.lower() == entity.lower():  # Case insensitive comparison
-                        label = entity_types[entity_idx] if entity_idx < len(entity_types) else 'Unknown'
-                        entity_info = {
-                            "entity": token.lower(),
+            normalized_entities = [entity.lower() for entity in fixed_entities]
+            merged_chunk_str = " ".join(merged_chunk).lower()  # Create a single string for substring matching
+            for entity in normalized_entities:
+                # Use regex to find the exact word with word boundaries
+                regex_pattern = r'\b' + re.escape(entity) + r'\b'
+                match = re.search(regex_pattern, merged_chunk_str)
+                if match:
+                    start_pos = match.start()
+                    char_count = 0
+                    start_idx = None
+                    for idx, token in enumerate(merged_chunk):
+                        if char_count >= start_pos:
+                            start_idx = idx
+                            break
+                        char_count += len(token) + (1 if idx < len(merged_chunk) - 1 else 0)  # Only add space if not the last token
+
+                    if start_idx is not None:
+                        label = entity_types[normalized_entities.index(entity)] if normalized_entities.index(entity) < len(entity_types) else 'Unknown'
+                        results.append({
+                            "entity": entity,
                             "label": label,
                             "score": default_score,
-                            "start_idx": idx
-                        }
-                        results.append(entity_info)
+                            "start_idx": start_idx
+                        })
         except Exception as e:
-            self.logger.error(f"Error extracting fixed entities from chunk: {e}")
-            raise Exception(f"Error extracting fixed entities from chunk: {e}")
+            self.logger.error(f"Error extracting fixed entities from merged chunk: {e}")
+            raise Exception(f"Error extracting fixed entities from merged chunk: {e}")
 
-        return results
+        return sorted(results, key=lambda x: x['start_idx'])
+
+
+
 
     def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
         try:
@@ -298,9 +329,16 @@ class NER_LLM:
                     entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
                 all_entities.extend(entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
-            parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence, model=NER_LLM.nlp)
-            binary_pairs = self.extract_binary_pairs(parsed_entities.entities, tokens, all_sentences, sentence_idx)
-            return parsed_entities.entities, binary_pairs
+            if fixed_entities_flag == False:
+                parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence, model=NER_LLM.nlp)
+                entities_withnnchunk = parsed_entities.entities
+            else:
+                for entity in final_entities:
+                    entity['noun_chunk'] = entity['entity']
+                    entity['noun_chunk_length'] = len(entity['noun_chunk'].split())
+                entities_withnnchunk = final_entities
+            binary_pairs = self.extract_binary_pairs(entities_withnnchunk, tokens, all_sentences, sentence_idx)
+            return entities_withnnchunk, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
             raise(f"Error extracting entities from sentence: {e}")

@@ -43,6 +43,16 @@ class WorkflowConfig(BaseModel):
                 "Invalid type for channel. Must have 'receive_in_python' and 'send_in_rust' functions."
             )
         return value
+    
+    @validator("tokens_feader", pre=True, allow_reuse=True)
+    def validate_tokens_feader(cls, value):
+        if not hasattr(value, "receive_tokens_in_python") or not hasattr(
+            value, "send_tokens_in_rust"
+        ):
+            raise ValueError(
+                "Invalid type for tokens_feader. Must have 'receive_tokens_in_python' and 'send_tokens_in_rust' functions."
+            )
+        return value
 
     @validator("event_handler", pre=True, allow_reuse=True)
     def validate_event_handler(cls, value):

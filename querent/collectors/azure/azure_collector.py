@@ -16,7 +16,9 @@ class AzureCollector(Collector):
         self.account_url = config.account_url
         self.credentials = config.credentials
         self.container_name = config.container
-        self.chunk_size = 1024
+        self.chunk_size = 1024  # Default value
+        if config.chunk_size and config.chunk_size.isdigit():
+            self.chunk_size = int(config.chunk_size)
         self.prefix = config.prefix
         self.blob_service_client = None
         self.container_client = None

@@ -16,7 +16,9 @@ class FSCollector(Collector):
     def __init__(self, config: FSCollectorConfig):
         self.root_dir = Path(config.root_path)
         self.items_to_ignore = []
-        self.chunk_size = config.chunk_size
+        self.chunk_size = 1024
+        if config.chunk_size and config.chunk_size.isdigit():
+            self.chunk_size = int(config.chunk_size)
         try:
             with open("./.gitignore", "r", encoding="utf-8") as gitignore_file:
                 self.items_to_ignore = set(

@@ -13,6 +13,7 @@ class Opensource_LLM_Config(BaseModel):
     vector_store_path: str = "./querent/kg/rel_helperfunctions/vectorstores/"
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
     rag_approach: bool = False
+    is_confined_search: bool = False
 
     def __init__(self, config_source=None, **kwargs):
         declared_keys = set(self.__annotations__.keys())

@@ -35,6 +35,7 @@ Answer:""")
     skip_inferences: bool = False
     fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
     sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
+    huggingface_token: str = None
     
     def __init__(self, config_source=None, **kwargs):
         config_data = {}
