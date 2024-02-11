@@ -21,7 +21,7 @@ class SlackCollector(Collector):
         self.inclusive = self.convert_to_boolean(config.inclusive) if config.inclusive else False
         self.latest = config.latest if config.latest else 0
         self.limit = 100
-        if config.limit and config.limit.isdigit():
+        if config.limit and type(config.limit) == str and config.limit.isdigit():
             self.limit = int(config.limit)
         self.channel = config.channel_name
         self.access_token = config.access_token
