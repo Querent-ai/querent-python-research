@@ -40,7 +40,7 @@ class PdfIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[IngestedTokens or str, None]:
+    ) -> AsyncGenerator[IngestedTokens or str, None]: # type: ignore
         current_file = None
         collected_bytes = b""
 

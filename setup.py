@@ -54,7 +54,6 @@ requirements = [
     "pytest-asyncio==0.23.2",
     "pyshacl==0.25.0",
     "google-cloud-storage==2.14.0",
-    "google-cloud==0.34.0",
     "pymupdf==1.23.7",
     "pydub==0.25.1",
     "SpeechRecognition==3.10.1",
@@ -84,7 +83,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="0.1.6",
+    version="0.1.7",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

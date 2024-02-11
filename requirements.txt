@@ -22,7 +22,7 @@ lxml==4.9.2
 newspaper3k==0.2.8
 nltk==3.8.1
 numpy==1.24.3
-Pillow==9.5.0
+Pillow==10.0.1
 pydantic==1.10.8
 PyJWT==2.4.0
 PyPDF2==3.0.1
@@ -48,7 +48,6 @@ pyshacl==0.25.0
 aiofiles==23.2.1
 pytest-asyncio==0.23.2
 google-cloud-storage==2.14.0
-google-cloud==0.34.0
 pymupdf==1.23.7
 pydub==0.25.1
 SpeechRecognition==3.10.1

@@ -190,10 +190,10 @@ class SlackCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Slack
     id: str
     cursor: Optional[str]
-    include_all_metadata: int
-    inclusive: int
-    latest: int
-    limit: int
+    include_all_metadata: Optional[bool]
+    inclusive: Optional[bool]
+    latest: Optional[str]
+    limit: Optional[int]
     channel_name: str
     access_token: str
 

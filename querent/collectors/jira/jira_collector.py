@@ -21,7 +21,13 @@ class JiraCollector(Collector):
         self.jira = None  # Initialize to None
         self.logger = setup_logger(__name__, "JiraCollector")
 
+    def convert_to_boolean(self, val: str):
+        if type(val) == str:
+            return val.lower() == "true"
+        return val
+
     def create_jira_client(self):
+        self.config.jira_verify = self.convert_to_boolean(self.config.jira_verify)
         options = {
             "server": self.config.jira_server,
             "verify": self.config.jira_verify,
@@ -59,7 +65,6 @@ class JiraCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
-            await self.connect()
             if not self.jira:
                 raise common_errors.ConnectionError(
                     "Jira client not initialized. Call connect() before polling."

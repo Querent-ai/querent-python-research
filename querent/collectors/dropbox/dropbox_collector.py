@@ -26,7 +26,7 @@ class DropboxCollector(Collector):
 
     async def connect(self):
         try:
-            if not self.dbx or not self.dbx.is_authenticated():
+            if not self.dbx:
                 # If the Dropbox SDK already has a valid access token, it won't refresh unnecessarily
                 self.dbx = dropbox.Dropbox(
                     app_key=self.dropbox_app_key,
@@ -55,7 +55,6 @@ class DropboxCollector(Collector):
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
-            await self.connect()
             files_list = self.dbx.files_list_folder(self.folder_path).entries
             for entry in files_list:
                 name = f"/{entry.name}"
