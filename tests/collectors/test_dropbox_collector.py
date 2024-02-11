@@ -35,6 +35,7 @@ async def test_dropbox_collector(dropbox_config):
     resolver = CollectorResolver()
     collector = resolver.resolve(uri, dropbox_config)
     assert collector is not None
+    await collector.connect()
 
     async def poll_and_print():
         counter = 0

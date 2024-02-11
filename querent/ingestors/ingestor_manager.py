@@ -158,7 +158,11 @@ class IngestorFactoryManager:
                     if result_queue is not None:
                         result_queue.put_nowait(chunk_tokens)
                     if tokens_feader is not None:
-                        tokens_feader.send_tokens_in_rust(chunk_tokens)
+                        tokens_feader.send_tokens_in_rust({
+                            "data": chunk_tokens.data if type(chunk_tokens) == IngestedTokens else chunk_tokens.ocr_text,
+                            "file": chunk_tokens.file,
+                            "is_token_stream": True,
+                        })
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"

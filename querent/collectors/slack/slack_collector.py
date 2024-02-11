@@ -16,11 +16,13 @@ class SlackCollector(Collector):
     def __init__(self, config: SlackCollectorConfig):
         self.cursor = config.cursor
         self.include_all_metadata = (
-            config.include_all_metadata if config.include_all_metadata else 0
+            self.convert_to_boolean(config.include_all_metadata) if config.include_all_metadata else 0
         )
-        self.inclusive = config.inclusive if config.inclusive else 0
+        self.inclusive = self.convert_to_boolean(config.inclusive) if config.inclusive else False
         self.latest = config.latest if config.latest else 0
-        self.limit = config.limit if config.limit else 100
+        self.limit = 100
+        if config.limit and type(config.limit) == str and config.limit.isdigit():
+            self.limit = int(config.limit)
         self.channel = config.channel_name
         self.access_token = config.access_token
 
@@ -33,6 +35,11 @@ class SlackCollector(Collector):
     async def disconnect(self):
         # Add your cleanup logic here if needed
         pass
+
+    def convert_to_boolean(self, val: str):
+        if type(val) == str:
+            return val.lower() == "true"
+        return val
 
     async def poll(self) -> AsyncGenerator[CollectedBytes, None]:
         try:
