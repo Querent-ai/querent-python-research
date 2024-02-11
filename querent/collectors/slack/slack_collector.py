@@ -16,11 +16,9 @@ class SlackCollector(Collector):
     def __init__(self, config: SlackCollectorConfig):
         self.cursor = config.cursor
         self.include_all_metadata = (
-            config.include_all_metadata if config.include_all_metadata else 0
+            self.convert_to_boolean(config.include_all_metadata) if config.include_all_metadata else 0
         )
-        self.include_all_metadata = self.convert_to_boolean(self.include_all_metadata)
-        self.inclusive = config.inclusive if config.inclusive else False
-        self.inclusive = self.convert_to_boolean(self.inclusive)
+        self.inclusive = self.convert_to_boolean(config.inclusive) if config.inclusive else False
         self.latest = config.latest if config.latest else 0
         self.limit = 100
         if config.limit and config.limit.isdigit():
