@@ -40,7 +40,8 @@ class Querent:
             auto_scale_task = asyncio.create_task(self.auto_scaler.start())
 
             # Start handling signals
-            self.setup_signal_handlers()
+            #self.setup_signal_handlers()
+
             # Start the tasks above and wait for them to finish
             await asyncio.gather(auto_scale_task, self.wait_for_termination())
 

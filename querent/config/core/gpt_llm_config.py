@@ -8,7 +8,7 @@ class GPTConfig(LLM_Config):
     ner_model_name: str = "botryan96/GeoBERT"
     rel_model_name: str = "gpt-3.5-turbo"
     requests_per_minute: int = 3
-    openai_apikey: str = ""
+    openai_api_key: str = ""
     user_context: str = None
     huggingface_token: str = None
 

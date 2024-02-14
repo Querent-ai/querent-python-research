@@ -179,7 +179,13 @@ class BaseEngine(ABC):
             if isinstance(new_state, EventState):
                 if new_state.payload == "Terminate":
                     break
-                await self._notify_subscribers(new_state.event_type, new_state)
+                new_state = {
+                    "event_type": new_state.event_type,
+                    "timestamp": new_state.timestamp,
+                    "payload": new_state.payload,
+                    "file": new_state.file
+                }
+                await self._notify_subscribers(new_state["event_type"], new_state)
             else:
                 raise Exception(
                     f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
@@ -214,7 +220,7 @@ class BaseEngine(ABC):
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=10)
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=240)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)

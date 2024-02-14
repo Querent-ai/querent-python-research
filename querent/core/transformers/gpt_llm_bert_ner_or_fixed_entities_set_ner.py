@@ -72,8 +72,8 @@ class GPTLLM(BaseEngine):
             else :
                 self.llm_instance = BERTLLM(input_queue, llm_config)
             self.rel_model_name = config.rel_model_name
-            if config.openai_apikey:
-                self.gpt_llm = OpenAI(api_key=config.openai_apikey)
+            if config.openai_api_key:
+                self.gpt_llm = OpenAI(api_key=config.openai_api_key)
             else:
                 self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
