@@ -55,7 +55,6 @@ from querent.logging.logger import setup_logger
 
 class EmbeddingStore:
     def __init__(self, inference_api_key=None, model_name='sentence-transformers/all-MiniLM-L6-v2', vector_store_path='./querent/kg/rel_helperfunctions/vectorstores/'):
-    def __init__(self, inference_api_key=None, model_name='sentence-transformers/all-MiniLM-L6-v2', vector_store_path='./querent/kg/rel_helperfunctions/vectorstores/'):
         self.logger = setup_logger("EmbeddingStore_config", "EmbeddingStore")
         try:
             self.model_name = model_name
@@ -71,10 +70,6 @@ class EmbeddingStore:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to initialize EmbeddingStore: {e}")
             raise Exception(f"Failed to initialize EmbeddingStore: {e}")
 
-    def query(self,payload):
-        response = requests.post(self.API_URL, headers=self.headers, json=payload)
-        return response.json()
-    
     def query(self,payload):
         response = requests.post(self.API_URL, headers=self.headers, json=payload)
         return response.json()
