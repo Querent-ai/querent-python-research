@@ -2,18 +2,11 @@ import json
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
-from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import SentenceTransformersTokenTextSplitter
 from langchain.docstore.document import Document
 from nltk.tokenize import sent_tokenize
 import os
-
 import requests
-
-import requests
-
 from querent.logging.logger import setup_logger
 
 """
