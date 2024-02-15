@@ -26,6 +26,7 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
+from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 import time
 
 """
@@ -96,6 +97,7 @@ class BERTLLM(BaseEngine):
             self.predicate_context_extractor = None
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
+        self.semantictriplefilter = SemanticTripleFilter()
         
  
 
@@ -181,18 +183,21 @@ class BERTLLM(BaseEngine):
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
-                    final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
-                    if final_clustered_triples:
-                        filtered_triples, reduction_count = self.triple_filter.filter_triples(final_clustered_triples)
+                    # final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
+                    if clustered_triples:
+                        filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
                     else:
-                        filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+                        # filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.error(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
+                        self.logger.info(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
+                        filtered_triples = pairs_with_predicates
                 else:
                     filtered_triples = pairs_with_predicates
                 if not filtered_triples:
                     raise Exception("No entity pairs")
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:15])
+                    relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:

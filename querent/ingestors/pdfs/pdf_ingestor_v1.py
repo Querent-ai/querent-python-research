@@ -40,7 +40,7 @@ class PdfIngestor(BaseIngestor):
 
     async def ingest(
         self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[IngestedTokens or str, None]:
+    ) -> AsyncGenerator[IngestedTokens or str, None]: # type: ignore
         current_file = None
         collected_bytes = b""
 
@@ -76,7 +76,6 @@ class PdfIngestor(BaseIngestor):
                     CollectedBytes(file=current_file, data=collected_bytes)
                 ):
                     yield page_text
-
                 yield IngestedTokens(file=current_file, data=None, error=None)
             except Exception as exc:
                 yield IngestedTokens(
@@ -105,14 +104,14 @@ class PdfIngestor(BaseIngestor):
                     data=processed_text,
                     error=collected_bytes.error,
                 )
-                async for image_result in self.extract_images_and_ocr(
-                    page,
-                    page_num,
-                    processed_text,
-                    collected_bytes.data,
-                    collected_bytes.file,
-                ):
-                    yield image_result
+                # async for image_result in self.extract_images_and_ocr(
+                #     page,
+                #     page_num,
+                #     processed_text,
+                #     collected_bytes.data,
+                #     collected_bytes.file,
+                # ):
+                #     yield image_result
 
         except TypeError as exc:
             self.logger.error(f"Exception while extracting pdf {exc}")
