@@ -45,7 +45,7 @@ class TextIngestor(BaseIngestor):
                 if self.is_token_stream:
                     async for line in self.ingest_token_stream(chunk_bytes=chunk_bytes):
                         yield IngestedTokens(
-                            file=current_file,
+                            file=chunk_bytes.file,
                             data=[line],
                             error=None,
                             is_token_stream=True,

@@ -153,8 +153,11 @@ class PdfIngestor(BaseIngestor):
 
     async def get_ocr_from_image(self, image):
         """Implement this to return ocr text of the image"""
-        image = Image.open(io.BytesIO(image.data))
-        text = pytesseract.image_to_string(image)
+        try:
+            image = Image.open(io.BytesIO(image.data))
+            text = pytesseract.image_to_string(image)
+        except Exception as e:
+            print("Exception-{e}")
         return str(text).encode("utf-8").decode("unicode_escape")
 
     async def process_data(self, text: str) -> str:

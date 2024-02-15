@@ -16,8 +16,8 @@ class Config(BaseModel):
     querent_id: str
     querent_name: str
     workflow: WorkflowConfig
-    collectors: List[CollectorConfig]
-    engines: List[EngineConfig]
+    collectors: Optional[List[CollectorConfig]]
+    engines: Optional[List[EngineConfig]]
     resource: Optional[ResourceConfig]
 
     def __init__(self, config_source=None, **kwargs):

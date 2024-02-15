@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     "cachetools==5.3.1",
-    "aiohttp==3.9.0",
+    "aiohttp==3.9.2",
     "attrs==23.1.0",
     "beautifulsoup4==4.12.2",
     "boto3==1.26.146",
@@ -54,7 +54,6 @@ requirements = [
     "pytest-asyncio==0.23.2",
     "pyshacl==0.25.0",
     "google-cloud-storage==2.14.0",
-    "google-cloud==0.34.0",
     "pymupdf==1.23.7",
     "pydub==0.25.1",
     "SpeechRecognition==3.10.1",
@@ -84,7 +83,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="0.1.6",
+    version="0.1.8",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
@@ -148,7 +147,7 @@ setup(
         "Typing :: Typed",
     ],
     python_requires=">=3.9, <4",
-    packages=find_packages(),
+    packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
     license="Business Source License 1.1",
 )
