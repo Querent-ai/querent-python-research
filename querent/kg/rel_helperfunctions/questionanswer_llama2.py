@@ -26,7 +26,7 @@ class QASystem:
     
     def load_llm(self):
         try:
-            llm = Llama(model_path=self.rel_model_path, f16_kv=True, n_ctx=1000)
+            llm = Llama(model_path=self.rel_model_path, f16_kv=True, n_ctx=4000)
             return llm
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Error loading LLM: {e}")

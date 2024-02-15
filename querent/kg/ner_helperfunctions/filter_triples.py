@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from querent.logging.logger import setup_logger
 from typing import List, Tuple, Dict
+from scipy.spatial.distance import cdist
 
 """
     A class used to filter and cluster triples of (entity1, context, entity2) based on various scoring metrics and embedding similarities.
@@ -93,7 +94,7 @@ class TripleFilter:
             try:
                 entity1, json_data, entity2 = triple
                 data = json.loads(json_data)                
-                if not self.filter_by_score(data) or not self.filter_by_attention_score(data) or not self.filter_by_embedding_similarity(data):
+                if not self.filter_by_score(data) or not self.filter_by_attention_score(data):
                     continue
 
                 relevant_triples.append(triple)
@@ -131,8 +132,7 @@ class TripleFilter:
             )
             cluster_labels = clusterer.fit_predict(distance_matrix)
             cluster_persistence = clusterer.cluster_persistence_
-
-            filtered_triples = [triples[index] for index, label in enumerate(cluster_labels) if label != -1]
+            filtered_triples = self.select_representatives(triples, cluster_labels, clusterer, normalized_embeddings)
             cluster_output = {
                 'filtered_triples': filtered_triples,
                 'reduction_count': len(triples) - len(filtered_triples),
@@ -146,6 +146,51 @@ class TripleFilter:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to apply clustering on triples {e}")
             raise Exception(f"Error during clustering: {e}")
 
+    def select_representatives(self, triples, cluster_labels, clusterer, embeddings):
+        representatives = []
+        # Define thresholds for high, medium, and low persistence
+        high_persistence_threshold = 0.2
+        medium_persistence_threshold = 0.1
+        # Adjust these percentages and caps as needed
+        high_persistence_percentage, high_persistence_cap = 0.2, 50
+        medium_persistence_percentage, medium_persistence_cap = 0.3, 100
+        low_persistence_percentage, low_persistence_cap = 0.5, 100
+        noise_percentage = 0.5  # For noise
+        
+        for cluster_id in set(cluster_labels):
+            indices = np.where(cluster_labels == cluster_id)[0]
+            cluster_size = len(indices)
+            
+            if cluster_id != -1:
+                persistence = clusterer.cluster_persistence_[cluster_id]
+                if persistence > high_persistence_threshold:
+                    n_representatives = min(int(cluster_size * high_persistence_percentage), high_persistence_cap)
+                elif persistence > medium_persistence_threshold:
+                    n_representatives = min(int(cluster_size * medium_persistence_percentage), medium_persistence_cap)
+                else:
+                    n_representatives = min(int(cluster_size * low_persistence_percentage), low_persistence_cap)
+                    
+                if cluster_size > 1:  # More than one element
+                    cluster_embeddings = embeddings[indices]
+                    centroid = np.mean(cluster_embeddings, axis=0)
+                    distances = cdist([centroid], cluster_embeddings, metric='euclidean')[0]
+                    sorted_indices = np.argsort(distances)[:n_representatives]
+                    for idx in sorted_indices:
+                        representatives.append(triples[indices[idx]])
+                else:  # Single element clusters
+                    representatives.append(triples[indices[0]])
+            else:
+                # For noise, select randomly based on the percentage
+                noise_indices = np.where(cluster_labels == -1)[0]
+                noise_size = len(noise_indices)
+                n_noise_representatives = int(noise_size * noise_percentage)
+                if noise_size > 0:
+                    selected_indices = np.random.choice(noise_indices, min(n_noise_representatives, noise_size), replace=False)
+                    for idx in selected_indices:
+                        representatives.append(triples[idx])
+        return representatives
+  
+    
     def filter_by_cluster_persistence(self, triples: List[Tuple[str, str,str]], cluster_persistence, cluster_labels) -> List[Tuple[str, str, str]]:
         if self.cluster_persistence_threshold != -1:
             high_persistence_triples = []
@@ -158,4 +203,4 @@ class TripleFilter:
         
         else:
             
-            return None
+            return triples

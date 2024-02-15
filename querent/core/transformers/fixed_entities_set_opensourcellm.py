@@ -17,6 +17,7 @@ from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
 from typing import Any, List, Tuple
 from querent.common.types.file_buffer import FileBuffer
+from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 from querent.logging.logger import setup_logger
 from querent.kg.querent_kg import QuerentKG
 from querent.graph.graph import QuerentGraph
@@ -96,6 +97,7 @@ class Fixed_Entities_LLM(BaseEngine):
             self.predicate_context_extractor = None
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
+        self.semantictriplefilter = SemanticTripleFilter()
         
  
 
@@ -143,7 +145,7 @@ class Fixed_Entities_LLM(BaseEngine):
                     return
             if data.data:
                 single_string = ' '.join(data.data)
-                clean_text = single_string.replace('\n', ' ')
+                clean_text = (single_string.replace('\n', '')).replace('- ', '-')
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -176,6 +178,7 @@ class Fixed_Entities_LLM(BaseEngine):
                 if not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     self.logger.info(f"length of relationships {len(relationships)}")
+                    relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:

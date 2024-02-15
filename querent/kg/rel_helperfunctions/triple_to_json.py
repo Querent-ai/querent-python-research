@@ -39,11 +39,11 @@ class TripleToJsonConverter:
 
             json_object = {
                 "subject": TripleToJsonConverter._normalize_text(subject),
-                "subject_type": TripleToJsonConverter._normalize_text(predicate_info.get("subject_type", ""), replace_space=True),
+                "subject_type": TripleToJsonConverter._normalize_text(predicate_info.get("subject_type", "Unlabeled"), replace_space=True),
                 "object": TripleToJsonConverter._normalize_text(object_),
-                "object_type": TripleToJsonConverter._normalize_text(predicate_info.get("object_type", ""), replace_space=True),
+                "object_type": TripleToJsonConverter._normalize_text(predicate_info.get("object_type", "Unlabeled"), replace_space=True),
                 "predicate": TripleToJsonConverter._normalize_text(predicate_info.get("predicate", "")),
-                "predicate_type": TripleToJsonConverter._normalize_text(predicate_info.get("predicate_type", ""), replace_space=True),
+                "predicate_type": TripleToJsonConverter._normalize_text(predicate_info.get("predicate_type", "Unlabeled"), replace_space=True),
                 "sentence": predicate_info.get("context", "").lower()
             }
 

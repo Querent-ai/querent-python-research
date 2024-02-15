@@ -6,9 +6,7 @@ from langchain.text_splitter import SentenceTransformersTokenTextSplitter
 from langchain.docstore.document import Document
 from nltk.tokenize import sent_tokenize
 import os
-
 import requests
-
 from querent.logging.logger import setup_logger
 
 """
@@ -56,7 +54,6 @@ class EmbeddingStore:
             if not inference_api_key:
                 self.embeddings = HuggingFaceEmbeddings(model_name=model_name, model_kwargs={'device': 'cpu'})
             else:
-                print("using Inference API--------------------------------------")
                 self.API_URL = "https://api-inference.huggingface.co/models/"+ model_name
                 self.headers = {"Authorization": f"Bearer {inference_api_key}"}
                 self.embeddings = HuggingFaceInferenceAPIEmbeddings(api_key= inference_api_key, model_name=model_name)
@@ -136,6 +133,12 @@ class EmbeddingStore:
                 else:
                     payload = {"inputs": text}
                     embedding = self.query(payload)
+                if isinstance(self.embeddings,HuggingFaceEmbeddings) or isinstance(self.embeddings, HuggingFaceInferenceAPIEmbeddings) :
+                    embedding = self.embeddings.embed_query(text)
+                    embeddings.append(embedding)
+                else:
+                    payload = {"inputs": text}
+                    embedding = self.query(payload)
             return embeddings
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
@@ -151,9 +154,9 @@ class EmbeddingStore:
                 data = json.loads(json_string)
                 context = data.get("context", "")
                 predicate = data.get("predicate","")
-                predicate_type = data.get("predicate_type","")
-                subject_type = data.get("subject_type","")
-                object_type = data.get("object_type","")
+                predicate_type = data.get("predicate_type","Unlabeled")
+                subject_type = data.get("subject_type","Unlabeled")
+                object_type = data.get("object_type","Unlabeled")
                 context_embeddings = self.get_embeddings([context])[0]
                 essential_data = {
                     "context": context,
