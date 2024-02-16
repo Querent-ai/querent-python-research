@@ -54,6 +54,8 @@
 #         collectors=collectors, result_queue=result_queue
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
+#     print("Going to start ingesting now.......")
+#     await asyncio.gather(ingest_task)
 #     resource_manager = ResourceManager()
 #     bert_llm_config = LLM_Config(
 #     ner_model_name="botryan96/GeoBERT",
@@ -67,10 +69,50 @@
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
 #         }
-#             ,fixed_entities = ['Gulf of Mexico', 'Paleocene - Eocene Thermal Maximum']
-#             , sample_entities=['GeoLoc', 'GeoEvent']
+#             ,fixed_entities = [
+#                                 "Hadean", "Archean", "Proterozoic", "Phanerozoic",
+#                                 "Paleozoic", "Mesozoic", "Cenozoic",
+#                                 "Cambrian", "Ordovician", "Silurian", "Devonian", "Carboniferous", "Permian",
+#                                 "Triassic", "Jurassic", "Cretaceous",
+#                                 "Paleogene", "Neogene", "Quaternary",
+#                                 "Paleocene", "Eocene", "Oligocene",
+#                                 "Miocene", "Pliocene",
+#                                 "Pleistocene", "Holocene",
+#                                 "Anticline", "Syncline", "Fault", "Salt dome", "Horst", "Graben",
+#                                 "Reef", "Shoal", "Deltaic deposits", "Turbidite", "Channel sandstone",
+#                                 "Sandstone", "Limestone", "Dolomite", "Shale",
+#                                 "Source rock", "Cap rock", "Shale gas",
+#                                 "Crude oil", "Natural gas", "Shale oil", "Coalbed methane", "Tar sands", "Gas hydrates",
+#                                 "Structural trap", "Stratigraphic trap", "Combination trap", "Salt trap", "Unconformity trap",
+#                                 "Hydrocarbon migration", "Hydrocarbon accumulation",
+#                                 "Placer deposits", "Vein deposit", "Porphyry deposit", "Kimberlite pipe", "Laterite deposit",
+#                                 "Volcanic rock", "Basalt", "Geothermal gradient", "Sedimentology",
+#                                 "Paleontology", "Biostratigraphy", "Sequence stratigraphy", "Geophysical survey",
+#                                 "Magnetic anomaly", "Gravitational anomaly", "Petrology", "Geochemistry", "Hydrogeology"
+#                             ]
+
+#             , sample_entities=[
+#                                 "geological_eon", "geological_eon", "geological_eon", "geological_eon",
+#                                 "geological_era", "geological_era", "geological_era",
+#                                 "geological_period", "geological_period", "geological_period", "geological_period", "geological_period", "geological_period",
+#                                 "geological_period", "geological_period", "geological_period",
+#                                 "geological_period", "geological_period", "geological_period",
+#                                 "geological_epoch", "geological_epoch", "geological_epoch",
+#                                 "geological_epoch", "geological_epoch",
+#                                 "geological_epoch", "geological_epoch", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature",
+#                                 "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature",
+#                                 "rock_type", "rock_type", "rock_type", "rock_type",
+#                                 "rock_type", "rock_type", "hydrocarbon_source",
+#                                 "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon",
+#                                 "trap_type", "trap_type", "trap_type", "trap_type", "trap_type",
+#                                 "geological_process", "geological_process",
+#                                 "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit",
+#                                 "rock_type", "rock_type", "geological_process", "geological_discipline",
+#                                 "geological_discipline", "geological_method", "geological_method", "geological_method",
+#                                 "geophysical_feature", "geophysical_feature", "geological_discipline", "geological_discipline", "geological_discipline"
+#                             ]
 #             , is_confined_search = True
-#             , huggingface_token = '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'
+#             # , huggingface_token = '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'
 #     )
 #     llm_instance = Fixed_Entities_LLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
@@ -104,7 +146,7 @@
 #         resource_manager=resource_manager,
 #     )
 #     querent_task = asyncio.create_task(querent.start())
-#     await asyncio.gather(ingest_task, querent_task)
+#     await asyncio.gather(querent_task)
 #     db_conn.close()
 
 # if __name__ == "__main__":

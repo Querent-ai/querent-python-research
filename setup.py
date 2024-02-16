@@ -37,7 +37,6 @@ requirements = [
     "regex==2023.5.5",
     "sentence-transformers==2.2.2",
     "spacy==3.7.2",
-    "umap-learn==0.5.4",
     "uvicorn==0.22.0",
     "slack-sdk==3.26.1",
     "pylint==2.17.4",
@@ -76,6 +75,9 @@ requirements = [
     "pybase64==1.3.1",
     "pdfminer==20191125",
     "unidecode==1.3.7",
+    "psutil==5.9.8",
+    "langchain-community==0.0.16",
+    "langchain==0.1.4"
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -83,7 +85,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.0.0",
+    version="1.0.1",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
