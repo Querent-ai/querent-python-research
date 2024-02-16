@@ -47,6 +47,7 @@ async def start_workflow(config_dict: dict):
     collector_tasks = asyncio.create_task(start_collectors(config))
     engine_tasks = asyncio.create_task(workflow(ResourceManager(), config, result_queue, state_queue))
     await asyncio.gather(collector_tasks, engine_tasks)
+    print("Workflow is finished. All events have been released.")
 
 
 async def start_collectors(config: Config):
