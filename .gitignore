@@ -176,3 +176,6 @@ tests/llama-2-7b.Q4_K_M.gguf
 volumes/
 embedEtcd.yaml
 standalone_embed.sh
+tests/data/llm/pdf/*.pdf
+tests/data/llm/old_pdf/**
+tests/data/llm/one_test_file1/**
