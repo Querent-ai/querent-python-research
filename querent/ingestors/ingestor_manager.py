@@ -158,11 +158,17 @@ class IngestorFactoryManager:
                     if result_queue is not None:
                         result_queue.put_nowait(chunk_tokens)
                     if tokens_feader is not None:
-                        tokens_feader.send_tokens_in_rust({
-                            "data": chunk_tokens.data if type(chunk_tokens) == IngestedTokens else chunk_tokens.ocr_text,
-                            "file": chunk_tokens.file,
-                            "is_token_stream": True,
-                        })
+                        tokens_feader.send_tokens_in_rust(
+                            {
+                                "data": (
+                                    chunk_tokens.data
+                                    if type(chunk_tokens) == IngestedTokens
+                                    else chunk_tokens.ocr_text
+                                ),
+                                "file": chunk_tokens.file,
+                                "is_token_stream": True,
+                            }
+                        )
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
@@ -214,5 +220,3 @@ class IngestorFactoryManager:
         await asyncio.gather(*ingestion_tasks)
         if self.result_queue is not None:
             await self.result_queue.put(None)
-        if self.tokens_feader is not None:
-            self.tokens_feader.send_tokens_in_rust(None)
