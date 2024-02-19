@@ -59,10 +59,8 @@ async def start_llama_workflow(
     else:
         raise Exception("No file found matching the criteria.")
     config.engines[0].rel_model_path = model_path
-    print("Model Path --------------------------------", model_path)
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
-    print("Config to LLM -----", config.engines[0])
     llm_instance = BERTLLM(result_queue, config.engines[0])
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
