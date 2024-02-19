@@ -68,24 +68,22 @@ Let's get Querent up and running on your local machine.
 
 ### Installation
 
-1. Clone the Querent repository:
-
-   ```bash
-   git clone https://github.com/querent-ai/querent-ai.git
-   cd querent
-   ```
-
-2. Create a virtual environment (recommended):
+1. Create a virtual environment (recommended):
 
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
    ```
+2. Install latest Querent Workflow Orchestrator package:
 
+   ```bash
+   pip install querent
+   ```
+  
 3. Install the project dependencies:
 
    ```bash
-   pip install -r requirements.txt
+     python3 -m spacy download en_core_web_lg
    ```
 
 ## Usage
