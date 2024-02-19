@@ -52,6 +52,8 @@ async def start_workflow(config_dict: dict):
 
 
 async def start_ingestion(config_dict: dict):
+    if not config_dict:
+        return
     collectors = []
     collector_configs = config_dict.get("collectors", [])
     for collector_config in collector_configs:
@@ -84,6 +86,8 @@ async def start_ingestion(config_dict: dict):
 
 
 async def start_workflow_engine(config_dict: Config):
+    if not config_dict:
+        return
     result_queue = QuerentQueue()
     workflows = {
         "knowledge_graph_using_openai": start_gpt_workflow,
