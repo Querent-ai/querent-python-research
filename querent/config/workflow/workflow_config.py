@@ -16,6 +16,7 @@ class WorkflowConfig(BaseModel):
     event_handler: Optional[Any]
     inner_tokens_feader: Optional[Any]
     tokens_feader: Optional[Any]
+    
 
     def __init__(self, config_source=None, **kwargs):
         # if kwargs:

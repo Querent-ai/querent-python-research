@@ -11,6 +11,8 @@ class LLM_Config(BaseModel):
     version: str = "0.0.1"
     logger: str = "LLM.engine_config"
     ner_model_name: str = "dbmdz/bert-large-cased-finetuned-conll03-english"
+    spacy_model_path: str = 'en_core_web_lg'
+    nltk_path: str = '/model/nltk_data'
     rel_model_type: str = 'llama'
     rel_model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf'
     grammar_file_path: str = './querent/kg/rel_helperfunctions/json.gbnf'

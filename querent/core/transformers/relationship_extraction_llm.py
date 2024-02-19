@@ -219,8 +219,10 @@ Answer:""".format(context = context, entity1=predicate.get('entity1_nn_chunk', '
                     else:
                         query = self.config.qa_template.format(context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
                     answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
+                    print("Choices: ", answer_relation)
                     try:
                         choices_text = answer_relation['choices'][0]['text']
+                        print("Choices: ", choices_text)
                         answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))
                         updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
                         updated_triples.append(updated_triple)

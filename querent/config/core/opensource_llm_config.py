@@ -14,6 +14,8 @@ class Opensource_LLM_Config(BaseModel):
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
     rag_approach: bool = False
     is_confined_search: bool = False
+    spacy_model_path: str = 'en_core_web_lg'
+    nltk_path: str = '/model/nltk_data'
 
     def __init__(self, config_source=None, **kwargs):
         declared_keys = set(self.__annotations__.keys())

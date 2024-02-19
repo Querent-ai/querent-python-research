@@ -15,6 +15,7 @@ from querent.querent.resource_manager import ResourceManager
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.workflow._helpers import *
 import os
+import nltk
 
 async def start_collectors(config: Config):
     collectors = []
@@ -43,7 +44,7 @@ async def start_llama_workflow(
     search_directory = '/model/'
     # Specify the file extension you're interested in, e.g., '.txt'. Leave empty ('') for all files.
     file_extension = '.gguf'
-
+    nltk.data.path.append(config.engines[0].nltk_path)
     def find_first_file(directory, extension):
         for root, dirs, files in os.walk(directory):
             for file in files:
@@ -61,6 +62,9 @@ async def start_llama_workflow(
     config.engines[0].rel_model_path = model_path
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
+    print("--------------------------------", config.engines[0].spacy_model_path)
+    config.engines[0].spacy_model_path = '/model/en_core_web_lg-3.7.1/en_core_web_lg/en_core_web_lg-3.7.1'
+    print("--------------------------------", config.engines[0].spacy_model_path)
     llm_instance = BERTLLM(result_queue, config.engines[0])
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
@@ -86,6 +90,8 @@ async def start_llama_workflow(
 async def start_gpt_workflow(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
+    nltk.data.path.append(config.engines[0].nltk_path)
+    config.engines[0].spacy_model_path = '/model/en_core_web_lg-3.7.1/en_core_web_lg/en_core_web_lg-3.7.1'
     llm_instance = GPTNERLLM(result_queue, config.engines[0])
 
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)

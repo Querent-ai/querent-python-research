@@ -41,7 +41,7 @@ class GPTNERLLM(BaseEngine):
     ):
         self.logger = setup_logger(__name__, "OPENAINERLLM")
         try:
-            self.nlp = spacy.load('en_core_web_lg')
+            self.nlp = spacy.load(config.spacy_model_path)
             super().__init__(input_queue)
             self.file_buffer = FileBuffer()
             self.rel_model_name = config.rel_model_name
@@ -52,7 +52,7 @@ class GPTNERLLM(BaseEngine):
             self.function_registry = FunctionRegistry()
             self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
             self.user_context = config.user_context
-            
+        
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
             raise Exception(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")

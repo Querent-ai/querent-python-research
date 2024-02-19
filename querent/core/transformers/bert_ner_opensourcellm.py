@@ -67,6 +67,7 @@ class BERTLLM(BaseEngine):
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
         self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)

@@ -11,10 +11,6 @@ from unidecode import unidecode
 import re
 
 
-# nltk.data.path.append(
-#     "/home/nishantg/querent/querent/nltk_resources/"
-# )  ##need to configure still
-
 """
     Named Entity Recognition (NER) class for extracting entities and relationships from text.
 
@@ -48,7 +44,12 @@ import re
 
 
 class NER_LLM:
-    nlp = spacy.load('en_core_web_lg')
+    nlp = None  # Initialize nlp as None or with a default model
+
+    @classmethod
+    def set_nlp_model(cls, model_path):
+        cls.nlp = spacy.load(model_path)
+        
     def __init__(
         self, ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
         filler_tokens=None,
