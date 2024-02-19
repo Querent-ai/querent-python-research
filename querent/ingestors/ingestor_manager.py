@@ -214,3 +214,5 @@ class IngestorFactoryManager:
         await asyncio.gather(*ingestion_tasks)
         if self.result_queue is not None:
             await self.result_queue.put(None)
+        if self.tokens_feader is not None:
+            self.tokens_feader.send_tokens_in_rust(None)
