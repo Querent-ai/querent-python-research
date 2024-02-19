@@ -78,6 +78,7 @@ requirements = [
     "psutil==5.9.8",
     "langchain-community==0.0.16",
     "langchain==0.1.4"
+    "openai=1.12.0",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -85,7 +86,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.0.1",
+    version="1.0.2",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
