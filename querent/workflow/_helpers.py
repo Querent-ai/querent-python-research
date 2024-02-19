@@ -14,7 +14,7 @@ from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.workflow._helpers import *
-
+import os
 
 async def start_collectors(config: Config):
     collectors = []
@@ -39,9 +39,31 @@ async def start_collectors(config: Config):
 async def start_llama_workflow(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
+    # Specify the directory you want to search
+    search_directory = '/model/'
+    # Specify the file extension you're interested in, e.g., '.txt'. Leave empty ('') for all files.
+    file_extension = '.gguf'
 
+    def find_first_file(directory, extension):
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                # Check if file ends with the specified extension (if any)
+                if file.endswith(extension) or not extension:
+                    return os.path.join(root, file)
+        return None
+
+    # Calling the function and printing the result
+    first_file_path = find_first_file(search_directory, file_extension)
+    if first_file_path:
+        model_path = first_file_path
+    else:
+        raise Exception("No file found matching the criteria.")
+    config.engines[0].rel_model_path = model_path
+    print("Model Path --------------------------------", model_path)
+    second_file_path = find_first_file(search_directory, '.gbnf')
+    config.engines[0].grammar_file_path = second_file_path
+    print("Config to LLM -----", config.engines[0])
     llm_instance = BERTLLM(result_queue, config.engines[0])
-
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
         [llm_instance],

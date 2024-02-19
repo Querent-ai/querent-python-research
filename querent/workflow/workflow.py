@@ -88,13 +88,26 @@ async def start_ingestion(config_dict: dict):
 async def start_workflow_engine(config_dict: Config):
     if not config_dict:
         return
-    result_queue = QuerentQueue()
+    workflow_config = config_dict.get("workflow")
+    workflow = WorkflowConfig(config_source=workflow_config)
+    engine_configs = config_dict.get("engines", [])
+    engines = []
+    for engine_config in engine_configs:
+        engine_config_source = engine_config.get("config", {})
+        if engine_config["name"] == "knowledge_graph_using_openai":
+            engines.append(GPTConfig(config_source=engine_config_source))
+        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+            engines.append(LLM_Config(config_source=engine_config_source))
+    config_dict["engines"] = engines
+    config_dict["collectors"] = None
+    config_dict["workflow"] = workflow
+    config = Config(config_source=config_dict)
     workflows = {
         "knowledge_graph_using_openai": start_gpt_workflow,
         "knowledge_graph_using_llama2_v1": start_llama_workflow,
     }
-    config = Config(config_dict)
     workflow = workflows.get(config.workflow.name)
+    result_queue = QuerentQueue()
     resource_manager = ResourceManager()
     receiving_tokens = asyncio.create_task(
         receive_token_feeder(resource_manager, config, result_queue)

@@ -66,7 +66,6 @@ requirements = [
     "azure-storage-blob==12.19.0",
     "moviepy==1.0.3",
     "python-docx==1.1.0",
-    "setuptools==69.0.2",
     "dropbox==11.36.2",
     "requests==2.31.0",
     "google-api-python-client==2.105.0",
