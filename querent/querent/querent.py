@@ -35,7 +35,6 @@ class Querent:
     async def start(self):
         try:
             self.logger.info("Starting Querent")
-            print("Starting Querent---")
 
             # Start the auto-scaler
             auto_scale_task = asyncio.create_task(self.auto_scaler.start())

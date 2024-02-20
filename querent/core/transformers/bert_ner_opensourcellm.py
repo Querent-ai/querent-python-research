@@ -137,7 +137,6 @@ class BERTLLM(BaseEngine):
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
         number_sentences = 0
-        print("Processing tokens-------------------------------", data.data)
         try:
             if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      
@@ -151,10 +150,8 @@ class BERTLLM(BaseEngine):
                 file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text)
             else:
-                print("Is Token Stream ", data.is_token_stream)
                 content = clean_text
                 file = data.get_file_path()
-                print("Content -----------------------", content)
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
@@ -203,7 +200,6 @@ class BERTLLM(BaseEngine):
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
                             embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
-                        print("Length of embeddings triples: ", len(embedding_triples))
                         for triple in embedding_triples:
                             graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                             if graph_json:

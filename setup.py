@@ -85,7 +85,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.0.5",
+    version="1.0.6",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
