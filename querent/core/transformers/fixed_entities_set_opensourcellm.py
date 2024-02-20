@@ -1,12 +1,11 @@
 import json
-import spacy
+from unidecode import unidecode
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
 from querent.core.transformers.relationship_extraction_llm import RelationExtractor
 from querent.kg.rel_helperfunctions.contextual_predicate import process_data
-from querent.kg.ner_helperfunctions.contextual_embeddings import EntityEmbeddingExtractor
 from querent.kg.ner_helperfunctions.fixed_entities import FixedEntityExtractor
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.common.types.querent_event import EventState, EventType
@@ -15,14 +14,11 @@ from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
-from typing import Any, List, Tuple
 from querent.common.types.file_buffer import FileBuffer
 from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 from querent.logging.logger import setup_logger
 from querent.kg.querent_kg import QuerentKG
-from querent.graph.graph import QuerentGraph
 from querent.config.graph_config import GraphConfig
-from querent.kg.ner_helperfunctions.attn_scores import EntityAttentionExtractor
 from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
@@ -145,7 +141,7 @@ class Fixed_Entities_LLM(BaseEngine):
                     return
             if data.data:
                 single_string = ' '.join(data.data)
-                clean_text = (single_string.replace('\n', '')).replace('- ', '-')
+                clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 

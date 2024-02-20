@@ -1,12 +1,10 @@
-import asyncio
 import json
 import re
+from unidecode import unidecode
+
 
 import spacy
-from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
-from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
-from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
@@ -16,10 +14,8 @@ from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
-from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
-from querent.config.core.llm_config import LLM_Config
 from openai import OpenAI
 from querent.common.types.file_buffer import FileBuffer
 from tenacity import (
@@ -187,7 +183,7 @@ class GPTNERLLM(BaseEngine):
 
             if data.data:
                 single_string = ' '.join(data.data)
-                clean_text = single_string.replace('\n', ' ')
+                clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
