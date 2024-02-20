@@ -117,21 +117,25 @@ async def start_gpt_workflow(
 async def receive_token_feeder(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
-    await asyncio.sleep(180)
+    await asyncio.sleep(60)
     while not resource_manager.querent_termination_event.is_set():
+        print("Any other message for result queue ?")
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
+        print("Any other message for result queue-----", tokens)
         if tokens is not None:
+            print("Getting these tokens ----------------", tokens)
             ingested_tokens = IngestedTokens(
-                file=tokens.get("file", None), data=tokens.get("data", None)
+                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream") == "true", 
             )
-            # we will get a dictionary here
             await result_queue.put(ingested_tokens)
+            print("---------Entered in queue ----------------")
 
         else:
             ## wait 1 minute for system to process and then set termination event
             await asyncio.sleep(60)
-            resource_manager.querent_termination_event.set()
+            # resource_manager.querent_termination_event.set()
     await result_queue.put(None)
+    print("Tokensssssss processed.......")
 
 
 async def check_message_states(

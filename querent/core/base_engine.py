@@ -216,11 +216,15 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
+                print("Inisde Inner Worker Thread------------")
+                print("Termination Evenet------------------------", self.termination_event.is_set())
                 while not self.termination_event.is_set():
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=240)
+                        print("Goind to wait for result queue to get data")
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=150)
+                        print("Getting this in Base Engine -------------------------", data)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)
@@ -256,6 +260,7 @@ class BaseEngine(ABC):
                         await asyncio.sleep(self.retry_interval)
 
                     except asyncio.TimeoutError:
+                        print("Need to terminate--------------------")
                         self.termination_event.set()
                         current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
                         await self.set_state(new_state=current_state)
@@ -265,8 +270,9 @@ class BaseEngine(ABC):
                     if current_message_total >= self.message_throttle_limit:
                         await asyncio.sleep(self.message_throttle_delay)
                         current_message_total = 0
-
+                print("Breaking Loop-----------------------", self.termination_event.is_set())
             await asyncio.gather(state_listener, _inner_worker())
+            print("Termination Evenet------------------------2", self.termination_event.is_set())
         except Exception as e:
             self.logger.error(f"Error while processing tokens: {e}")
         finally:
