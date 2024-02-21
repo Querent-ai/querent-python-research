@@ -70,6 +70,9 @@ jobs:
           sudo apt-get update
           sudo apt install tesseract-ocr
           sudo apt install libtesseract-dev
+          sudo apt-get install ffmpeg
+          sudo apt install antiword
+          sudo apt install libreoffice
       - id: "auth"
         name: "Authenticate to Google Cloud"
         uses: "google-github-actions/auth@v1"
