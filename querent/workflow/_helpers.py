@@ -78,8 +78,6 @@ async def start_llama_workflow(
     config.engines[0].rel_model_path = model_path
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
-    print("Spacy Path--------------------------------", config.engines[0].spacy_model_path)
-    print("NLTK PATH--------------------------------", config.engines[0].nltk_path)
     llm_instance = BERTLLM(result_queue, config.engines[0])
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
@@ -107,8 +105,6 @@ async def start_gpt_workflow(
 ):
     search_directory = os.getenv('MODEL_PATH', '/model/')
     setup_nltk_and_spacy_paths(config, search_directory)
-    print("Spacy Path--------------------------------", config.engines[0].spacy_model_path)
-    print("NLTK PATH--------------------------------", config.engines[0].nltk_path)
     llm_instance = GPTNERLLM(result_queue, config.engines[0])
 
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
@@ -136,23 +132,18 @@ async def receive_token_feeder(
 ):
     await asyncio.sleep(60)
     while not resource_manager.querent_termination_event.is_set():
-        print("Any other message for result queue ?")
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
-        print("Any other message for result queue-----", tokens)
         if tokens is not None:
-            print("Getting these tokens ----------------", tokens)
             ingested_tokens = IngestedTokens(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
             )
             await result_queue.put(ingested_tokens)
-            print("---------Entered in queue ----------------")
 
         else:
             ## wait 1 minute for system to process and then set termination event
             await asyncio.sleep(60)
             # resource_manager.querent_termination_event.set()
     await result_queue.put(None)
-    print("Tokensssssss processed.......")
 
 
 async def check_message_states(

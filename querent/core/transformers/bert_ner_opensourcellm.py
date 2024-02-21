@@ -100,9 +100,9 @@ class BERTLLM(BaseEngine):
             self.user_context = config.user_context
             self.isConfinedSearch = config.is_confined_search
             self.semantictriplefilter = SemanticTripleFilter()
-            print("BERT LLM finiushed loading------------------------")
         except Exception as e:
             print("Error initializing BERT LLM Class", e)
+            raise e
         
  
 
@@ -144,11 +144,8 @@ class BERTLLM(BaseEngine):
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
         number_sentences = 0
-        print("Inside BERT LLM --------------------------", data)
         try:
-            print("Inside BERT LLM Token Stream--------------------------", data.is_token_stream)
             if not BERTLLM.validate_ingested_tokens(data):
-                    print("Caught invalidate tokens")
                     self.set_termination_event()                                      
                     return
             if data.data:
@@ -156,16 +153,13 @@ class BERTLLM(BaseEngine):
                 clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
-            print("Reached here 1 ---------------------------------------------------")
             if not data.is_token_stream : 
                 file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text)
             else:
                 content = clean_text
                 file = data.get_file_path()
-            print("Reached here 2 ---------------------------------------------------")
             if content:
-                print("------------------------------", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
