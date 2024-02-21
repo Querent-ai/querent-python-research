@@ -30,7 +30,6 @@ requirements = [
     "Pillow==10.0.1",
     "pydantic==1.10.8",
     "PyJWT==2.4.0",
-    "PyPDF2==3.0.1",
     "pytest==7.3.2",
     "python-dotenv==1.0.0",
     "redis==4.5.5",
@@ -45,7 +44,7 @@ requirements = [
     "tensorflow==2.14.0",
     "torch==2.0.1",
     "transformers==4.36.0",
-    "pypdf==3.17.0",
+    "pypdf==4.0.2",
     "asyncio==3.4.3",
     "aiofiles==23.2.1",
     "prometheus-client==0.17.1",
@@ -66,7 +65,6 @@ requirements = [
     "azure-storage-blob==12.19.0",
     "moviepy==1.0.3",
     "python-docx==1.1.0",
-    "setuptools==69.0.2",
     "dropbox==11.36.2",
     "requests==2.31.0",
     "google-api-python-client==2.105.0",
@@ -86,7 +84,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.0.5",
+    version="1.0.6",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

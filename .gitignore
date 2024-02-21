@@ -129,6 +129,7 @@ env.bak/
 venv.bak/
 dev-env/
 nltk_resources/
+test/
 
 # Spyder project settings
 .spyderproject
@@ -179,3 +180,9 @@ standalone_embed.sh
 tests/data/llm/pdf/*.pdf
 tests/data/llm/old_pdf/**
 tests/data/llm/one_test_file1/**
+pdfs/*.pdf
+DejaVuSans.cw127.pkl
+DejaVuSans.pkl
+DejaVuSans.ttf
+graph2.png
+web_nlg_extract.csv

@@ -220,7 +220,7 @@ class BaseEngine(ABC):
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=240)
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=210)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)
@@ -265,7 +265,6 @@ class BaseEngine(ABC):
                     if current_message_total >= self.message_throttle_limit:
                         await asyncio.sleep(self.message_throttle_delay)
                         current_message_total = 0
-
             await asyncio.gather(state_listener, _inner_worker())
         except Exception as e:
             self.logger.error(f"Error while processing tokens: {e}")

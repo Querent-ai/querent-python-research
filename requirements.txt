@@ -25,7 +25,6 @@ numpy==1.24.3
 Pillow==10.0.1
 pydantic==1.10.8
 PyJWT==2.4.0
-PyPDF2==3.0.1
 pytest==7.3.2
 python-dotenv==1.0.0
 redis==4.5.5
@@ -40,7 +39,7 @@ pytest-mock==3.11.1
 tensorflow==2.14.0
 transformers==4.36.0
 torch==2.0.1
-pypdf==3.17.0
+pypdf==4.0.2
 asyncio==3.4.3
 prometheus-client==0.17.1
 rdflib==7.0.0
@@ -61,7 +60,6 @@ coverage==7.3.3
 azure-storage-blob==12.19.0
 moviepy==1.0.3
 python-docx==1.1.0
-setuptools==69.0.2
 psutil==5.9.8
 dropbox==11.36.2
 requests==2.31.0
