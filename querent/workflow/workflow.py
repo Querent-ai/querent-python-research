@@ -109,10 +109,5 @@ async def start_workflow_engine(config_dict: Config):
     workflow = workflows.get(config.workflow.name)
     result_queue = QuerentQueue()
     resource_manager = ResourceManager()
-    receiving_tokens = asyncio.create_task(
-        receive_token_feeder(resource_manager, config, result_queue)
-    )
-    starting_engine = asyncio.create_task(
-        workflow(resource_manager, config, result_queue)
-    )
-    await asyncio.gather(starting_engine)
+
+    await workflow(resource_manager, config, result_queue)
