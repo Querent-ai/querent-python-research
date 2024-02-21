@@ -220,7 +220,7 @@ class BaseEngine(ABC):
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=150)
+                        data = await asyncio.wait_for(self.input_queue.get(), timeout=210)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)

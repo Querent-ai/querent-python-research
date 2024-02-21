@@ -201,7 +201,7 @@ class BERTLLM(BaseEngine):
                 if not filtered_triples:
                     raise Exception("No entity pairs")
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:2])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)

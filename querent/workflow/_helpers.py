@@ -130,7 +130,7 @@ async def start_gpt_workflow(
 async def receive_token_feeder(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
-    await asyncio.sleep(60)
+    await asyncio.sleep(120)
     while not resource_manager.querent_termination_event.is_set():
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         if tokens is not None:
