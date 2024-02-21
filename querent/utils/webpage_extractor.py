@@ -1,5 +1,5 @@
 from io import BytesIO
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import requests
 import re
 from requests.exceptions import RequestException
