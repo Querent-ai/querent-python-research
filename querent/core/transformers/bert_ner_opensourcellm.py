@@ -50,52 +50,59 @@ class BERTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
-        if not self.skip_inferences:
-            mock_config = Opensource_LLM_Config(qa_template=config.user_context,
-                                                model_type = config.rel_model_type,
-                                                model_path = config.rel_model_path,
-                                                grammar_file_path = config.grammar_file_path,
-                                                emb_model_name = config.emb_model_name)
-            self.semantic_extractor = RelationExtractor(mock_config)
-        self.graph_config = GraphConfig(identifier=config.name)
-        self.contextual_graph = QuerentKG(self.graph_config)
-        self.semantic_graph = QuerentKG(self.graph_config)
-        self.file_buffer = FileBuffer()
-        self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
-        self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
-        self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
-        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
-        self.nlp_model = NER_LLM.get_class_variable()
-        self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
-        self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
-        self.enable_filtering = config.enable_filtering
-        self.filter_params = config.filter_params or {}
-        self.triple_filter = None
-        if self.enable_filtering:
-            self.triple_filter = TripleFilter(**self.filter_params)
-        self.sample_entities = config.sample_entities
-        self.fixed_entities = config.fixed_entities
-        if self.fixed_entities and not self.sample_entities:
-            raise ValueError("If specific entities are provided, their types should also be provided.")
-        if self.fixed_entities and self.sample_entities:
-            self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities,model = self.nlp_model)
-        elif self.sample_entities:
-            self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities, model = self.nlp_model)
-        else:
-            self.entity_context_extractor = None
-        self.fixed_relationships = config.fixed_relationships
-        self.sample_relationships = config.sample_relationships
-        if self.fixed_relationships and not self.sample_relationships:
-            raise ValueError("If specific predicates are provided, their types should also be provided.")
-        if self.fixed_relationships and self.sample_relationships:
-            self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
-        elif self.sample_relationships:
-            self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
-        else:
-            self.predicate_context_extractor = None
-        self.user_context = config.user_context
-        self.isConfinedSearch = config.is_confined_search
-        self.semantictriplefilter = SemanticTripleFilter()
+        try:
+            if not self.skip_inferences:
+                mock_config = Opensource_LLM_Config(qa_template=config.user_context,
+                                                    model_type = config.rel_model_type,
+                                                    model_path = config.rel_model_path,
+                                                    grammar_file_path = config.grammar_file_path,
+                                                    emb_model_name = config.emb_model_name,
+                                                    spacy_model_path = config.spacy_model_path,
+                                                    nltk_path = config.nltk_path
+                                                    )
+                self.semantic_extractor = RelationExtractor(mock_config)
+            self.graph_config = GraphConfig(identifier=config.name)
+            self.contextual_graph = QuerentKG(self.graph_config)
+            self.semantic_graph = QuerentKG(self.graph_config)
+            self.file_buffer = FileBuffer()
+            self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
+            self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
+            self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+            self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
+            self.nlp_model = NER_LLM.get_class_variable()
+            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
+            self.enable_filtering = config.enable_filtering
+            self.filter_params = config.filter_params or {}
+            self.triple_filter = None
+            if self.enable_filtering:
+                self.triple_filter = TripleFilter(**self.filter_params)
+            self.sample_entities = config.sample_entities
+            self.fixed_entities = config.fixed_entities
+            if self.fixed_entities and not self.sample_entities:
+                raise ValueError("If specific entities are provided, their types should also be provided.")
+            if self.fixed_entities and self.sample_entities:
+                self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities,model = self.nlp_model)
+            elif self.sample_entities:
+                self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities, model = self.nlp_model)
+            else:
+                self.entity_context_extractor = None
+            self.fixed_relationships = config.fixed_relationships
+            self.sample_relationships = config.sample_relationships
+            if self.fixed_relationships and not self.sample_relationships:
+                raise ValueError("If specific predicates are provided, their types should also be provided.")
+            if self.fixed_relationships and self.sample_relationships:
+                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
+            elif self.sample_relationships:
+                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
+            else:
+                self.predicate_context_extractor = None
+            self.user_context = config.user_context
+            self.isConfinedSearch = config.is_confined_search
+            self.semantictriplefilter = SemanticTripleFilter()
+            print("BERT LLM finiushed loading------------------------")
+        except Exception as e:
+            print("Error initializing BERT LLM Class", e)
         
  
 
@@ -137,8 +144,11 @@ class BERTLLM(BaseEngine):
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
         number_sentences = 0
+        print("Inside BERT LLM --------------------------", data)
         try:
+            print("Inside BERT LLM Token Stream--------------------------", data.is_token_stream)
             if not BERTLLM.validate_ingested_tokens(data):
+                    print("Caught invalidate tokens")
                     self.set_termination_event()                                      
                     return
             if data.data:
@@ -146,13 +156,16 @@ class BERTLLM(BaseEngine):
                 clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
+            print("Reached here 1 ---------------------------------------------------")
             if not data.is_token_stream : 
                 file, content = self.file_buffer.add_chunk(
                 data.get_file_path(), clean_text)
             else:
                 content = clean_text
                 file = data.get_file_path()
+            print("Reached here 2 ---------------------------------------------------")
             if content:
+                print("------------------------------", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
@@ -214,5 +227,6 @@ class BERTLLM(BaseEngine):
                 else:
                     return filtered_triples, file
         except Exception as e:
+            print("Exception in BERT LLM", e)
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")

@@ -129,6 +129,7 @@ env.bak/
 venv.bak/
 dev-env/
 nltk_resources/
+test/
 
 # Spyder project settings
 .spyderproject

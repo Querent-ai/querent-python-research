@@ -55,7 +55,9 @@ class Fixed_Entities_LLM(BaseEngine):
                                                 model_path = config.rel_model_path,
                                                 grammar_file_path = config.grammar_file_path,
                                                 emb_model_name = config.emb_model_name,
-                                                is_confined_search = config.is_confined_search)
+                                                is_confined_search = config.is_confined_search,
+                                                spacy_model_path = config.spacy_model_path,
+                                                nltk_path = config.nltk_path)
             self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)

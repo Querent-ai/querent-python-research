@@ -17,6 +17,21 @@ from querent.workflow._helpers import *
 import os
 import nltk
 
+
+def setup_nltk_and_spacy_paths(config, search_directory):
+    """
+    Sets up NLTK and spaCy paths using the provided search directory.
+    """
+    # Set NLTK path
+    config.engines[0].nltk_path = os.path.join(search_directory, 'nltk_data')
+    nltk.data.path=[config.engines[0].nltk_path]
+    # nltk.data.path.append(config.engines[0].nltk_path)
+    
+    # Set spaCy model path
+    spacy_model_path = os.path.join(search_directory, 'en_core_web_lg-3.7.1/en_core_web_lg/en_core_web_lg-3.7.1')
+    config.engines[0].spacy_model_path = spacy_model_path
+
+    
 async def start_collectors(config: Config):
     collectors = []
     for collector_config in config.collectors:
@@ -41,10 +56,11 @@ async def start_llama_workflow(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
     # Specify the directory you want to search
-    search_directory = '/model/'
+    
+    search_directory = os.getenv('MODEL_PATH', '/model/')
+    setup_nltk_and_spacy_paths(config, search_directory)
     # Specify the file extension you're interested in, e.g., '.txt'. Leave empty ('') for all files.
     file_extension = '.gguf'
-    nltk.data.path.append(config.engines[0].nltk_path)
     def find_first_file(directory, extension):
         for root, dirs, files in os.walk(directory):
             for file in files:
@@ -62,9 +78,8 @@ async def start_llama_workflow(
     config.engines[0].rel_model_path = model_path
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
-    print("--------------------------------", config.engines[0].spacy_model_path)
-    config.engines[0].spacy_model_path = '/model/en_core_web_lg-3.7.1/en_core_web_lg/en_core_web_lg-3.7.1'
-    print("--------------------------------", config.engines[0].spacy_model_path)
+    print("Spacy Path--------------------------------", config.engines[0].spacy_model_path)
+    print("NLTK PATH--------------------------------", config.engines[0].nltk_path)
     llm_instance = BERTLLM(result_queue, config.engines[0])
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
@@ -90,8 +105,10 @@ async def start_llama_workflow(
 async def start_gpt_workflow(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
-    nltk.data.path.append(config.engines[0].nltk_path)
-    config.engines[0].spacy_model_path = '/model/en_core_web_lg-3.7.1/en_core_web_lg/en_core_web_lg-3.7.1'
+    search_directory = os.getenv('MODEL_PATH', '/model/')
+    setup_nltk_and_spacy_paths(config, search_directory)
+    print("Spacy Path--------------------------------", config.engines[0].spacy_model_path)
+    print("NLTK PATH--------------------------------", config.engines[0].nltk_path)
     llm_instance = GPTNERLLM(result_queue, config.engines[0])
 
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
@@ -125,7 +142,7 @@ async def receive_token_feeder(
         if tokens is not None:
             print("Getting these tokens ----------------", tokens)
             ingested_tokens = IngestedTokens(
-                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream") == "true", 
+                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
             )
             await result_queue.put(ingested_tokens)
             print("---------Entered in queue ----------------")
