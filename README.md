@@ -51,6 +51,8 @@ Querent is designed to simplify and optimize data collection and processing work
 
 - **Processors:** Apply asynchronous data processing, including text preprocessing, cleaning, and feature extraction.
 
+- **Engines:** Execute a suite of LLM engines to extract insights from data, leveraging parallel processing for enhanced efficiency.
+
 - **Storage:** Store processed data in various storage systems, such as databases or cloud storage.
 
 - **Workflow Management:** Efficiently manage and scale data workflows with task orchestration.
@@ -85,6 +87,14 @@ Let's get Querent up and running on your local machine.
    ```bash
      python3 -m spacy download en_core_web_lg
    ```
+
+4. Apt install the project dependencies:
+   ```bash
+        sudo apt install tesseract-ocr
+        sudo apt install libtesseract-dev
+        sudo apt-get install ffmpeg
+        sudo apt install antiword
+    ```
 
 ## Usage
 
@@ -217,7 +227,7 @@ class MockLLMEngine(BaseEngine):
 @pytest.mark.asyncio
 async def test_example_workflow_with_querent():
     # Initialize some collectors to collect the data
-    directory_path = "./tests/data/pdf4"
+    directory_path = "path/to/your/data/directory"
     collectors = [
         CollectorResolver().resolve(
             Uri("file://" + str(Path(directory_path).resolve())),
