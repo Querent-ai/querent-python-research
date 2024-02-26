@@ -216,11 +216,16 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
+                first_data = False
                 while not self.termination_event.is_set():
                     retries = 0
                     none_counter = 0
                     try:
-                        data = await asyncio.wait_for(self.input_queue.get(), timeout=210)
+                        if not first_data:
+                            data = await self.input_queue.get()
+                            first_data = True
+                        else:
+                            data = await asyncio.wait_for(self.input_queue.get(), timeout=120)
                         try:
                             if isinstance(data, IngestedMessages):
                                 await self.process_messages(data)

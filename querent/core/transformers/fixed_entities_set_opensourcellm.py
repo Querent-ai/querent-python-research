@@ -65,6 +65,7 @@ class Fixed_Entities_LLM(BaseEngine):
         self.file_buffer = FileBuffer()
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model= "dummy")
+        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         huggingface_token = config.huggingface_token
         self.create_emb = EmbeddingStore(inference_api_key=huggingface_token)

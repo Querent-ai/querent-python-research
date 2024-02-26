@@ -158,6 +158,7 @@ class IngestorFactoryManager:
                     if result_queue is not None:
                         result_queue.put_nowait(chunk_tokens)
                     if tokens_feader is not None:
+                        print("Sending tokens in rust-----------------------------------------------", chunk_tokens.data)
                         tokens_feader.send_tokens_in_rust(
                             {
                                 "data": (
