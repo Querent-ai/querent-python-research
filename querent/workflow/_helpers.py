@@ -79,9 +79,7 @@ async def start_llama_workflow(
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
     llm_instance = BERTLLM(result_queue, config.engines[0])
-    print("Initialised bert LLM")
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
-    print("Subscribed---------------------------------------------------------")
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
@@ -100,7 +98,6 @@ async def start_llama_workflow(
     # )
 
     await asyncio.gather(querent_task, token_feeder)
-    print("Done engine workflow---------------------------------------")
 
 
 async def start_gpt_workflow(
