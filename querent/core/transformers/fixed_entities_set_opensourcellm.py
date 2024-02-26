@@ -176,7 +176,7 @@ class Fixed_Entities_LLM(BaseEngine):
                 if not filtered_triples:
                     raise Exception("No entity pairs found")
                 if not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:5])
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     self.logger.info(f"length of relationships {len(relationships)}")
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
