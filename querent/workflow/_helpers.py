@@ -33,6 +33,7 @@ def setup_nltk_and_spacy_paths(config, search_directory):
 
     
 async def start_collectors(config: Config):
+    print("In start_collectors--------------------")
     collectors = []
     for collector_config in config.collectors:
         uri = Uri(collector_config.uri)
@@ -79,7 +80,9 @@ async def start_llama_workflow(
     second_file_path = find_first_file(search_directory, '.gbnf')
     config.engines[0].grammar_file_path = second_file_path
     llm_instance = BERTLLM(result_queue, config.engines[0])
+    print("Initialised bert LLM")
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
+    print("Subscribed---------------------------------------------------------")
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
@@ -93,11 +96,12 @@ async def start_llama_workflow(
         )
     )
 
-    check_message_states_task = asyncio.create_task(
-        check_message_states(config, resource_manager, [querent_task, token_feeder])
-    )
+    # check_message_states_task = asyncio.create_task(
+    #     check_message_states(config, resource_manager, [querent_task, token_feeder])
+    # )
 
-    await asyncio.gather(querent_task, token_feeder, check_message_states_task)
+    await asyncio.gather(querent_task, token_feeder)
+    print("Done engine workflow---------------------------------------")
 
 
 async def start_gpt_workflow(
@@ -133,13 +137,12 @@ async def receive_token_feeder(
     while not resource_manager.querent_termination_event.is_set():
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         if tokens is not None:
-            print("tokens received in python---------------------", tokens.get("data", None))
             ingested_tokens = IngestedTokens(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
             )
             await result_queue.put(ingested_tokens)
         else:
-            asyncio.sleep(60)
+            await asyncio.sleep(10)
     await result_queue.put(None)
 
 

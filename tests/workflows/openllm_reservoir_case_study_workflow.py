@@ -25,12 +25,12 @@
 # async def test_ingest_all_async():
 #     # Set up the collectors
 #     db_conn = DatabaseConnection(dbname="postgres", 
-#             user="querent", 
+#             user="postgres", 
 #             password="querent", 
 #             host="localhost", 
 #             port="5432")
 #     # ml_conn = MilvusDBConnection()
-#     directories = [ "/path/to/directory/"]
+#     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -59,7 +59,7 @@
 #     resource_manager = ResourceManager()
 #     bert_llm_config = LLM_Config(
 #     ner_model_name="botryan96/GeoBERT",
-#     rel_model_path="/model.gguf",
+#     rel_model_path="/home/nishantg/Downloads/openhermes-2.5-mistral-7b.Q5_K_M.gguf",
 #     enable_filtering=True,
 #     filter_params={
 #             'score_threshold': 0.5,
@@ -70,8 +70,8 @@
 #             'cluster_persistence_threshold':0.2
 #         }
 #             ,fixed_entities = [
-#                     "Reservoir", "Pore pressure", "Ground water",
-#                     "Carbonate rock", "Clastic rock", "Porosity", "Permeability",
+#                     "Reservoir",
+#                     "Carbonate", "Clastic", "Porosity", "Permeability",
 #                     "Oil saturation", "Water saturation", "Gas saturation",
 #                     "Depth", "Size", "Temperature",
 #                     "Pressure", "Oil viscosity", "Gas-oil ratio",
@@ -86,7 +86,7 @@
 #                 ]
 
 #             , sample_entities = [
-#                     "reservoir", "reservoir_property", "ground_water",
+#                     "reservoir",
 #                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
 #                     "reservoir_property", "reservoir_property", "reservoir_property",
 #                     "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic",
@@ -100,21 +100,21 @@
 #                     "environmental_aspect", "regulatory_aspect",
 #                     "economic_aspect", "economic_aspect"
 #                 ]
-#             , is_confined_search = True,
+#             , is_confined_search = True
 #             # , huggingface_token = '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'
-#             user_context = """Analyze the geological context and two specific entities within it to respond to the query below.
+#             , user_context = """Analyze the geological context and two specific entities within it to respond to the query below.
 # Context: {context}
 # Entities: {entity1}, {entity2}
 # Query: Identify the subject and object from the entities, based on the context, and determine the predicate linking them, utilizing a semantic triple framework (Subject, Predicate, Object). Also, classify the subject, object, and predicate according to geology-specific types.
 # Answer:"""
-#     )
+# )
 #     llm_instance = Fixed_Entities_LLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             # assert event_state.event_type == EventType.Graph
-#             if event_state["event_type"] == EventType.Graph :
-#                 triple = json.loads(event_state["payload"])
-#                 print("file---------------------",event_state["file"], "----------------", type(event_state["file"]))
+#             if event_state['event_type'] == EventType.Graph :
+#                 triple = json.loads(event_state['payload'])
+#                 print("file---------------------",event_state['file'], "----------------", type(event_state['file']))
 #                 print("triple: {}".format(triple))
 #                 graph_event_data = {
 #             'subject': triple['subject'],
@@ -124,9 +124,9 @@
 #             'predicate': triple['predicate'],
 #             'predicate_type': triple['predicate_type'],
 #             'sentence': triple['sentence'],
-#             'document_id': event_state["file"]
+#             'document_id': event_state['file']
 #         }
-#                 db_conn.insert_graph_event(graph_event_data)
+#                 # db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
 #             # else :
 #             #     vector_triple = json.loads(event_state.payload)

@@ -158,7 +158,6 @@ class IngestorFactoryManager:
                     if result_queue is not None:
                         result_queue.put_nowait(chunk_tokens)
                     if tokens_feader is not None:
-                        print("Sending tokens in rust-----------------------------------------------", chunk_tokens.data)
                         tokens_feader.send_tokens_in_rust(
                             {
                                 "data": (
@@ -170,6 +169,7 @@ class IngestorFactoryManager:
                                 "is_token_stream": True,
                             }
                         )
+                        await asyncio.sleep(1)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
