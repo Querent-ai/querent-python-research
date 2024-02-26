@@ -70,55 +70,44 @@
 #             'cluster_persistence_threshold':0.2
 #         }
 #             ,fixed_entities = [
-#                                 "Hadean", "Archean", "Proterozoic", "Phanerozoic",
-#                                 "Paleozoic", "Mesozoic", "Cenozoic",
-#                                 "Cambrian", "Ordovician", "Silurian", "Devonian", "Carboniferous", "Permian",
-#                                 "Triassic", "Jurassic", "Cretaceous",
-#                                 "Paleogene", "Neogene", "Quaternary",
-#                                 "Paleocene", "Eocene", "Oligocene",
-#                                 "Miocene", "Pliocene",
-#                                 "Pleistocene", "Holocene",
-#                                 "Anticline", "Syncline", "Fault", "Salt dome", "Horst", "Graben",
-#                                 "Reef", "Shoal", "Deltaic deposits", "Turbidite", "Channel sandstone",
-#                                 "Sandstone", "Limestone", "Dolomite", "Shale",
-#                                 "Source rock", "Cap rock", "Shale gas",
-#                                 "Crude oil", "Natural gas", "Shale oil", "Coalbed methane", "Tar sands", "Gas hydrates",
-#                                 "Structural trap", "Stratigraphic trap", "Combination trap", "Salt trap", "Unconformity trap",
-#                                 "Hydrocarbon migration", "Hydrocarbon accumulation",
-#                                 "Placer deposits", "Vein deposit", "Porphyry deposit", "Kimberlite pipe", "Laterite deposit",
-#                                 "Volcanic rock", "Basalt", "Geothermal gradient", "Sedimentology",
-#                                 "Paleontology", "Biostratigraphy", "Sequence stratigraphy", "Geophysical survey",
-#                                 "Magnetic anomaly", "Gravitational anomaly", "Petrology", "Geochemistry", "Hydrogeology"
-#                             ]
+#                     "Reservoir",
+#                     "Carbonate", "Clastic", "Porosity", "Permeability",
+#                     "Oil saturation", "Water saturation", "Gas saturation",
+#                     "Depth", "Size", "Temperature",
+#                     "Pressure", "Oil viscosity", "Gas-oil ratio",
+#                     "Water cut", "Recovery factor", "Enhanced recovery technique",
+#                     "Horizontal drilling", "Hydraulic fracturing", "Water injection", "Gas injection", "Steam injection",
+#                     "Seismic activity", "Structural deformation", "Faulting",
+#                     "Cap rock integrity", "Compartmentalization",
+#                     "Connectivity", "Production rate", "Depletion rate",
+#                     "Exploration technique", "Drilling technique", "Completion technique",
+#                     "Environmental impact", "Regulatory compliance",
+#                     "Economic analysis", "Market analysis"
+#                 ]
 
-#             , sample_entities=[
-#                                 "geological_eon", "geological_eon", "geological_eon", "geological_eon",
-#                                 "geological_era", "geological_era", "geological_era",
-#                                 "geological_period", "geological_period", "geological_period", "geological_period", "geological_period", "geological_period",
-#                                 "geological_period", "geological_period", "geological_period",
-#                                 "geological_period", "geological_period", "geological_period",
-#                                 "geological_epoch", "geological_epoch", "geological_epoch",
-#                                 "geological_epoch", "geological_epoch",
-#                                 "geological_epoch", "geological_epoch", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature",
-#                                 "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature",
-#                                 "rock_type", "rock_type", "rock_type", "rock_type",
-#                                 "rock_type", "rock_type", "hydrocarbon_source",
-#                                 "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon",
-#                                 "trap_type", "trap_type", "trap_type", "trap_type", "trap_type",
-#                                 "geological_process", "geological_process",
-#                                 "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit",
-#                                 "rock_type", "rock_type", "geological_process", "geological_discipline",
-#                                 "geological_discipline", "geological_method", "geological_method", "geological_method",
-#                                 "geophysical_feature", "geophysical_feature", "geological_discipline", "geological_discipline", "geological_discipline"
-#                             ]
+#             , sample_entities = [
+#                     "reservoir",
+#                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
+#                     "reservoir_property", "reservoir_property", "reservoir_property",
+#                     "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic",
+#                     "reservoir_characteristic", "reservoir_property", "reservoir_property",
+#                     "production_metric", "production_metric", "recovery_technique",
+#                     "drilling_technique", "recovery_technique", "recovery_technique", "recovery_technique", "recovery_technique",
+#                     "geological_feature", "geological_feature", "geological_feature",
+#                     "reservoir_feature", "reservoir_feature",
+#                     "reservoir_feature", "production_metric", "production_metric",
+#                     "exploration_method", "drilling_method", "completion_method",
+#                     "environmental_aspect", "regulatory_aspect",
+#                     "economic_aspect", "economic_aspect"
+#                 ]
 #             , is_confined_search = True
 #             # , huggingface_token = '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'
-#             , user_context = """Please analyze the provided context and two entities. Use this information to answer the users query below.
+#             , user_context = """Analyze the geological context and two specific entities within it to respond to the query below.
 # Context: {context}
-# Entity 1: {entity1} and Entity 2: {entity2}
-# Query: In the above geological reservoir studies context, determine which of the above entity is the subject and which is the object based on the context along with the predicate between these entities as per a semantic triple (Subject, Predicate & Object) framework. Please also identify the subject type, object type & predicate type.
+# Entities: {entity1}, {entity2}
+# Query: Identify the subject and object from the entities, based on the context, and determine the predicate linking them, utilizing a semantic triple framework (Subject, Predicate, Object). Also, classify the subject, object, and predicate according to geology-specific types.
 # Answer:"""
-#     )
+# )
 #     llm_instance = Fixed_Entities_LLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):

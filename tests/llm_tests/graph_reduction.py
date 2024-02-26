@@ -20,14 +20,22 @@ import pandas as pd
 import networkx as nx
 
 # Load the dataset
-file_path = '//home/nishantg/Downloads/graph_event (4).csv'
+file_path = '//home/nishantg/Downloads/neo4j_check.csv'
 data = pd.read_csv(file_path)
 
+print(len(data))
 # Create a directed graph from the dataset
 G = nx.from_pandas_edgelist(data, source='subject', target='object', edge_attr=True, create_using=nx.DiGraph())
-
+print("Number of Rows------",G.number_of_edges())
+for node, degree in dict(G.degree()).items():
+    print("Node: {}".format(node))
+    print("Degree: {}".format(degree))     
 # Define criteria for identifying transient nodes (example: nodes with a single connection)
-transient_nodes = [node for node, degree in dict(G.degree()).items() if degree <= 3]
+
+
+transient_nodes = [node for node, degree in dict(G.degree()).items() if degree > 2]
+print("correct_nodes    ",len(transient_nodes))
+
 
 # Remove transient nodes from the graph
 G_reduced = G.copy()
@@ -41,4 +49,4 @@ nodes_reduced = pd.DataFrame(list(G_reduced.nodes()), columns=['node'])
 edges_reduced.to_csv('/home/nishantg/Downloads/edges_reduced.csv', index=False)
 nodes_reduced.to_csv('/home/nishantg/Downloads/nodes_reduced.csv', index=False)
 
-# Note: Adjust the '/path/to/your/' in the file paths to your actual file locations.
+
