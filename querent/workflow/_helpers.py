@@ -33,7 +33,6 @@ def setup_nltk_and_spacy_paths(config, search_directory):
 
     
 async def start_collectors(config: Config):
-    print("In start_collectors--------------------")
     collectors = []
     for collector_config in config.collectors:
         uri = Uri(collector_config.uri)
