@@ -138,11 +138,6 @@ async def receive_token_feeder(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
             )
             await result_queue.put(ingested_tokens)
-
-        else:
-            ## wait 1 minute for system to process and then set termination event
-            await asyncio.sleep(60)
-            # resource_manager.querent_termination_event.set()
     await result_queue.put(None)
 
 
