@@ -42,8 +42,8 @@
 #     llm_instance = llm_class(input_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
-#             assert event_state.event_type == EventType.Graph
-#             triple = json.loads(event_state.payload)
+#             assert event_state['event_type'] == EventType.Graph
+#             triple = json.loads(event_state['payload'])
 #             print("triple: {}".format(triple))
 #             assert isinstance(triple['subject'], str) and triple['subject']
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())

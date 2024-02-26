@@ -93,11 +93,11 @@ async def start_llama_workflow(
         )
     )
 
-    check_message_states_task = asyncio.create_task(
-        check_message_states(config, resource_manager, [querent_task, token_feeder])
-    )
+    # check_message_states_task = asyncio.create_task(
+    #     check_message_states(config, resource_manager, [querent_task, token_feeder])
+    # )
 
-    await asyncio.gather(querent_task, token_feeder, check_message_states_task)
+    await asyncio.gather(querent_task, token_feeder)
 
 
 async def start_gpt_workflow(
@@ -130,7 +130,6 @@ async def start_gpt_workflow(
 async def receive_token_feeder(
     resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
 ):
-    await asyncio.sleep(120)
     while not resource_manager.querent_termination_event.is_set():
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         if tokens is not None:
@@ -138,6 +137,8 @@ async def receive_token_feeder(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
             )
             await result_queue.put(ingested_tokens)
+        else:
+            await asyncio.sleep(10)
     await result_queue.put(None)
 
 

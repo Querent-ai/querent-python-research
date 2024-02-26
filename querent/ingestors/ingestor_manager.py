@@ -169,6 +169,7 @@ class IngestorFactoryManager:
                                 "is_token_stream": True,
                             }
                         )
+                        await asyncio.sleep(1)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"

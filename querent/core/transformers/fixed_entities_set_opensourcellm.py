@@ -57,7 +57,8 @@ class Fixed_Entities_LLM(BaseEngine):
                                                 emb_model_name = config.emb_model_name,
                                                 is_confined_search = config.is_confined_search,
                                                 spacy_model_path = config.spacy_model_path,
-                                                nltk_path = config.nltk_path)
+                                                nltk_path = config.nltk_path,
+                                                )
             self.semantic_extractor = RelationExtractor(mock_config)
         self.graph_config = GraphConfig(identifier=config.name)
         self.contextual_graph = QuerentKG(self.graph_config)
@@ -65,6 +66,7 @@ class Fixed_Entities_LLM(BaseEngine):
         self.file_buffer = FileBuffer()
         self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
         self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model= "dummy")
+        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         huggingface_token = config.huggingface_token
         self.create_emb = EmbeddingStore(inference_api_key=huggingface_token)

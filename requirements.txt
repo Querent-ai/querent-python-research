@@ -38,7 +38,7 @@ pytest-cov==4.1.0
 pytest-mock==3.11.1
 tensorflow==2.14.0
 transformers==4.36.0
-torch==2.0.1
+torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu
 pypdf==4.0.2
 asyncio==3.4.3
 prometheus-client==0.17.1

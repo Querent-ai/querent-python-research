@@ -23,5 +23,5 @@ class UnsupportedIngestor(IngestorFactory):
     async def supports(self, file_extension: str) -> bool:
         return False
 
-    async def create(self, file_extension: str) -> Optional[BaseIngestor]:
+    async def create(self, file_extension: str, processors: List[AsyncProcessor]) -> Optional[BaseIngestor]:
         return None

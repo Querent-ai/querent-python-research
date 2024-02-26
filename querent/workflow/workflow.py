@@ -78,12 +78,12 @@ async def start_ingestion(config_dict: dict):
     )
 
     resource_manager = ResourceManager()
+    
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-    # check_message_states_task = asyncio.create_task(
-    #     check_message_states(config, resource_manager, [ingest_task])
-    # )
-    # await asyncio.gather(ingest_task, check_message_states_task)
-    await asyncio.gather(ingest_task)
+    check_message_states_task = asyncio.create_task(
+        check_message_states(config, resource_manager, [ingest_task])
+    )
+    await asyncio.gather(ingest_task, check_message_states_task)
 
 async def start_workflow_engine(config_dict: Config):
     if not config_dict:

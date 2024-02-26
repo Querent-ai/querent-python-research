@@ -42,7 +42,6 @@ requirements = [
     "pytest-cov==4.1.0",
     "pytest-mock==3.11.1",
     "tensorflow==2.14.0",
-    "torch==2.0.1",
     "transformers==4.36.0",
     "pypdf==4.0.2",
     "asyncio==3.4.3",
