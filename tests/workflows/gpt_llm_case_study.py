@@ -8,8 +8,8 @@
 # from querent.common.types.querent_event import EventState, EventType
 # from querent.config.collector.collector_config import FSCollectorConfig
 # from querent.common.uri import Uri
-# from querent.config.core.llm_config import LLM_Config
-# from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
+# from querent.config.core.gpt_llm_config import GPTConfig
+# from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
 # from querent.ingestors.ingestor_manager import IngestorFactoryManager
 # import pytest
 # import uuid
@@ -30,7 +30,7 @@
 #             host="localhost", 
 #             port="5432")
 #     # ml_conn = MilvusDBConnection()
-#     directories = [ "/path/to/files/"]
+#     directories = [ "/path/to/directory"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -55,11 +55,10 @@
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     print("Going to start ingesting now.......")
-#     await asyncio.gather(ingest_task)
 #     resource_manager = ResourceManager()
-#     bert_llm_config = LLM_Config(
+#     bert_llm_config = GPTConfig(
 #     ner_model_name="botryan96/GeoBERT",
-#     rel_model_path="/path/to/model/",
+#     rel_model_path="/path/to/model.gguf",
 #     enable_filtering=True,
 #     filter_params={
 #             'score_threshold': 0.5,
@@ -101,14 +100,13 @@
 #                     "economic_aspect", "economic_aspect"
 #                 ]
 #             , is_confined_search = True,
+#             openai_api_key = "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",
 #             # , huggingface_token = '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'
-#             user_context = """Analyze the geological context and two specific entities within it to respond to the query below.
-# Context: {context}
-# Entities: {entity1}, {entity2}
-# Query: Identify the subject and object from the entities, based on the context, and determine the predicate linking them, utilizing a semantic triple framework (Subject, Predicate, Object). Also, classify the subject, object, and predicate according to geology-specific types.
+#             user_context = """Query: The above context is from a geological research paper on reservoirs and the above entities and their respective types have already been identified.
+#             Please Identify the entity which is the subject and which is object from the above entities based on the context, and determine the predicate linking them, utilizing a semantic triple framework (Subject, Predicate, Object). Also, classify the predicate according to geology-specific types.
 # Answer:"""
 #     )
-#     llm_instance = Fixed_Entities_LLM(result_queue, bert_llm_config)
+#     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             # assert event_state.event_type == EventType.Graph
@@ -140,7 +138,7 @@
 #         resource_manager=resource_manager,
 #     )
 #     querent_task = asyncio.create_task(querent.start())
-#     await asyncio.gather(querent_task)
+#     await asyncio.gather(querent_task, ingest_task)
 #     db_conn.close()
 
 # if __name__ == "__main__":

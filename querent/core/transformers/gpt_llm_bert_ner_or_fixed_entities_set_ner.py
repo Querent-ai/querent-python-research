@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
@@ -55,9 +56,11 @@ class GPTLLM(BaseEngine):
             skip_inferences= True,
             is_confined_search = config.is_confined_search,
             huggingface_token = config.huggingface_token)
+            self.fixed_entities = config.fixed_entities
             self.is_confined_search = config.is_confined_search
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
+            self.user_context = config.user_context
             if self.fixed_relationships and not self.sample_relationships:
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
@@ -101,6 +104,19 @@ class GPTLLM(BaseEngine):
             return False
 
         return True
+    def extract_semantic_triples(self, chat_completion):
+    # Extract the message content from the ChatCompletion
+        message_content = chat_completion.choices[0].message.content.replace('\n', '')
+
+        # Parse the JSON content into a Python list
+        try:
+            triples_list = eval(message_content)
+            if not isinstance(triples_list, list):
+                raise ValueError("Content is not a list")
+        except Exception as e:
+            raise ValueError(f"Error parsing content: {e}")
+
+        return triples_list
 
     @staticmethod
     def remove_items_from_tuples(data: List[Tuple[str, str, str]]) -> List[Tuple[str, str, str]]:
@@ -118,100 +134,78 @@ class GPTLLM(BaseEngine):
         return result
     
     async def process_triples(self, context, entity1, entity2, entity1_label, entity2_label):
-        try:
-            classify_entity_function = self.function_registry.get_classifyentity_function()
-            predicate_info_function = self.function_registry.get_predicate_info_function()
-            classify_entity_message = f"""Please analyze the provided context and two specified entities to identify the roles and types of these entities. These entities will be used to construct a semantic triple. A semantic triple is a structure used in semantic analysis and consists of three parts: a subject, a predicate, and an object. The subject is the main entity being discussed, the predicate is the action or relationship that connects the subject and object, and the object is the entity that is affected by or related to the subject. Use this information to the answer the user's query.
-Context: {context} 
-Entity 1: {entity1} and Entity 2: {entity2}
-"""
-            messages_classify_entity = [
-                    {"role": "user", "content": classify_entity_message},
-                    {"role": "user", "content": f"Query: Determine which entity is the subject and its respective type or category, also which entity is the object and its type or category e.g. location, time-period, rock, fossil , person, event, material, process etc."}
-                    
-                ]             
-            classify_entity_response = self.generate_response(
-                messages_classify_entity,
-                classify_entity_function,
-                "classify_entities"
-            )
-            subject_info = self.extract_subject_object_info(classify_entity_response)
-            identify_predicate_message = f"Given the context, please identify the predicate between the subject '{subject_info['subject']}' and the object '{subject_info['object']}' and determine the predicate type e.g. causative, action, ownership, occurance etc."
-            messages_identify_predicate = [
-                                                {"role": "system", "content": identify_predicate_message},
-                                                {"role": "user", "content": f"Context: {context}"}
-                                            ]
+        try: 
+            if not self.user_context:
+                identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
+        
+                    Context: {context}
+                    Entity 1: {entity1} and Entity 2: {entity2}
+                    Output Format:
+                    [
+                        {{
+                            'subject': 'Identified as the main entity in the context, typically the initiator or primary focus of the action or topic being discussed.',
+                            'predicate': 'The relationship (predicate) between the subject and the object.',
+                            'object': 'This parameter represents the entity in the context directly impacted by or involved in the action, typically the recipient or target of the main verb's action.',
+                            'subject_type': 'The category of the subject entity e.g. location, person, event, material, process etc.',
+                            'object_type': 'The category of the object entity e.g. location, person, event, material, process etc.',
+                            'predicate_type': 'The category of the predicate e.g. causative, action, ownership, occurance etc.'
+                        }},
+                    ]
+                    """
+                messages_classify_entity = [
+                    {"role": "user", "content": identify_entity_message},
+                    {"role": "user", "content": "Query: First, identify all geological entities in the provided context. Then, create relevant semantic triples (Subject, Predicate, Object) and also categorize the respective the Subject, Object types (e.g. location, person, event, material, process etc.) and Predicate type. Use the above output format to provide all the relevant semantic triples."},
+                ]
+            else :
+                identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
+        
+                    Context: {context}
+                    Entity 1: {entity1} and Entity 2: {entity2}
+                    Entity 1_Type: {entity1_label} and Entity 2_Type: {entity2_label}
+                    Output Format:
+                    [
+                        {{
+                            'subject': 'Identified as the main entity in the context, typically the initiator or primary focus of the action or topic being discussed.',
+                            'predicate': 'The relationship (predicate) between the subject and the object.',
+                            'object': 'This parameter represents the entity in the context directly impacted by or involved in the action, typically the recipient or target of the main verb's action.',
+                            'subject_type': 'The category of the subject entity e.g. location, person, event, material, process etc.',
+                            'object_type': 'The category of the object entity e.g. location, person, event, material, process etc.',
+                            'predicate_type': 'The category of the predicate e.g. causative, action, ownership, occurance etc.'
+                        }},
+                    ]
+                    """
+                messages_classify_entity = [
+                    {"role": "user", "content": identify_entity_message},
+                    {"role": "user", "content": self.user_context},
+                ]
             identify_predicate_response = self.generate_response(
-                messages_identify_predicate,
-                predicate_info_function,
+                messages_classify_entity,
                 "predicate_info"
             )
-            predicate_info = self.extract_predicate_info(identify_predicate_response)
-            if not self.is_confined_search:
+            semantic_triples = self.extract_semantic_triples(identify_predicate_response)
+            if len(semantic_triples)>0:
                 return {
-                    'subject_type': subject_info['subject_type'],
-                    'subject': subject_info['subject'],
-                    'object_type': subject_info['object_type'],
-                    'object': subject_info['object'],
-                    'predicate': predicate_info['predicate'],
-                    'predicate_type': predicate_info['predicate_type']
-                }
-            else:
-                if subject_info['subject'].lower() in entity1.lower() or entity1.lower() in subject_info['subject'].lower() or entity1.lower() == subject_info['subject'].lower():
-                    return {
-                    'subject_type': entity1_label,
-                    'subject': subject_info['subject'],
-                    'object_type': entity2_label,
-                    'object': subject_info['object'],
-                    'predicate': predicate_info['predicate'],
-                    'predicate_type': predicate_info['predicate_type']
-                }
-                else:
-                    return {
-                    'subject_type': entity2_label,
-                    'subject': subject_info['subject'],
-                    'object_type': entity1_label,
-                    'object': subject_info['object'],
-                    'predicate': predicate_info['predicate'],
-                    'predicate_type': predicate_info['predicate_type']
-                }
+                    'subject_type': semantic_triples[0]['subject_type'].lower().replace(" ", "_"),
+                    'subject': semantic_triples[0]['subject'].lower(),
+                    'object_type': semantic_triples[0]['object_type'].lower().replace(" ", "_"),
+                    'object': semantic_triples[0]['object'].lower(),
+                    'predicate': semantic_triples[0]['predicate'].lower(),
+                    'predicate_type': semantic_triples[0]['predicate_type'].lower().replace(" ", "_")
+                }   
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process triples using GPT. {e}")
 
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-    @retry(wait=wait_fixed(60), stop=stop_after_attempt(3))
     def completion_with_backoff(self, **kwargs):
         return self.gpt_llm.chat.completions.create(**kwargs)
     
-    def generate_response(self, messages, functions, name):
+    def generate_response(self, messages, name):
         response = self.completion_with_backoff(
             model=self.rel_model_name,
             messages=messages,
-            temperature=0,
-            tools=functions,
-            tool_choice="auto"
+            temperature=0
         )
         return response
-
-    def extract_subject_object_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-        if not function_call_arguments.get("subject") or not function_call_arguments.get("object"):
-                raise ValueError("Missing 'subject',  or 'object' in llm output")
-        return {
-            'subject_type': function_call_arguments.get("subject_type", "Unlabeled"),
-            'subject': function_call_arguments.get("subject"),
-            'object_type': function_call_arguments.get("object_type", "Unlabeled"),
-            'object': function_call_arguments.get("object")
-        }
-
-    def extract_predicate_info(self, response):
-        function_call_arguments = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-        if not function_call_arguments.get("predicate"):
-                raise ValueError("Missing 'predicate' in llm output")
-        return {
-            'predicate': function_call_arguments.get("predicate"),
-            'predicate_type': function_call_arguments.get("predicate_type", "Unlabeled")
-        }
 
     def generate_output_tuple(self,result, context_json):
         context_data = json.loads(context_json)
