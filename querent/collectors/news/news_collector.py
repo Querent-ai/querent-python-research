@@ -32,7 +32,6 @@ class NewsCollector(Collector):
             try:
                 response = self.newsapi.get_everything(
                     q=self.config.query,
-                    search_in=self.config.search_in,
                     sources=self.config.sources,
                     domains=self.config.domains,
                     exclude_domains=self.config.exclude_domains,

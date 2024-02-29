@@ -346,7 +346,6 @@ class NewsCollectorConfig(CollectorConfig):
     id: str
     api_key: str
     query: str
-    search_in: str = "title,description,content"
     sources: str = None
     domains: str = None
     exclude_domains: str = None
@@ -361,7 +360,7 @@ class NewsCollectorConfig(CollectorConfig):
         if config_source is None:
             config_source = {}
         elif "config" in config_source:
-            extended_config = config_source.pop("config")
+            extended_config = config_source.get("config")
             config_source.update(extended_config)
 
         super().__init__(config_source=config_source, **kwargs)

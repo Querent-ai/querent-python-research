@@ -1,6 +1,7 @@
 import asyncio
 import pytest
 import os
+import uuid
 from querent.collectors.news.news_collector import NewsCollector
 from querent.common.uri import Uri
 from querent.config.collector.collector_config import NewsCollectorConfig
@@ -14,6 +15,8 @@ def news_collector_config():
     # Example configuration for collecting news about "technology"
     return NewsCollectorConfig(
         config_source={
+        "id": str(uuid.uuid4()),
+        "name": "News API",
         "api_key":NEWS_API_KEY,
         "query":"technology",
         "from_date":"2024-02-01",
