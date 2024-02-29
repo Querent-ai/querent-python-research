@@ -4,6 +4,7 @@ import os
 from querent.collectors.news.news_collector import NewsCollector
 from querent.common.uri import Uri
 from querent.config.collector.collector_config import NewsCollectorConfig
+from querent.collectors.collector_resolver import CollectorResolver
 
 # Assuming you've set your News API key in an environment variable called NEWS_API_KEY
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
@@ -12,20 +13,26 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 def news_collector_config():
     # Example configuration for collecting news about "technology"
     return NewsCollectorConfig(
-        api_key=NEWS_API_KEY,
-        query="technology",
-        from_date="2024-02-01",
-        to_date="2024-02-28",
-        language="en",
-        sort_by="publishedAt",
-        page_size=5,
-        page=1
+        config_source={
+        "api_key":NEWS_API_KEY,
+        "query":"technology",
+        "from_date":"2024-02-01",
+        "to_date":"2024-02-28",
+        "language":"en",
+        "sort_by":"publishedAt",
+        "page_size":5,
+        "page":1,
+        "config": {},
+        "uri": "news://"
+        }
     )
 
 @pytest.mark.asyncio
 async def test_news_collector_real_request(news_collector_config):
     # Initialize the collector with the real API key and configuration
-    collector = NewsCollector(config=news_collector_config)
+    uri = Uri("news://")
+    resolver = CollectorResolver()
+    collector = resolver.resolve(uri, news_collector_config)
     await collector.connect()
 
     # Poll the collector and verify the response
