@@ -19,6 +19,7 @@ class CollectorBackend(str, Enum):
     Drive = "drive"
     Email = "email"
     Jira = "jira"
+    News = "news"
 
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
@@ -327,6 +328,36 @@ class JiraCollectorConfig(CollectorConfig):
                 if hasattr(self, key):
                     setattr(self, key, value)
 
+from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
+
+class NewsCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.News
+    id: str
+    api_key: str
+    query: str
+    search_in: str = "title,description,content"
+    sources: str = None
+    domains: str = None
+    exclude_domains: str = None
+    from_date: str
+    to_date: str
+    language: str = "en"
+    sort_by: str = "publishedAt"
+    page_size: int = 100
+    page: int = 1
+
+    def __init__(self, config_source=None, **kwargs):
+        super().__init__(config_source=config_source, **kwargs)
+        if config_source and "config" in config_source:
+            extended_config = config_source["config"]
+            config_source.update(extended_config)
+            for key, value in extended_config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
 
 colectorconfig_factories = {
         CollectorBackend.LocalFile: FSCollectorConfig,
@@ -340,7 +371,9 @@ colectorconfig_factories = {
         CollectorBackend.S3: S3CollectConfig,
         CollectorBackend.WebScraper: WebScraperConfig,
         CollectorBackend.Slack: SlackCollectorConfig,
+        CollectorBackend.News: NewsCollectorConfig,
     }
+
 
 uri_backend_mapping = {
     "localfile": "file://",
@@ -354,4 +387,5 @@ uri_backend_mapping = {
     "drive": "drive://",
     "email": "email://",
     "jira": "jira://",
+    "news": "news://",
 }
