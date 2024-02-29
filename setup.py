@@ -76,6 +76,7 @@ requirements = [
     "langchain-community==0.0.16",
     "langchain==0.1.4",
     "openai==1.12.0",
+    "newsapi-python==0.2.7",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -83,7 +84,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.0.8",
+    version="1.1.1",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
@@ -115,6 +116,28 @@ setup(
         "Queues",
         "QuiAssisstant",
         "Collectors",
+        "Data",
+        "Data Science",
+        "Data Engineering",
+        "Data Analysis",
+        "Data Analytics",
+        "News",
+        "NLP",
+        "Natural Language Processing",
+        "Text",
+        "Text Analysis",
+        "Deep Learning",
+        "Graphs",
+        "Graph Theory",
+        "Graph Algorithms",
+        "Graph Analytics",
+        "Graph Databases",
+        "Graph Processing",
+        "Graph Mining",
+        "Graph Neural Networks",
+        "GNN",
+        "GNNs",
+        "Graph Neural Network",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

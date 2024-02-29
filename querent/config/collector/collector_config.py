@@ -19,6 +19,7 @@ class CollectorBackend(str, Enum):
     Drive = "drive"
     Email = "email"
     Jira = "jira"
+    News = "news"
 
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
@@ -32,8 +33,8 @@ class CollectorConfig(BaseModel):
     config_source: Optional[Any]
 
     def __init__(self, config_source=None, **kwargs):
-         
-         if config_source:
+
+        if config_source:
             config_data = self.load_config(config_source)
 
             if "uri" not in config_data or not config_data["uri"]:
@@ -111,10 +112,11 @@ class FSCollectorConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     # Custom validator for ChannelCommandInterface
     @validator("channel", pre=True, allow_reuse=True)
@@ -143,11 +145,12 @@ class AzureCollectConfig(CollectorConfig):
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
-            config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+            config_source.update(extended_config)
+ 
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class S3CollectConfig(CollectorConfig):
@@ -163,10 +166,11 @@ class S3CollectConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class GcsCollectConfig(CollectorConfig):
@@ -180,10 +184,11 @@ class GcsCollectConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class SlackCollectorConfig(CollectorConfig):
@@ -201,10 +206,11 @@ class SlackCollectorConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class DropboxConfig(CollectorConfig):
@@ -220,10 +226,11 @@ class DropboxConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class GithubConfig(CollectorConfig):
@@ -237,10 +244,11 @@ class GithubConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class WebScraperConfig(CollectorConfig):
@@ -252,10 +260,11 @@ class WebScraperConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class DriveCollectorConfig(CollectorConfig):
@@ -274,10 +283,11 @@ class DriveCollectorConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class EmailCollectorConfig(CollectorConfig):
@@ -295,10 +305,11 @@ class EmailCollectorConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class JiraCollectorConfig(CollectorConfig):
@@ -322,10 +333,44 @@ class JiraCollectorConfig(CollectorConfig):
         if config_source and "config" in config_source:
             extended_config = config_source["config"]
             config_source.update(extended_config) 
-            super().__init__(config_source=config_source, **kwargs)
-            for key, value in extended_config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
+
+class NewsCollectorConfig(CollectorConfig):
+    backend: CollectorBackend = CollectorBackend.News
+    id: str
+    api_key: str
+    query: str
+    sources: str = None
+    domains: str = None
+    exclude_domains: str = None
+    from_date: str
+    to_date: str
+    language: str = "en"
+    sort_by: str = "publishedAt"
+    page_size: int = 100
+    page: int = 1
+
+    def __init__(self, config_source=None, **kwargs):
+        if config_source is None:
+            config_source = {}
+        elif "config" in config_source:
+            extended_config = config_source.get("config")
+            config_source.update(extended_config)
+
+        super().__init__(config_source=config_source, **kwargs)
+        for key, value in extended_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 colectorconfig_factories = {
@@ -340,7 +385,9 @@ colectorconfig_factories = {
         CollectorBackend.S3: S3CollectConfig,
         CollectorBackend.WebScraper: WebScraperConfig,
         CollectorBackend.Slack: SlackCollectorConfig,
+        CollectorBackend.News: NewsCollectorConfig,
     }
+
 
 uri_backend_mapping = {
     "localfile": "file://",
@@ -354,4 +401,5 @@ uri_backend_mapping = {
     "drive": "drive://",
     "email": "email://",
     "jira": "jira://",
+    "news": "news://",
 }

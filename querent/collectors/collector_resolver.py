@@ -10,6 +10,7 @@ from querent.collectors.slack.slack_collector import SlackCollectorFactory
 from querent.collectors.dropbox.dropbox_collector import DropBoxCollectorFactory
 from querent.collectors.github.github_collector import GithubCollectorFactory
 from querent.collectors.drive.google_drive_collector import DriveCollectorFactory
+from querent.collectors.news.news_collector import NewsCollectorFactory
 from querent.config.collector.collector_config import CollectorConfig, CollectorBackend
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_errors import (
@@ -33,6 +34,7 @@ class CollectorResolver:
             CollectorBackend.Drive: DriveCollectorFactory(),
             CollectorBackend.Email: EmailCollectorFactory(),
             CollectorBackend.Jira: JiraCollectorFactory(),
+            CollectorBackend.News: NewsCollectorFactory(),
             # Add other collector factories as needed
         }
 
@@ -79,6 +81,8 @@ class CollectorResolver:
             return CollectorBackend.Email
         elif protocol.is_jira():
             return CollectorBackend.Jira
+        elif protocol.is_news():
+            return CollectorBackend.News
         else:
             raise CollectorResolverError(
                 CollectorErrorKind.NotSupported, "Unknown backend"
