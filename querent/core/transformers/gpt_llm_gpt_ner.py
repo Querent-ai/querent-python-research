@@ -152,6 +152,9 @@ class GPTNERLLM(BaseEngine):
             distance = calculate_distance(tokenized_context, subject, object)
             
             if distance <= max_distance:
+                if (triple.get("subject") is None or triple.get("subect") == "") or (triple.get("object") is None or triple.get("object") == "") or (triple.get("subject_type") is None or triple.get("subject_type") == "") or (triple.get("object_type") is None or triple.get("object_type") == "") or (triple.get("predicate") is None or triple.get("predicate") == "") or (triple.get("predicate_type") is None or triple.get("predicate_type") == ""):
+                    self.logger.info(f"Received none while creating semantic triples")
+                    continue
                 triple['subject'] = subject
                 triple['object'] = object
                 triple['subject_type'] = triple['subject_type'].lower().replace(" ", "_")
@@ -183,6 +186,7 @@ class GPTNERLLM(BaseEngine):
 
             if data.data:
                 clean_text = ' '.join(data.data)
+                #clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 

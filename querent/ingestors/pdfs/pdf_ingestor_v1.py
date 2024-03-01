@@ -98,6 +98,7 @@ class PdfIngestor(BaseIngestor):
 
                 processed_text = await self.process_data(text)
 
+                print("File-----------------------", collected_bytes.file)
                 # Yield processed text as IngestedTokens
                 yield IngestedTokens(
                     file=collected_bytes.file,
