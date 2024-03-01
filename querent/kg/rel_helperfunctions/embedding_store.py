@@ -151,7 +151,11 @@ class EmbeddingStore:
             processed_pairs = []
 
             for entity, json_string, related_entity in triples:
-                data = json.loads(json_string)
+                json_string = json_string.replace("\n", "\\n").replace("\t", "\\t")
+                try:
+                    data = json.loads(str(json_string))
+                except json.JSONDecodeError as e:
+                    self.logger.error(f"JSON parsing error: {e} in string: {json_string}")
                 context = data.get("context", "")
                 predicate = data.get("predicate","")
                 predicate_type = data.get("predicate_type","Unlabeled")
@@ -173,6 +177,5 @@ class EmbeddingStore:
 
         except Exception as e:
             self.logger.error(f"Error in extracting embeddings: {e}")
-            raise Exception(f"Error in extracting embeddings: {e}")
 
     

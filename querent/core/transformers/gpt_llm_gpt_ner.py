@@ -182,8 +182,7 @@ class GPTNERLLM(BaseEngine):
                     return 
 
             if data.data:
-                single_string = ' '.join(data.data)
-                clean_text = unidecode(single_string)
+                clean_text = ' '.join(data.data)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
