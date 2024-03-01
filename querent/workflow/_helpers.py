@@ -9,6 +9,7 @@ from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.core.transformers.gpt_llm_gpt_ner import GPTNERLLM
+from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
 from querent.common.types.querent_event import EventType
 from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
@@ -105,8 +106,9 @@ async def start_gpt_workflow(
 ):
     search_directory = os.getenv('MODEL_PATH', '/model/')
     setup_nltk_and_spacy_paths(config, search_directory)
-    llm_instance = GPTNERLLM(result_queue, config.engines[0])
-
+    # llm_instance = GPTNERLLM(result_queue, config.engines[0])
+    llm_instance = GPTLLM(result_queue, config.engines[0])
+    
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
     querent = Querent(
         [llm_instance],

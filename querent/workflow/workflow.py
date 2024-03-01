@@ -1,6 +1,7 @@
 """File to start workflow"""
 
 import asyncio
+import json
 from querent.common.types.querent_queue import QuerentQueue
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
@@ -17,6 +18,14 @@ from querent.workflow._helpers import *
 async def start_workflow(config_dict: dict):
     # Start the workflow
     workflow_config = config_dict.get("workflow")
+    engine_params = workflow_config.get("config").get("engine_params", None)
+    is_engine_params = False
+    try:
+        if engine_params is not None:
+            engine_params = json.loads(engine_params)
+            is_engine_params = True
+    except Exception as e:
+        print("Got error while loading engine params: ", e)
     workflow = WorkflowConfig(config_source=workflow_config)
     collector_configs = config_dict.get("collectors", [])
     collectors = []
@@ -26,11 +35,13 @@ async def start_workflow(config_dict: dict):
     engine_configs = config_dict.get("engines", [])
     engines = []
     for engine_config in engine_configs:
+        if is_engine_params:
+            engine_config.update(engine_params)
         engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
-            engines.append(GPTConfig(config_source=engine_config_source))
+            engines.append(GPTConfig(config_source=engine_config))
         elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
-            engines.append(LLM_Config(config_source=engine_config_source))
+            engines.append(LLM_Config(config_source=engine_config))
     config_dict["engines"] = engines
     config_dict["collectors"] = collectors
     config_dict["workflow"] = workflow

@@ -55,22 +55,29 @@
 
 # # Function to standardize geologic time
 # def standardize_geologic_time(value, classification):
-#     # Convert the value to lower case and check if it is in the classification dictionary
-#     if isinstance(value,str):
+#     if isinstance(value, str):
 #         value_lower = value.lower()
-#         if value_lower in classification:
-#             # If the value is found in the dictionary, return the corresponding classification
-#             return classification[value_lower]
-#         else:
-#             # If not found, return the original value
-#             return value
+#         for key in classification:
+#             if key in value_lower:  # Check if the classification key is a substring of the value_lower
+#                 print("Value---", value_lower)
+#                 print("Class--- ", classification[key])
+#                 return classification[key]
+#     return None
 
-# # Apply the function to 'subject_type' and 'object_type'
-# data['subject_type'] = data['subject'].apply(standardize_geologic_time, args=(geologic_time_classification,))
-# data['object_type'] = data['object'].apply(standardize_geologic_time, args=(geologic_time_classification,))
+# # Assuming 'data' is a pandas DataFrame and you have 'subject', 'object', 'subject_type', and 'object_type' columns
+# # Apply the function to 'subject' and 'object', and temporarily store the results
+# data['temp_subject_type'] = data['subject'].apply(lambda x: standardize_geologic_time(x, geologic_time_classification))
+# data['temp_object_type'] = data['object'].apply(lambda x: standardize_geologic_time(x, geologic_time_classification))
+
+# # Update 'subject_type' and 'object_type' only where 'temp_subject_type' and 'temp_object_type' are not None
+# data['subject_type'] = data.apply(lambda row: row['temp_subject_type'] if row['temp_subject_type'] is not None else row['subject_type'], axis=1)
+# data['object_type'] = data.apply(lambda row: row['temp_object_type'] if row['temp_object_type'] is not None else row['object_type'], axis=1)
+
+# # Drop the temporary columns
+# data.drop(['temp_subject_type', 'temp_object_type'], axis=1, inplace=True)
 
 # # Save the cleaned data
-# cleaned_file_path = '/home/nishantg/Downloads/cleaned_graph_event.csv'
+# cleaned_file_path = '/home/nishantg/querent-main/querent/tests/data/llm/cleaned_graph_event (copy).csv'
 # data.to_csv(cleaned_file_path, index=False)
 
-# print(f"Data cleaning complete. The cleaned data has been saved to: {cleaned_file_path}")
+# # print(f"Data cleaning complete. The cleaned data has been saved to: {cleaned_file_path}")
