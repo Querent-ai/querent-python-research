@@ -6,6 +6,7 @@ from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtract
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
+from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
 from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
@@ -55,18 +56,22 @@ class GPTLLM(BaseEngine):
             fixed_entities = config.fixed_entities,
             skip_inferences= True,
             is_confined_search = config.is_confined_search,
-            huggingface_token = config.huggingface_token)
+            huggingface_token = config.huggingface_token,
+            spacy_model_path = config.spacy_model_path,
+            nltk_path = config.nltk_path)
             self.fixed_entities = config.fixed_entities
             self.is_confined_search = config.is_confined_search
             self.fixed_relationships = config.fixed_relationships
             self.sample_relationships = config.sample_relationships
             self.user_context = config.user_context
+            self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
+            self.nlp_model = NER_LLM.get_class_variable()
             if self.fixed_relationships and not self.sample_relationships:
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships)
+                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,  model = self.nlp_model)
             elif self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships)
+                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,  model = self.nlp_model)
             else:
                 self.predicate_context_extractor = None
             self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
@@ -156,7 +161,7 @@ class GPTLLM(BaseEngine):
                     {"role": "user", "content": identify_entity_message},
                     {"role": "user", "content": "Query: First, identify all geological entities in the provided context. Then, create relevant semantic triples (Subject, Predicate, Object) and also categorize the respective the Subject, Object types (e.g. location, person, event, material, process etc.) and Predicate type. Use the above output format to provide all the relevant semantic triples."},
                 ]
-            else :
+            elif self.user_context and self.fixed_entities :
                 identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
         
                     Context: {context}

@@ -35,13 +35,13 @@ async def start_workflow(config_dict: dict):
     engine_configs = config_dict.get("engines", [])
     engines = []
     for engine_config in engine_configs:
-        if engine_params is not None and is_engine_params:
+        if is_engine_params:
             engine_config.update(engine_params)
         engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
-            engines.append(GPTConfig(config_source=engine_config_source))
+            engines.append(GPTConfig(config_source=engine_config))
         elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
-            engines.append(LLM_Config(config_source=engine_config_source))
+            engines.append(LLM_Config(config_source=engine_config))
     config_dict["engines"] = engines
     config_dict["collectors"] = collectors
     config_dict["workflow"] = workflow
@@ -58,7 +58,6 @@ async def start_workflow(config_dict: dict):
     engine_tasks = asyncio.create_task(
         workflow(ResourceManager(), config, result_queue)
     )
-    print("Starting workflows--------------------------------------")
     await asyncio.gather(collector_tasks, engine_tasks)
     print("Workflow is finished. All events have been released.")
 

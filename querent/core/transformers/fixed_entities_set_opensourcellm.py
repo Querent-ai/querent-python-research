@@ -145,7 +145,8 @@ class Fixed_Entities_LLM(BaseEngine):
                     return
             if data.data:
                 single_string = ' '.join(data.data)
-                clean_text = unidecode(single_string)
+                clean_text = single_string
+                # clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 

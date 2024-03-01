@@ -151,27 +151,29 @@ class EmbeddingStore:
             processed_pairs = []
 
             for entity, json_string, related_entity in triples:
-                json_string = json_string.replace("\n", "\\n").replace("\t", "\\t")
+                json_string = json_string.replace("\\n", " ").replace("\\t", " ")
+                json_string = json_string.replace("\n", " ").replace("\t", " ")
+                
                 try:
                     data = json.loads(str(json_string))
+                    context = data.get("context", "")
+                    predicate = data.get("predicate","")
+                    predicate_type = data.get("predicate_type","Unlabeled")
+                    subject_type = data.get("subject_type","Unlabeled")
+                    object_type = data.get("object_type","Unlabeled")
+                    context_embeddings = self.get_embeddings([context])[0]
+                    essential_data = {
+                        "context": context,
+                        "context_embeddings" : context_embeddings,
+                        "predicate_type": predicate_type,
+                        "predicate" : predicate,
+                        "subject_type": subject_type,
+                        "object_type": object_type
+                    }
+                    updated_json_string = json.dumps(essential_data)
+                    processed_pairs.append((entity, updated_json_string, related_entity))
                 except json.JSONDecodeError as e:
                     self.logger.error(f"JSON parsing error: {e} in string: {json_string}")
-                context = data.get("context", "")
-                predicate = data.get("predicate","")
-                predicate_type = data.get("predicate_type","Unlabeled")
-                subject_type = data.get("subject_type","Unlabeled")
-                object_type = data.get("object_type","Unlabeled")
-                context_embeddings = self.get_embeddings([context])[0]
-                essential_data = {
-                    "context": context,
-                    "context_embeddings" : context_embeddings,
-                    "predicate_type": predicate_type,
-                    "predicate" : predicate,
-                    "subject_type": subject_type,
-                    "object_type": object_type
-                }
-                updated_json_string = json.dumps(essential_data)
-                processed_pairs.append((entity, updated_json_string, related_entity))
 
             return processed_pairs
 

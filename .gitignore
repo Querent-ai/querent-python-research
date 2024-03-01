@@ -190,3 +190,14 @@ tests/openhermes-2.5-mistral-7b.Q5_K_M.gguf
 querent/storage/*
 tests/workflows/openllm_case_study_workflow.py
 
+
+tests/openhermes-2.5-mistral-7b.Q5_K_M.gguf
+querent/storage/*
+tests/workflows/openllm_case_study_workflow.py
+lib/bindings/utils.js
+lib/tom-select/tom-select.complete.min.js
+lib/tom-select/tom-select.css
+lib/vis-9.1.2/vis-network.css
+lib/vis-9.1.2/vis-network.min.js
+tests/data/llm/cleaned_graph_event (copy).csv
+tests/data/llm/cleaned_graph_event1.csv
