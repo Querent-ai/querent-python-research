@@ -36,7 +36,7 @@ async def start_workflow(config_dict: dict):
     engines = []
     for engine_config in engine_configs:
         if engine_params is not None and is_engine_params:
-            engine_config.append(engine_params)
+            engine_config.update(engine_params)
         engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
             engines.append(GPTConfig(config_source=engine_config_source))
