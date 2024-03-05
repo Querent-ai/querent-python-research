@@ -1,19 +1,84 @@
-## Notes
-# similar to start_workflow we have start_graph_query_engine
-# Which takes a config as input and has neo4j storage info Neo4jGraphStore
-# implement 
-# graph_rag_retriever = KnowledgeGraphRAGRetriever(
-#     storage_context=storage_context,
-#     verbose=True,
-# )
+import asyncio
+from typing import List, Optional
+import time
 
-# query_engine = RetrieverQueryEngine.from_args(
-#     graph_rag_retriever,
-# )
+from querent.common.types.querent_queue import QuerentQueue
+from querent.querent.resource_manager import ResourceManager
+from querent.common.types.querent_event import EventState, EventType
+from querent.common.types.ingested_tokens import IngestedTokens
+from querent.query.neo4j_query import Neo4jConnection
 
-# input config also has our token feader where the input query will come
-# whenever a query is received in token feader we pass it through the query engine
-# and the result is sent via event_handler as EventType- QueryResult
-# where file = actual query and payload is the result from query engine
 
-## So this will expose querent's capability to do graph queries via neo4j using graphRag
+async def start_graph_query_engine(config_dict: dict):
+    query_queue = QuerentQueue()
+    resource_manager = ResourceManager()
+    receive_token_feeder_task = asyncio.create_task(receive_token_feeder(config=config_dict, resource_manager=resource_manager, query_queue=query_queue))
+    check_message_states_task = asyncio.create_task(check_message_states(config=config_dict, resource_manager=resource_manager, query_queue=query_queue))
+
+    rag_task = asyncio.create_task(process_query1(config_dict, resource_manager, query_queue))
+    await asyncio.gather(rag_task, receive_token_feeder_task, check_message_states_task)
+
+
+async def receive_token_feeder(
+    config: dict,
+    resource_manager: ResourceManager,
+    query_queue: QuerentQueue
+):
+    #for this to terminate, channel input
+    while not resource_manager.querent_termination_event.is_set():
+        query = config["tokens_feader"].receive_tokens_in_python()
+        if query is not None:
+            ingested_tokens = IngestedTokens(
+                file=query.get("file", None), data=query.get("data", None), is_token_stream= query.get("is_token_stream"), 
+            )
+            await query_queue.put(ingested_tokens)
+        else:
+            await asyncio.sleep(10)
+
+
+
+async def check_message_states(
+    config: dict,
+    resource_manager: ResourceManager,
+    tasks_to_kill: Optional[List[asyncio.Task]] = None,
+):
+    while not resource_manager.querent_termination_event.is_set():
+        message_state = config["channel"].receive_in_python()
+        if message_state is not None:
+            message_type = message_state["message_type"]
+            if message_type.lower() == "stop" or message_type.lower() == "terminate":
+                print("🛑 Received stop signal. Exiting...")
+                resource_manager.querent_termination_event.set()
+                if tasks_to_kill is not None:
+                    for task in tasks_to_kill:
+                        task.cancel()
+                break
+            else:
+                print("📬 Received message of type: " + message_type)
+                # Handle other message types...
+        await asyncio.sleep(60)
+    print("🛑 Received stop signal. Exiting...")
+
+
+
+async def process_query1(config_dict: dict, resource_manager: ResourceManager, query_queue: QuerentQueue):
+    uri = config_dict.get("uri")
+    user = config_dict.get("user")
+    pwd = config_dict.get("pwd")
+    while not resource_manager.querent_termination_event.is_set():
+        try:
+            data = await asyncio.wait(query_queue.get(), timeout=300)
+
+            neo4j_conn = Neo4jConnection(uri, user, pwd)
+            if isinstance(data, IngestedTokens):
+                # Execute the query
+                results = neo4j_conn.query(data.data)
+
+                event_state = EventState(EventType.QueryResult, timestamp=time.time(), payload=results, file= data.file)
+                config_dict["event_handler"].handle_event(EventType.QueryResult, event_state)
+        
+        except asyncio.TimeoutError:
+            print("Got timeout error while waiting for data from queue ")
+            resource_manager.querent_termination_event.set()
+
+    neo4j_conn.close()
