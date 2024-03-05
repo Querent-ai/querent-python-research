@@ -5,6 +5,7 @@ class EventType:
     Graph = "Graph"
     Vector = "Vector"
     Terminate="Terminate"
+    QueryResult="QueryResult"
 
 
 class EventState:
