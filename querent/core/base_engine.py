@@ -222,7 +222,7 @@ class BaseEngine(ABC):
                     none_counter = 0
                     try:
                         if not first_data:
-                            asyncio.sleep(60)
+                            await asyncio.sleep(60)
                             data = await self.input_queue.get()
                             first_data = True
                         else:
