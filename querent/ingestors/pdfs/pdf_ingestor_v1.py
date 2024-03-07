@@ -10,7 +10,7 @@ from querent.logging.logger import setup_logger
 from querent.processors.async_processor import AsyncProcessor
 from querent.common import common_errors
 import uuid
-import pypdf
+import fitz
 from PIL import Image
 import io
 
@@ -89,12 +89,15 @@ class PdfIngestor(BaseIngestor):
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
             path = BytesIO(collected_bytes.data)
-            loader = pypdf.PdfReader(path)
+            loader = fitz.open(stream=path.read(), filetype="pdf")
 
-            for page_num, page in enumerate(loader.pages):
-                text = page.extract_text()
+
+            for page in loader:
+                text = page.get_text()
                 if not text:
                     continue
+
+                text = text.replace('\"', ' ')
 
                 processed_text = await self.process_data(text)
                 # Yield processed text as IngestedTokens
