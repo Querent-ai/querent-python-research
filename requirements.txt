@@ -39,7 +39,7 @@ pytest-mock==3.11.1
 tensorflow==2.14.0
 transformers==4.36.0
 torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu
-pypdf==4.0.2
+pymupdf==1.23.26
 asyncio==3.4.3
 prometheus-client==0.17.1
 rdflib==7.0.0
@@ -47,7 +47,6 @@ pyshacl==0.25.0
 aiofiles==23.2.1
 pytest-asyncio==0.23.2
 google-cloud-storage==2.14.0
-pymupdf==1.23.7
 pydub==0.25.1
 SpeechRecognition==3.10.1
 pytesseract==0.3.10

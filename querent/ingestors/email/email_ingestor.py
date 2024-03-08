@@ -1,9 +1,7 @@
 from typing import List, AsyncGenerator
 import uuid
 from PIL import Image
-import pybase64
-import pypdf
-from querent.common import common_errors
+import fitz
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_images import IngestedImages
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -182,10 +180,10 @@ class EmailIngestor(BaseIngestor):
         pdf_text = ""
         try:
             path = BytesIO(pdf_data)
-            loader = pypdf.PdfReader(path)
+            loader = fitz.open(stream=path.read(), filetype="pdf")
 
-            for _, page in enumerate(loader.pages):
-                text = page.extract_text()
+            for page in loader:
+                text = page.get_text()
                 pdf_text += text + "\n"
                 pdf_text += await self.extract_images_and_ocr(page)
 

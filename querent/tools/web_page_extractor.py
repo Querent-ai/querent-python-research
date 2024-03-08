@@ -1,5 +1,5 @@
 from io import BytesIO
-from pypdf import PdfReader
+import fitz
 import requests
 import re
 from requests.exceptions import RequestException
@@ -56,13 +56,8 @@ class WebpageExtractor:
                 response.raise_for_status()
 
                 with BytesIO(response.content) as pdf_data:
-                    reader = PdfReader(pdf_data)
-                    content = " ".join(
-                        [
-                            reader.getPage(i).extract_text()
-                            for i in range(reader.getNumPages())
-                        ]
-                    )
+                    doc = fitz.open(stream=pdf_data.read(), filetype="pdf")
+                    content = " ".join([page.get_text() for page in doc])
 
             else:
                 config = Config()

@@ -43,7 +43,6 @@ requirements = [
     "pytest-mock==3.11.1",
     "tensorflow==2.14.0",
     "transformers==4.36.0",
-    "pypdf==4.0.2",
     "asyncio==3.4.3",
     "aiofiles==23.2.1",
     "prometheus-client==0.17.1",
@@ -51,7 +50,7 @@ requirements = [
     "pytest-asyncio==0.23.2",
     "pyshacl==0.25.0",
     "google-cloud-storage==2.14.0",
-    "pymupdf==1.23.7",
+    "PyMuPDF==1.23.26",
     "pydub==0.25.1",
     "SpeechRecognition==3.10.1",
     "pytesseract==0.3.10",
@@ -85,7 +84,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="1.1.1",
+    version="1.1.2",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

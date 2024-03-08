@@ -72,7 +72,7 @@ class TextProcessor(AsyncProcessor):
                         new_line = new_line[: len(new_line) - 3] + next_word
                         lines[index + 1] = lines[index + 1][next_index + 1 :]
 
-                processed_lines.append(new_line.strip())
+                processed_lines.append(new_line.strip().replace("\"", " "))
 
             return processed_lines
         except Exception as e:

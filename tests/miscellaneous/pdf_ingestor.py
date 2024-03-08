@@ -1,47 +1,50 @@
-import pypdf
-
+import fitz  # This is PyMuPDF
 
 class PDFConnector:
     def __init__(self, file_path):
         self.file_path = file_path
-        self.pdf_file = None
-        self.pdf_reader = None
+        self.doc = None
 
     def open_pdf(self):
         """Open the PDF file."""
-        self.pdf_file = open(self.file_path, 'rb')
-        self.pdf_reader = pypdf.pdf_reader(self.pdf_file)
+        self.doc = fitz.open(self.file_path)
 
     def authenticate(self, password):
-        """Authenticate the connection if the PDF is encrypted."""
-        if self.pdf_reader.is_encrypted:
+        """Authenticate the connection if the PDF is encrypted.
+           PyMuPDF handles encryption directly upon opening the file,
+           so we modify this method to match that behavior."""
+        if self.doc.is_encrypted:
             try:
-                self.pdf_reader.decrypt(password)
+                # Attempt to authenticate with the provided password
+                if not self.doc.authenticate(password):
+                    print("Incorrect password!")
+                    return False
                 return True
-            except:
-                print("Incorrect password!")
+            except Exception as e:
+                print(f"Error during authentication: {e}")
                 return False
-        return True
+        return True  # Document is not encrypted
 
     def read_data(self, page_num=0):
         """Read data from a specific page of the PDF."""
-        if not self.pdf_reader:
+        if not self.doc:
             print("PDF not opened!")
             return None
-        print(len(self.pdf_reader.pages))
-        if page_num < len(self.pdf_reader.pages):
-            page = self.pdf_reader.pages[page_num]
-            print("Page      ", page)
-            return page.extract_text()
+
+        if page_num < len(self.doc):
+            page = self.doc.load_page(page_num)
+            return page.get_text()
         else:
             print(f"Page number {page_num} is out of range!")
             return None
 
     def print_pdf_contents(self):
         """Print the entire contents of the PDF to the terminal."""
-        if not self.pdf_reader:
+        if not self.doc:
             print("PDF not opened!")
             return
-        for page_num in range(len(self.pdf_reader.pages)):
-            page = self.pdf_reader.pages[page_num]
-            print(page.extract_text())
+
+        for page_num in range(len(self.doc)):
+            page = self.doc.load_page(page_num)
+            print(page.get_text())
+

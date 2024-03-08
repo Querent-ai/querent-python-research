@@ -7,6 +7,7 @@ from langchain.docstore.document import Document
 from nltk.tokenize import sent_tokenize
 import os
 import requests
+import re
 from querent.logging.logger import setup_logger
 
 """
@@ -151,16 +152,17 @@ class EmbeddingStore:
             processed_pairs = []
 
             for entity, json_string, related_entity in triples:
+                json_string = json_string.encode('unicode_escape').decode('utf-8')
                 json_string = json_string.replace("\\n", " ").replace("\\t", " ")
-                json_string = json_string.replace("\n", " ").replace("\t", " ")
-                
+                json_string = re.sub(r'\\x[0-9a-fA-F]{2}', '', json_string)
+                # json_string = json_string.replace("\n", " ").replace("\t", " ")
                 try:
-                    data = json.loads(str(json_string))
-                    context = data.get("context", "")
-                    predicate = data.get("predicate","")
-                    predicate_type = data.get("predicate_type","Unlabeled")
-                    subject_type = data.get("subject_type","Unlabeled")
-                    object_type = data.get("object_type","Unlabeled")
+                    data = json.loads(json_string)
+                    context = data.get("context", "").replace('"', '\\"')
+                    predicate = data.get("predicate","").replace('"', '\\"')
+                    predicate_type = data.get("predicate_type","Unlabeled").replace('"', '\\"')
+                    subject_type = data.get("subject_type","Unlabeled").replace('"', '\\"')
+                    object_type = data.get("object_type","Unlabeled").replace('"', '\\"')
                     context_embeddings = self.get_embeddings([context])[0]
                     essential_data = {
                         "context": context,

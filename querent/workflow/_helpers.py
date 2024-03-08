@@ -81,6 +81,7 @@ async def start_llama_workflow(
     config.engines[0].grammar_file_path = second_file_path
     llm_instance = BERTLLM(result_queue, config.engines[0])
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
+    llm_instance.subscribe(EventType.Vector, config.workflow.event_handler)
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,
@@ -110,6 +111,7 @@ async def start_gpt_workflow(
     llm_instance = GPTLLM(result_queue, config.engines[0])
     
     llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
+    llm_instance.subscribe(EventType.Vector, config.workflow.event_handler)
     querent = Querent(
         [llm_instance],
         resource_manager=resource_manager,

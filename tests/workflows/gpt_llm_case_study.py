@@ -69,8 +69,7 @@
 #             'cluster_persistence_threshold':0.2
 #         }
 #             ,fixed_entities = [
-#                     "Reservoir", "Pore pressure", "Ground water",
-#                     "Carbonate rock", "Clastic rock", "Porosity", "Permeability",
+#                     "Carbonate", "Clastic", "Porosity", "Permeability",
 #                     "Oil saturation", "Water saturation", "Gas saturation",
 #                     "Depth", "Size", "Temperature",
 #                     "Pressure", "Oil viscosity", "Gas-oil ratio",
@@ -81,11 +80,9 @@
 #                     "Connectivity", "Production rate", "Depletion rate",
 #                     "Exploration technique", "Drilling technique", "Completion technique",
 #                     "Environmental impact", "Regulatory compliance",
-#                     "Economic analysis", "Market analysis"
+#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford shale", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
 #                 ]
-
 #             , sample_entities = [
-#                     "reservoir", "reservoir_property", "ground_water",
 #                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
 #                     "reservoir_property", "reservoir_property", "reservoir_property",
 #                     "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic",
@@ -97,13 +94,13 @@
 #                     "reservoir_feature", "production_metric", "production_metric",
 #                     "exploration_method", "drilling_method", "completion_method",
 #                     "environmental_aspect", "regulatory_aspect",
-#                     "economic_aspect", "economic_aspect"
+#                     "economic_aspect", "economic_aspect","hydrocarbon_source","hydrocarbon_source","hydrocarbon_source","hydrocarbon_source","reservoir","reservoir","reservoir","reservoir","reservoir"
 #                 ]
 #             , is_confined_search = True,
 #             openai_api_key = "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",
 #             # , huggingface_token = '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'
-#             user_context = """Query: The above context is from a geological research paper on reservoirs and the above entities and their respective types have already been identified.
-#             Please Identify the entity which is the subject and which is object from the above entities based on the context, and determine the predicate linking them, utilizing a semantic triple framework (Subject, Predicate, Object). Also, classify the predicate according to geology-specific types.
+#             user_context = """Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified.
+#             Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed.Also provide the predicate type.
 # Answer:"""
 #     )
 #     llm_instance = GPTLLM(result_queue, bert_llm_config)
