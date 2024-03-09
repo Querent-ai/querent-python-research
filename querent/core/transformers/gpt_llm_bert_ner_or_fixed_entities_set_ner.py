@@ -120,6 +120,7 @@ class GPTLLM(BaseEngine):
                 raise ValueError("Content is not a list")
         except Exception as e:
             print(f"Error parsing content: {e}")
+            return []
 
         return triples_list
 

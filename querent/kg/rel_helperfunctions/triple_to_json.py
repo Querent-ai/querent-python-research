@@ -64,7 +64,8 @@ class TripleToJsonConverter:
                 "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True),
                 "embeddings": data.get("context_embeddings", []),
                 "size": len(data.get("context_embeddings", [])),
-                "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True)
+                "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True),
+                "sentence": data.get("context", "").lower()
             }
 
             return json_object
