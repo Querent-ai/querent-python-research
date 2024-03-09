@@ -192,7 +192,6 @@ tests/workflows/openllm_case_study_workflow.py
 
 
 tests/openhermes-2.5-mistral-7b.Q5_K_M.gguf
-querent/storage/*
 tests/workflows/openllm_case_study_workflow.py
 lib/bindings/utils.js
 lib/tom-select/tom-select.complete.min.js
