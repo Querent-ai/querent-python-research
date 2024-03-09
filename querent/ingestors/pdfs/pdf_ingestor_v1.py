@@ -97,7 +97,7 @@ class PdfIngestor(BaseIngestor):
                 if not text:
                     continue
 
-                text = text.replace('\"', ' ')
+                text = text.replace('\"', ' ').replace('\“', '').replace('\”', '')
 
                 processed_text = await self.process_data(text)
                 # Yield processed text as IngestedTokens

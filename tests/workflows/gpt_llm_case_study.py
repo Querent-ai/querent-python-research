@@ -29,7 +29,7 @@
 #             password="querent", 
 #             host="localhost", 
 #             port="5432")
-#     # ml_conn = MilvusDBConnection()
+#     ml_conn = MilvusDBConnection()
 #     directories = [ "/path/to/directory"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
@@ -106,30 +106,33 @@
 #     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
+#             if event_state["event_type"] == EventType.Vector :
+#                 triple = json.loads(event_state["payload"])
+#                 print("triple: {}".format(triple))
+#                 vector_triple = json.loads(event_state["payload"])
+#                 print("Inside Vector event ---------------------------------", vector_triple)
+#                 milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
+#                 ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state["file"], collection= milvus_coll )
 #             # assert event_state.event_type == EventType.Graph
 #             if event_state["event_type"] == EventType.Graph :
 #                 triple = json.loads(event_state["payload"])
 #                 print("file---------------------",event_state["file"], "----------------", type(event_state["file"]))
 #                 print("triple: {}".format(triple))
 #                 graph_event_data = {
-#             'subject': triple['subject'],
-#             'subject_type': triple['subject_type'],
-#             'object': triple['object'],
-#             'object_type': triple['object_type'],
-#             'predicate': triple['predicate'],
-#             'predicate_type': triple['predicate_type'],
-#             'sentence': triple['sentence'],
-#             'document_id': event_state["file"]
-#         }
+#                     'subject': triple['subject'],
+#                     'subject_type': triple['subject_type'],
+#                     'object': triple['object'],
+#                     'object_type': triple['object_type'],
+#                     'predicate': triple['predicate'],
+#                     'predicate_type': triple['predicate_type'],
+#                     'sentence': triple['sentence'],
+#                     'document_id': event_state["file"]
+#                 }
 #                 db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
-#             # else :
-#             #     vector_triple = json.loads(event_state.payload)
-#             #     print("Inside Vector event ---------------------------------", vector_triple)
-#             #     milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
-#             #     ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state.file, collection= milvus_coll )
-#     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
-#     # llm_instance.subscribe(EventType.Vector, StateChangeCallback())
+                
+#     # llm_instance.subscribe(EventType.Graph, StateChangeCallback())
+#     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(
 #         [llm_instance],
 #         resource_manager=resource_manager,
