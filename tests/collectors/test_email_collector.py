@@ -49,7 +49,7 @@ async def test_email_collector(email_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 2
+        assert counter == 3
 
     await poll_and_print()
 
