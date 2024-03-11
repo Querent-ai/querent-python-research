@@ -1,5 +1,5 @@
 import json
-
+import re
 """
     A class to convert triples into different JSON formats.
 
@@ -19,7 +19,7 @@ class TripleToJsonConverter:
     def _normalize_text(text, replace_space=False):
         normalized_text = text.lower()
         if replace_space:
-            normalized_text = normalized_text.replace(" ", "_")
+            normalized_text = TripleToJsonConverter.replace_special_chars_with_underscore(normalized_text)
         return normalized_text
 
     @staticmethod
@@ -61,7 +61,7 @@ class TripleToJsonConverter:
 
             id_format = f"{TripleToJsonConverter._normalize_text(subject)}_{TripleToJsonConverter._normalize_text(data.get('predicate', ''))}_{TripleToJsonConverter._normalize_text(object_)}"
             json_object = {
-                "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True),
+                "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True).replace(",","_"),
                 "embeddings": data.get("context_embeddings", []),
                 "size": len(data.get("context_embeddings", [])),
                 "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True),
@@ -72,5 +72,12 @@ class TripleToJsonConverter:
         except Exception as e:
             raise Exception(f"Error in convert_vectorjson: {e}")
         
+
+    @staticmethod
+    def replace_special_chars_with_underscore(data):
+        # This pattern will match anything that is not a letter, number, or underscore
+        pattern = r'[^a-zA-Z0-9_]'
+        # Replace matched patterns with an underscore
+        return re.sub(pattern, '_', data)
         
         
