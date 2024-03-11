@@ -170,9 +170,9 @@ class EmailIngestor(BaseIngestor):
             self.logger.error(f"Error handling PDF attachment: {e}")
         return pdf_text
 
-    async def get_ocr_from_image(self, image):
-        """Implement this to return ocr text of the image"""
-        image = Image.open(io.BytesIO(image))
+    async def get_ocr_from_image(self, image_bytes):
+        """Return OCR text of the image."""
+        image = Image.open(io.BytesIO(image_bytes))
         text = pytesseract.image_to_string(image)
         return str(text).encode("utf-8").decode("unicode_escape")
 
@@ -180,27 +180,24 @@ class EmailIngestor(BaseIngestor):
         pdf_text = ""
         try:
             path = BytesIO(pdf_data)
-            loader = fitz.open(stream=path.read(), filetype="pdf")
+            doc = fitz.open(stream=path.read(), filetype="pdf")
 
-            for page in loader:
+            for page in doc:
                 text = page.get_text()
                 pdf_text += text + "\n"
-                pdf_text += await self.extract_images_and_ocr(page)
+                images = page.get_images(full=True)
+                
+                # Extract and OCR images
+                for image_index, img in enumerate(images, start=1):
+                    xref = img[0]
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    ocr_text = await self.get_ocr_from_image(image_bytes)
+                    pdf_text += ocr_text + "\n"
 
-        except TypeError as exc:
-            self.logger.error(f"Exception while extracting email {exc}")
         except Exception as exc:
-            self.logger.error(f"Exception while extracting email {exc}")
+            print(f"Exception while processing PDF: {exc}")
         return pdf_text
-
-    async def extract_images_and_ocr(self, page) -> str:
-        ocr_text = ""
-        try:
-            for image_path in page.images:
-                ocr_text += await self.get_ocr_from_image(image_path)
-        except Exception as e:
-            self.logger.error(f"Error extracting images and OCR: {e}")
-        return ocr_text
 
     async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:
