@@ -81,7 +81,7 @@ class HtmlIngestor(BaseIngestor):
 
     async def extract_text_from_html(
         self, collected_bytes: CollectedBytes
-    ) -> List[str]:
+    ):
         """Function to extract text from xml"""
         try:
             html_content = collected_bytes.data.decode("UTF-8")

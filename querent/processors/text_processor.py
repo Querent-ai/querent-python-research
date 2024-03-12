@@ -15,7 +15,7 @@ class TextProcessor(AsyncProcessor):
     async def process_text(self, data: str) -> str:
         try:
             if data is None or data == "":
-                return [data]
+                return data
             text = unidecode(data)
 
             processed_lines = []
@@ -74,10 +74,12 @@ class TextProcessor(AsyncProcessor):
 
                 processed_lines.append(new_line.strip().replace("\"", " "))
 
-            return processed_lines
+                res = " ".join(processed_lines)
+
+            return res
         except Exception as e:
             self.logger.error(f"Exception while processing data {e}")
-            return []
+            return ""
 
     def is_valid_word(self, word):
         return word.lower() in self.english_vocab

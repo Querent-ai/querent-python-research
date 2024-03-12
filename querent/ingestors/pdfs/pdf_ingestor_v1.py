@@ -170,6 +170,6 @@ class PdfIngestor(BaseIngestor):
             processed_data = text
             for processor in self.processors:
                 processed_data = await processor.process_text(processed_data)
-            return processed_data
+            return [processed_data]
         except Exception as e:
             self.logger.error(f"Error while processing text: {e}")

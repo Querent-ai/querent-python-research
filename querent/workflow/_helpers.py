@@ -15,6 +15,8 @@ from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.workflow._helpers import *
+from querent.processors.text_cleanup_processor import TextCleanupProcessor
+from querent.processors.text_processor import TextProcessor
 import os
 import nltk
 from querent.logging.logger import setup_logger
@@ -44,10 +46,14 @@ async def start_collectors(config: Config):
     for collector in collectors:
         await collector.connect()
 
+    text_cleanup_processor = TextCleanupProcessor()
+    text_processor = TextProcessor()
+
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors,
         result_queue=None,
         tokens_feader=config.workflow.tokens_feader,
+        processors=[text_cleanup_processor, text_processor]
     )
 
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
