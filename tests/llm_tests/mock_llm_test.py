@@ -68,8 +68,6 @@ async def test_querent_with_base_llm():
     # Define a callback function to subscribe to state changes
     class StateChangeCallback(EventCallbackInterface):
         async def handle_event(self, event_type: EventType, event_state: EventState):
-            print(f"New state: {event_state}")
-            print(f"New state type: {event_type}")
             assert event_state.event_type == EventType.Graph
 
     # Subscribe to state change events

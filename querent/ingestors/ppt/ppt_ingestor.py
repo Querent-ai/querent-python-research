@@ -89,9 +89,9 @@ class PptIngestor(BaseIngestor):
                     for shape in slide.shapes:
                         if hasattr(shape, "text"):
                             text.append(shape.text)
-                        if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (shape.shape_type in [MSO_SHAPE_TYPE.PLACEHOLDER, MSO_SHAPE_TYPE.AUTO_SHAPE] and hasattr(shape, "image")):
-                            ocr_text = await self.process_image(shape)
-                            yield IngestedImages(file=collected_bytes.file, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
+                        # if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (shape.shape_type in [MSO_SHAPE_TYPE.PLACEHOLDER, MSO_SHAPE_TYPE.AUTO_SHAPE] and hasattr(shape, "image")):
+                        #     ocr_text = await self.process_image(shape)
+                        #     yield IngestedImages(file=collected_bytes.file, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
                     slide_text = "\n".join(text)
                     processed_slide_text = await self.process_data(slide_text)
                     yield IngestedTokens(
@@ -102,7 +102,7 @@ class PptIngestor(BaseIngestor):
                 parsed = parser.from_buffer(collected_bytes.data)
                 extracted_text = parsed["content"]
                 yield IngestedTokens(
-                    file=collected_bytes.file, data=extracted_text, error=None
+                    file=collected_bytes.file, data=[extracted_text], error=None
                 )
             else:
                 raise common_errors.WrongPptFileError(

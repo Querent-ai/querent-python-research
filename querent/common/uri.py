@@ -2,6 +2,7 @@ import re
 import enum
 from pathlib import Path
 from typing import Optional, Union
+from querent.logging.logger import setup_logger
 
 
 class Protocol(enum.Enum):
@@ -128,12 +129,13 @@ class Uri:
 
 # Usage example
 if __name__ == "__main__":
+    logger = setup_logger(__name__, "URI")
     uri_str = "s3://bucket/key"
     uri = Uri(uri_str)
-    print(f"Original URI: {uri}")
-    print(f"Extension: {uri.extension}")
-    print(f"Protocol: {uri.protocol}")
-    print(f"Is Azure: {uri.protocol.is_azure()}")
-    print(f"Is Redacted: {uri.is_redacted()}")
-    print(f"Redacted URI: {uri.as_redacted_str()}")
-    print(f"URI == 's3://bucket/key': {uri == 's3://bucket/key'}")
+    logger.info(f"Original URI: {uri}")
+    logger.info(f"Extension: {uri.extension}")
+    logger.info(f"Protocol: {uri.protocol}")
+    logger.info(f"Is Azure: {uri.protocol.is_azure()}")
+    logger.info(f"Is Redacted: {uri.is_redacted()}")
+    logger.info(f"Redacted URI: {uri.as_redacted_str()}")
+    logger.info(f"URI == 's3://bucket/key': {uri == 's3://bucket/key'}")

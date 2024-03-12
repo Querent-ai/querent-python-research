@@ -38,7 +38,6 @@ async def test_collect_and_ingest_code():
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested.data != "" or ingested is not None:
-                print(ingested)
                 counter += 1
         # counter is 2 though files are 4, that is because we are yielding an empty IngestedCode at the end of each file
         assert counter == 4

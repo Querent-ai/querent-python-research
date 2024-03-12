@@ -159,7 +159,7 @@ class PdfIngestor(BaseIngestor):
             image = Image.open(io.BytesIO(image.data))
             text = pytesseract.image_to_string(image)
         except Exception as e:
-            print("Exception-{e}")
+            self.logger.error("Exception-{e}")
             raise e
         return str(text).encode("utf-8").decode("unicode_escape")
 

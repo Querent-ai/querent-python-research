@@ -95,6 +95,7 @@ class IngestorFactoryManager:
             IngestorBackend.JSON.value: JsonIngestorFactory(),
             IngestorBackend.JPG.value: ImageIngestorFactory(),
             IngestorBackend.PNG.value: ImageIngestorFactory(),
+            IngestorBackend.JPEG.value: ImageIngestorFactory(),
             IngestorBackend.DOCX.value: DocIngestorFactory(),
             IngestorBackend.DOC.value: DocIngestorFactory(),
             IngestorBackend.CSV.value: CsvIngestorFactory(),

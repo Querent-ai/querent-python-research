@@ -19,6 +19,7 @@ class IngestorBackend(str, Enum):
     IMG = "image"
     PNG = "png"
     JPG = "jpg"
+    JPEG = "jpeg"
     GIF = "gif"
     WEBRTC = "webrtc"
     MP3 = "mp3"

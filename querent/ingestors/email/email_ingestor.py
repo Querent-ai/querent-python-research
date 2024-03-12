@@ -196,7 +196,7 @@ class EmailIngestor(BaseIngestor):
                     pdf_text += ocr_text + "\n"
 
         except Exception as exc:
-            print(f"Exception while processing PDF: {exc}")
+            self.logger.error(f"Exception while processing PDF: {exc}")
         return pdf_text
 
     async def process_data(self, text: str) -> str:

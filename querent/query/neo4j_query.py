@@ -4,6 +4,8 @@ import pandas as pd
 from pyvis.network import Network
 
 from neo4j import GraphDatabase
+from querent.logging.logger import setup_logger
+
 
 class Neo4jConnection:
     
@@ -12,10 +14,11 @@ class Neo4jConnection:
         self.__user = user
         self.__pwd = pwd
         self.__driver = None
+        self.logger = setup_logger(__name__, "Neo4jConnection")
         try:
             self.__driver = GraphDatabase.driver(self.__uri, auth=(user, pwd))
         except Exception as e:
-            print("Failed to create the driver:", e)
+            self.logger.error("Failed to create the driver:", e)
         
     def close(self):
         if self.__driver is not None:
@@ -30,7 +33,7 @@ class Neo4jConnection:
             for record in result:
                 response.append(record)
         except Exception as e:
-            print("Query failed:", e)
+            self.logger.error("Query failed:", e)
         finally:
             if session is not None:
                 session.close()

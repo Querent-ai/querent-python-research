@@ -6,7 +6,8 @@ from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 import pytest
 import uuid
-
+from querent.logging.logger import setup_logger
+logger = setup_logger(__name__, "FanningCollector")
 count = 0
 
 
@@ -38,7 +39,6 @@ async def see_contents(output_queue):
             break
         else:
             output_queue.task_done()
-            print(data)
 
 
 async def create_workers(directory, output_queue, logger_queue, stop_event):
@@ -63,11 +63,10 @@ async def create_workers(directory, output_queue, logger_queue, stop_event):
             if ingested.data is None:
                 # continue
                 await logger_queue.put("1 file received")
-                print("Putting 1 file in logger queue")
             else:
                 await output_queue.put(ingested.data)
     except Exception as e:
-        print("Got an exception:  ", e)
+        logger.error("Got an exception:  ", e)
 
     finally:
         # Always ensure we send the "DONE" signal, even if an exception occurred

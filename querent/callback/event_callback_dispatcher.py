@@ -5,6 +5,7 @@ import requests
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.querent_event import EventState, EventType
 
+from querent.logging.logger import setup_logger
 
 class EventCallbackDispatcher:
     def __init__(self, retries=3):
@@ -14,6 +15,7 @@ class EventCallbackDispatcher:
 
         self.webhooks: dict[EventType, List[str]] = defaultdict(list)
         self.retries = retries
+        self.logger = setup_logger(__name__, "EventCallbackDispatcher")
 
     def register_callback(
         self, event_type: EventType, callback: EventCallbackInterface
@@ -55,12 +57,12 @@ class EventCallbackDispatcher:
                 while attempt <= self.retries:
                     response = requests.post(webhook_url, json=event_data)
                     if response.status_code == 200:
-                        print(f"Webhook to {webhook_url} was successfully dispatched.")
+                        self.logger.info(f"Webhook to {webhook_url} was successfully dispatched.")
                         break
                     else:
-                        print(
+                        self.logger.error(
                             f"Failed to dispatch webhook to {webhook_url}. Status code: {response.status_code}"
                         )
                         attempt += 1
             except Exception as e:
-                print(f"Error when sending webhook to {webhook_url}: {str(e)}")
+                self.logger.error(f"Error when sending webhook to {webhook_url}: {str(e)}")
