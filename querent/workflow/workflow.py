@@ -1,7 +1,8 @@
-"""File to start workflow"""
-
 import asyncio
 import json
+import logging
+from typing import Dict, Any, List, Callable, Optional
+
 from querent.common.types.querent_queue import QuerentQueue
 from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
@@ -12,113 +13,136 @@ from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.querent.resource_manager import ResourceManager
-from querent.workflow._helpers import *
+from querent.workflow._helpers import check_message_states, start_collectors
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-async def start_workflow(config_dict: dict):
-    # Start the workflow
-    workflow_config = config_dict.get("workflow")
-    engine_params = workflow_config.get("config").get("engine_params", None)
-    is_engine_params = False
+async def parse_json_config(json_str: str) -> Optional[Dict[str, Any]]:
+    """Attempt to parse a JSON string and return the dictionary representation.
+
+    Args:
+        json_str (str): The JSON string to parse.
+
+    Returns:
+        Optional[Dict[str, Any]]: The dictionary representation of the JSON string, or None if parsing fails.
+    """
     try:
-        if engine_params is not None:
-            engine_params = json.loads(engine_params)
-            is_engine_params = True
-    except Exception as e:
-        print("Got error while loading engine params: ", e)
-    workflow = WorkflowConfig(config_source=workflow_config)
-    collector_configs = config_dict.get("collectors", [])
-    collectors = []
-    for collector_config in collector_configs:
-        collectors.append(CollectorConfig(config_source=collector_config).resolve())
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        logger.error(f"Got error while loading JSON: {e}")
+        return None
 
-    engine_configs = config_dict.get("engines", [])
+
+def load_configuration(
+    config_dict: dict, engine_params: Optional[Dict[str, Any]] = None
+) -> Config:
+    """Load and return a configuration object from a dictionary.
+
+    Args:
+        config_dict (dict): The dictionary containing configuration.
+        engine_params (Optional[Dict[str, Any]]): Optional engine parameters to update the engine config with.
+
+    Returns:
+        Config: The configuration object.
+    """
+    # Process workflow configuration
+    workflow = WorkflowConfig(config_source=config_dict.get("workflow"))
+
+    # Process collector configurations
+    collectors = [
+        CollectorConfig(config_source=collector_config).resolve()
+        for collector_config in config_dict.get("collectors", [])
+    ]
+
+    # Process engine configurations
     engines = []
-    for engine_config in engine_configs:
-        if is_engine_params:
+    for engine_config in config_dict.get("engines", []):
+        if engine_params:
             engine_config.update(engine_params)
-        engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
             engines.append(GPTConfig(config_source=engine_config))
         elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
             engines.append(LLM_Config(config_source=engine_config))
-    config_dict["engines"] = engines
-    config_dict["collectors"] = collectors
-    config_dict["workflow"] = workflow
-    config = Config(config_source=config_dict)
 
-    workflows = {
-        "knowledge_graph_using_openai": start_gpt_workflow,
-        "knowledge_graph_using_llama2_v1": start_llama_workflow,
+    # Assemble the final configuration
+    final_config_dict = {
+        "workflow": workflow,
+        "collectors": collectors,
+        "engines": engines,
     }
 
-    workflow = workflows.get(config.workflow.name)
+    return Config(config_source=final_config_dict)
+
+
+async def start_workflow(config_dict: dict):
+    """Start the main workflow asynchronously.
+
+    Args:
+        config_dict (dict): Configuration dictionary for the workflow.
+    """
+    engine_params_json = (
+        config_dict.get("workflow", {}).get("config", {}).get("engine_params")
+    )
+    engine_params = (
+        parse_json_config(engine_params_json) if engine_params_json else None
+    )
+
+    config = load_configuration(config_dict, engine_params)
+
+    # Retrieve the appropriate workflow function based on the workflow name
+    workflow_func: Callable = globals().get(f"start_{config.workflow.name}_workflow")
+
+    if not workflow_func:
+        logger.error(f"Workflow function for '{config.workflow.name}' not found.")
+        return
+
     result_queue = QuerentQueue()
     collector_tasks = asyncio.create_task(start_collectors(config))
     engine_tasks = asyncio.create_task(
-        workflow(ResourceManager(), config, result_queue)
+        workflow_func(ResourceManager(), config, result_queue)
     )
+
     await asyncio.gather(collector_tasks, engine_tasks)
-    print("Workflow is finished. All events have been released.")
+    logger.info("Workflow is finished. All events have been released.")
 
 
 async def start_ingestion(config_dict: dict):
+    """Start the ingestion process asynchronously.
+
+    Args:
+        config_dict (dict): Configuration dictionary for the ingestion.
+    """
     if not config_dict:
+        logger.error("Configuration for ingestion is empty.")
         return
-    collectors = []
-    collector_configs = config_dict.get("collectors", [])
-    for collector_config in collector_configs:
-        collectors.append(CollectorConfig(config_source=collector_config).resolve())
-    workflow_config = config_dict.get("workflow")
-    workflow = WorkflowConfig(config_source=workflow_config)
-    config_dict["collectors"] = collectors
-    config_dict["workflow"] = workflow
-    config = Config(config_source=config_dict)
-    collectors = []
-    for collector_config in config.collectors:
-        uri = Uri(collector_config.uri)
-        collectors.append(CollectorResolver().resolve(uri=uri, config=collector_config))
+
+    config = load_configuration(config_dict)
+
+    # Initialize collectors based on the configuration
+    collectors: List[CollectorResolver] = [
+        CollectorResolver().resolve(
+            uri=Uri(collector_config.uri), config=collector_config
+        )
+        for collector_config in config.collectors
+    ]
 
     for collector in collectors:
         await collector.connect()
 
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors,
-        result_queue=None,
+        result_queue=None,  # Assuming there's logic to handle the result queue
         tokens_feader=config.workflow.tokens_feader,
     )
 
     resource_manager = ResourceManager()
-    
+
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
     check_message_states_task = asyncio.create_task(
         check_message_states(config, resource_manager, [ingest_task])
     )
+
     await asyncio.gather(ingest_task, check_message_states_task)
-
-async def start_workflow_engine(config_dict: Config):
-    if not config_dict:
-        return
-    workflow_config = config_dict.get("workflow")
-    workflow = WorkflowConfig(config_source=workflow_config)
-    engine_configs = config_dict.get("engines", [])
-    engines = []
-    for engine_config in engine_configs:
-        engine_config_source = engine_config.get("config", {})
-        if engine_config["name"] == "knowledge_graph_using_openai":
-            engines.append(GPTConfig(config_source=engine_config_source))
-        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
-            engines.append(LLM_Config(config_source=engine_config_source))
-    config_dict["engines"] = engines
-    config_dict["collectors"] = None
-    config_dict["workflow"] = workflow
-    config = Config(config_source=config_dict)
-    workflows = {
-        "knowledge_graph_using_openai": start_gpt_workflow,
-        "knowledge_graph_using_llama2_v1": start_llama_workflow,
-    }
-    workflow = workflows.get(config.workflow.name)
-    result_queue = QuerentQueue()
-    resource_manager = ResourceManager()
-
-    await workflow(resource_manager, config, result_queue)
