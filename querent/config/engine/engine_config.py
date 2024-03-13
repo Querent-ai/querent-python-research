@@ -18,25 +18,28 @@ class EngineConfig(BaseModel):
     message_throttle_limit: Optional[int] = 1000
     message_throttle_delay: Optional[int] = 1
     # Use Field with allow_mutation=False to specify the type
-    inner_channel: Optional[Any]
-    channel: Optional[Any]
+    inner_channel: Optional[Any] = None
+    channel: Optional[Any] = None
     logger: str = f"{__name__}.engine_config"
     state_queue: str = f"{__name__}.state_queue"
     workers: str = f"{__name__}.workers"
 
     def __init__(self, config_source=None, **kwargs):
-        # if kwargs:
-        #     raise ValueError(
-        #         "Config values must be provided within a dictionary via 'config_source' parameter."
-        #     )
-
+        # Load configuration from the source if provided
         if config_source:
             config_data = self.load_config(config_source)
-            super().__init__(**config_data)
-            for config_key in EngineConfigKey:
-                key = config_key.value
-                if key in config_data:
-                    setattr(self, key, config_data[key])
+        else:
+            config_data = {}
+
+        # Merge config_data with kwargs. kwargs take precedence.
+        merged_config = {**config_data, **kwargs}
+
+        # Call the superclass __init__ with the merged configuration
+        super().__init__(**merged_config)
+        for config_key in EngineConfigKey:
+            key = config_key.value
+            if key in config_data:
+                setattr(self, key, config_data[key])
 
         # else:
         #     raise ValueError("Please pass config")

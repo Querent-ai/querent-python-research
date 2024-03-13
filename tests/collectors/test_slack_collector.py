@@ -16,7 +16,7 @@ def slack_config():
             "cursor": None,
             "include_all_metadata": 0,
             "inclusive": 0,
-            "latest": 0,
+            "latest": "0",
             "limit": 100,
             "access_token": os.getenv("SLACK_ACCESS_KEY"),
             "name": "Slack-config",

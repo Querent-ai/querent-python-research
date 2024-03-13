@@ -67,8 +67,8 @@ async def test_querent_with_base_llm():
 
     # Define a callback function to subscribe to state changes
     class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
-            assert event_state.event_type == EventType.Graph
+        def handle_event(self, event_type: EventType, event_state: EventState):
+            assert event_state["event_type"] == EventType.Graph
 
     # Subscribe to state change events
     # This pattern is ideal as we can expose multiple events for each use case of the LLM

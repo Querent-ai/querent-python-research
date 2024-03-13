@@ -24,13 +24,13 @@ class CollectorBackend(str, Enum):
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
     # Use Field with allow_mutation=False to specify the type
-    channel: Optional[Any]
+    channel: Optional[Any] = None
     id: str
     name: str
     uri: Optional[Any]
     config: Dict[str, str]
-    inner_channel: Optional[Any]
-    config_source: Optional[Any]
+    inner_channel: Optional[Any] = None 
+    config_source: Optional[Any] = None
 
     def __init__(self, config_source=None, **kwargs):
 
@@ -106,7 +106,7 @@ class FSCollectorConfig(CollectorConfig):
     id: str
     root_path: str
     chunk_size: str = "1048576"
-    channel: Any
+    channel: Optional[Any] = None
 
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
