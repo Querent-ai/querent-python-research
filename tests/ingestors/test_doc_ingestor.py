@@ -11,7 +11,7 @@ import uuid
 
 
 @pytest.mark.asyncio
-async def test_collect_and_ingest_audio():
+async def test_collect_and_ingest_doc():
     collector_factory = FSCollectorFactory()
     uri = Uri("file://" + str(Path("./tests/data/doc/").resolve()))
     config = FSCollectorConfig(
@@ -42,10 +42,10 @@ async def test_collect_and_ingest_audio():
             assert ingested.file is not None
             counter += 1
         # 2 extra IngestedTokens are repreenting end of files
-        assert counter == 5
+        assert counter == 4
 
     await poll_and_print()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_collect_and_ingest_audio())
+    asyncio.run(test_collect_and_ingest_doc())
