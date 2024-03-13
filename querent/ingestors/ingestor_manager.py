@@ -143,8 +143,10 @@ class IngestorFactoryManager:
         result_queue: Optional[Queue] = None,
         tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
+        collected_bytes_list = None
         try:
             collected_bytes_list = self.file_caches.pop(file_id)
+            print(collected_bytes_list)
             file_extension = collected_bytes_list[0].extension
             ingestor = await self.get_ingestor(file_extension)
             if ingestor is not None:
