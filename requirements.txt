@@ -68,5 +68,5 @@ pybase64==1.3.1
 pdfminer==20191125
 requests_html==0.10.0
 unidecode==1.3.7
-openai==1.12.0
+openai==1.13.3
 newsapi-python==0.2.7
