@@ -15,7 +15,7 @@ requirements = [
     "faiss-cpu==1.7.4",
     "gensim==4.3.2",
     "hdbscan==0.8.33",
-    "jira==3.5.0",
+    "jira==3.6.0",
     "jmespath==1.0.1",
     "joblib==1.2.0",
     "json5==0.9.14",
