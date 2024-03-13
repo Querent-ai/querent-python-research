@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    "cachetools==5.3.1",
+    "cachetools==5.3.3",
     "aiohttp==3.9.2",
     "attrs==23.1.0",
     "beautifulsoup4==4.12.2",
