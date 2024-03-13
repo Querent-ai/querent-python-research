@@ -107,7 +107,7 @@ class DocIngestor(BaseIngestor):
         elif file_extension == "doc":
             current_doc_text = await self.temp_extract_from(collected_bytes)
             yield IngestedTokens(
-                file=collected_bytes.file, data=[current_doc_text], error=None
+                file=collected_bytes.file, data=current_doc_text, error=None
             )
         else:
             raise common_errors.UnknownError(
