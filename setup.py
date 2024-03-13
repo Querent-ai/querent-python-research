@@ -73,7 +73,7 @@ requirements = [
     "unidecode==1.3.7",
     "psutil==5.9.8",
     "langchain-community==0.0.16",
-    "langchain==0.1.4",
+    "langchain==0.1.11",
     "openai==1.12.0",
     "newsapi-python==0.2.7",
 ]
