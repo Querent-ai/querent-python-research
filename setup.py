@@ -74,7 +74,7 @@ requirements = [
     "psutil==5.9.8",
     "langchain-community==0.0.16",
     "langchain==0.1.11",
-    "openai==1.12.0",
+    "openai==1.13.3",
     "newsapi-python==0.2.7",
 ]
 
