@@ -101,8 +101,9 @@ class PptIngestor(BaseIngestor):
             elif collected_bytes.extension == "ppt":
                 parsed = parser.from_buffer(collected_bytes.data)
                 extracted_text = parsed["content"]
+                processed_text = await self.process_data(extracted_text)
                 yield IngestedTokens(
-                    file=collected_bytes.file, data=[extracted_text], error=None
+                    file=collected_bytes.file, data=processed_text, error=None
                 )
             else:
                 raise common_errors.WrongPptFileError(
@@ -128,7 +129,7 @@ class PptIngestor(BaseIngestor):
             processed_data = text
             for processor in self.processors:
                 processed_data = await processor.process_text(processed_data)
-            return processed_data
+            return [processed_data]
         except Exception as e:
             self.logger.error(f"Error while processing text: {e}")
 

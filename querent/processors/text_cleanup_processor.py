@@ -10,8 +10,8 @@ class TextCleanupProcessor(AsyncProcessor):
 
     async def process_text(self, data: str) -> str:
         data = data.replace("\"", "").replace('\“', '').replace('\”', '')
-        data = data.encode('unicode_escape').decode('utf-8')
         data = data.replace("\\n", " ").replace("\\t", " ")
         data = re.sub(r'\\x[0-9a-fA-F]{2}', '', data)
+        data = data.replace("\n", " ")
 
         return data
