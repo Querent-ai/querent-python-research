@@ -76,7 +76,6 @@ requirements = [
     "langchain==0.1.4",
     "openai==1.12.0",
     "newsapi-python==0.2.7",
-    "neo4j==5.18.0",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
