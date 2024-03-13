@@ -45,7 +45,7 @@ async def test_dropbox_collector(dropbox_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 170
+        assert counter == 6206
 
     await poll_and_print()
 
