@@ -95,6 +95,7 @@ class IngestorFactoryManager:
             IngestorBackend.JSON.value: JsonIngestorFactory(),
             IngestorBackend.JPG.value: ImageIngestorFactory(),
             IngestorBackend.PNG.value: ImageIngestorFactory(),
+            IngestorBackend.JPEG.value: ImageIngestorFactory(),
             IngestorBackend.DOCX.value: DocIngestorFactory(),
             IngestorBackend.DOC.value: DocIngestorFactory(),
             IngestorBackend.CSV.value: CsvIngestorFactory(),
@@ -142,6 +143,7 @@ class IngestorFactoryManager:
         result_queue: Optional[Queue] = None,
         tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
+        collected_bytes_list = None
         try:
             collected_bytes_list = self.file_caches.pop(file_id)
             file_extension = collected_bytes_list[0].extension

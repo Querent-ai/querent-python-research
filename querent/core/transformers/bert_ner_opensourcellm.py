@@ -101,7 +101,7 @@ class BERTLLM(BaseEngine):
             self.isConfinedSearch = config.is_confined_search
             self.semantictriplefilter = SemanticTripleFilter()
         except Exception as e:
-            print("Error initializing BERT LLM Class", e)
+            self.logger.error("Error initializing BERT LLM Class", e)
             raise e
         
  
@@ -222,6 +222,5 @@ class BERTLLM(BaseEngine):
                 else:
                     return filtered_triples, file
         except Exception as e:
-            print("Exception in BERT LLM", e)
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
             raise Exception(f"An unexpected error occurred while processing tokens: {e}")

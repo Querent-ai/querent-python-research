@@ -1,6 +1,7 @@
 import requests
 from typing import AsyncGenerator
 from querent.common.types.collected_bytes import CollectedBytes
+import aiohttp
 
 
 from querent.config.collector.collector_config import GithubConfig, CollectorBackend
@@ -35,32 +36,25 @@ class GithubCollector(Collector):
 
     async def fetch_files_in_folder(self, api_url):
         try:
-            headers = {"Authorization": f"token {self.access_token}"}
-            response = requests.get(api_url, headers=headers)
-            response.raise_for_status()
-            contents = response.json()
-            for item in contents:
-                if item["type"] == "file":
-                    file_url = item["download_url"]
-                    try:
-                        file_response = requests.get(
-                            file_url, timeout=5, headers=headers
-                        )
-                        file_response.raise_for_status()
-                        file_contents = (file_response.text).encode("utf-8")
-                        yield CollectedBytes(file=item["name"], data=file_contents)
-                        yield CollectedBytes(
-                            file=item["name"], data=None, error=None, eof=True
-                        )
-                    except requests.exceptions.RequestException as file_error:
-                        self.logger.error(f"Error connecting to Github: {file_error}")
-                        yield CollectedBytes(
-                            file=item["name"], data=None, error=file_error
-                        )
-                elif item["type"] == "dir":
-                    # Recursively fetch files in subfolders
-                    async for sub_item in self.fetch_files_in_folder(item["url"]):
-                        yield sub_item
+            async with aiohttp.ClientSession() as session:
+                headers = {"Authorization": f"token {self.access_token}"}
+                async with session.get(api_url, headers=headers) as response:
+                    response.raise_for_status()
+                    contents = await response.json()
+                    for item in contents:
+                        if item["type"] == "file":
+                            file_url = item["download_url"]
+                            async with session.get(file_url, headers=headers) as file_response:
+                                file_response.raise_for_status()
+                                file_contents = await file_response.read()
+                                # Assume process_data() is correctly implemented for your file type
+                                yield CollectedBytes(file=item["name"], data=file_contents)
+
+                            yield CollectedBytes(file = item["name"], data = None, eof = True)
+                        elif item["type"] == "dir":
+                            # Recursively fetch files in subfolders
+                            async for sub_item in self.fetch_files_in_folder(item["url"]):
+                                yield sub_item
 
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Error connecting to Github: {e}")

@@ -70,7 +70,7 @@ class Querent:
             shutdown_task = asyncio.create_task(self.graceful_shutdown())
             asyncio.run(shutdown_task)
         except Exception as e:
-            print(f"Error during graceful shutdown: {str(e)}")
+            self.logger.error(f"Error during graceful shutdown: {str(e)}")
 
     async def wait_for_termination(self) -> Awaitable[None]:
         # Wait for the termination event to be set, indicating graceful shutdown

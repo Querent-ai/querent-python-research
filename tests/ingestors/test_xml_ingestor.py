@@ -4,6 +4,7 @@ from querent.collectors.fs.fs_collector import FSCollectorFactory
 from querent.config.collector.collector_config import FSCollectorConfig
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.processors.text_cleanup_processor import TextCleanupProcessor
 import pytest
 import uuid
 
@@ -25,9 +26,10 @@ async def test_collect_and_ingest_xml():
     collector = collector_factory.resolve(uri, config)
 
     # Set up the ingestor
+    text_cleanup_processor = TextCleanupProcessor()
     ingestor_factory_manager = IngestorFactoryManager()
     ingestor_factory = await ingestor_factory_manager.get_factory("xml")
-    ingestor = await ingestor_factory.create("xml", [])
+    ingestor = await ingestor_factory.create("xml", processors=[text_cleanup_processor])
 
     # Collect and ingest the PDF
     ingested_call = ingestor.ingest(collector.poll())

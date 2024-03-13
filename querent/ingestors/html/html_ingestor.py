@@ -81,7 +81,7 @@ class HtmlIngestor(BaseIngestor):
 
     async def extract_text_from_html(
         self, collected_bytes: CollectedBytes
-    ) -> List[str]:
+    ):
         """Function to extract text from xml"""
         try:
             html_content = collected_bytes.data.decode("UTF-8")
@@ -97,16 +97,16 @@ class HtmlIngestor(BaseIngestor):
                     element_text = element.get_text().strip()
                     elements.append(element_text)
 
-            i = 1
-            for img_tag in soup.find_all('img'):
-                img_src = img_tag.get('src')
-                if img_src and img_src.startswith('data:image'):
-                    base64_data = img_src.split(';base64,')[-1]
-                    image_data = base64.b64decode(base64_data)
-                    image_ocr = await self.process_image(io.BytesIO(image_data))
+            # i = 1
+            # for img_tag in soup.find_all('img'):
+            #     img_src = img_tag.get('src')
+            #     if img_src and img_src.startswith('data:image'):
+            #         base64_data = img_src.split(';base64,')[-1]
+            #         image_data = base64.b64decode(base64_data)
+            #         image_ocr = await self.process_image(io.BytesIO(image_data))
 
-                    yield IngestedImages(file = collected_bytes.file, image = base64_data, image_name = str(uuid.uuid4()), page_num=i, text = soup, ocr_text = image_ocr, coordinates= None, error= None)
-                    i += 1
+            #         yield IngestedImages(file = collected_bytes.file, image = base64_data, image_name = str(uuid.uuid4()), page_num=i, text = soup, ocr_text = image_ocr, coordinates= None, error= None)
+            #         i += 1
         except UnicodeDecodeError as exc:
             raise common_errors.UnicodeDecodeError(
                 f"Getting UnicodeDecodeError on this file {collected_bytes.file} as {exc}"

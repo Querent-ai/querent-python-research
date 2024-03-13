@@ -39,7 +39,7 @@ async def test_collect_and_ingest_html():
             if ingested != "" or ingested is not None:
                 counter += 1
         # 1 extra IngestedToken signifying end of file
-        assert counter == 18
+        assert counter == 17
 
     await poll_and_print()
 

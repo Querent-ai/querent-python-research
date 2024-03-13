@@ -152,11 +152,6 @@ class EmbeddingStore:
             processed_pairs = []
 
             for entity, json_string, related_entity in triples:
-                json_string = json_string.replace('\“', '').replace('\”', '')
-                json_string = json_string.encode('unicode_escape').decode('utf-8')
-                json_string = json_string.replace("\\n", " ").replace("\\t", " ")
-                json_string = re.sub(r'\\x[0-9a-fA-F]{2}', '', json_string)
-                # json_string = json_string.replace("\n", " ").replace("\t", " ")
                 try:
                     data = json.loads(json_string)
                     context = data.get("context", "").replace('"', '\\"')

@@ -7,7 +7,9 @@ from querent.querent.resource_manager import ResourceManager
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.query.neo4j_query import Neo4jConnection
+from querent.logging.logger import setup_logger
 
+logger = setup_logger(__name__, "Neo4jQueryEngine")
 
 async def start_graph_query_engine(config_dict: dict):
     query_queue = QuerentQueue()
@@ -47,17 +49,17 @@ async def check_message_states(
         if message_state is not None:
             message_type = message_state["message_type"]
             if message_type.lower() == "stop" or message_type.lower() == "terminate":
-                print("🛑 Received stop signal. Exiting...")
+                logger.info("🛑 Received stop signal. Exiting...")
                 resource_manager.querent_termination_event.set()
                 if tasks_to_kill is not None:
                     for task in tasks_to_kill:
                         task.cancel()
                 break
             else:
-                print("📬 Received message of type: " + message_type)
+                logger.info("📬 Received message of type: " + message_type)
                 # Handle other message types...
         await asyncio.sleep(60)
-    print("🛑 Received stop signal. Exiting...")
+    logger.info("🛑 Received stop signal. Exiting...")
 
 
 
@@ -78,7 +80,7 @@ async def process_query1(config_dict: dict, resource_manager: ResourceManager, q
                 config_dict["event_handler"].handle_event(EventType.QueryResult, event_state)
         
         except asyncio.TimeoutError:
-            print("Got timeout error while waiting for data from queue ")
+            logger.error("Got timeout error while waiting for data from queue ")
             resource_manager.querent_termination_event.set()
 
     neo4j_conn.close()

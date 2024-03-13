@@ -33,7 +33,6 @@ async def test_collect_and_ingest_wrong_doc():
     async def poll_and_print():
         with pytest.raises(UnknownError):
             async for ingested in ingested_call:
-                print(ingested)
                 if ingested.data is None:
                     continue
 

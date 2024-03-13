@@ -14,6 +14,8 @@ from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.querent.resource_manager import ResourceManager
 from querent.workflow._helpers import *
 
+from querent.logging.logger import setup_logger
+logger = setup_logger(__name__, "Workflows")
 
 async def start_workflow(config_dict: dict):
     # Start the workflow
@@ -25,7 +27,7 @@ async def start_workflow(config_dict: dict):
             engine_params = json.loads(engine_params)
             is_engine_params = True
     except Exception as e:
-        print("Got error while loading engine params: ", e)
+        logger.error("Got error while loading engine params: ", e)
     workflow = WorkflowConfig(config_source=workflow_config)
     collector_configs = config_dict.get("collectors", [])
     collectors = []
@@ -59,7 +61,7 @@ async def start_workflow(config_dict: dict):
         workflow(ResourceManager(), config, result_queue)
     )
     await asyncio.gather(collector_tasks, engine_tasks)
-    print("Workflow is finished. All events have been released.")
+    logger.info("Workflow is finished. All events have been released.")
 
 
 async def start_ingestion(config_dict: dict):

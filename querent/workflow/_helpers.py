@@ -15,8 +15,12 @@ from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.workflow._helpers import *
+from querent.processors.text_cleanup_processor import TextCleanupProcessor
+from querent.processors.text_processor import TextProcessor
 import os
 import nltk
+from querent.logging.logger import setup_logger
+logger = setup_logger(__name__, "Helpers")
 
 
 def setup_nltk_and_spacy_paths(config, search_directory):
@@ -42,10 +46,14 @@ async def start_collectors(config: Config):
     for collector in collectors:
         await collector.connect()
 
+    text_cleanup_processor = TextCleanupProcessor()
+    text_processor = TextProcessor()
+
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors,
         result_queue=None,
         tokens_feader=config.workflow.tokens_feader,
+        processors=[text_cleanup_processor, text_processor]
     )
 
     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
@@ -156,14 +164,14 @@ async def check_message_states(
         if message_state is not None:
             message_type = message_state["message_type"]
             if message_type.lower() == "stop" or message_type.lower() == "terminate":
-                print("🛑 Received stop signal. Exiting...")
+                logger.info("🛑 Received stop signal. Exiting...")
                 resource_manager.querent_termination_event.set()
                 if tasks_to_kill is not None:
                     for task in tasks_to_kill:
                         task.cancel()
                 break
             else:
-                print("📬 Received message of type: " + message_type)
+                logger.info("📬 Received message of type: " + message_type)
                 # Handle other message types...
         await asyncio.sleep(60)
-    print("🛑 Received stop signal. Exiting...")
+    logger.info("🛑 Received stop signal. Exiting...")
