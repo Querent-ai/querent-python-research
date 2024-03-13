@@ -1,6 +1,4 @@
 import os
-from pydantic import BaseSettings
-import yaml
 from pydantic import BaseModel
 from typing import Optional, List
 
