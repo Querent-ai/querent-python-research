@@ -63,12 +63,10 @@ class BaseEngine(ABC):
         self,
         input_queue: QuerentQueue,
         config: EngineConfig = EngineConfig(
-            config_source={
-                "id": str(uuid.uuid4()),
-                "name": "BaseEngine",
-                "description": "Base Engine",
-                "version": "0.0.1",
-            }
+                id = str(uuid.uuid4()),
+                name = "BaseEngine",
+                description = "Base Engine",
+                version = "0.0.1",
         ),
         **kwargs,
     ):
