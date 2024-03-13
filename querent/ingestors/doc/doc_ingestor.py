@@ -122,7 +122,8 @@ class DocIngestor(BaseIngestor):
         temp_file_path = temp_file.name
         try:
             txt = pytextract.process(temp_file_path).decode("utf-8")
-            return txt
+            processed_text = await self.process_data(txt)
+            return processed_text
         except RuntimeError as exc:
             raise common_errors.RuntimeError(
                 f"Getting ExtractionError on this file {collected_bytes.file}"
