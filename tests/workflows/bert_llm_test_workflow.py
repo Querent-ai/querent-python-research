@@ -47,7 +47,7 @@
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
 #     bert_llm_config = LLM_Config(
-#     # ner_model_name="botryan96/GeoBERT",
+#     ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
 #     filter_params={
 #             'score_threshold': 0.5,
@@ -61,8 +61,8 @@
 #     llm_instance = BERTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
-#             assert event_state.event_type == EventType.Graph
-#             triple = json.loads(event_state.payload)
+#             assert event_state['event_type'] == EventType.Graph
+#             triple = json.loads(event_state['payload'])
 #             print("triple: {}".format(triple))
 #             assert isinstance(triple['subject'], str) and triple['subject']
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())

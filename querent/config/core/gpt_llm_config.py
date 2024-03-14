@@ -1,3 +1,4 @@
+from typing import Optional
 from querent.config.core.llm_config import LLM_Config
 
 class GPTConfig(LLM_Config):
@@ -10,7 +11,7 @@ class GPTConfig(LLM_Config):
     requests_per_minute: int = 3
     openai_api_key: str = ""
     user_context: str = None
-    huggingface_token: str = None
+    huggingface_token: Optional[str] = None
 
     def __init__(self, config_source=None, **kwargs):
         config_data = {}
