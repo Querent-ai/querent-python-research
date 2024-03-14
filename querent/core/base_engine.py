@@ -278,7 +278,6 @@ class BaseEngine(ABC):
                         current_message_total = 0
             await asyncio.gather(state_listener, _inner_worker())
         except Exception as e:
-            print("Exception", e)
             self.logger.error(f"Error while processing tokens: {e}")
         finally:
             self.logger.info(f"Stopping worker for {self.__class__.__name__}")
