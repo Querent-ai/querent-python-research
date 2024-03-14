@@ -5,7 +5,8 @@ import os
 
 from querent.config.engine.engine_config import EngineConfig
 
-class LLM_Config(BaseModel):
+class LLM_Config(EngineConfig):
+    id: str = ""
     name: str = "LLMEngine"
     description: str = "An engine for NER and knowledge graph operations."
     version: str = "0.0.1"
@@ -47,6 +48,18 @@ Answer:""")
         if "config" in config_data:
             config_data.update(config_data["config"])
         super().__init__(**config_data)
+
+    @classmethod
+    def load_config(cls, config_source) -> dict:
+        if isinstance(config_source, dict):
+            # If config source is a dictionary, return a dictionary
+            cls.config_data = config_source
+        else:
+            raise ValueError("Invalid config. Must be a valid dictionary")
+
+        env_vars = dict(os.environ)
+        cls.config_data.update(env_vars)
+        return cls.config_data
 
     
 

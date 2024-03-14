@@ -9,7 +9,7 @@ from querent.common.types.engine_config_keys import EngineConfigKey
 class EngineConfig(BaseModel):
     """Engine configuration."""
 
-    id: str
+    id: Optional[str] = ""
     name: str
 
     num_workers: Optional[int] = 1

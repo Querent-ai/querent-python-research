@@ -10,12 +10,12 @@ class WorkflowConfig(BaseModel):
     name: str
     id: str
     config: Dict[str, str]
-    inner_channel: Optional[Any]
-    channel: Optional[Any]
-    inner_channel_handler: Optional[Any]
-    event_handler: Optional[Any]
-    inner_tokens_feader: Optional[Any]
-    tokens_feader: Optional[Any]
+    inner_channel: Optional[Any] = None
+    channel: Optional[Any] = None
+    inner_channel_handler: Optional[Any] = None
+    event_handler: Optional[Any] = None
+    inner_tokens_feader: Optional[Any] = None
+    tokens_feader: Optional[Any] = None
     
 
     def __init__(self, config_source=None, **kwargs):
