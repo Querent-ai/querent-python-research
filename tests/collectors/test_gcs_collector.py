@@ -21,7 +21,7 @@ def gcs_config():
             "id": str(uuid.uuid4()),
             "bucket": "querent-test",
             "credentials": credential_json_str,
-            "chunk": 1024,
+            "chunk": "1024",
             "config": {},
             "name": "GCS-config",
             "uri": "gs://",
