@@ -43,7 +43,8 @@ class Querent:
             #self.setup_signal_handlers()
 
             # Start the tasks above and wait for them to finish
-            await asyncio.gather(auto_scale_task, self.wait_for_termination())
+            termination_task = asyncio.create_task(self.wait_for_termination())
+            await asyncio.gather(auto_scale_task, termination_task)
 
         except Exception as e:
             self.logger.error(f"An error occurred during Querent execution: {e}")

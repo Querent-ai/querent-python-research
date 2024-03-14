@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.ingested_images import IngestedImages
@@ -93,4 +94,12 @@ async def test_querent_with_base_llm():
         resource_manager=resource_manager,
     )
     # Start the querent
-    await querent.start()
+
+    querent_task = asyncio.create_task(querent.start())
+    terminate_task = asyncio.create_task(terminate_querent(llm_mocker))
+    await asyncio.gather(querent_task, terminate_task)
+
+async def terminate_querent(llm_mocker: MockLLMEngine):
+    await asyncio.sleep(60)
+    event_state = EventState(event_type=EventType.Graph, payload = "terminate", timestamp=1.0, file="dummy.txt")
+    await llm_mocker.set_state(event_state)

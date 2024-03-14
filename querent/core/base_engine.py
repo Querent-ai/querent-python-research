@@ -174,28 +174,23 @@ class BaseEngine(ABC):
     """
 
     async def _listen_for_state_changes(self):
-        while not self.termination_event.is_set():
-            try:
-                # Wait for up to 2 minutes to get a new state. If no state is received in this time, a TimeoutError is raised.
-                new_state = await asyncio.wait_for(self.state_queue.get(), timeout=15)
-                if isinstance(new_state, EventState):
-                    if new_state.payload == "Terminate":
-                        break
-                    # Construct the new state dictionary.
-                    new_state_dict = {
-                        "event_type": new_state.event_type,
-                        "timestamp": new_state.timestamp,
-                        "payload": new_state.payload,
-                        "file": new_state.file
-                    }
-                    # Notify subscribers with the new state.
-                    await self._notify_subscribers(new_state_dict["event_type"], new_state_dict)
-                else:
-                    raise Exception(f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: EventState")
-                await self.state_queue.task_done()
-            except asyncio.TimeoutError:
-                if self.termination_event.is_set():
+        while not self.state_queue.empty() or not self.termination_event.is_set():
+            new_state = await self.state_queue.get()
+            if isinstance(new_state, EventState):
+                if new_state.payload == "Terminate":
                     break
+                new_state = {
+                    "event_type": new_state.event_type,
+                    "timestamp": new_state.timestamp,
+                    "payload": new_state.payload,
+                    "file": new_state.file
+                }
+                await self._notify_subscribers(new_state["event_type"], new_state)
+            else:
+                raise Exception(
+                    f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
+                )
+            await self.state_queue.task_done()
                 
 
     async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
@@ -222,54 +217,44 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
-                first_data = False
                 while not self.termination_event.is_set():
                     retries = 0
                     none_counter = 0
+                    await asyncio.sleep(5)
+                    data = await self.input_queue.get()
                     try:
-                        if not first_data:
-                            data = await self.input_queue.get()
-                            first_data = True
+                        if isinstance(data, IngestedMessages):
+                            await self.process_messages(data)
+                        elif isinstance(data, IngestedTokens):
+                            await self.process_tokens(data)
+                        elif isinstance(data, IngestedImages):
+                            await self.process_images(data)
+                        elif isinstance(data, IngestedCode):
+                            await self.process_code(data)
+                        elif data is None:
+                            none_counter += 1
+                            if none_counter >= 2:
+                                self.termination_event.set()
+                                current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                                await self.set_state(new_state=current_state)
+
                         else:
-                            data = await asyncio.wait_for(self.input_queue.get(), timeout=120)
-                        try:
-                            if isinstance(data, IngestedMessages):
-                                await self.process_messages(data)
-                            elif isinstance(data, IngestedTokens):
-                                await self.process_tokens(data)
-                            elif isinstance(data, IngestedImages):
-                                await self.process_images(data)
-                            elif isinstance(data, IngestedCode):
-                                await self.process_code(data)
-                            elif data is None:
-                                none_counter += 1
-                                if none_counter >= 2:
-                                    self.termination_event.set()
-                                    current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
-                                    await self.set_state(new_state=current_state)
-
-                            else:
-                                raise Exception(
-                                    f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
-                                )
-                        except Exception as e:
-                            self.logger.error(
-                                f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                            raise Exception(
+                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
                             )
-                            retries += 1
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                        )
+                        retries += 1
 
-                            if retries > self.max_retries:
-                                self.logger.error(
-                                    f"Error processing tokens: {e}. Max retries reached. Terminating."
-                                )
-                                break
+                        if retries > self.max_retries:
+                            self.logger.error(
+                                f"Error processing tokens: {e}. Max retries reached. Terminating."
+                            )
+                            break
                         
                         await asyncio.sleep(self.retry_interval)
-
-                    except asyncio.TimeoutError:
-                        self.termination_event.set()
-                        current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
-                        await self.set_state(new_state=current_state)
 
                     current_message_total += 1
 
