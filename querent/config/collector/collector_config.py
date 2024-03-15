@@ -194,11 +194,11 @@ class GcsCollectConfig(CollectorConfig):
 class SlackCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Slack
     id: str
-    cursor: Optional[str]
-    include_all_metadata: Optional[bool]
-    inclusive: Optional[bool]
-    latest: Optional[str]
-    limit: Optional[int]
+    cursor: Optional[str] = None
+    include_all_metadata: Optional[bool] = True
+    inclusive: Optional[bool] = True
+    latest: Optional[str] = "0"
+    limit: Optional[int] = 100
     channel_name: str
     access_token: str
 

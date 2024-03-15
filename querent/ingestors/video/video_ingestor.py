@@ -32,9 +32,7 @@ class VideoIngestor(BaseIngestor):
         self.processors = processors
         self.logger = setup_logger(__name__, "VideoIngestor")
 
-    async def ingest(
-        self, poll_function: AsyncGenerator[CollectedBytes, None]
-    ) -> AsyncGenerator[IngestedTokens, None]:
+    async def ingest(self, poll_function: AsyncGenerator[CollectedBytes, None]) -> AsyncGenerator[IngestedTokens, None]:
         current_file = None
         collected_bytes = b""
         try:
@@ -45,11 +43,12 @@ class VideoIngestor(BaseIngestor):
                 if current_file is None:
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
-                    # we have a new file, process the old one
+                    # We have a new file, process the old one
                     async for text in self.extract_and_process_video(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
                         yield IngestedTokens(file=current_file, data=[text], error=None)
+                    # Ensure a final yield for the last processed text
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
@@ -61,19 +60,18 @@ class VideoIngestor(BaseIngestor):
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
         finally:
-            # process the last file
-            async for text in self.extract_and_process_video(
-                CollectedBytes(file=current_file, data=collected_bytes)
-            ):
-                yield IngestedTokens(file=current_file, data=[text], error=None)
-            yield IngestedTokens(file=current_file, data=None, error=None)
+            if collected_bytes:  # Check if there's data left to process for the last file
+                async for text in self.extract_and_process_video(
+                    CollectedBytes(file=current_file, data=collected_bytes)
+                ):
+                    yield IngestedTokens(file=current_file, data=[text], error=None)
+                # Ensure a final yield for the last processed text
+                yield IngestedTokens(file=current_file, data=None, error=None)
 
-    async def extract_and_process_video(
-        self, collected_bytes: CollectedBytes
-    ) -> AsyncGenerator[str, None]:
-        text=""
+    async def extract_and_process_video(self, collected_bytes: CollectedBytes) -> AsyncGenerator[str, None]:
+        text = ""
         async for video_text in self.extract_text_from_video(collected_bytes):
-            text = text + video_text
+            text += video_text
         processed_text = await self.process_data(text)
         yield processed_text
 
