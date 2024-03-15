@@ -76,6 +76,7 @@ requirements = [
     "langchain==0.1.11",
     "openai==1.13.3",
     "newsapi-python==0.2.7",
+    "ffmpeg-python==0.2.0"
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:

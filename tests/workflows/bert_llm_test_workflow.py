@@ -56,7 +56,8 @@
 #             'min_cluster_size': 5,
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
-#         }
+#         },
+#     user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
 #     )
 #     llm_instance = BERTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
