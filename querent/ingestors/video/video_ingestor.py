@@ -9,7 +9,7 @@ from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.logging.logger import setup_logger
-
+import ffmpeg
 
 class VideoIngestorFactory(IngestorFactory):
     SUPPORTED_EXTENSIONS = {"mp4"}
@@ -71,20 +71,37 @@ class VideoIngestor(BaseIngestor):
     async def extract_and_process_video(
         self, collected_bytes: CollectedBytes
     ) -> AsyncGenerator[str, None]:
-        text = await self.extract_text_from_video(collected_bytes)
+        text=""
+        async for video_text in self.extract_text_from_video(collected_bytes):
+            text = text + video_text
         processed_text = await self.process_data(text)
         yield processed_text
 
-    async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> AsyncGenerator[str, None]:
-        # Extract audio from the video
-        video = mp.VideoFileClip(io.BytesIO(collected_bytes.data))
-        audio = video.audio.to_soundarray()
 
-        # Use audio processor to process audio and obtain text
-        async for text in self.audio_processor.extract_and_process_audio(
-            CollectedBytes(file=collected_bytes.file, data=audio.tobytes())
-        ):
-            yield text
+    async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> AsyncGenerator[str, None]:
+        input_video_stream = io.BytesIO(collected_bytes.data)
+        print("Input video stream")
+        try:
+            process = (
+                ffmpeg
+                .input('pipe:0', format='mp4')
+                .output('pipe:1', format='wav')
+                .run_async(pipe_stdin=True, pipe_stdout=True, pipe_stderr=True, overwrite_output=True)
+            )
+            input_video_stream.seek(0)
+            process.stdin.write(input_video_stream.read())
+            process.stdin.close()
+            print("Reading video data")
+            output_audio_data = process.stdout.read()
+            await process.wait()
+            async for text in self.audio_processor.extract_and_process_audio(
+                CollectedBytes(file=collected_bytes.file, data=output_audio_data)
+            ):  
+                print("Text extracted", text)
+                yield text
+
+        except Exception as e:
+            self.logger.error(f"Failed to extract text from video: {e}")
 
     async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:

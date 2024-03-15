@@ -81,6 +81,7 @@ class AudioIngestor(BaseIngestor):
                     async for text in self.extract_and_process_audio(
                         CollectedBytes(file=current_file, data=collected_bytes)
                     ):
+                        print("Audio Text Processing", text)
                         yield IngestedTokens(file=current_file, data=[text], error=None)
                     yield IngestedTokens(
                         file=current_file,
