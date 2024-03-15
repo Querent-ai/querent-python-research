@@ -81,7 +81,7 @@
 #                     "Connectivity", "Production rate", "Depletion rate",
 #                     "Exploration technique", "Drilling technique", "Completion technique",
 #                     "Environmental impact", "Regulatory compliance",
-#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford shale", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
+#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
 #                 ]
 #             , sample_entities = [
 #                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
