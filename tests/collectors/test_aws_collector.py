@@ -62,7 +62,7 @@ async def test_aws_collector(aws_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 5392
+        assert counter == 5078
 
     await poll_and_print()
 

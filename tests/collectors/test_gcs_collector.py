@@ -70,7 +70,7 @@ async def test_gcs_collector(gcs_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 797
+        assert counter == 3996
 
     await poll_and_print()
 

@@ -24,6 +24,8 @@ def email_config():
             "id": str(uuid.uuid4()),
             "imap_server": "imap.gmail.com",
             "imap_port": 993,
+            "imap_username": "puneet@querent.xyz",
+            "imap_password": os.getenv("IMAP_PASSWORD"),
             "imap_folder": "[Gmail]/Drafts",
             "imap_certfile": None,
             "imap_keyfile": None,
