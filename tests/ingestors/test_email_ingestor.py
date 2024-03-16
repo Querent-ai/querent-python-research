@@ -55,7 +55,6 @@ async def test_email_ingestor(email_config):
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested != "" or ingested is not None:
-                print(ingested)
                 counter += 1
         assert counter == 4
 
