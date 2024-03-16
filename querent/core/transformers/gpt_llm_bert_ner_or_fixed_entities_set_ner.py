@@ -183,6 +183,27 @@ class GPTLLM(BaseEngine):
                     {"role": "user", "content": identify_entity_message},
                     {"role": "user", "content": self.user_context},
                 ]
+            elif self.user_context and not self.fixed_entities :
+                identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
+        
+                    Context: {context}
+                    Entity 1: {entity1} and Entity 2: {entity2}
+                    Output Format:
+                    [
+                        {{
+                            'subject': 'Identified as the main entity in the context, typically the initiator or primary focus of the action or topic being discussed.',
+                            'predicate': 'The relationship (predicate) between the subject and the object.',
+                            'object': 'This parameter represents the entity in the context directly impacted by or involved in the action, typically the recipient or target of the main verb's action.',
+                            'subject_type': 'The category of the subject entity e.g. location, person, event, material, process etc.',
+                            'object_type': 'The category of the object entity e.g. location, person, event, material, process etc.',
+                            'predicate_type': 'The category of the predicate e.g. causative, action, ownership, occurance etc.'
+                        }},
+                    ]
+                    """
+                messages_classify_entity = [
+                    {"role": "user", "content": identify_entity_message},
+                    {"role": "user", "content": self.user_context},
+                ]
             identify_predicate_response = self.generate_response(
                 messages_classify_entity,
                 "predicate_info"

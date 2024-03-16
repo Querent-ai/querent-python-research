@@ -76,6 +76,7 @@ requirements = [
     "langchain==0.1.11",
     "openai==1.13.3",
     "newsapi-python==0.2.7",
+    "ffmpeg-python==0.2.0"
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -83,7 +84,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="2.0.1",
+    version="2.1.0",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

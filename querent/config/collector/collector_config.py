@@ -24,13 +24,13 @@ class CollectorBackend(str, Enum):
 class CollectorConfig(BaseModel):
     backend: CollectorBackend
     # Use Field with allow_mutation=False to specify the type
-    channel: Optional[Any]
+    channel: Optional[Any] = None
     id: str
     name: str
     uri: Optional[Any]
     config: Dict[str, str]
-    inner_channel: Optional[Any]
-    config_source: Optional[Any]
+    inner_channel: Optional[Any] = None 
+    config_source: Optional[Any] = None
 
     def __init__(self, config_source=None, **kwargs):
 
@@ -106,7 +106,7 @@ class FSCollectorConfig(CollectorConfig):
     id: str
     root_path: str
     chunk_size: str = "1048576"
-    channel: Any
+    channel: Optional[Any] = None
 
     def __init__(self, config_source=None, **kwargs):
         if config_source and "config" in config_source:
@@ -194,11 +194,11 @@ class GcsCollectConfig(CollectorConfig):
 class SlackCollectorConfig(CollectorConfig):
     backend: CollectorBackend = CollectorBackend.Slack
     id: str
-    cursor: Optional[str]
-    include_all_metadata: Optional[bool]
-    inclusive: Optional[bool]
-    latest: Optional[str]
-    limit: Optional[int]
+    cursor: Optional[str] = None
+    include_all_metadata: Optional[bool] = True
+    inclusive: Optional[bool] = True
+    latest: Optional[str] = "0"
+    limit: Optional[int] = 100
     channel_name: str
     access_token: str
 

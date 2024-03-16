@@ -47,7 +47,7 @@
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
 #     bert_llm_config = LLM_Config(
-#     # ner_model_name="botryan96/GeoBERT",
+#     ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
 #     filter_params={
 #             'score_threshold': 0.5,
@@ -56,13 +56,14 @@
 #             'min_cluster_size': 5,
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
-#         }
+#         },
+#     user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
 #     )
 #     llm_instance = BERTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
-#             assert event_state.event_type == EventType.Graph
-#             triple = json.loads(event_state.payload)
+#             assert event_state['event_type'] == EventType.Graph
+#             triple = json.loads(event_state['payload'])
 #             print("triple: {}".format(triple))
 #             assert isinstance(triple['subject'], str) and triple['subject']
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())

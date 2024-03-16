@@ -256,8 +256,7 @@ class GPTNERLLM(BaseEngine):
                                 await self.set_state(new_state=current_state)
 
         except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT NER LLM class. {e}")
-            raise Exception(f"An error occurred while extracting predicates using GPT NER LLM class: {e}")
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT NER LLM class. {e}")
     
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError

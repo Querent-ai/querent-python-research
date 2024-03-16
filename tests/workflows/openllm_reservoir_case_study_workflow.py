@@ -15,6 +15,7 @@
 # import uuid
 # from querent.common.types.file_buffer import FileBuffer
 # from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
+# from querent.processors.text_cleanup_processor import TextCleanupProcessor
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
 # import time
@@ -24,11 +25,11 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     db_conn = DatabaseConnection(dbname="postgres", 
-#             user="postgres", 
-#             password="querent", 
-#             host="localhost", 
-#             port="5432")
+#     # db_conn = DatabaseConnection(dbname="postgres", 
+#     #         user="postgres", 
+#     #         password="querent", 
+#     #         host="localhost", 
+#     #         port="5432")
 #     # ml_conn = MilvusDBConnection()
 #     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
@@ -49,9 +50,10 @@
 #     # Set up the result queue
 #     result_queue = asyncio.Queue()
 
+#     text_cleanup_processor = TextCleanupProcessor()
 #     # Create the IngestorFactoryManager
 #     ingestor_factory_manager = IngestorFactoryManager(
-#         collectors=collectors, result_queue=result_queue
+#         collectors=collectors, result_queue=result_queue, processors=[text_cleanup_processor]
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     print("Going to start ingesting now.......")
@@ -70,7 +72,6 @@
 #             'cluster_persistence_threshold':0.2
 #         }
 #             ,fixed_entities = [
-#                     "Reservoir",
 #                     "Carbonate", "Clastic", "Porosity", "Permeability",
 #                     "Oil saturation", "Water saturation", "Gas saturation",
 #                     "Depth", "Size", "Temperature",
@@ -82,11 +83,9 @@
 #                     "Connectivity", "Production rate", "Depletion rate",
 #                     "Exploration technique", "Drilling technique", "Completion technique",
 #                     "Environmental impact", "Regulatory compliance",
-#                     "Economic analysis", "Market analysis"
+#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
 #                 ]
-
 #             , sample_entities = [
-#                     "reservoir",
 #                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
 #                     "reservoir_property", "reservoir_property", "reservoir_property",
 #                     "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic",
@@ -98,7 +97,7 @@
 #                     "reservoir_feature", "production_metric", "production_metric",
 #                     "exploration_method", "drilling_method", "completion_method",
 #                     "environmental_aspect", "regulatory_aspect",
-#                     "economic_aspect", "economic_aspect"
+#                     "economic_aspect", "economic_aspect","hydrocarbon_source","hydrocarbon_source","hydrocarbon_source","hydrocarbon_source","reservoir","reservoir","reservoir","reservoir","reservoir"
 #                 ]
 #             , is_confined_search = True
 #             # , huggingface_token = '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'
@@ -115,7 +114,7 @@
 #             if event_state['event_type'] == EventType.Graph :
 #                 triple = json.loads(event_state['payload'])
 #                 print("file---------------------",event_state['file'], "----------------", type(event_state['file']))
-#                 print("triple: {}".format(triple))
+#                 # print("triple: {}".format(triple))
 #                 graph_event_data = {
 #             'subject': triple['subject'],
 #             'subject_type': triple['subject_type'],
@@ -141,7 +140,7 @@
 #     )
 #     querent_task = asyncio.create_task(querent.start())
 #     await asyncio.gather(querent_task)
-#     db_conn.close()
+#     # db_conn.close()
 
 # if __name__ == "__main__":
 

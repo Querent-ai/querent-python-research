@@ -11,6 +11,7 @@ import uuid
 from dotenv import load_dotenv
 
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.processors.text_processor import TextProcessor
 
 load_dotenv()
 
@@ -45,7 +46,8 @@ async def test_email_ingestor(email_config):
     # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
     ingestor_factory = await ingestor_factory_manager.get_factory("email")
-    ingestor = await ingestor_factory.create("email", [])
+    processor = TextProcessor()
+    ingestor = await ingestor_factory.create("email", [processor])
     ingested_call = ingestor.ingest(collector.poll())
 
     async def poll_and_print():

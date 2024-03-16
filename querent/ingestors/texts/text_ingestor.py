@@ -47,7 +47,7 @@ class TextIngestor(BaseIngestor):
                         process_text = await self.process_data(line)
                         yield IngestedTokens(
                             file=chunk_bytes.file,
-                            data=process_text,
+                            data=[process_text],
                             error=None,
                             is_token_stream=True,
                         )

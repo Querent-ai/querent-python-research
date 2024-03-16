@@ -15,6 +15,7 @@
 # import uuid
 # from querent.common.types.file_buffer import FileBuffer
 # from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
+# from querent.processors.text_cleanup_processor import TextCleanupProcessor
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
 # import time
@@ -24,13 +25,13 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     db_conn = DatabaseConnection(dbname="postgres", 
-#             user="querent", 
-#             password="querent", 
-#             host="localhost", 
-#             port="5432")
-#     ml_conn = MilvusDBConnection()
-#     directories = [ "/path/to/directory"]
+#     # db_conn = DatabaseConnection(dbname="postgres", 
+#     #         user="querent", 
+#     #         password="querent", 
+#     #         host="localhost", 
+#     #         port="5432")
+#     # ml_conn = MilvusDBConnection()
+#     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -48,10 +49,10 @@
 
 #     # Set up the result queue
 #     result_queue = asyncio.Queue()
-
+#     text_cleanup_processor = TextCleanupProcessor()
 #     # Create the IngestorFactoryManager
 #     ingestor_factory_manager = IngestorFactoryManager(
-#         collectors=collectors, result_queue=result_queue
+#         collectors=collectors, result_queue=result_queue, processors=[text_cleanup_processor]
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     print("Going to start ingesting now.......")
@@ -80,7 +81,7 @@
 #                     "Connectivity", "Production rate", "Depletion rate",
 #                     "Exploration technique", "Drilling technique", "Completion technique",
 #                     "Environmental impact", "Regulatory compliance",
-#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford shale", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
+#                     "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford", "ghawar", "johan sverdrup", "karachaganak","maracaibo"
 #                 ]
 #             , sample_entities = [
 #                     "rock_type", "rock_type", "reservoir_property", "reservoir_property",
@@ -108,16 +109,16 @@
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             if event_state["event_type"] == EventType.Vector :
 #                 triple = json.loads(event_state["payload"])
-#                 print("triple: {}".format(triple))
+#                 # print("triple: {}".format(triple))
 #                 vector_triple = json.loads(event_state["payload"])
-#                 print("Inside Vector event ---------------------------------", vector_triple)
-#                 milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
-#                 ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state["file"], collection= milvus_coll )
+#                 # print("Inside Vector event ---------------------------------", vector_triple)
+#                 # milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
+#                 # ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state["file"], collection= milvus_coll )
 #             # assert event_state.event_type == EventType.Graph
 #             if event_state["event_type"] == EventType.Graph :
 #                 triple = json.loads(event_state["payload"])
 #                 print("file---------------------",event_state["file"], "----------------", type(event_state["file"]))
-#                 print("triple: {}".format(triple))
+#                 # print("triple: {}".format(triple))
 #                 graph_event_data = {
 #                     'subject': triple['subject'],
 #                     'subject_type': triple['subject_type'],
@@ -128,18 +129,18 @@
 #                     'sentence': triple['sentence'],
 #                     'document_id': event_state["file"]
 #                 }
-#                 db_conn.insert_graph_event(graph_event_data)
+#                 # db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
                 
-#     # llm_instance.subscribe(EventType.Graph, StateChangeCallback())
-#     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
+#     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
+#     # llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(
 #         [llm_instance],
 #         resource_manager=resource_manager,
 #     )
 #     querent_task = asyncio.create_task(querent.start())
 #     await asyncio.gather(querent_task, ingest_task)
-#     db_conn.close()
+#     # db_conn.close()
 
 # if __name__ == "__main__":
 

@@ -56,7 +56,7 @@ class EmailIngestor(BaseIngestor):
                     )
                     yield IngestedTokens(
                         file=current_file,
-                        data=email,  # Wrap line in a list
+                        data=[email],
                         error=None,
                     )
                     yield IngestedTokens(
@@ -76,7 +76,7 @@ class EmailIngestor(BaseIngestor):
                 )
                 yield IngestedTokens(
                     file=current_file,
-                    data=email,  # Wrap line in a list
+                    data=[email],
                     error=None,
                 )
                 yield IngestedTokens(

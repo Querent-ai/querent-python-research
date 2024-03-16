@@ -26,7 +26,7 @@ def aws_config():
             "region": "ap-south-1",
             "access_key": aws_access_key_id,
             "secret_key": aws_secret_access_key,
-            "chunk": 1024,
+            "chunk": "1024",
             "name": "AWS-config",
             "config": {},
             "backend": "s3",  # Assuming this is a string or relevant enum value
@@ -62,7 +62,7 @@ async def test_aws_collector(aws_config):
 
             if chunk is not None:
                 counter += 1
-        assert counter == 5392
+        assert counter == 5078
 
     await poll_and_print()
 

@@ -1,11 +1,12 @@
 import os
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import os
 
 from querent.config.engine.engine_config import EngineConfig
 
-class LLM_Config(BaseModel):
+class LLM_Config(EngineConfig):
+    id: str = ""
     name: str = "LLMEngine"
     description: str = "An engine for NER and knowledge graph operations."
     version: str = "0.0.1"
@@ -37,7 +38,7 @@ Answer:""")
     skip_inferences: bool = False
     fixed_relationships: List[str] = Field(default_factory=list, description="List of fixed relationships")
     sample_relationships: List[str] = Field(default_factory=list, description="List of sample relationships")
-    huggingface_token: str = None
+    huggingface_token: Optional[str] = None
     
     def __init__(self, config_source=None, **kwargs):
         config_data = {}
@@ -48,17 +49,16 @@ Answer:""")
             config_data.update(config_data["config"])
         super().__init__(**config_data)
 
-
     @classmethod
     def load_config(cls, config_source) -> dict:
         if isinstance(config_source, dict):
-            # If config source is a dictionary, use it as the initial config data
+            # If config source is a dictionary, return a dictionary
             cls.config_data = config_source
         else:
             raise ValueError("Invalid config. Must be a valid dictionary")
 
         env_vars = dict(os.environ)
-        cls.config_data.update(env_vars)  # Update config data with environment variables
+        cls.config_data.update(env_vars)
         return cls.config_data
 
     

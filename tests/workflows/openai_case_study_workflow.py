@@ -15,6 +15,7 @@
 # import uuid
 # from querent.common.types.file_buffer import FileBuffer
 # from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
+# from querent.processors.text_cleanup_processor import TextCleanupProcessor
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
 # import time
@@ -26,13 +27,13 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     db_conn = DatabaseConnection(dbname="postgres", 
-#             user="postgres", 
-#             password="querent", 
-#             host="localhost", 
-#             port="5432")
-#     # ml_conn = MilvusDBConnection()
-#     directories = [ "./tests/data/llm/pdf/"]
+#     # db_conn = DatabaseConnection(dbname="postgres", 
+#     #         user="postgres", 
+#     #         password="querent", 
+#     #         host="localhost", 
+#     #         port="5432")
+#     # # ml_conn = MilvusDBConnection()
+#     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -50,10 +51,10 @@
 
 #     # Set up the result queue
 #     result_queue = asyncio.Queue()
-
+#     text_cleanup_processor = TextCleanupProcessor()
 #     # Create the IngestorFactoryManager
 #     ingestor_factory_manager = IngestorFactoryManager(
-#         collectors=collectors, result_queue=result_queue
+#         collectors=collectors, result_queue=result_queue, processors=[text_cleanup_processor]
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
@@ -118,9 +119,9 @@
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             # assert event_state.event_type == EventType.Graph
-#             if event_state.event_type == EventType.Graph :
-#                 triple = json.loads(event_state.payload)
-#                 print("file---------------------",event_state.file, "----------------", type(event_state.file))
+#             if event_state['event_type'] == EventType.Graph :
+#                 triple = json.loads(event_state['payload'])
+#                 print("file---------------------",event_state['file'], "----------------", type(event_state['file']))
 #                 print("triple: {}".format(triple))
 #                 graph_event_data = {
 #             'subject': triple['subject'],
@@ -130,9 +131,9 @@
 #             'predicate': triple['predicate'],
 #             'predicate_type': triple['predicate_type'],
 #             'sentence': triple['sentence'],
-#             'document_id': event_state.file
+#             'document_id': event_state['file']
 #         }
-#                 db_conn.insert_graph_event(graph_event_data)
+#                 # db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
 #             # else :
 #             #     vector_triple = json.loads(event_state.payload)
@@ -147,7 +148,7 @@
 #     )
 #     querent_task = asyncio.create_task(querent.start())
 #     await asyncio.gather(ingest_task, querent_task)
-#     db_conn.close()
+#     # db_conn.close()
 
 # if __name__ == "__main__":
 

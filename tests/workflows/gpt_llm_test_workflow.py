@@ -17,7 +17,7 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     directories = [ "./tests/data/llm/pdf/"]
+#     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -50,14 +50,16 @@
 #             'min_cluster_size': 5,
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
-#         }
+#         },
+#         user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
+    
 #     )
 #     llm_instance = GPTLLM(result_queue, gpt_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             print("StateChange---------------------------")
-#             assert event_state.event_type == EventType.Graph
-#             triple = json.loads(event_state.payload)
+#             assert event_state['event_type'] == EventType.Graph
+#             triple = json.loads(event_state['payload'])
 #             print("triple: {}".format(triple))
 #             assert isinstance(triple['subject'], str) and triple['subject']
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())

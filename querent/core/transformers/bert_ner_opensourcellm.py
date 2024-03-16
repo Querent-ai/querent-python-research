@@ -184,6 +184,7 @@ class BERTLLM(BaseEngine):
                 else:
                     pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
+                print("Pairs with------------------------------", len(pairs_with_predicates))
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -194,14 +195,15 @@ class BERTLLM(BaseEngine):
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
                     else:
                         # filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
-                        self.logger.error(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
-                        self.logger.info(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
+                        self.logger.debug(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                         filtered_triples = pairs_with_predicates
                 else:
                     filtered_triples = pairs_with_predicates
+                print("Filtered triples-------", len(filtered_triples))
                 if not filtered_triples:
-                    raise Exception("No entity pairs")
-                if not self.skip_inferences:
+                    self.logger.info("No entity pairs")
+                    return
+                elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
@@ -222,5 +224,4 @@ class BERTLLM(BaseEngine):
                 else:
                     return filtered_triples, file
         except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
-            raise Exception(f"An unexpected error occurred while processing tokens: {e}")
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

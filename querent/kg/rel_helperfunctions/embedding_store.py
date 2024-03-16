@@ -171,7 +171,7 @@ class EmbeddingStore:
                     updated_json_string = json.dumps(essential_data)
                     processed_pairs.append((entity, updated_json_string, related_entity))
                 except json.JSONDecodeError as e:
-                    self.logger.error(f"JSON parsing error: {e} in string: {json_string}")
+                    self.logger.info(f"JSON parsing error: {e} in string: {json_string}")
 
             return processed_pairs
 

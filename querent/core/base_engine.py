@@ -63,10 +63,12 @@ class BaseEngine(ABC):
         self,
         input_queue: QuerentQueue,
         config: EngineConfig = EngineConfig(
-                id = str(uuid.uuid4()),
-                name = "BaseEngine",
-                description = "Base Engine",
-                version = "0.0.1",
+            config_source={
+                "id": str(uuid.uuid4()),
+                "name":"BaseEngine",
+                "description":"Base Engine",
+                "version":"0.0.1",
+            }
         ),
         **kwargs,
     ):
@@ -189,6 +191,7 @@ class BaseEngine(ABC):
                     f"Bad state type {type(new_state)} for {self.__class__.__name__}. Supported type: {EventState}"
                 )
             await self.state_queue.task_done()
+                
 
     async def _notify_subscribers(self, event_type: EventType, event_state: EventState):
         """
@@ -214,55 +217,44 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
-                first_data = False
                 while not self.termination_event.is_set():
                     retries = 0
                     none_counter = 0
+                    await asyncio.sleep(5)
+                    data = await self.input_queue.get()
                     try:
-                        if not first_data:
-                            await asyncio.sleep(60)
-                            data = await self.input_queue.get()
-                            first_data = True
+                        if isinstance(data, IngestedMessages):
+                            await self.process_messages(data)
+                        elif isinstance(data, IngestedTokens):
+                            await self.process_tokens(data)
+                        elif isinstance(data, IngestedImages):
+                            await self.process_images(data)
+                        elif isinstance(data, IngestedCode):
+                            await self.process_code(data)
+                        elif data is None:
+                            none_counter += 1
+                            if none_counter >= 2:
+                                self.termination_event.set()
+                                current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                                await self.set_state(new_state=current_state)
+
                         else:
-                            data = await asyncio.wait_for(self.input_queue.get(), timeout=120)
-                        try:
-                            if isinstance(data, IngestedMessages):
-                                await self.process_messages(data)
-                            elif isinstance(data, IngestedTokens):
-                                await self.process_tokens(data)
-                            elif isinstance(data, IngestedImages):
-                                await self.process_images(data)
-                            elif isinstance(data, IngestedCode):
-                                await self.process_code(data)
-                            elif data is None:
-                                none_counter += 1
-                                if none_counter >= 2:
-                                    self.termination_event.set()
-                                    current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
-                                    await self.set_state(new_state=current_state)
-
-                            else:
-                                raise Exception(
-                                    f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
-                                )
-                        except Exception as e:
-                            self.logger.error(
-                                f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                            raise Exception(
+                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
                             )
-                            retries += 1
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error processing tokens: {e}. Retrying ({retries}/{self.max_retries})"
+                        )
+                        retries += 1
 
-                            if retries > self.max_retries:
-                                self.logger.error(
-                                    f"Error processing tokens: {e}. Max retries reached. Terminating."
-                                )
-                                break
+                        if retries > self.max_retries:
+                            self.logger.error(
+                                f"Error processing tokens: {e}. Max retries reached. Terminating."
+                            )
+                            break
                         
                         await asyncio.sleep(self.retry_interval)
-
-                    except asyncio.TimeoutError:
-                        self.termination_event.set()
-                        current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
-                        await self.set_state(new_state=current_state)
 
                     current_message_total += 1
 

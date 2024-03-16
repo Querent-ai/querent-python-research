@@ -33,7 +33,6 @@ async def start_workflow(config_dict: dict):
     collectors = []
     for collector_config in collector_configs:
         collectors.append(CollectorConfig(config_source=collector_config).resolve())
-
     engine_configs = config_dict.get("engines", [])
     engines = []
     for engine_config in engine_configs:

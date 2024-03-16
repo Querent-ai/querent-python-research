@@ -25,19 +25,6 @@ from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 import time
 
-"""
-    BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
-
-    Key functionalities include:
-    - Initializing with a specific configuration for named entity recognition (NER) and language model processing.
-    - Validating the presence of NER models and tokenizers.
-    - Processing various types of input data like messages, images, code, and tokens.
-    - Implementing methods for counting entity pairs, setting filter parameters, and processing tokens.
-    - Extracting and clustering entities and relationships from the text, and converting them into graph and vector formats.
-    - Handling errors and maintaining robustness in data processing.
-
-    The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
-    """
 
 
 class Fixed_Entities_LLM(BaseEngine):
@@ -174,7 +161,10 @@ class Fixed_Entities_LLM(BaseEngine):
             if doc_entity_pairs and any(doc_entity_pairs):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 filtered_triples = process_data(doc_entity_pairs, file)
-                if not self.skip_inferences:
+                if not filtered_triples:
+                    self.logger.info("No entity pairs")
+                    return
+                elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     self.logger.info(f"length of relationships {len(relationships)}")
                     relationships = self.semantictriplefilter.filter_triples(relationships)
@@ -198,5 +188,4 @@ class Fixed_Entities_LLM(BaseEngine):
             else:
                 return
         except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
-            raise Exception(f"An unexpected error occurred while processing tokens: {e}")
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
