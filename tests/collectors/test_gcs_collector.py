@@ -16,17 +16,17 @@ import os
 def gcs_config():
     cred_file = "/tmp/.config/gcloud/application_default_credentials.json"
     credentials_info = {
-        "type": os.getenv("GOOGLE_BUCKET_TYPE"),
-        "project_id": os.getenv("GOOGLE_BUCKET_PROJECT_ID"),
+        "type": "service_account",
+        "project_id": "protocolstreams-ai",
         "private_key_id": os.getenv("GOOGLE_BUCKET_PRIVATE_KEY_ID"),
         "private_key": os.getenv("GOOGLE_BUCKET_PRIVATE_KEY"),
-        "client_email": os.getenv("GOOGLE_BUCKET_CLIENT_EMAIL"),
+        "client_email": "gcs-test-querent@protocolstreams-ai.iam.gserviceaccount.com",
         "client_id": os.getenv("GOOGLE_BUCKET_CLIENT_ID"),
-        "auth_uri": os.getenv("GOOGLE_BUCKET_AUTH_URI"),
-        "token_uri": os.getenv("GOOGLE_BUCKET_TOKEN_URI"),
-        "auth_provider_x509_cert_url": os.getenv("GOOGLE_BUCKET_AUTH_PROVIDER"),
-        "client_x509_cert_url": os.getenv("GOOGLE_BUCKET_CLIENT_CERT_URL"),
-        "universe_domain": os.getenv("GOOGLE_BUCKET_UNIVERSE_DOMAIN")
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gcs-test-querent%40protocolstreams-ai.iam.gserviceaccount.com",
+        "universe_domain": "googleapis.com"
     }
     credential_json_str = json.dumps(credentials_info)
     return GcsCollectConfig(
