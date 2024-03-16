@@ -11,6 +11,7 @@ import uuid
 from dotenv import load_dotenv
 
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
+from querent.processors.text_processor import TextProcessor
 
 load_dotenv()
 
@@ -23,8 +24,6 @@ def email_config():
             "id": str(uuid.uuid4()),
             "imap_server": "imap.gmail.com",
             "imap_port": 993,
-            "imap_username": "puneet@querent.xyz",
-            "imap_password": os.getenv("IMAP_PASSWORD"),
             "imap_folder": "[Gmail]/Drafts",
             "imap_certfile": None,
             "imap_keyfile": None,
@@ -45,7 +44,8 @@ async def test_email_ingestor(email_config):
     # Set up the ingestor
     ingestor_factory_manager = IngestorFactoryManager()
     ingestor_factory = await ingestor_factory_manager.get_factory("email")
-    ingestor = await ingestor_factory.create("email", [])
+    processor = TextProcessor()
+    ingestor = await ingestor_factory.create("email", [processor])
     ingested_call = ingestor.ingest(collector.poll())
 
     async def poll_and_print():
@@ -53,6 +53,7 @@ async def test_email_ingestor(email_config):
         async for ingested in ingested_call:
             assert ingested is not None
             if ingested != "" or ingested is not None:
+                print(ingested)
                 counter += 1
         assert counter == 4
 
