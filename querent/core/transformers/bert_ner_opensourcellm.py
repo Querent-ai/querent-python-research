@@ -184,7 +184,6 @@ class BERTLLM(BaseEngine):
                 else:
                     pairs_withemb = pairs_withattn
                 pairs_with_predicates = process_data(pairs_withemb, file)
-                print("Pairs with------------------------------", len(pairs_with_predicates))
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
                     cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
                     clustered_triples = cluster_output['filtered_triples']
@@ -199,7 +198,6 @@ class BERTLLM(BaseEngine):
                         filtered_triples = pairs_with_predicates
                 else:
                     filtered_triples = pairs_with_predicates
-                print("Filtered triples-------", len(filtered_triples))
                 if not filtered_triples:
                     self.logger.info("No entity pairs")
                     return
