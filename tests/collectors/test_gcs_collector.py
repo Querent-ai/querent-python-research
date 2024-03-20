@@ -24,7 +24,7 @@ def gcs_config():
             "chunk": 1024,
             "config": {},
             "name": "GCS-config",
-            "uri": "gs://",
+            "uri": "gcs://",
         }
     )
 
@@ -42,7 +42,7 @@ def test_gcs_collector_factory():
 @pytest.mark.asyncio
 async def test_gcs_collector(gcs_config):
     config = gcs_config
-    uri = Uri("gs://" + config.bucket)
+    uri = Uri("gcs://" + config.bucket)
     resolver = CollectorResolver()
     collector = resolver.resolve(uri, config)
     assert collector is not None
