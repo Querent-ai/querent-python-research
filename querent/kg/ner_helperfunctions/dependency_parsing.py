@@ -50,7 +50,6 @@ class Dependency_Parsing():
             self.entities = self.process_entities()
         except Exception as e:
             self.logger.info(f"Error Initializing Dependency Parsing Class: {e}")
-            raise Exception(f"Error Initializing Dependency Parsing Class: {e}")
 
     def filter_chunks(self):
         try:
@@ -64,7 +63,6 @@ class Dependency_Parsing():
 
         except Exception as e:
             self.logger.info(f"Error filtering chunks: {e}")
-            raise Exception(f"Error filtering chunks: {e}")
 
 
     def merge_overlapping_entities(self):
@@ -81,7 +79,6 @@ class Dependency_Parsing():
             return merged_entities
         except Exception as e:
             self.logger.info(f"Error merging overlapping entities: {e}")
-            raise Exception(f"Error merging overlapping entities: {e}")
 
     def compare_entities_with_chunks(self):
         try:
@@ -93,7 +90,6 @@ class Dependency_Parsing():
                         break
         except Exception as e:
             self.logger.info(f"Error comparing entities with chunks: {e}")
-            raise Exception(f"Error comparing entities with chunks: {e}")
         
     def process_entities(self):
         try:
@@ -131,5 +127,4 @@ class Dependency_Parsing():
             return processed_entities
         except Exception as e:
             self.logger.info(f"Error processing entities: {e}")
-            raise Exception(f"Error processing entities: {e}")
 

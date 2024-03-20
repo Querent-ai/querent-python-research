@@ -224,4 +224,4 @@ class BERTLLM(BaseEngine):
                 else:
                     return filtered_triples, file
         except Exception as e:
-            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+            self.logger.info(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
