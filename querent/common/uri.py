@@ -8,7 +8,7 @@ from querent.logging.logger import setup_logger
 class Protocol(enum.Enum):
     Azure = "azure"
     File = "file"
-    Gcs = "gs"
+    Gcs = "gcs"
     PostgreSQL = "postgresql"
     Ram = "ram"
     S3 = "s3"

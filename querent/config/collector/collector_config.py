@@ -11,7 +11,7 @@ class CollectorBackend(str, Enum):
     LocalFile = "localfile"
     WebScraper = "webscraper"
     S3 = "s3"
-    Gcs = "gs"
+    Gcs = "gcs"
     AzureBlobStorage = "azure"
     Slack = "slack"
     DropBox = "dropbox"
@@ -393,7 +393,7 @@ uri_backend_mapping = {
     "localfile": "file://",
     "webscraper": "https://",
     "s3": "s3://",
-    "gs": "gs://",
+    "gcs": "gcs://",
     "azure": "azure://",
     "slack": "slack://",
     "dropbox": "dropbox://",
