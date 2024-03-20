@@ -37,7 +37,6 @@ from querent.logging.logger import setup_logger
 
 class Dependency_Parsing():
     def __init__(self, entities=None, sentence=None, model=None):
-        self.logger = setup_logger(__name__, "Dependency_Parsing")
         try:
             self.entities = entities
             self.sentence = sentence.replace("\n", " ")
@@ -49,7 +48,7 @@ class Dependency_Parsing():
             self.compare_entities_with_chunks()
             self.entities = self.process_entities()
         except Exception as e:
-            self.logger.debug(f"Error Initializing Dependency Parsing Class: {e}")
+            raise Exception(f"Error Initializing Dependency Parsing Class: {e}")
 
     def filter_chunks(self):
         try:
@@ -62,7 +61,7 @@ class Dependency_Parsing():
             return filtered_chunks
 
         except Exception as e:
-            self.logger.debug(f"Error filtering chunks: {e}")
+            raise Exception(f"Error filtering chunks: {e}")
 
 
     def merge_overlapping_entities(self):
@@ -78,7 +77,7 @@ class Dependency_Parsing():
                 i += 1
             return merged_entities
         except Exception as e:
-            self.logger.debug(f"Error merging overlapping entities: {e}")
+            raise Exception(f"Error merging overlapping entities: {e}")
 
     def compare_entities_with_chunks(self):
         try:
@@ -89,7 +88,7 @@ class Dependency_Parsing():
                         entity['noun_chunk_length'] = len(chunk.text.split())
                         break
         except Exception as e:
-            self.logger.debug(f"Error comparing entities with chunks: {e}")
+            raise Exception(f"Error comparing entities with chunks: {e}")
         
     def process_entities(self):
         try:
@@ -126,5 +125,5 @@ class Dependency_Parsing():
 
             return processed_entities
         except Exception as e:
-            self.logger.debug(f"Error processing entities: {e}")
+            raise Exception(f"Error processing entities: {e}")
 
