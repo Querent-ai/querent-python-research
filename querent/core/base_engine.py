@@ -217,9 +217,9 @@ class BaseEngine(ABC):
 
             async def _inner_worker():
                 current_message_total = 0
+                none_counter = 0
                 while not self.termination_event.is_set():
                     retries = 0
-                    none_counter = 0
                     await asyncio.sleep(5)
                     data = await self.input_queue.get()
                     try:

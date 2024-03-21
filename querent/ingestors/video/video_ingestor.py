@@ -78,7 +78,6 @@ class VideoIngestor(BaseIngestor):
 
     async def extract_text_from_video(self, collected_bytes: CollectedBytes) -> AsyncGenerator[str, None]:
         input_video_stream = io.BytesIO(collected_bytes.data)
-        print("Input video stream")
         try:
             process = (
                 ffmpeg
@@ -89,13 +88,11 @@ class VideoIngestor(BaseIngestor):
             input_video_stream.seek(0)
             process.stdin.write(input_video_stream.read())
             process.stdin.close()
-            print("Reading video data")
             output_audio_data = process.stdout.read()
             await process.wait()
             async for text in self.audio_processor.extract_and_process_audio(
                 CollectedBytes(file=collected_bytes.file, data=output_audio_data)
-            ):  
-                print("Text extracted", text)
+            ):
                 yield text
 
         except Exception as e:

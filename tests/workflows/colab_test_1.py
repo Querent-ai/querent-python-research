@@ -84,14 +84,10 @@ async def main():
     llm_instance = BERTLLM(result_queue, bert_llm_config)
 
     # Define a function to automatically terminate the task after 5 minutes
-    async def terminate_querent(result_queue, llm_mocker: BERTLLM):
+    async def terminate_querent(result_queue):
         await asyncio.sleep(180)
         await result_queue.put(None)
         await result_queue.put(None)
-        event_state = EventState(event_type=EventType.Terminate, payload = "Terminate", timestamp=1.0, file="dummy.txt")
-        await llm_mocker.set_state(event_state)
-        print("Terminating terminate task...")
-
 
     # Define a callback class to handle state changes and print resulting triples.
     class StateChangeCallback(EventCallbackInterface):
@@ -111,7 +107,7 @@ async def main():
 
     # Start Querent and the ingestion task asynchronously and wait for both to complete.
     querent_task = asyncio.create_task(querent.start())
-    terminate_task = asyncio.create_task(terminate_querent(result_queue, llm_instance))
+    terminate_task = asyncio.create_task(terminate_querent(result_queue))
     await asyncio.gather(querent_task, ingest_task, terminate_task)
 if __name__ == "__main__":
     asyncio.run(main())
