@@ -40,6 +40,7 @@ async def start_workflow(config_dict: dict):
             engine_config.update(engine_params)
         engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
+            engine_config.update({"openai_api_key": engine_config["config"]["openai_api_key"]})
             engines.append(GPTConfig(config_source=engine_config))
         elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
             engines.append(LLM_Config(config_source=engine_config))

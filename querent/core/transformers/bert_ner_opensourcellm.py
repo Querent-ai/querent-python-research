@@ -201,7 +201,7 @@ class BERTLLM(BaseEngine):
                     filtered_triples = pairs_with_predicates
                 print("Filtered triples-------", len(filtered_triples))
                 if not filtered_triples:
-                    self.logger.info("No entity pairs")
+                    self.logger.debug("No entity pairs")
                     return
                 elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)

@@ -162,11 +162,11 @@ class Fixed_Entities_LLM(BaseEngine):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 filtered_triples = process_data(doc_entity_pairs, file)
                 if not filtered_triples:
-                    self.logger.info("No entity pairs")
+                    self.logger.debug("No entity pairs")
                     return
                 elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
-                    self.logger.info(f"length of relationships {len(relationships)}")
+                    self.logger.debug(f"length of relationships {len(relationships)}")
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)

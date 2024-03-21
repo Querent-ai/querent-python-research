@@ -153,7 +153,7 @@ class GPTNERLLM(BaseEngine):
             
             if distance <= max_distance:
                 if (triple.get("subject") is None or triple.get("subect") == "") or (triple.get("object") is None or triple.get("object") == "") or (triple.get("subject_type") is None or triple.get("subject_type") == "") or (triple.get("object_type") is None or triple.get("object_type") == "") or (triple.get("predicate") is None or triple.get("predicate") == "") or (triple.get("predicate_type") is None or triple.get("predicate_type") == ""):
-                    self.logger.info(f"Received none while creating semantic triples")
+                    self.logger.debug(f"Received none while creating semantic triples")
                     continue
                 triple['subject'] = subject
                 triple['object'] = object
@@ -235,7 +235,7 @@ class GPTNERLLM(BaseEngine):
                         semantic_triples = self.extract_semantic_triples(identify_entity_response)
                         relevant_triples = self.filter_relevant_triples(semantic_triples, context, 10)
                     except Exception as e:
-                        self.logger.info(f"Error extracting semantic triples in GPT NER & LLM Class: {e}")
+                        self.logger.debug(f"Error extracting semantic triples in GPT NER & LLM Class: {e}")
                         continue
                     if len(relevant_triples)>0:
                         final_triples.extend(relevant_triples)

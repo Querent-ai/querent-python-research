@@ -20,7 +20,7 @@
 # from querent.querent.querent import Querent
 # import time
 # from querent.storage.postgres_graphevent_storage import DatabaseConnection
-# from querent.storage.milvus_vectorevent_storage import MilvusDBConnection
+# # from querent.storage.milvus_vectorevent_storage import MilvusDBConnection
 # from querent.config.core.gpt_llm_config import GPTConfig
 # from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
 
@@ -59,10 +59,11 @@
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
 #     gpt_llm_config = GPTConfig(
-#     ner_model_name="botryan96/GeoBERT",
-#     rel_model_path="/home/nishantg/Downloads/openhermes-2.5-mistral-7b.Q5_K_M.gguf",
+#     ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+#     # rel_model_path="/home/nishantg/Downloads/openhermes-2.5-mistral-7b.Q5_K_M.gguf",
 #     enable_filtering=True,
-#     filter_params={
+#     openai_api_key="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"
+#     ,filter_params={
 #             'score_threshold': 0.5,
 #             'attention_score_threshold': 0.1,
 #             'similarity_threshold': 0.5,
@@ -70,50 +71,51 @@
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
 #         }
-#     ,fixed_entities = [
-#                     "Hadean", "Archean", "Proterozoic", "Phanerozoic",
-#                     "Paleozoic", "Mesozoic", "Cenozoic",
-#                     "Cambrian", "Ordovician", "Silurian", "Devonian", "Carboniferous", "Permian",
-#                     "Triassic", "Jurassic", "Cretaceous",
-#                     "Paleogene", "Neogene", "Quaternary",
-#                     "Paleocene", "Eocene", "Oligocene",
-#                     "Miocene", "Pliocene",
-#                     "Pleistocene", "Holocene",
-#                     "Anticline", "Syncline", "Fault", "Salt dome", "Horst", "Graben",
-#                     "Reef", "Shoal", "Deltaic deposits", "Turbidite", "Channel sandstone",
-#                     "Sandstone", "Limestone", "Dolomite", "Shale",
-#                     "Source rock", "Cap rock", "Shale gas",
-#                     "Crude oil", "Natural gas", "Shale oil", "Coalbed methane", "Tar sands", "Gas hydrates",
-#                     "Structural trap", "Stratigraphic trap", "Combination trap", "Salt trap", "Unconformity trap",
-#                     "Hydrocarbon migration", "Hydrocarbon accumulation",
-#                     "Placer deposits", "Vein deposit", "Porphyry deposit", "Kimberlite pipe", "Laterite deposit",
-#                     "Volcanic rock", "Basalt", "Geothermal gradient", "Sedimentology",
-#                     "Paleontology", "Biostratigraphy", "Sequence stratigraphy", "Geophysical survey",
-#                     "Magnetic anomaly", "Gravitational anomaly", "Petrology", "Geochemistry", "Hydrogeology"
-#                 ]
+#     ,user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
+#     # ,fixed_entities = [
+#     #                 "Hadean", "Archean", "Proterozoic", "Phanerozoic",
+#     #                 "Paleozoic", "Mesozoic", "Cenozoic",
+#     #                 "Cambrian", "Ordovician", "Silurian", "Devonian", "Carboniferous", "Permian",
+#     #                 "Triassic", "Jurassic", "Cretaceous",
+#     #                 "Paleogene", "Neogene", "Quaternary",
+#     #                 "Paleocene", "Eocene", "Oligocene",
+#     #                 "Miocene", "Pliocene",
+#     #                 "Pleistocene", "Holocene",
+#     #                 "Anticline", "Syncline", "Fault", "Salt dome", "Horst", "Graben",
+#     #                 "Reef", "Shoal", "Deltaic deposits", "Turbidite", "Channel sandstone",
+#     #                 "Sandstone", "Limestone", "Dolomite", "Shale",
+#     #                 "Source rock", "Cap rock", "Shale gas",
+#     #                 "Crude oil", "Natural gas", "Shale oil", "Coalbed methane", "Tar sands", "Gas hydrates",
+#     #                 "Structural trap", "Stratigraphic trap", "Combination trap", "Salt trap", "Unconformity trap",
+#     #                 "Hydrocarbon migration", "Hydrocarbon accumulation",
+#     #                 "Placer deposits", "Vein deposit", "Porphyry deposit", "Kimberlite pipe", "Laterite deposit",
+#     #                 "Volcanic rock", "Basalt", "Geothermal gradient", "Sedimentology",
+#     #                 "Paleontology", "Biostratigraphy", "Sequence stratigraphy", "Geophysical survey",
+#     #                 "Magnetic anomaly", "Gravitational anomaly", "Petrology", "Geochemistry", "Hydrogeology"
+#     #             ]
 
-#     , sample_entities=[
-#                     "geological_eon", "geological_eon", "geological_eon", "geological_eon",
-#                     "geological_era", "geological_era", "geological_era",
-#                     "geological_period", "geological_period", "geological_period", "geological_period", "geological_period", "geological_period",
-#                     "geological_period", "geological_period", "geological_period",
-#                     "geological_period", "geological_period", "geological_period",
-#                     "geological_epoch", "geological_epoch", "geological_epoch",
-#                     "geological_epoch", "geological_epoch",
-#                     "geological_epoch", "geological_epoch", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature",
-#                     "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature",
-#                     "rock_type", "rock_type", "rock_type", "rock_type",
-#                     "rock_type", "rock_type", "hydrocarbon_source",
-#                     "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon",
-#                     "trap_type", "trap_type", "trap_type", "trap_type", "trap_type",
-#                     "geological_process", "geological_process",
-#                     "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit",
-#                     "rock_type", "rock_type", "geological_process", "geological_discipline",
-#                     "geological_discipline", "geological_method", "geological_method", "geological_method",
-#                     "geophysical_feature", "geophysical_feature", "geological_discipline", "geological_discipline", "geological_discipline"
-#                 ]
-#             , is_confined_search = True
-#             # , huggingface_token = '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'
+#     # , sample_entities=[
+#     #                 "geological_eon", "geological_eon", "geological_eon", "geological_eon",
+#     #                 "geological_era", "geological_era", "geological_era",
+#     #                 "geological_period", "geological_period", "geological_period", "geological_period", "geological_period", "geological_period",
+#     #                 "geological_period", "geological_period", "geological_period",
+#     #                 "geological_period", "geological_period", "geological_period",
+#     #                 "geological_epoch", "geological_epoch", "geological_epoch",
+#     #                 "geological_epoch", "geological_epoch",
+#     #                 "geological_epoch", "geological_epoch", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature",
+#     #                 "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature",
+#     #                 "rock_type", "rock_type", "rock_type", "rock_type",
+#     #                 "rock_type", "rock_type", "hydrocarbon_source",
+#     #                 "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon",
+#     #                 "trap_type", "trap_type", "trap_type", "trap_type", "trap_type",
+#     #                 "geological_process", "geological_process",
+#     #                 "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit",
+#     #                 "rock_type", "rock_type", "geological_process", "geological_discipline",
+#     #                 "geological_discipline", "geological_method", "geological_method", "geological_method",
+#     #                 "geophysical_feature", "geophysical_feature", "geological_discipline", "geological_discipline", "geological_discipline"
+#     #             ]
+#     #         , is_confined_search = True
+#     #         , huggingface_token = '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'
 #     )
 #     llm_instance = GPTLLM(result_queue, gpt_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):

@@ -197,7 +197,7 @@ class RelationExtractor():
 
     def extract_relationships(self, triples):
         try:
-            self.logger.info(f"Length of identified triples {len(triples)}")
+            self.logger.debug(f"Length of identified triples {len(triples)}")
             updated_triples = []
             for _, predicate_str, _ in triples:
                 documents=[]

@@ -195,7 +195,7 @@ class NER_LLM:
                     results.append(entity_info)
         except Exception as e:
             self.logger.error(f"Error extracting entities from chunk: {e}")
-            raise(f"Error extracting entities from chunk: {e}")
+            raise Exception(f"Error extracting entities from chunk: {e}")
         return results
 
     def combine_entities_wordpiece(self, entities: List[dict], tokens: List[str]):
@@ -265,7 +265,6 @@ class NER_LLM:
                             binary_pairs.append((pair, metadata))
         except Exception as e:
             self.logger.error(f"Error extracting binary pairs: {e}")
-            raise(f"Error extracting binary pairs: {e}")
         return binary_pairs
     
     def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=1.0):
@@ -311,7 +310,6 @@ class NER_LLM:
                         })
         except Exception as e:
             self.logger.error(f"Error extracting fixed entities from merged chunk: {e}")
-            raise Exception(f"Error extracting fixed entities from merged chunk: {e}")
 
         return sorted(results, key=lambda x: x['start_idx'])
 
@@ -342,7 +340,6 @@ class NER_LLM:
             return entities_withnnchunk, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
-            raise(f"Error extracting entities from sentence: {e}")
     
     def remove_duplicates(self, data):
         seen = set()

@@ -91,7 +91,7 @@ class EmbeddingStore:
 
             if verbose:
                 for i, chunk in enumerate(final_chunks):
-                    self.logger.info("Embedding Store Chunk %i: %s", i, chunk)
+                    self.logger.debug("Embedding Store Chunk %i: %s", i, chunk)
 
             return docs
         except Exception as e:
@@ -171,7 +171,7 @@ class EmbeddingStore:
                     updated_json_string = json.dumps(essential_data)
                     processed_pairs.append((entity, updated_json_string, related_entity))
                 except json.JSONDecodeError as e:
-                    self.logger.info(f"JSON parsing error: {e} in string: {json_string}")
+                    self.logger.debug(f"JSON parsing error: {e} in string: {json_string}")
 
             return processed_pairs
 

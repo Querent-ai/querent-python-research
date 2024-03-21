@@ -23,13 +23,13 @@ def setup_logger(logger_name: str, log_file_id: str) -> logging.Logger:
         )
         logger.addHandler(console_handler)
 
-        file_handler = RotatingFileHandler(
-            log_file_name, maxBytes=1024 * 1024, backupCount=5
-        )
-        file_handler.setFormatter(
-            logging.Formatter(LOGGING_FORMAT, LOGGING_DATE_FORMAT)
-        )
-        logger.addHandler(file_handler)
+        # file_handler = RotatingFileHandler(
+        #     log_file_name, maxBytes=1024 * 1024, backupCount=5
+        # )
+        # file_handler.setFormatter(
+        #     logging.Formatter(LOGGING_FORMAT, LOGGING_DATE_FORMAT)
+        # )
+        # logger.addHandler(file_handler)
 
         return logger
     except Exception as e:
