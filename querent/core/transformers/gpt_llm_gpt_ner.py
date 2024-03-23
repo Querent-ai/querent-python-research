@@ -243,17 +243,20 @@ class GPTNERLLM(BaseEngine):
                 final_triples = self.remove_duplicate_triplets(final_triples)
                 if len(final_triples) > 0:
                     for triple in final_triples:
-                        graph_json = json.dumps(triple)
-                        if graph_json:
-                            current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                            await self.set_state(new_state=current_state)
-                        context_embeddings = self.create_emb.get_embeddings([triple['sentence']])[0]
-                        triple['context_embeddings'] = context_embeddings
-                        triple['context'] = triple['sentence']
-                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson((triple['subject'],json.dumps(triple), triple['object'])))
-                        if vector_json:
-                                current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                        if not self.termination_event.is_set():
+                            graph_json = json.dumps(triple)
+                            if graph_json:
+                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
                                 await self.set_state(new_state=current_state)
+                            context_embeddings = self.create_emb.get_embeddings([triple['sentence']])[0]
+                            triple['context_embeddings'] = context_embeddings
+                            triple['context'] = triple['sentence']
+                            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson((triple['subject'],json.dumps(triple), triple['object'])))
+                            if vector_json:
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                    await self.set_state(new_state=current_state)
+                        else:
+                            return
 
         except Exception as e:
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT NER LLM class. {e}")
