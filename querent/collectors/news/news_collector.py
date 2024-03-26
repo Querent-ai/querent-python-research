@@ -39,57 +39,108 @@ class NewsCollector(Collector):
         if self.config.to_date in ["now", "latest", "", "present"]:
             should_keep_going = True
 
-        while should_keep_going:
-            if should_keep_going:
-                self.config.to_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            while current_page <= total_pages:
-                try:
-                    response = self.newsapi.get_everything(
-                        q=self.config.query,
-                        sources=self.config.sources,
-                        domains=self.config.domains,
-                        exclude_domains=self.config.exclude_domains,
-                        from_param=self.config.from_date,
-                        to=self.config.to_date,
-                        language=self.config.language,
-                        sort_by=self.config.sort_by,
-                        page_size=self.config.page_size,
-                        page=current_page,
-                    )
-                    if response["status"] == "ok":
-                        articles = response.get("articles", [])
-                        if not articles:
-                            # If no articles found, consider sleeping for a shorter duration
-                            await asyncio.sleep(3600)  # Example: 1 hour
-                            break  # Exit the inner loop to potentially adjust date and check again
-
-                        for article in articles:
-                            # Article data preparation and yielding
-                            pass  # Same as before
-
-                        total_results = response.get("totalResults", 0)
-                        total_pages = (
-                            total_results + self.config.page_size - 1
-                        ) // self.config.page_size
-                        current_page += 1
-                    else:
-                        self.logger.error(
-                            f"News API request failed: {response.get('message')}"
+        if should_keep_going:
+            while should_keep_going:
+                if should_keep_going:
+                    self.config.to_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                while current_page <= total_pages:
+                    try:
+                        response = self.newsapi.get_everything(
+                            q=self.config.query,
+                            sources=self.config.sources,
+                            domains=self.config.domains,
+                            exclude_domains=self.config.exclude_domains,
+                            from_param=self.config.from_date,
+                            to=self.config.to_date,
+                            language=self.config.language,
+                            sort_by=self.config.sort_by,
+                            page_size=self.config.page_size,
+                            page=current_page,
                         )
-                        break
-                except Exception as e:
-                    self.logger.error(f"Error fetching news articles: {e}")
-                    yield CollectedBytes(file="Error", data=None, error=e)
-                    break
+                        if response["status"] == "ok":
+                            articles = response.get("articles", [])
+                            if not articles:
+                                # If no articles found, consider sleeping for a shorter duration
+                                await asyncio.sleep(3600)  # Example: 1 hour
+                                continue
 
-            # After exhausting the current batch, reset for next polling cycle
-            current_page = 1
-            total_pages = float("inf")
-            if not should_keep_going:
-                break
-            # Adjust the to_date for the next cycle
-            self.config.from_date = self.config.to_date
-            await asyncio.sleep(86400)
+                            for article in articles:
+                                article_data = {
+                                "source": article.get('source', {}).get('name'),
+                                "author": article.get('author'),
+                                "title": article.get('title'),
+                                "description": article.get('description'),
+                                "url": article.get('url'),
+                                "urlToImage": article.get('urlToImage'),
+                                "publishedAt": article.get('publishedAt'),
+                                "content": article.get('content')
+                                }
+
+                                title = article['title']
+                                yield CollectedBytes(file=f"{title}.news", data=str(article_data).encode("utf-8"))
+                                yield CollectedBytes(file=f"{title}.news", data=None, error=None, eof=True)
+
+                            total_results = response.get("totalResults", 0)
+                            total_pages = (
+                                total_results + self.config.page_size - 1
+                            ) // self.config.page_size
+                            current_page += 1
+                        else:
+                            self.logger.error(
+                                f"News API request failed: {response.get('message')}"
+                            )
+                            break
+                    except Exception as e:
+                        self.logger.error(f"Error fetching news articles: {e}")
+                        yield CollectedBytes(file="Error", data=None, error=e)
+                        break
+
+                # After exhausting the current batch, reset for next polling cycle
+                current_page = 1
+                total_pages = float("inf")
+                if not should_keep_going:
+                    break
+                # Adjust the to_date for the next cycle
+                self.config.from_date = self.config.to_date
+                await asyncio.sleep(86400)
+        else:
+            try:
+                response = self.newsapi.get_everything(
+                    q=self.config.query,
+                    sources=self.config.sources,
+                    domains=self.config.domains,
+                    exclude_domains=self.config.exclude_domains,
+                    from_param=self.config.from_date,
+                    to=self.config.to_date,
+                    language=self.config.language,
+                    sort_by=self.config.sort_by,
+                    page_size=self.config.page_size,
+                    page=current_page,
+                )
+                if response["status"] == "ok":
+                    articles = response.get("articles", [])
+                    if not articles:
+                        return
+
+                    for article in articles:
+                        article_data = {
+                        "source": article.get('source', {}).get('name'),
+                        "author": article.get('author'),
+                        "title": article.get('title'),
+                        "description": article.get('description'),
+                        "url": article.get('url'),
+                        "urlToImage": article.get('urlToImage'),
+                        "publishedAt": article.get('publishedAt'),
+                        "content": article.get('content')
+                        }
+
+                        title = article['title']
+                        yield CollectedBytes(file=f"{title}.news", data=str(article_data).encode("utf-8"))
+                        yield CollectedBytes(file=f"{title}.news", data=None, error=None, eof=True)
+            except Exception as e:
+                self.logger.error(f"Error fetching news articles: {e}")
+
+
 
 
 class NewsCollectorFactory(CollectorFactory):

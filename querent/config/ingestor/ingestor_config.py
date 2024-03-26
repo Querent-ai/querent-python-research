@@ -32,3 +32,4 @@ class IngestorBackend(str, Enum):
     Email = "email"
     Slack = "slack"
     Jira = "jira"
+    News = "news"
