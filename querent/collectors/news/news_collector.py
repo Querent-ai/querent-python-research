@@ -1,10 +1,10 @@
 import asyncio
 import datetime
+import uuid
 from newsapi import NewsApiClient
 from typing import AsyncGenerator
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.config.collector.collector_config import (
-    CollectorConfig,
     CollectorBackend,
     NewsCollectorConfig,
 )
@@ -75,10 +75,11 @@ class NewsCollector(Collector):
                                 "publishedAt": article.get('publishedAt'),
                                 "content": article.get('content')
                                 }
+                                publish_date = article.get('publishedAt').split('T')[0]
 
                                 title = article['title']
-                                yield CollectedBytes(file=f"{title}.news", data=str(article_data).encode("utf-8"))
-                                yield CollectedBytes(file=f"{title}.news", data=None, error=None, eof=True)
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"))
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True)
 
                             total_results = response.get("totalResults", 0)
                             total_pages = (
@@ -134,9 +135,10 @@ class NewsCollector(Collector):
                         "content": article.get('content')
                         }
 
+                        publish_date = article.get('publishedAt').split('T')[0]
                         title = article['title']
-                        yield CollectedBytes(file=f"{title}.news", data=str(article_data).encode("utf-8"))
-                        yield CollectedBytes(file=f"{title}.news", data=None, error=None, eof=True)
+                        yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"))
+                    yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True)
             except Exception as e:
                 self.logger.error(f"Error fetching news articles: {e}")
 
