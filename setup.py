@@ -50,7 +50,7 @@ requirements = [
     "pytest-asyncio==0.23.2",
     "pyshacl==0.25.0",
     "google-cloud-storage==2.14.0",
-    "PyMuPDF==1.23.26",
+    "PyMuPDF==1.24.0",
     "pydub==0.25.1",
     "SpeechRecognition==3.10.1",
     "pytesseract==0.3.10",
