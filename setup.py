@@ -18,7 +18,7 @@ requirements = [
     "jira==3.6.0",
     "jmespath==1.0.1",
     "joblib==1.2.0",
-    "json5==0.9.14",
+    "json5==0.9.24",
     "jsonmerge==1.9.0",
     "jsonschema==4.17.3",
     "kombu==5.2.4",
