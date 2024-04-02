@@ -36,7 +36,7 @@ requirements = [
     "regex==2023.5.5",
     "sentence-transformers==2.2.2",
     "spacy==3.7.2",
-    "uvicorn==0.22.0",
+    "uvicorn==0.29.0",
     "slack-sdk==3.26.1",
     "pylint==2.17.4",
     "pytest-cov==4.1.0",
