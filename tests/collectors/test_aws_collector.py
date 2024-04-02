@@ -22,7 +22,7 @@ def aws_config():
     config = S3CollectConfig(
         config_source={
             "id": str(uuid.uuid4()),
-            "bucket": "pstreamsbucket1",
+            "bucket": "querentbucket1",
             "region": "ap-south-1",
             "access_key": aws_access_key_id,
             "secret_key": aws_secret_access_key,

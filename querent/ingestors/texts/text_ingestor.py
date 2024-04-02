@@ -10,7 +10,7 @@ from querent.logging.logger import setup_logger
 
 
 class TextIngestorFactory(IngestorFactory):
-    SUPPORTED_EXTENSIONS = {"txt", "slack", ""}
+    SUPPORTED_EXTENSIONS = {"txt", "slack", "", "news"}
 
     def __init__(self, is_token_stream=False):
         self.is_token_stream = is_token_stream
