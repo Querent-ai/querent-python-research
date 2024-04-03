@@ -24,7 +24,23 @@ async def start_workflow(config_dict: dict):
     is_engine_params = False
     try:
         if engine_params is not None:
-            engine_params = json.loads(engine_params)
+            engine_params_json = json.loads(engine_params)
+            engine_params = {
+                "ner_model_name": engine_params_json.get("ner_model_name"),
+                "enable_filtering": engine_params_json.get("enable_filtering"),
+                "filter_params": {
+                    "score_threshold": engine_params_json.get("score_threshold"),
+                    "attention_score_threshold": engine_params_json.get("attention_score_threshold"),
+                    "similarity_threshold": engine_params_json.get("similarity_threshold"),
+                    "min_cluster_size": engine_params_json.get("min_cluster_size"),
+                    "min_samples": engine_params_json.get("min_samples"),
+                    "cluster_persistence_threshold": engine_params_json.get("cluster_persistence_threshold")
+                },
+                "fixed_entities": [x for x in engine_params_json.get("fixed_entities").split(",")],
+                "sample_entities": [x for x in engine_params_json.get("sample_entities").split(",")],
+                "is_confined_search": engine_params_json.get("is_confined_search"),
+                "user_context": engine_params_json.get("user_context")
+            }
             is_engine_params = True
     except Exception as e:
         logger.error("Got error while loading engine params: ", e)
