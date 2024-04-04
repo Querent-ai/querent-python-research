@@ -20,26 +20,25 @@ logger = setup_logger(__name__, "Workflows")
 async def start_workflow(config_dict: dict):
     # Start the workflow
     workflow_config = config_dict.get("workflow")
-    engine_params = workflow_config.get("config").get("engine_params", None)
+    engine_params = workflow_config.get("config", None)
     is_engine_params = False
     try:
         if engine_params is not None:
-            engine_params_json = json.loads(engine_params)
             engine_params = {
-                "ner_model_name": engine_params_json.get("ner_model_name"),
-                "enable_filtering": engine_params_json.get("enable_filtering"),
+                "ner_model_name": engine_params.get("ner_model_name"),
+                "enable_filtering": engine_params.get("enable_filtering"),
                 "filter_params": {
-                    "score_threshold": engine_params_json.get("score_threshold"),
-                    "attention_score_threshold": engine_params_json.get("attention_score_threshold"),
-                    "similarity_threshold": engine_params_json.get("similarity_threshold"),
-                    "min_cluster_size": engine_params_json.get("min_cluster_size"),
-                    "min_samples": engine_params_json.get("min_samples"),
-                    "cluster_persistence_threshold": engine_params_json.get("cluster_persistence_threshold")
+                    "score_threshold": engine_params.get("score_threshold"),
+                    "attention_score_threshold": engine_params.get("attention_score_threshold"),
+                    "similarity_threshold": engine_params.get("similarity_threshold"),
+                    "min_cluster_size": engine_params.get("min_cluster_size"),
+                    "min_samples": engine_params.get("min_samples"),
+                    "cluster_persistence_threshold": engine_params.get("cluster_persistence_threshold")
                 },
-                "fixed_entities": [x for x in engine_params_json.get("fixed_entities").split(",")],
-                "sample_entities": [x for x in engine_params_json.get("sample_entities").split(",")],
-                "is_confined_search": engine_params_json.get("is_confined_search"),
-                "user_context": engine_params_json.get("user_context")
+                "fixed_entities": [x for x in engine_params.get("fixed_entities").split(",")],
+                "sample_entities": [x for x in engine_params.get("sample_entities").split(",")],
+                "is_confined_search": engine_params.get("is_confined_search"),
+                "user_context": engine_params.get("user_context")
             }
             is_engine_params = True
     except Exception as e:
