@@ -59,7 +59,7 @@ class TripleToJsonConverter:
             if data is None:
                 return {}
 
-            id_format = f"{TripleToJsonConverter._normalize_text(subject)}_{TripleToJsonConverter._normalize_text(data.get('predicate', ''))}_{TripleToJsonConverter._normalize_text(object_)}"
+            id_format = f"{TripleToJsonConverter._normalize_text(subject)}-{TripleToJsonConverter._normalize_text(data.get('predicate', ''))}-{TripleToJsonConverter._normalize_text(object_)}"
             json_object = {
                 "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True).replace(",","_"),
                 "embeddings": data.get("context_embeddings", []),
@@ -76,7 +76,7 @@ class TripleToJsonConverter:
     @staticmethod
     def replace_special_chars_with_underscore(data):
         # This pattern will match anything that is not a letter, number, or underscore
-        pattern = r'[^a-zA-Z0-9_]'
+        pattern = r'[^-a-zA-Z0-9_]'
         # Replace matched patterns with an underscore
         return re.sub(pattern, '_', data)
         
