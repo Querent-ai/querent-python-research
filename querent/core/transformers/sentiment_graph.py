@@ -64,7 +64,6 @@ class Sentiment_Graph(BaseEngine):
                 self.set_termination_event()
                 return
             else:
-                print("Data parsed", data.data)
                 if data.data[0].startswith('{\'source\''):
                     parsed_data = self.preprocess_data(data.data)
                     company_name = data.file.split('_')[0]
@@ -72,8 +71,6 @@ class Sentiment_Graph(BaseEngine):
                     sentiment_result = self.sentiment_analyzer.analyze_sentiment(parsed_data["title"], self.user_context)
                     topic_result = self.topic_classifier.classify_topic(parsed_data["title"])
                     topic_result['topic_type'] = topic_result.pop('sentiment')
-                    print("Sentiment result", sentiment_result)
-                    print("Topic result", topic_result)
                     topic_result.pop('sentiment_score')
                     sentiment_result.update(topic_result)
                     sentiment_result['title'] = parsed_data["title"]
@@ -84,7 +81,6 @@ class Sentiment_Graph(BaseEngine):
                     sentiment_result['entity_type'] = "company"
                     sentiment_result['predicate'] = "has_sentiment"
                     sentiment_result['symbol'] = self.target_companies[company_name]
-                    print("Sentiment result:",sentiment_result)
                 else:
                     single_string = data.data
                     file = data.get_file_path()
@@ -97,12 +93,10 @@ class Sentiment_Graph(BaseEngine):
                     sentiment_result['entity'] = file
                     sentiment_result['entity_type'] = "text"
                     sentiment_result['predicate'] = "has_sentiment"
-                    print("Sentiment result:",sentiment_result)
 
                 current_state = EventState(EventType.Sentiment, 1.0, json.dumps(sentiment_result), file)
                 await self.set_state(new_state=current_state)
         except Exception as e:
-            print("Exceptions caught",e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to extract sentiment. {e}")
 
     async def process_messages(self, data):

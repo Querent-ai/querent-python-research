@@ -100,7 +100,6 @@ class SentimentAnalyzer:
                     {"role": "user", "content": identify_entity_message},
                     {"role": "user", "content": data}
                 ]
-            print("Response --------------------------------", messages_classify_entity)
             response = self.generate_response(messages_classify_entity)
             return response
         except Exception as e:
