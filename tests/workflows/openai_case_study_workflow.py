@@ -33,7 +33,7 @@
 #     #         host="localhost", 
 #     #         port="5432")
 #     # # ml_conn = MilvusDBConnection()
-#     directories = [ "./tests/data/llm/one_file/"]
+#     directories = [ "./tests/data/llm/case_study_files/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -137,13 +137,13 @@
 #         }
 #                 # db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
-#             # else :
-#             #     vector_triple = json.loads(event_state.payload)
-#             #     print("Inside Vector event ---------------------------------", vector_triple)
+#             else :
+#                 vector_triple = json.loads(event_state['payload'])
+#                 print("Inside Vector event ---------------------------------", vector_triple)
 #             #     milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
 #             #     ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state.file, collection= milvus_coll )
-#     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
-#     # llm_instance.subscribe(EventType.Vector, StateChangeCallback())
+#     # llm_instance.subscribe(EventType.Graph, StateChangeCallback())
+#     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(
 #         [llm_instance],
 #         resource_manager=resource_manager,
