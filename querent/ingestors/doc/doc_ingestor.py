@@ -95,14 +95,14 @@ class DocIngestor(BaseIngestor):
                 file=collected_bytes.file, data=text, error=None
             )
 
-            # i = 1
-            # for rel in doc.part.rels.values():
-            #     if "image" in rel.reltype:
-            #         image = rel.target_part.blob 
-            #         ocr_text = await self.process_image(image)
-            #         encoded_image = base64.b64encode(image)
-            #         yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=ocr_text, error=None, coordinates=None)
-            #         i += 1
+            i = 1
+            for rel in doc.part.rels.values():
+                if "image" in rel.reltype:
+                    image = rel.target_part.blob 
+                    ocr_text = await self.process_image(image)
+                    encoded_image = base64.b64encode(image)
+                    yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=[ocr_text], error=None, coordinates=None)
+                    i += 1
 
         elif file_extension == "doc":
             current_doc_text = await self.temp_extract_from(collected_bytes)

@@ -91,7 +91,6 @@ class PdfIngestor(BaseIngestor):
             path = BytesIO(collected_bytes.data)
             loader = fitz.open(stream=path.read(), filetype="pdf")
 
-
             for page in loader:
                 text = page.get_text()
                 if not text:
@@ -106,14 +105,9 @@ class PdfIngestor(BaseIngestor):
                     data=processed_text,
                     error=collected_bytes.error,
                 )
-                # async for image_result in self.extract_images_and_ocr(
-                #     page,
-                #     page_num,
-                #     processed_text,
-                #     collected_bytes.data,
-                #     collected_bytes.file,
-                # ):
-                #     yield image_result
+            
+            async for imgae_data in self.extract_img(loader, collected_bytes.file, collected_bytes.data):
+                yield imgae_data
 
         except TypeError as exc:
             self.logger.error(f"Exception while extracting pdf {exc}")
@@ -126,42 +120,52 @@ class PdfIngestor(BaseIngestor):
             raise common_errors.UnknownError(
                 f"Getting unknown error while handling this file: {collected_bytes.file} error - {exc}"
             ) from exc
+        
+    async def extract_img(self, doc, file_path, data):
+        image_page_map = {}
 
-    async def extract_images_and_ocr(self, page, page_num, text, data, file_path):
-        try:
-            for image_path in page.images:
-                ocr = await self.get_ocr_from_image(image_path)
+        # Iterate through the pages to fill the map
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            image_list = page.get_images(full=True)  # Get full details including xref
+            for img in image_list:
+                xref = img[0]
+                image_page_map[xref] = page_num + 1  # Page numbers are 1-indexed for humans
+
+        # Now we can extract images knowing their page numbers
+        for xref, page_num in image_page_map.items():
+            img = doc.extract_image(xref)
+            if img:  # If image extraction was successful
+                image_data = img["image"]
+                image_ext = img["ext"]
+                ocr_text = await self.get_ocr_from_image(image=img["image"])
+
+                # Adjust page_num for 0-indexed access and check if it's within range
+                page_index = page_num - 1
+                if page_index < len(doc):
+                    text_content = doc[page_index].get_text()
+                else:
+                    text_content = "Page not in document."
+
                 yield IngestedImages(
                     file=file_path,
                     image=pybase64.b64encode(data),
-                    image_name=uuid.uuid4(),
+                    image_name=f"{str(uuid.UUID)}.{image_ext}",
                     page_num=page_num,
-                    text=text,
+                    text=[text_content],
                     coordinates=None,
-                    ocr_text=ocr,
+                    ocr_text=[ocr_text],
                 )
-        except Exception as e:
-            self.logger.error(f"Error extracting images and OCR: {e}")
-            yield IngestedImages(
-                file=file_path,
-                image=pybase64.b64encode(data),
-                image_name=uuid.uuid4(),
-                page_num=page_num,
-                text=text,
-                coordinates=None,
-                ocr_text=None,
-                error=f"Exception:{e}",
-            )
 
     async def get_ocr_from_image(self, image):
         """Implement this to return ocr text of the image"""
         try:
-            image = Image.open(io.BytesIO(image.data))
+            image = Image.open(io.BytesIO(image))
             text = pytesseract.image_to_string(image)
         except Exception as e:
             self.logger.error("Exception-{e}")
             raise e
-        return str(text).encode("utf-8").decode("unicode_escape")
+        return str(text).encode("utf-8").decode("utf-8")
 
     async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:
