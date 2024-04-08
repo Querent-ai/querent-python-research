@@ -122,7 +122,7 @@ async def test_multiple_collectors_all_async():
             else:
                 unique_files.add(ingested_data.file)
             counter += 1
-    assert counter == 85
+    assert counter ==115
     assert len(unique_files) > 1
     assert messages > 0
 

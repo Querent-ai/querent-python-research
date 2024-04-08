@@ -51,7 +51,7 @@ async def test_ingest_all_async():
         if ingested_data is not None:
             unique_files.add(ingested_data.file)
             counter += 1
-    assert counter == 65
+    assert counter == 95
     assert len(unique_files) == 5
 
 
