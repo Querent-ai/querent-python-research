@@ -77,7 +77,7 @@ requirements = [
     "openai==1.13.3",
     "newsapi-python==0.2.7",
     "ffmpeg-python==0.2.0",
-    "pdfplumber==0.11.0"
+    "pdfplumber==0.10.0"
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
