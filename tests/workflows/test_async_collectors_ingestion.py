@@ -52,7 +52,7 @@ async def test_ingest_all_async():
             unique_files.add(ingested_data.file)
             counter += 1
     assert counter == 102
-    assert len(unique_files) == 5
+    assert len(unique_files) == 6
 
 
 if __name__ == "__main__":
