@@ -22,7 +22,7 @@ class IngestedTables:
     def __str__(self):
         if self.error:
             return f"Error: {self.error}"
-        return f"Data: {self.ocr_text}"
+        return f"Data: {self.table}"
 
     def is_error(self) -> bool:
         return self.error is not None

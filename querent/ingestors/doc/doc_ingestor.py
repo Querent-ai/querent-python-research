@@ -8,6 +8,7 @@ import base64
 import pytesseract
 import uuid
 from PIL import Image
+from querent.common.types.ingested_table import IngestedTables
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -94,6 +95,16 @@ class DocIngestor(BaseIngestor):
             yield IngestedTokens(
                 file=collected_bytes.file, data=text, error=None
             )
+
+            i = 1
+            for table in doc.tables:
+                table_data = []
+                for row in table.rows:
+                    row_data = []
+                    for cell in row.cells:
+                        row_data.append(cell.text.strip())
+                    table_data.append(row_data)
+                yield IngestedTables(file=collected_bytes.file, table = table_data, page_num = i, text = text, error=None)
 
             i = 1
             for rel in doc.part.rels.values():

@@ -26,8 +26,8 @@
 
 #     # Set up the ingestor
 #     ingestor_factory_manager = IngestorFactoryManager()
-#     ingestor_factory = await ingestor_factory_manager.get_factory("ppt")
-#     ingestor = await ingestor_factory.create("ppt", [])
+#     ingestor_factory = await ingestor_factory_manager.get_factory("pptx")
+#     ingestor = await ingestor_factory.create("pptx", [])
 
 #     # Collect and ingest the PDF
 #     ingested_call = ingestor.ingest(collector.poll())
@@ -38,7 +38,7 @@
 #         async for ingested in ingested_call:
 #             if ingested != "" or ingested is not None:
 #                 counter += 1
-#         assert counter == 13
+#         assert counter == 16
 
 #     await poll_and_print()
 
