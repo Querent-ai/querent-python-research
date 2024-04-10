@@ -3,6 +3,7 @@ from io import BytesIO
 from querent.common.types.collected_bytes import CollectedBytes
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_images import IngestedImages
+from querent.common.types.ingested_table import IngestedTables
 from querent.config.ingestor.ingestor_config import IngestorBackend
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
@@ -16,6 +17,7 @@ import io
 
 import pybase64
 import pytesseract
+import pdfplumber
 
 
 class PdfIngestorFactory(IngestorFactory):
@@ -106,6 +108,9 @@ class PdfIngestor(BaseIngestor):
                     error=collected_bytes.error,
                 )
             
+            async for table in self.extract_table(collected_bytes):
+                yield table
+            
             async for imgae_data in self.extract_img(loader, collected_bytes.file, collected_bytes.data):
                 yield imgae_data
 
@@ -120,6 +125,19 @@ class PdfIngestor(BaseIngestor):
             raise common_errors.UnknownError(
                 f"Getting unknown error while handling this file: {collected_bytes.file} error - {exc}"
             ) from exc
+        
+    async def extract_table(self, data):
+        with pdfplumber.open(io.BytesIO(data.data)) as pdf:
+            i = 0
+            for page in pdf.pages:
+                # Extract tables from the current page
+                tables = page.extract_tables()
+                i += 1
+                for table in tables:
+                    if len(table) <= 1:
+                        continue
+
+                    yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
         
     async def extract_img(self, doc, file_path, data):
         image_page_map = {}
