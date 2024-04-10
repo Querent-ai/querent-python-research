@@ -93,8 +93,12 @@ class BERTLLM(BaseEngine):
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
                 self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.fixed_relationships, self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             elif self.sample_relationships:
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             else:
                 self.predicate_context_extractor = None
             self.user_context = config.user_context
@@ -175,7 +179,7 @@ class BERTLLM(BaseEngine):
                 return
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
-            if doc_entity_pairs and any(doc_entity_pairs):
+            if any(doc_entity_pairs):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
