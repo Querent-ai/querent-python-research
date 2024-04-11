@@ -67,7 +67,6 @@ requirements = [
     "requests==2.31.0",
     "google-api-python-client==2.105.0",
     "requests_html==0.10.0",
-    "rapidocr-onnxruntime==1.3.9",
     "pybase64==1.3.1",
     "pdfminer==20191125",
     "unidecode==1.3.7",
