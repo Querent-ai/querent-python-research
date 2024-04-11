@@ -24,22 +24,34 @@ async def start_workflow(config_dict: dict):
     is_engine_params = False
     try:
         if engine_params is not None:
-            engine_params = {
-                "ner_model_name": engine_params.get("ner_model_name"),
-                "enable_filtering": engine_params.get("enable_filtering"),
-                "filter_params": {
-                    "score_threshold": engine_params.get("score_threshold"),
-                    "attention_score_threshold": engine_params.get("attention_score_threshold"),
-                    "similarity_threshold": engine_params.get("similarity_threshold"),
-                    "min_cluster_size": engine_params.get("min_cluster_size"),
-                    "min_samples": engine_params.get("min_samples"),
-                    "cluster_persistence_threshold": engine_params.get("cluster_persistence_threshold")
-                },
-                "fixed_entities": [x for x in engine_params.get("fixed_entities").split(",")],
-                "sample_entities": [x for x in engine_params.get("sample_entities").split(",")],
-                "is_confined_search": engine_params.get("is_confined_search"),
-                "user_context": engine_params.get("user_context")
+            engine_params_json = {}
+            
+            if engine_params.get("fixed_entities") is not None:
+                engine_params_json["fixed_entities"] = [x for x in engine_params.get("fixed_entities").split(",")]
+            
+            if engine_params.get("sample_entities") is not None:
+                engine_params_json["sample_entities"] = [x for x in engine_params.get("fixed_entities").split(",")]
+            
+            if engine_params.get("ner_model_name") is not None:
+                engine_params_json["ner_model_name"] = engine_params.get("ner_model_name")
+            
+            if engine_params.get("enable_filtering") is not None:
+                engine_params_json["enable_filtering"] = engine_params.get("enable_filtering")
+            
+            engine_params_json["filter_params"] = {
+                "score_threshold": float(engine_params.get("score_threshold")) if engine_params.get("score_threshold") is not None else None,
+                "attention_score_threshold": float(engine_params.get("attention_score_threshold")) if engine_params.get("attention_score_threshold") is not None else None,
+                "similarity_threshold": float(engine_params.get("similarity_threshold")) if engine_params.get("similarity_threshold") is not None else None,
+                "min_cluster_size": int(engine_params.get("min_cluster_size")) if engine_params.get("min_cluster_size") is not None else None,
+                "min_samples": int(engine_params.get("min_samples")) if engine_params.get("min_samples") is not None else None,
+                "cluster_persistence_threshold": float(engine_params.get("cluster_persistence_threshold")) if engine_params.get("cluster_persistence_threshold") is not None else None,
             }
+
+            if engine_params.get("is_confined_search") is not None:
+                engine_params_json["is_confined_search"] = engine_params.get("is_confined_search")
+
+            if engine_params.get("user_context") is not None:
+                engine_params_json["user_context"] = engine_params.get("user_context")
             is_engine_params = True
     except Exception as e:
         logger.error("Got error while loading engine params: ", e)
@@ -52,7 +64,7 @@ async def start_workflow(config_dict: dict):
     engines = []
     for engine_config in engine_configs:
         if is_engine_params:
-            engine_config.update(engine_params)
+            engine_config.update(engine_params_json)
         engine_config_source = engine_config.get("config", {})
         if engine_config["name"] == "knowledge_graph_using_openai":
             engine_config.update({"openai_api_key": engine_config["config"]["openai_api_key"]})
