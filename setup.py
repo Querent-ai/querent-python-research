@@ -27,7 +27,7 @@ requirements = [
     "newspaper3k==0.2.8",
     "nltk==3.8.1",
     "numpy==1.24.3",
-    "Pillow==10.0.1",
+    "Pillow==10.3.0",
     "pydantic==2.6.4",
     "PyJWT==2.4.0",
     "pytest==7.3.2",
@@ -67,7 +67,6 @@ requirements = [
     "requests==2.31.0",
     "google-api-python-client==2.105.0",
     "requests_html==0.10.0",
-    "rapidocr-onnxruntime==1.3.9",
     "pybase64==1.3.1",
     "pdfminer==20191125",
     "unidecode==1.3.7",
@@ -84,7 +83,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.0",
+    version="3.0.1",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
