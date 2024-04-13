@@ -50,6 +50,7 @@ class TextIngestor(BaseIngestor):
                             data=[process_text],
                             error=None,
                             is_token_stream=True,
+                            doc_source=chunk_bytes.doc_source
                         )
                 else:
                     if current_file is None:
@@ -60,13 +61,15 @@ class TextIngestor(BaseIngestor):
                         ):
                             yield IngestedTokens(
                                 file=current_file,
-                                data=[line],  # Wrap line in a list
+                                data=[line],
                                 error=None,
+                                doc_source=chunk_bytes.doc_source
                             )
                         yield IngestedTokens(
                             file=current_file,
                             data=None,
                             error=None,
+                            doc_source=chunk_bytes.doc_source
                         )
                         collected_bytes = b""
                         current_file = chunk_bytes.file
@@ -78,12 +81,13 @@ class TextIngestor(BaseIngestor):
                 ):
                     yield IngestedTokens(
                         file=current_file,
-                        data=[line],  # Wrap line in a list
+                        data=[line],
                         error=None,
+                        doc_source=chunk_bytes.doc_source,
                     )
-                yield IngestedTokens(file=current_file, data=None, error=None)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
         except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
 
     async def ingest_token_stream(
         self, chunk_bytes: CollectedBytes

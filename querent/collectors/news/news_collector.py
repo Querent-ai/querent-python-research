@@ -78,8 +78,8 @@ class NewsCollector(Collector):
                                 publish_date = article.get('publishedAt').split('T')[0]
 
                                 title = article['title']
-                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"))
-                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True)
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"), doc_source="news://")
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True, doc_source="news://")
 
                             total_results = response.get("totalResults", 0)
                             total_pages = (

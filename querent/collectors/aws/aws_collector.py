@@ -52,8 +52,8 @@ class AWSCollector(Collector):
             for obj in response.get("Contents", []):
                 file = self.download_object_as_byte_stream(obj["Key"])
                 async for chunk in self.read_chunks(file):
-                    yield CollectedBytes(file=obj["Key"], data=chunk, error=None)
-                yield CollectedBytes(file=obj["Key"], data=None, error=None, eof=True)
+                    yield CollectedBytes(file=obj["Key"], data=chunk, error=None, doc_source=f"aws://{self.bucket_name}")
+                yield CollectedBytes(file=obj["Key"], data=None, error=None, eof=True, doc_source=f"aws://{self.bucket_name}")
 
         except PermissionError as exc:
             self.logger.error(f"Getting Permission Error on file {file}, as {exc}")

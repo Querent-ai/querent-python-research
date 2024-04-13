@@ -57,6 +57,7 @@ class EmailCollector(Collector):
                         yield CollectedBytes(
                             data=message,
                             file=f"{self.config.imap_username}:{self.config.imap_folder}/{i}.email",
+                            doc_source="email://"
                         )
                 yield CollectedBytes(
                     data=None,

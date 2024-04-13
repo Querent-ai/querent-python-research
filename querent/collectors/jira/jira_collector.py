@@ -82,10 +82,10 @@ class JiraCollector(Collector):
             for issue in issues:
                 json_issue = json.dumps(issue.raw).encode("utf-8")
                 yield CollectedBytes(
-                    data=json_issue, file=f"jira_issue_{issue.key}.json.jira"
+                    data=json_issue, file=f"jira_issue_{issue.key}.json.jira", doc_source="jira://"
                 )
                 yield CollectedBytes(
-                    data=None, file=f"jira_issue_{issue.key}.json.jira", eof=True
+                    data=None, file=f"jira_issue_{issue.key}.json.jira", eof=True, doc_source="jira://"
                 )
 
         except common_errors.ConnectionError as e:

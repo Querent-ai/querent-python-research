@@ -1,13 +1,14 @@
-from typing import Union
+from typing import Union, List
 
 
 class IngestedTokens:
     def __init__(
-        self, file: str, data: [str], error: str = None, is_token_stream=False
+        self, file: str, data: List[str], error: str = None, is_token_stream=False, doc_source=str
     ) -> None:
         self.data = data
         self.error = error
         self.is_token_stream = is_token_stream
+        self.doc_source = doc_source
         if file:
             self.file = file
             file = str(file)

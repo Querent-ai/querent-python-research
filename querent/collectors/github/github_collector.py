@@ -48,9 +48,9 @@ class GithubCollector(Collector):
                                 file_response.raise_for_status()
                                 file_contents = await file_response.read()
                                 # Assume process_data() is correctly implemented for your file type
-                                yield CollectedBytes(file=item["name"], data=file_contents)
+                                yield CollectedBytes(file=item["name"], data=file_contents, doc_source=f"github://{self.repository}")
 
-                            yield CollectedBytes(file = item["name"], data = None, eof = True)
+                            yield CollectedBytes(file = item["name"], data = None, eof = True, doc_source=f"github://{self.repository}")
                         elif item["type"] == "dir":
                             # Recursively fetch files in subfolders
                             async for sub_item in self.fetch_files_in_folder(item["url"]):
