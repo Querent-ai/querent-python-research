@@ -57,8 +57,8 @@ class AzureCollector(Collector):
                     self.container_client, blob.name
                 )
                 async for chunk in self.read_chunks(file):
-                    yield CollectedBytes(file=blob.name, data=chunk, error=None, doc_source=f"azure://{self.container_name}")
-                yield CollectedBytes(file=blob.name, data=None, error=None, eof=True, doc_source=f"azure://{self.container_name}")
+                    yield CollectedBytes(file=blob.name, data=chunk, error=None, doc_source=f"azure://{self.container_name}/{self.account_url}")
+                yield CollectedBytes(file=blob.name, data=None, error=None, eof=True, doc_source=f"azure://{self.container_name}/{self.account_url}")
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             self.logger.error(f"Error polling Azure Blob Storage: {e}")
