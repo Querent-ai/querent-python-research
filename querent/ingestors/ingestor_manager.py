@@ -170,6 +170,7 @@ class IngestorFactoryManager:
                                 ),
                                 "file": chunk_tokens.file,
                                 "is_token_stream": True,
+                                "doc_source": chunk_tokens.doc_source,
                             }
                         )
                         await asyncio.sleep(0.1)

@@ -146,7 +146,7 @@ async def receive_token_feeder(
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         if tokens is not None:
             ingested_tokens = IngestedTokens(
-                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
+                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), doc_source=tokens.get("doc_source", "")
             )
             await result_queue.put(ingested_tokens)
         else:
