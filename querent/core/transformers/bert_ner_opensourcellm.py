@@ -206,14 +206,17 @@ class BERTLLM(BaseEngine):
                         if self.sample_relationships:
                             embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
                         for triple in embedding_triples:
-                            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                            if graph_json:
-                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
-                                await self.set_state(new_state=current_state)
-                            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                            if vector_json:
-                                current_state = EventState(EventType.Vector,1.0, vector_json, file)
-                                await self.set_state(new_state=current_state)
+                            if not self.termination_event.is_set():
+                                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                                if graph_json:
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                    await self.set_state(new_state=current_state)
+                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                                if vector_json:
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                    await self.set_state(new_state=current_state)
+                            else:
+                                return
                     else:
                         return
                 else:
