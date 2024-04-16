@@ -137,42 +137,52 @@ class FixedPredicateExtractor:
         except Exception as e:
             raise Exception(f"Error processing predicate types: {e}")
     
-    def construct_predicate_json(relationships=None, relationship_types=None):
+    def construct_predicate_json(self, relationships=None, relationship_types=None):
         predicate_values = []
         if relationships and relationship_types:
             if len(relationships) != len(relationship_types):
                 raise Exception("'relationships' and 'relationship_types' lists must have the same length.")
             for relationship, relationship_type in zip(relationships, relationship_types):
                 predicate_value = f"{relationship} ({relationship_type})"
-                predicate_values.append({"predicate_value": predicate_value, "relationship": relationship, "type": relationship_type})
+                predicate_values.append(json.dumps({"predicate_value": predicate_value, "relationship": relationship, "type": relationship_type}))
         elif relationship_types:
             for relationship_type in relationship_types:
-                predicate_values.append({"predicate_value": relationship_type, "type": relationship_type})
+                predicate_values.append(json.dumps({"predicate_value": relationship_type, "type": relationship_type}))
         else:
             
-            return
+            return []
         
-        return json.dumps(predicate_values)
-    
+        return predicate_values
+        
 
-
-def update_embedding_triples_with_similarity(predicate_json_emb, embedding_triples):
-        predicate_json_emb = [json.loads(item) for item in predicate_json_emb]
-        embedding_triples = [json.loads(item) for item in embedding_triples]
-        predicate_emb_list = [item["predicate_emb"] for item in predicate_json_emb if item["predicate_emb"] != "Not Implemented"]
-        predicate_emb_matrix = np.array(predicate_emb_list)
-        for triple in embedding_triples:
-            if triple["predicate_emb"] == "Not Implemented":
+    def update_embedding_triples_with_similarity(self, predicate_json_emb, embedding_triples):
+        try:
+            print("Updating embedding------------------------------")
+            predicate_json_emb = [json.loads(item) for item in predicate_json_emb]
+            predicate_emb_list = [item["predicate_emb"] for item in predicate_json_emb if item["predicate_emb"] != "Not Implemented"]
+            print("Updating embedding------------------------------1")
+            predicate_emb_matrix = np.array(predicate_emb_list)
+            print("Updating embedding------------------------------2")
+            updated_embedding_triples = []
+            for triple in embedding_triples:
+                entity, triple_json, study_field = triple  
+                triple_data = json.loads(triple_json)
                 
-                continue
-
-            current_predicate_emb = np.array(triple["predicate_emb"]).reshape(1, -1)
-            similarities = cosine_similarity(current_predicate_emb, predicate_emb_matrix)
-            max_similarity_index = np.argmax(similarities)
-            most_similar_predicate_details = predicate_json_emb[max_similarity_index]
-            triple["predicate_type"] = most_similar_predicate_details["type"]
-            if most_similar_predicate_details["relationship"].lower() != "unlabelled":
-                triple["predicate"] = most_similar_predicate_details["relationship"]
-        updated_embedding_triples = [json.dumps(item) for item in embedding_triples]
-
-        return updated_embedding_triples
+                if triple_data["predicate_emb"] == "Not Implemented":
+                    updated_embedding_triples.append(triple)
+                    continue  
+                
+                current_predicate_emb = np.array(triple_data["predicate_emb"]).reshape(1, -1)
+                similarities = cosine_similarity(current_predicate_emb, predicate_emb_matrix)
+                max_similarity_index = np.argmax(similarities)
+                most_similar_predicate_details = predicate_json_emb[max_similarity_index]
+                print("Score: ", similarities[0][max_similarity_index])
+                if similarities[0][max_similarity_index] > 0.4:
+                    triple_data["predicate_type"] = most_similar_predicate_details["type"]
+                    if most_similar_predicate_details["relationship"].lower() != "unlabelled":
+                        triple_data["predicate"] = most_similar_predicate_details["relationship"]
+                    updated_triple_json = json.dumps(triple_data)
+                    updated_embedding_triples.append((entity, updated_triple_json, study_field))
+            return updated_embedding_triples
+        except Exception as e:
+            raise Exception(f"Error processing predicate types: {e}")

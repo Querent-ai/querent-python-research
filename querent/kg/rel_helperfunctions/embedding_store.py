@@ -155,13 +155,12 @@ class EmbeddingStore:
                     object_type = data.get("object_type","Unlabeled").replace('"', '\\"')
                     context_embeddings = None
                     predicate_embedding = None
-                    if not relationship_finder:
-                        context_embeddings = self.get_embeddings([context])[0]
-                    else:
-                        if generate_embeddings_with_fixed_relationship:
-                            predicate_embedding = self.get_embeddings([predicate + " ("+predicate_type+")"])[0]
-                        else:
-                            predicate_embedding = self.get_embeddings([predicate_type])[0]
+                    context_embeddings = self.get_embeddings([context])[0]
+                    if relationship_finder and generate_embeddings_with_fixed_relationship:
+                        predicate_embedding = self.get_embeddings([predicate + " ("+predicate_type+")"])[0]
+                    elif relationship_finder:
+                        print("Predicate ----------------------------", self.get_embeddings([predicate_type]))
+                        predicate_embedding = self.get_embeddings([predicate_type])[0]
                     essential_data = {
                         "context": context,
                         "context_embeddings" : context_embeddings,
@@ -204,8 +203,8 @@ class EmbeddingStore:
                     processed_pairs.append((updated_json_string))
                 except json.JSONDecodeError as e:
                     self.logger.debug(f"JSON parsing error while generating embeddings for fixed realtionships: {e} in string.")
-
+                    
             return processed_pairs
 
         except Exception as e:
-            self.logger.error(f"Error in extracting embeddings for fixed realtionships: {e}")
+            self.logger.debug(f"Error in extracting embeddings for fixed realtionships: {e}")

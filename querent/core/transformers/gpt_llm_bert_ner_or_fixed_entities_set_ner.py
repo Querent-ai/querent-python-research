@@ -66,15 +66,19 @@ class GPTLLM(BaseEngine):
             self.user_context = config.user_context
             self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
             self.nlp_model = NER_LLM.get_class_variable()
+            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
             if self.fixed_relationships and not self.sample_relationships:
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,  model = self.nlp_model)
+                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.fixed_relationships, self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             elif self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,  model = self.nlp_model)
+                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(relationship_types=self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
             if config.is_confined_search:
                 self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
             else :
@@ -273,9 +277,15 @@ class GPTLLM(BaseEngine):
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)
                 if len(relationships) > 0:
-                    embedding_triples = self.create_emb.generate_embeddings(relationships)
+                    if self.fixed_relationships and self.sample_relationships:
+                        embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
+                    elif self.sample_relationships:
+                        print("Only for sample_relationships")
+                        embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
+                    else:
+                        embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:
-                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                        embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
                     for triple in embedding_triples:
                         graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                         if graph_json:
