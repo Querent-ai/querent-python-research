@@ -144,9 +144,9 @@ class EmbeddingStore:
         try:
             triples = payload
             processed_pairs = []
-
             for entity, json_string, related_entity in triples:
                 try:
+                    json_string = json_string.replace("\n", "")
                     data = json.loads(json_string)
                     context = data.get("context", "").replace('"', '\\"')
                     predicate = data.get("predicate","").replace('"', '\\"')
@@ -159,7 +159,6 @@ class EmbeddingStore:
                     if relationship_finder and generate_embeddings_with_fixed_relationship:
                         predicate_embedding = self.get_embeddings([predicate + " ("+predicate_type+")"])[0]
                     elif relationship_finder:
-                        print("Predicate ----------------------------", self.get_embeddings([predicate_type]))
                         predicate_embedding = self.get_embeddings([predicate_type])[0]
                     essential_data = {
                         "context": context,

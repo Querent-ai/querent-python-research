@@ -58,7 +58,9 @@ class GPTLLM(BaseEngine):
             is_confined_search = config.is_confined_search,
             huggingface_token = config.huggingface_token,
             spacy_model_path = config.spacy_model_path,
-            nltk_path = config.nltk_path)
+            nltk_path = config.nltk_path,
+            fixed_relationships = config.fixed_relationships,
+            sample_relationships = config.sample_relationships)
             self.fixed_entities = config.fixed_entities
             self.is_confined_search = config.is_confined_search
             self.fixed_relationships = config.fixed_relationships
@@ -144,7 +146,7 @@ class GPTLLM(BaseEngine):
     
     async def process_triples(self, context, entity1, entity2, entity1_label, entity2_label):
         try: 
-            if not self.user_context:
+            if not self.user_context and not self.fixed_entities:
                 identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
         
                     Context: {context}
@@ -163,7 +165,29 @@ class GPTLLM(BaseEngine):
                     """
                 messages_classify_entity = [
                     {"role": "user", "content": identify_entity_message},
-                    {"role": "user", "content": "Query: First, identify all geological entities in the provided context. Then, create relevant semantic triples (Subject, Predicate, Object) and also categorize the respective the Subject, Object types (e.g. location, person, event, material, process etc.) and Predicate type. Use the above output format to provide all the relevant semantic triples."},
+                    {"role": "user", "content": "Query : In the context of a semantic triple framework, first identify which entity is subject and which is the object along with their respective types. Also determine the predicate and predicate type."},
+                ]
+            elif not self.user_context and self.fixed_entities :
+                identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
+        
+                    Context: {context}
+                    Entity 1: {entity1} and Entity 2: {entity2}
+                    Entity 1_Type: {entity1_label} and Entity 2_Type: {entity2_label}
+                    Output Format:
+                    [
+                        {{
+                            'subject': 'Identified as the main entity in the context, typically the initiator or primary focus of the action or topic being discussed.',
+                            'predicate': 'The relationship (predicate) between the subject and the object.',
+                            'object': 'This parameter represents the entity in the context directly impacted by or involved in the action, typically the recipient or target of the main verb's action.',
+                            'subject_type': 'The category of the subject entity e.g. location, person, event, material, process etc.',
+                            'object_type': 'The category of the object entity e.g. location, person, event, material, process etc.',
+                            'predicate_type': 'The category of the predicate e.g. causative, action, ownership, occurance etc.'
+                        }},
+                    ]
+                    """
+                messages_classify_entity = [
+                    {"role": "user", "content": identify_entity_message},
+                    {"role": "user", "content": "Query : In the context of a semantic triple framework, first identify which entity is subject and which is the object and also validate and output their their respective types. Also determine the predicate and predicate type."},
                 ]
             elif self.user_context and self.fixed_entities :
                 identify_entity_message = f"""Please analyze the provided context below. Once you have understood the context, answer the user query using the specified output format.
@@ -253,14 +277,20 @@ class GPTLLM(BaseEngine):
         )
 
         return output_tuple
-      
+    
+    def extract_key(tup):
+        subject, json_string, obj = tup
+        data = json.loads(json_string.replace("\n", ""))
+        return (subject, data.get('predicate'), obj)
+   
     async def process_tokens(self, data: IngestedTokens):
         try:
             if not GPTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                    
                     return 
             relationships = []
-            result = await self.llm_instance.process_tokens(data)           
+            unique_keys = set()
+            result = await self.llm_instance.process_tokens(data)      
             if not result: return 
             else:
                 filtered_triples, file = result
@@ -275,12 +305,14 @@ class GPTLLM(BaseEngine):
                     result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk, entity1_label, entity2_label)
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
-                        relationships.append(output_tuple)
+                        key = GPTLLM.extract_key(output_tuple)
+                        if key not in unique_keys:
+                            unique_keys.add(key)
+                            relationships.append(output_tuple)
                 if len(relationships) > 0:
                     if self.fixed_relationships and self.sample_relationships:
                         embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
                     elif self.sample_relationships:
-                        print("Only for sample_relationships")
                         embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
                     else:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
