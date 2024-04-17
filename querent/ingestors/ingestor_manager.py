@@ -216,7 +216,7 @@ class IngestorFactoryManager:
         """Asynchronously ingest data from all collectors concurrently."""
         ingestion_tasks = [
             self.ingest_collector_async(
-                collector, self.result_queue, self.tokens_feader
+                collector, self.tokens_feader
             )
             for collector in self.collectors
         ]
