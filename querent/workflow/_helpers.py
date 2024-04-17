@@ -135,7 +135,6 @@ async def start_gpt_workflow(
     check_message_states_task = asyncio.create_task(
         check_message_states(config, resource_manager, [querent_task, token_feeder])
     )
-    print("Queue Size Right now in Work Flow--------------------------------", result_queue.qsize())
     await asyncio.gather(querent_task, token_feeder, check_message_states_task)
 
 
@@ -151,9 +150,7 @@ async def receive_token_feeder(
             )
             result_queue.put_nowait(ingested_tokens)
         else:
-            print("1-----------------------------------------------------------------------------------")
             await asyncio.sleep(10)
-            print("2")
     await result_queue.put(None)
 
 

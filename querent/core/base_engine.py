@@ -222,9 +222,7 @@ class BaseEngine(ABC):
                 while not self.termination_event.is_set():
                     retries = 0
                     await asyncio.sleep(30)
-                    print("Queue Size Right now in Base Engine--------------------------------", self.input_queue.qsize())
                     data = await self.input_queue.get()
-                    print("Data -----", data)
                     try:
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)

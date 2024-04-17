@@ -141,7 +141,6 @@ class IngestorFactoryManager:
     async def ingest_file_async(
         self,
         file_id: str,
-        result_queue: Optional[Queue] = None,
         tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
         collected_bytes_list = None
@@ -158,10 +157,8 @@ class IngestorFactoryManager:
                         yield chunk
 
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
-                    if result_queue is not None:
-                        print("Putting data --------------------------------")
-                        result_queue.put_nowait(chunk_tokens)
-                        print("Queue Size Right now in Ingestion  --------------------------------", result_queue.qsize())
+                    if self.result_queue is not None:
+                        await self.result_queue.put_nowait(chunk_tokens)
                     # elif tokens_feader is not None:
                     #     tokens_feader.send_tokens_in_rust(
                     #         {
@@ -188,7 +185,6 @@ class IngestorFactoryManager:
     async def ingest_collector_async(
         self,
         collector: Collector,
-        result_queue: Optional[Queue] = None,
         token_feader: Optional[ChannelCommandInterface] = None,
     ):
         """Asynchronously ingest data from a single collector."""
@@ -207,7 +203,7 @@ class IngestorFactoryManager:
                 # Try to ingest the ongoing file even if the cache is full
                 try:
                     await self.ingest_file_async(
-                        current_file, result_queue, token_feader
+                        current_file, token_feader
                     )
                 except Exception as e:
                     self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
@@ -227,4 +223,3 @@ class IngestorFactoryManager:
         await asyncio.gather(*ingestion_tasks)
         if self.result_queue is not None:
             await self.result_queue.put(None)
-            print("Queue Size Right now After putting None--------------------------------", self.result_queue.qsize())

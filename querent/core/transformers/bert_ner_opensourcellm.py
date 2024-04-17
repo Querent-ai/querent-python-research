@@ -145,7 +145,6 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
-            print("Processing tokens------------------------------------------")
             doc_source = data.doc_source
             if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      
