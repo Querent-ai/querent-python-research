@@ -223,6 +223,7 @@ class BaseEngine(ABC):
                     retries = 0
                     await asyncio.sleep(5)
                     data = await self.input_queue.get()
+                    print("Data -----", data)
                     try:
                         if isinstance(data, IngestedMessages):
                             await self.process_messages(data)

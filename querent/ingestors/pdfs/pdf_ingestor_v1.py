@@ -64,7 +64,8 @@ class PdfIngestor(BaseIngestor):
                         file=current_file,
                         data=None,
                         error=None,
-                        doc_source=chunk_bytes.doc_source
+                        doc_source=chunk_bytes.doc_source,
+                        is_token_stream=True,
                     )
                 collected_bytes += chunk_bytes.data
         except Exception as e:
@@ -108,6 +109,7 @@ class PdfIngestor(BaseIngestor):
                     data=processed_text,
                     error=collected_bytes.error,
                     doc_source=doc_source,
+                    is_token_stream=True,
                 )
                 # async for image_result in self.extract_images_and_ocr(
                 #     page,

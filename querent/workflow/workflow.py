@@ -83,7 +83,7 @@ async def start_workflow(config_dict: dict):
 
     workflow = workflows.get(config.workflow.name)
     result_queue = QuerentQueue()
-    collector_tasks = asyncio.create_task(start_collectors(config))
+    collector_tasks = asyncio.create_task(start_collectors(config, result_queue))
     engine_tasks = asyncio.create_task(
         workflow(ResourceManager(), config, result_queue)
     )
