@@ -158,7 +158,7 @@ class IngestorFactoryManager:
 
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
                     if self.result_queue is not None:
-                        await self.result_queue.put_nowait(chunk_tokens)
+                        self.result_queue.put_nowait(chunk_tokens)
                     # elif tokens_feader is not None:
                     #     tokens_feader.send_tokens_in_rust(
                     #         {
