@@ -127,6 +127,7 @@ class Fixed_Entities_LLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
+            print("Processing tokens------------------------------------------")
             doc_source = data.doc_source
             if not Fixed_Entities_LLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      

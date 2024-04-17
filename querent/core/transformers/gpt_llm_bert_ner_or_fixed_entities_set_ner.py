@@ -258,7 +258,8 @@ class GPTLLM(BaseEngine):
             
             doc_source = data.doc_source
             relationships = []
-            result = await self.llm_instance.process_tokens(data)           
+            result = await self.llm_instance.process_tokens(data)
+            print("Inside GPT LLM ------------------------------------", result)           
             if not result: return 
             else:
                 filtered_triples, file = result

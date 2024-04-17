@@ -159,8 +159,9 @@ class IngestorFactoryManager:
 
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
                     if result_queue is not None:
-                        print("Putting data --------------------------------", chunk_tokens)
+                        print("Putting data --------------------------------")
                         result_queue.put_nowait(chunk_tokens)
+                        print("Queue Size Right now in Ingestion  --------------------------------", result_queue.qsize())
                     # elif tokens_feader is not None:
                     #     tokens_feader.send_tokens_in_rust(
                     #         {
@@ -226,3 +227,4 @@ class IngestorFactoryManager:
         await asyncio.gather(*ingestion_tasks)
         if self.result_queue is not None:
             await self.result_queue.put(None)
+            print("Queue Size Right now After putting None--------------------------------", self.result_queue.qsize())
