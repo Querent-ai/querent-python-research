@@ -109,7 +109,7 @@ class IngestorFactoryManager:
             IngestorBackend.Slack.value: TextIngestorFactory(is_token_stream=True),
             IngestorBackend.Email.value: EmailIngestorFactory(),
             IngestorBackend.Jira.value: JsonIngestorFactory(),
-            IngestorBackend.News.value: TextIngestorFactory(is_token_stream=True)
+            IngestorBackend.News.value: TextIngestorFactory(is_token_stream=True),
             # Add more mappings as needed
         }
         self.file_caches = LRUCache(maxsize=cache_size)
@@ -141,7 +141,6 @@ class IngestorFactoryManager:
     async def ingest_file_async(
         self,
         file_id: str,
-        tokens_feader: Optional[ChannelCommandInterface] = None,
     ):
         collected_bytes_list = None
         try:
@@ -159,20 +158,6 @@ class IngestorFactoryManager:
                 async for chunk_tokens in ingestor.ingest(chunk_generator()):
                     if self.result_queue is not None:
                         await self.result_queue.put(chunk_tokens)
-                    # elif tokens_feader is not None:
-                    #     tokens_feader.send_tokens_in_rust(
-                    #         {
-                    #             "data": (
-                    #                 chunk_tokens.data
-                    #                 if type(chunk_tokens) == IngestedTokens
-                    #                 else chunk_tokens.ocr_text
-                    #             ),
-                    #             "file": chunk_tokens.file,
-                    #             "is_token_stream": True,
-                    #             "doc_source": chunk_tokens.doc_source,
-                    #         }
-                    #     )
-                    #     await asyncio.sleep(0.1)
             else:
                 self.logger.warning(
                     f"Unsupported file extension {file_extension} for file {collected_bytes_list[0].file}"
@@ -185,7 +170,6 @@ class IngestorFactoryManager:
     async def ingest_collector_async(
         self,
         collector: Collector,
-        token_feader: Optional[ChannelCommandInterface] = None,
     ):
         """Asynchronously ingest data from a single collector."""
         async for collected_bytes in collector.poll():
@@ -202,9 +186,7 @@ class IngestorFactoryManager:
             if collected_bytes.eof:
                 # Try to ingest the ongoing file even if the cache is full
                 try:
-                    await self.ingest_file_async(
-                        current_file, token_feader
-                    )
+                    await self.ingest_file_async(current_file)
                 except Exception as e:
                     self.logger.error(f"Error ingesting file {current_file}: {str(e)}")
 
@@ -215,10 +197,7 @@ class IngestorFactoryManager:
     async def ingest_all_async(self):
         """Asynchronously ingest data from all collectors concurrently."""
         ingestion_tasks = [
-            self.ingest_collector_async(
-                collector, self.tokens_feader
-            )
-            for collector in self.collectors
+            self.ingest_collector_async(collector) for collector in self.collectors
         ]
         await asyncio.gather(*ingestion_tasks)
         if self.result_queue is not None:
