@@ -259,6 +259,7 @@ class GPTLLM(BaseEngine):
             doc_source = data.doc_source
             relationships = []
             result = await self.llm_instance.process_tokens(data)
+            print("Recsults recieved in GPT ----", result)
             if not result: return 
             else:
                 filtered_triples, file = result
@@ -274,6 +275,7 @@ class GPTLLM(BaseEngine):
                     if result:
                         output_tuple = self.generate_output_tuple(result, context_json)
                         relationships.append(output_tuple)
+                print("Relationships in GPT ----", len(relationships))
                 if len(relationships) > 0:
                     embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:

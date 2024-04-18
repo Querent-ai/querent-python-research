@@ -162,6 +162,7 @@ class BERTLLM(BaseEngine):
                 content = clean_text
                 file = data.get_file_path()
             if content:
+                print("Content is recieved in BERT---", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
@@ -177,6 +178,7 @@ class BERTLLM(BaseEngine):
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
+                print("Found doc_entity_pairs")
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
@@ -200,9 +202,10 @@ class BERTLLM(BaseEngine):
                 else:
                     filtered_triples = pairs_with_predicates
                 if not filtered_triples:
-                    self.logger.debug("No entity pairs")
+                    print("No entity pairs")
                     return
                 elif not self.skip_inferences:
+                    print("Number of Relationships ------", len(filtered_triples))
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
