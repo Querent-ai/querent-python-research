@@ -144,7 +144,6 @@ class Fixed_Entities_LLM(BaseEngine):
                 content = clean_text
                 file = data.get_file_path()
             if content:
-                print("Content is recieved in Fixed---", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
@@ -157,11 +156,9 @@ class Fixed_Entities_LLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
-                print("Found doc_entity_pairs")
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 filtered_triples = process_data(doc_entity_pairs, file)
                 if not filtered_triples:
@@ -190,7 +187,6 @@ class Fixed_Entities_LLM(BaseEngine):
                     else:
                         return
                 else:
-                    print("Number of Relationships in Fixed------", len(filtered_triples))
                     return filtered_triples, file
             else:
                 return
