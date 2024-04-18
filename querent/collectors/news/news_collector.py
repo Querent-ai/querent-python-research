@@ -78,8 +78,8 @@ class NewsCollector(Collector):
                                 publish_date = article.get('publishedAt').split('T')[0]
 
                                 title = article['title']
-                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"))
-                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True)
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"), doc_source=f"news://{self.config.query}")
+                                yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True, doc_source=f"news://{self.config.query}")
 
                             total_results = response.get("totalResults", 0)
                             total_pages = (
@@ -93,7 +93,7 @@ class NewsCollector(Collector):
                             break
                     except Exception as e:
                         self.logger.error(f"Error fetching news articles: {e}")
-                        yield CollectedBytes(file="Error", data=None, error=e)
+                        yield CollectedBytes(file="Error", data=None, error=e, doc_source=f"news://{self.config.query}")
                         break
 
                 # After exhausting the current batch, reset for next polling cycle
@@ -137,8 +137,8 @@ class NewsCollector(Collector):
 
                         publish_date = article.get('publishedAt').split('T')[0]
                         title = article['title']
-                        yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"))
-                    yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True)
+                        yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=str(article_data).encode("utf-8"), doc_source=f"news://{self.config.query}")
+                    yield CollectedBytes(file=f"{self.config.query}_{publish_date}.news", data=None, error=None, eof=True, doc_source=f"news://{self.config.query}")
             except Exception as e:
                 self.logger.error(f"Error fetching news articles: {e}")
 

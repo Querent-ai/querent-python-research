@@ -47,13 +47,14 @@ class JsonIngestor(BaseIngestor):
                                 CollectedBytes(file=current_file, data=collected_bytes)
                             ):
                                 yield IngestedTokens(
-                                    file=current_file, data=[json_objects], error=None
+                                    file=current_file, data=[json_objects], error=None, doc_source=chunk_bytes.doc_source
                                 )
                         if current_file:
                             yield IngestedTokens(
                                 file=current_file,
                                 data=None,
                                 error=None,
+                                doc_source=chunk_bytes.doc_source
                             )
                         collected_bytes = b""
                         current_file = chunk_bytes.file
@@ -62,21 +63,21 @@ class JsonIngestor(BaseIngestor):
 
             except json.JSONDecodeError:
                 yield IngestedTokens(
-                    file=current_file, data=None, error="JSON Decode Error"
+                    file=current_file, data=None, error="JSON Decode Error", doc_source=chunk_bytes.doc_source
                 )
             finally:
                 async for json_objects in self.extract_and_process_json(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 ):
                     yield IngestedTokens(
-                        file=current_file, data=[json_objects], error=None
+                        file=current_file, data=[json_objects], error=None, doc_source=chunk_bytes.doc_source
                     )
-                yield IngestedTokens(file=current_file, data=None, error=None)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
         except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
 
-    async def extract_and_process_json(self, collected_bytes: CollectedBytes) -> str:
+    async def extract_and_process_json(self, collected_bytes: CollectedBytes):
         try:
             json_data = collected_bytes.data.decode("utf-8")
             processed_text = await self.process_data(json_data)

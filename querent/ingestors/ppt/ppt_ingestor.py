@@ -56,28 +56,29 @@ class PptIngestor(BaseIngestor):
                     current_file = chunk_bytes.file
                 elif current_file != chunk_bytes.file:
                     async for ingested_data in self.extract_and_process_ppt(
-                        CollectedBytes(file=current_file, data=collected_bytes)
+                        CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                     ):
                         yield ingested_data
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
+                        doc_source=chunk_bytes.doc_source,
                     )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
         finally:
             async for ingested_data in self.extract_and_process_ppt(
-                CollectedBytes(file=current_file, data=collected_bytes)
+                CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
             ):
                 yield ingested_data
-            yield IngestedTokens(file=current_file, data=None, error=None)
+            yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
     async def extract_and_process_ppt(
-        self, collected_bytes: CollectedBytes
+        self, collected_bytes: CollectedBytes, doc_source: str
     ) -> AsyncGenerator[str, None]:
         try:
             if collected_bytes.extension == "pptx":
@@ -95,7 +96,7 @@ class PptIngestor(BaseIngestor):
                     slide_text = "\n".join(text)
                     processed_slide_text = await self.process_data(slide_text)
                     yield IngestedTokens(
-                        file=collected_bytes.file, data=processed_slide_text, error=None
+                        file=collected_bytes.file, data=processed_slide_text, error=None, doc_source=doc_source
                     )
                     i+=1
             elif collected_bytes.extension == "ppt":
@@ -103,7 +104,7 @@ class PptIngestor(BaseIngestor):
                 extracted_text = parsed["content"]
                 processed_text = await self.process_data(extracted_text)
                 yield IngestedTokens(
-                    file=collected_bytes.file, data=processed_text, error=None
+                    file=collected_bytes.file, data=processed_text, error=None, doc_source=doc_source
                 )
             else:
                 raise common_errors.WrongPptFileError(
