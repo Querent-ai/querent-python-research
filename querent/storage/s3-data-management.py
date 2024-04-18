@@ -62,34 +62,34 @@
 
 
 # ------------------------------------List --------------------------------------
-import boto3
+# import boto3
 
-# Your AWS access key ID and secret access key
-aws_access_key_id = 'AKIAU6GDY2RDMGC2RNTK'
-aws_secret_access_key = 'kvmy2uLmRKkJI5+LSlaanRp/Uu7DJwbOVohS7kvf'
+# # Your AWS access key ID and secret access key
+# aws_access_key_id = 'AKIAU6GDY2RDMGC2RNTK'
+# aws_secret_access_key = 'kvmy2uLmRKkJI5+LSlaanRp/Uu7DJwbOVohS7kvf'
 
-# The name of the bucket you want to list files from
-bucket_name = 'querentbucket1'
+# # The name of the bucket you want to list files from
+# bucket_name = 'querentbucket1'
 
-# Create an S3 client
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=aws_access_key_id,
-    aws_secret_access_key=aws_secret_access_key,
-    # If you're using a specific region, uncomment and set the region_name parameter
-    # region_name='your-bucket-region'
-)
+# # Create an S3 client
+# s3 = boto3.client(
+#     's3',
+#     aws_access_key_id=aws_access_key_id,
+#     aws_secret_access_key=aws_secret_access_key,
+#     # If you're using a specific region, uncomment and set the region_name parameter
+#     # region_name='your-bucket-region'
+# )
 
-# List files in the specified S3 bucket
-def list_files(bucket):
-    try:
-        response = s3.list_objects_v2(Bucket=bucket)
-        if 'Contents' in response:
-            for file in response['Contents']:
-                print(file['Key'])
-        else:
-            print("No files found.")
-    except Exception as e:
-        print(e)
+# # List files in the specified S3 bucket
+# def list_files(bucket):
+#     try:
+#         response = s3.list_objects_v2(Bucket=bucket)
+#         if 'Contents' in response:
+#             for file in response['Contents']:
+#                 print(file['Key'])
+#         else:
+#             print("No files found.")
+#     except Exception as e:
+#         print(e)
 
-list_files(bucket_name)
+# list_files(bucket_name)
