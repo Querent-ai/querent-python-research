@@ -70,7 +70,7 @@ class PdfIngestor(BaseIngestor):
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # at the queue level, we can sample out the error
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source, is_token_stream=True)
         finally:
             # process the last file
             try:
@@ -78,7 +78,7 @@ class PdfIngestor(BaseIngestor):
                     CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                 ):
                     yield page_text
-                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source, is_token_stream=True)
             except Exception as exc:
                 yield IngestedTokens(
                     file=current_file,

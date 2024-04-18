@@ -148,7 +148,7 @@ async def receive_token_feeder(
             ingested_tokens = IngestedTokens(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), doc_source=tokens.get("doc_source", "")
             )
-            result_queue.put_nowait(ingested_tokens)
+            await result_queue.put(ingested_tokens)
         else:
             await asyncio.sleep(10)
     await result_queue.put(None)
