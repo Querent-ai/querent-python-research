@@ -65,12 +65,11 @@ class PdfIngestor(BaseIngestor):
                         data=None,
                         error=None,
                         doc_source=chunk_bytes.doc_source,
-                        is_token_stream=True,
                     )
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # at the queue level, we can sample out the error
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source, is_token_stream=True)
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
         finally:
             # process the last file
             try:
@@ -78,7 +77,7 @@ class PdfIngestor(BaseIngestor):
                     CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                 ):
                     yield page_text
-                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source, is_token_stream=True)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
             except Exception as exc:
                 yield IngestedTokens(
                     file=current_file,
@@ -109,7 +108,6 @@ class PdfIngestor(BaseIngestor):
                     data=processed_text,
                     error=collected_bytes.error,
                     doc_source=doc_source,
-                    is_token_stream=True,
                 )
                 # async for image_result in self.extract_images_and_ocr(
                 #     page,

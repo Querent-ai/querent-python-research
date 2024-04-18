@@ -180,7 +180,7 @@ class BaseEngine(ABC):
                 if new_state.payload == "Terminate":
                     break
                 new_state = {
-                    "event_type": str(new_state.event_type.value),
+                    "event_type": str(new_state.event_type),
                     "timestamp": new_state.timestamp,
                     "payload": new_state.payload,
                     "file": new_state.file,
@@ -221,7 +221,7 @@ class BaseEngine(ABC):
                 none_counter = 0
                 while not self.termination_event.is_set():
                     retries = 0
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(5)
                     data = await self.input_queue.get()
                     try:
                         if isinstance(data, IngestedMessages):

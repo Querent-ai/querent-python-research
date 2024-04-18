@@ -1,8 +1,7 @@
 from typing import Any
-from enum import Enum
 
 
-class EventType(Enum):
+class EventType:
     Graph = "Graph"
     Vector = "Vector"
     Terminate="Terminate"
