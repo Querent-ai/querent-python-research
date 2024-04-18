@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     "cachetools==5.3.3",
-    "aiohttp==3.9.3",
+    "aiohttp==3.9.4",
     "attrs==23.1.0",
     "beautifulsoup4==4.12.3",
     "boto3==1.26.146",
@@ -42,7 +42,7 @@ requirements = [
     "pytest-cov==4.1.0",
     "pytest-mock==3.11.1",
     "tensorflow==2.14.0",
-    "transformers==4.36.0",
+    "transformers==4.38.0",
     "asyncio==3.4.3",
     "aiofiles==23.2.1",
     "prometheus-client==0.17.1",
