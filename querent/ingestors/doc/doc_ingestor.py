@@ -56,6 +56,7 @@ class DocIngestor(BaseIngestor):
                     async for ingested_data in self.extract_and_process_doc(
                         CollectedBytes(file=current_file, data=collected_bytes), doc_source=chunk_bytes.doc_source
                     ):
+                        ingested_data.doc_source = chunk_bytes.doc_source
                         yield ingested_data
                     yield IngestedTokens(
                         file=current_file,
@@ -74,7 +75,7 @@ class DocIngestor(BaseIngestor):
                 CollectedBytes(file=current_file, data=collected_bytes), doc_source=chunk_bytes.doc_source
             ):
                 yield ingested_data
-            yield IngestedTokens(file=current_file, data=None, error=None)
+            yield IngestedTokens(file=current_file, data=None, doc_source = chunk_bytes.doc_source, error=None)
 
     async def extract_and_process_doc(
         self, collected_bytes: CollectedBytes, doc_source: str
