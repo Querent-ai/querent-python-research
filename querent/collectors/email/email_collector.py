@@ -57,11 +57,13 @@ class EmailCollector(Collector):
                         yield CollectedBytes(
                             data=message,
                             file=f"{self.config.imap_username}:{self.config.imap_folder}/{i}.email",
+                            doc_source=f"email://{self.config.imap_server}/{self.config.imap_folder}"
                         )
                 yield CollectedBytes(
                     data=None,
                     file=f"{self.config.imap_username}:{self.config.imap_folder}/{i}.email",
                     eof=True,
+                    doc_source=f"email://{self.config.imap_server}/{self.config.imap_folder}"
                 )
         except imaplib.IMAP4.error as e:
             self.logger.error(f"Error fetching emails from IMAP server: {e}")

@@ -77,11 +77,13 @@ class CodeIngestor(BaseIngestor):
                             file=current_file,
                             data=[line],
                             error=None,
+                            doc_source=chunk_bytes.doc_source,
                         )
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
+                        doc_source=chunk_bytes.doc_source
                     )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
@@ -94,11 +96,12 @@ class CodeIngestor(BaseIngestor):
                         file=current_file,
                         data=[line],
                         error=None,
+                        doc_source=chunk_bytes.doc_source
                     )
-                yield IngestedTokens(file=current_file, data=None, error=None)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
         except Exception as exc:
             yield IngestedTokens(
-                file=current_file, data=None, error=f"Exception: {exc}"
+                file=current_file, data=None, error=f"Exception: {exc}", doc_source=chunk_bytes.doc_source,
             )
             raise Exception from exc
 

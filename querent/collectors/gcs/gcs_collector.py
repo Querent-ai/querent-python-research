@@ -55,8 +55,8 @@ class GCSCollector(Collector):
             blobs = list(bucket.list_blobs())  # Convert to a list
             for blob in blobs:
                 async for chunk in self.stream_blob(blob):
-                    yield CollectedBytes(file=blob.name, data=chunk, error=None)
-                yield CollectedBytes(file=blob.name, data=None, error=None, eof=True)
+                    yield CollectedBytes(file=blob.name, data=chunk, error=None, doc_source=f"gcs://{self.bucket_name}")
+                yield CollectedBytes(file=blob.name, data=None, error=None, eof=True, doc_source=f"gcs://{self.bucket_name}")
         except Exception as e:
             # Handle exceptions gracefully, e.g., log the error
             self.logger.error(f"Error connecting to GCS: {e}")

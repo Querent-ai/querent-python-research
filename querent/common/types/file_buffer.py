@@ -31,21 +31,19 @@ class FileBuffer:
 
     def add_chunk(self, filename, chunk):
         try:
-            if chunk is None:
-                return self.end_file(filename)
-
             if filename not in self.file_chunks:
                 self.file_chunks[filename] = {}
-
-            # Automatically assign a chunk ID
+                
+            if chunk is None:
+                return self.end_file(filename)
+            
             chunk_id = len(self.file_chunks[filename])
             self.file_chunks[filename][chunk_id] = chunk
 
             return filename, None
                 
         except Exception as e:
-            self.logger.error(f"Error adding a chunk: {e}")
-            raise Exception(f"An error occurred while adding a chunk: {e}")   
+            return filename, None   
 
     def end_file(self, filename):
         try:
@@ -56,10 +54,9 @@ class FileBuffer:
                 del self.file_chunks[filename]  # Clear the file entry
                 return filename, full_content
             else:
-                raise Exception(f"No chunks found for file: {filename}")
+                return filename, None
         except Exception as e:
-            self.logger.error(f"Error ending the file: {e}")
-            raise Exception(f"An error occurred while ending the file: {e}")
+            return filename, None
 
     def get_content(self, filename):
         try:

@@ -131,6 +131,7 @@ class Fixed_Entities_LLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
+            doc_source = data.doc_source
             if not Fixed_Entities_LLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      
                     return
@@ -157,7 +158,6 @@ class Fixed_Entities_LLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
@@ -183,11 +183,11 @@ class Fixed_Entities_LLM(BaseEngine):
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                                 if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                                 vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                                 if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             else:
                                 return

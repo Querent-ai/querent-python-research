@@ -41,9 +41,9 @@ class FSCollector(Collector):
                 async with aiofiles.open(file_path, "rb") as file:
                     file_path_str = str(file_path)
                     async for chunk in self.read_chunks(file):
-                        yield CollectedBytes(file=file_path_str, data=chunk, error=None)
+                        yield CollectedBytes(file=file_path_str, data=chunk, error=None, doc_source=f"file://{self.root_dir}")
                     yield CollectedBytes(
-                        file=file_path_str, data=None, error=None, eof=True
+                        file=file_path_str, data=None, error=None, eof=True, doc_source=f"file://{self.root_dir}"
                     )
             except PermissionError as exc:
                 raise common_errors.PermissionError(
