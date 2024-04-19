@@ -55,13 +55,15 @@ class DocIngestor(BaseIngestor):
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
                     async for ingested_data in self.extract_and_process_doc(
-                        CollectedBytes(file=current_file, data=collected_bytes)
+                        CollectedBytes(file=current_file, data=collected_bytes), doc_source=chunk_bytes.doc_source
                     ):
+                        ingested_data.doc_source = chunk_bytes.doc_source
                         yield ingested_data
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
+                        doc_source=chunk_bytes.doc_source
                     )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
@@ -71,18 +73,18 @@ class DocIngestor(BaseIngestor):
         finally:
             # process the last file
             async for ingested_data in self.extract_and_process_doc(
-                CollectedBytes(file=current_file, data=collected_bytes)
+                CollectedBytes(file=current_file, data=collected_bytes), doc_source=chunk_bytes.doc_source
             ):
                 yield ingested_data
-            yield IngestedTokens(file=current_file, data=None, error=None)
+            yield IngestedTokens(file=current_file, data=None, doc_source = chunk_bytes.doc_source, error=None)
 
     async def extract_and_process_doc(
-        self, collected_bytes: CollectedBytes
+        self, collected_bytes: CollectedBytes, doc_source: str
     ) -> AsyncGenerator[str, None]:
-        async for paragraph in self.extract_text_from_doc(collected_bytes):            
+        async for paragraph in self.extract_text_from_doc(collected_bytes, doc_source):            
             yield paragraph
 
-    async def extract_text_from_doc(self, collected_bytes: CollectedBytes):
+    async def extract_text_from_doc(self, collected_bytes: CollectedBytes, doc_source: str):
         # Determine file extension
         file_extension = collected_bytes.extension.lower()
         if file_extension == "docx":
@@ -93,7 +95,7 @@ class DocIngestor(BaseIngestor):
 
             text = await self.process_data(text)
             yield IngestedTokens(
-                file=collected_bytes.file, data=text, error=None
+                file=collected_bytes.file, data=text, error=None, doc_source=doc_source
             )
 
             i = 1
@@ -118,7 +120,7 @@ class DocIngestor(BaseIngestor):
         elif file_extension == "doc":
             current_doc_text = await self.temp_extract_from(collected_bytes)
             yield IngestedTokens(
-                file=collected_bytes.file, data=current_doc_text, error=None
+                file=collected_bytes.file, data=current_doc_text, error=None, doc_source=doc_source
             )
         else:
             raise common_errors.UnknownError(

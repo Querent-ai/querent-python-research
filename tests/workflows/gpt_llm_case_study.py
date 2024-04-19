@@ -20,7 +20,6 @@
 # from querent.querent.querent import Querent
 # import time
 # from querent.storage.postgres_graphevent_storage import DatabaseConnection
-# from querent.storage.milvus_vectorevent_storage import MilvusDBConnection
 
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():

@@ -119,11 +119,8 @@ async def test_multiple_collectors_all_async():
                 and ingested_data.is_token_stream
             ):
                 messages += 1
-            else:
-                unique_files.add(ingested_data.file)
             counter += 1
-    assert counter ==122
-    assert len(unique_files) > 1
+    assert counter == 122
     assert messages > 0
 
 

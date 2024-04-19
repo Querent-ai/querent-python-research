@@ -88,8 +88,8 @@ class DriveCollector(Collector):
                 self.logger.info("No files found in Google Drive")
             for file in files:
                 async for chunk in self.read_chunks(file["id"]):
-                    yield CollectedBytes(data=chunk, file=file["name"])
-                yield CollectedBytes(data=None, file=file["name"], eof=True)
+                    yield CollectedBytes(data=chunk, file=file["name"], doc_source=f"drive://{self.folder_to_crawl}")
+                yield CollectedBytes(data=None, file=file["name"], eof=True, doc_source=f"drive://{self.folder_to_crawl}")
         except Exception as e:
             raise common_errors.PollingError(
                 f"Failed to poll Google Drive: {str(e)}"

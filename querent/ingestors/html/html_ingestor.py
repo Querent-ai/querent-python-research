@@ -51,36 +51,37 @@ class HtmlIngestor(BaseIngestor):
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
                     async for ingested_data in self.extract_and_process_html(
-                        CollectedBytes(file=current_file, data=collected_bytes)
+                        CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                     ):
                         yield ingested_data
                     yield IngestedTokens(
                         file=current_file,
                         data=None,
                         error=None,
+                        doc_source=chunk_bytes.doc_source,
                     )
                     collected_bytes = b""
                     current_file = chunk_bytes.file
                 collected_bytes += chunk_bytes.data
         except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
         finally:
             # process the last file
             async for ingested_data in self.extract_and_process_html(
-                CollectedBytes(file=current_file, data=collected_bytes)
+                CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
             ):
                 yield ingested_data
-            yield IngestedTokens(file=current_file, data=None, error=None)
+            yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
     async def extract_and_process_html(
-        self, collected_bytes: CollectedBytes
+        self, collected_bytes: CollectedBytes, doc_source: str
     ) -> AsyncGenerator[str, None]:
         """Function to extract and process xml files"""
-        async for elements in self.extract_text_from_html(collected_bytes):
+        async for elements in self.extract_text_from_html(collected_bytes, doc_source):
             yield elements
 
     async def extract_text_from_html(
-        self, collected_bytes: CollectedBytes
+        self, collected_bytes: CollectedBytes, doc_source: str
     ):
         """Function to extract text from xml"""
         try:
@@ -105,7 +106,7 @@ class HtmlIngestor(BaseIngestor):
                     image_data = base64.b64decode(base64_data)
                     image_ocr = await self.process_image(io.BytesIO(image_data))
 
-                    yield IngestedImages(file = collected_bytes.file, image = base64_data, image_name = str(uuid.uuid4()), page_num=i, text = [soup], ocr_text = [image_ocr], coordinates= None, error= None)
+                    yield IngestedImages(file = collected_bytes.file, image = base64_data, image_name = str(uuid.uuid4()), page_num=i, text = soup, ocr_text = image_ocr, coordinates= None, error= None, doc_source=doc_source)
                     i += 1
         except UnicodeDecodeError as exc:
             raise common_errors.UnicodeDecodeError(
@@ -121,7 +122,7 @@ class HtmlIngestor(BaseIngestor):
             ) from exc
         for element in elements:
             processed_element = await self.process_data(element)
-            yield IngestedTokens(file=collected_bytes.file, data=[processed_element], error=None)
+            yield IngestedTokens(file=collected_bytes.file, data=[processed_element], error=None, doc_source=doc_source)
 
     async def process_data(self, text: str) -> str:
         if self.processors is None or len(self.processors) == 0:

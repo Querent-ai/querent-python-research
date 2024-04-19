@@ -34,7 +34,7 @@ class MockLLMEngine(BaseEngine):
         # can set the state of the LLM using the set_state method
         # The state of the LLM is stored in the state attribute of the LLM
         # The state of the LLM is published to subscribers of the LLM
-        current_state = EventState(EventType.Graph, 1.0, "anything", "dummy.txt")
+        current_state = EventState(EventType.Graph, 1.0, "anything", "dummy.txt", doc_source="file://folder_path")
         await self.set_state(new_state=current_state)
 
     async def process_code(self, data: IngestedCode):
@@ -101,5 +101,5 @@ async def test_querent_with_base_llm():
 
 async def terminate_querent(llm_mocker: MockLLMEngine):
     await asyncio.sleep(60)
-    event_state = EventState(event_type=EventType.Graph, payload = "terminate", timestamp=1.0, file="dummy.txt")
+    event_state = EventState(event_type=EventType.Graph, payload = "terminate", timestamp=1.0, file="dummy.txt", doc_source="file://folder_path")
     await llm_mocker.set_state(event_state)

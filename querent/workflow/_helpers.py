@@ -37,7 +37,7 @@ def setup_nltk_and_spacy_paths(config, search_directory):
     config.engines[0].spacy_model_path = spacy_model_path
 
     
-async def start_collectors(config: Config):
+async def start_collectors(config: Config, result_queue: QuerentQueue):
     collectors = []
     for collector_config in config.collectors:
         uri = Uri(collector_config.uri)
@@ -51,8 +51,8 @@ async def start_collectors(config: Config):
 
     ingestor_factory_manager = IngestorFactoryManager(
         collectors=collectors,
-        result_queue=None,
-        tokens_feader=config.workflow.tokens_feader,
+        result_queue=result_queue,
+        tokens_feader=None,
         processors=[text_cleanup_processor, text_processor]
     )
 
@@ -103,11 +103,11 @@ async def start_llama_workflow(
         )
     )
 
-    # check_message_states_task = asyncio.create_task(
-    #     check_message_states(config, resource_manager, [querent_task, token_feeder])
-    # )
+    check_message_states_task = asyncio.create_task(
+        check_message_states(config, resource_manager, [querent_task, token_feeder])
+    )
 
-    await asyncio.gather(querent_task, token_feeder)
+    await asyncio.gather(querent_task, token_feeder, check_message_states_task)
 
 
 async def start_gpt_workflow(
@@ -146,7 +146,7 @@ async def receive_token_feeder(
         tokens = config.workflow.tokens_feader.receive_tokens_in_python()
         if tokens is not None:
             ingested_tokens = IngestedTokens(
-                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), 
+                file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), doc_source=tokens.get("doc_source", "")
             )
             await result_queue.put(ingested_tokens)
         else:
