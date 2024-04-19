@@ -332,6 +332,8 @@ class GPTLLM(BaseEngine):
                                     await self.set_state(new_state=current_state)
                         else:
                             return
+                else:
+                    return
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
             raise Exception(f"An error occurred while extracting predicates using GPT: {e}")
