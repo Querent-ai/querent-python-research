@@ -55,7 +55,7 @@ class PdfIngestor(BaseIngestor):
                 elif current_file != chunk_bytes.file:
                     # we have a new file, process the old one
                     async for page_text in self.extract_and_process_pdf(
-                        CollectedBytes(file=current_file, data=collected_bytes)
+                        CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                     ):
                         yield page_text
                     collected_bytes = b""
@@ -64,28 +64,30 @@ class PdfIngestor(BaseIngestor):
                         file=current_file,
                         data=None,
                         error=None,
+                        doc_source=chunk_bytes.doc_source,
                     )
                 collected_bytes += chunk_bytes.data
         except Exception as e:
             # at the queue level, we can sample out the error
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
         finally:
             # process the last file
             try:
                 async for page_text in self.extract_and_process_pdf(
-                    CollectedBytes(file=current_file, data=collected_bytes)
+                    CollectedBytes(file=current_file, data=collected_bytes), chunk_bytes.doc_source
                 ):
                     yield page_text
-                yield IngestedTokens(file=current_file, data=None, error=None)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
             except Exception as exc:
                 yield IngestedTokens(
                     file=current_file,
                     data=None,
                     error=f"Exception: {exc}",
+                    doc_source=chunk_bytes.doc_source,
                 )
 
     async def extract_and_process_pdf(
-        self, collected_bytes: CollectedBytes
+        self, collected_bytes: CollectedBytes, doc_source: str
     ) -> AsyncGenerator[IngestedTokens, None]:
         try:
             path = BytesIO(collected_bytes.data)
@@ -105,6 +107,7 @@ class PdfIngestor(BaseIngestor):
                     file=collected_bytes.file,
                     data=processed_text,
                     error=collected_bytes.error,
+                    doc_source=doc_source,
                 )
                 # async for image_result in self.extract_images_and_ocr(
                 #     page,

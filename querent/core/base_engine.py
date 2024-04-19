@@ -180,10 +180,11 @@ class BaseEngine(ABC):
                 if new_state.payload == "Terminate":
                     break
                 new_state = {
-                    "event_type": new_state.event_type,
+                    "event_type": str(new_state.event_type),
                     "timestamp": new_state.timestamp,
                     "payload": new_state.payload,
-                    "file": new_state.file
+                    "file": new_state.file,
+                    "doc_source": new_state.doc_source,
                 }
                 await self._notify_subscribers(new_state["event_type"], new_state)
             else:

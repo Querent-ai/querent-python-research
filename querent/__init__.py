@@ -19,9 +19,6 @@ from .processors import *
 # System Callbacks
 from .callback import *
 
-# System Insights
-from .insights import *
-
 # System Logging and Utilities
 from .core import *
 from .utils import *

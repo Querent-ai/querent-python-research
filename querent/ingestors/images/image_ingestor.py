@@ -52,8 +52,8 @@ class ImageIngestor(BaseIngestor):
                         text = await self.extract_and_process_image(
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
-                        yield IngestedTokens(file=current_file, data=[text], error=None)
-                        yield IngestedTokens(file=current_file, data=None, error=None)
+                        yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
+                        yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
                     current_file = chunk_bytes.file
                     collected_bytes = b""
@@ -64,11 +64,11 @@ class ImageIngestor(BaseIngestor):
                 text = await self.extract_and_process_image(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield IngestedTokens(file=current_file, data=[text], error=None)
-                yield IngestedTokens(file=current_file, data=None, error=None)
+                yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
+                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
         except Exception as e:
-            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}")
+            yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
 
     async def extract_and_process_image(self, collected_bytes: CollectedBytes) -> str:
         text = await self.extract_text_from_image(collected_bytes)

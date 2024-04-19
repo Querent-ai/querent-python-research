@@ -184,6 +184,7 @@ class GPTNERLLM(BaseEngine):
                     self.set_termination_event()                    
                     return 
 
+            doc_source = data.doc_source
             if data.data:
                 clean_text = ' '.join(data.data)
                 #clean_text = unidecode(single_string)
@@ -246,14 +247,14 @@ class GPTNERLLM(BaseEngine):
                         if not self.termination_event.is_set():
                             graph_json = json.dumps(triple)
                             if graph_json:
-                                current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
                                 await self.set_state(new_state=current_state)
                             context_embeddings = self.create_emb.get_embeddings([triple['sentence']])[0]
                             triple['context_embeddings'] = context_embeddings
                             triple['context'] = triple['sentence']
                             vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson((triple['subject'],json.dumps(triple), triple['object'])))
                             if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                         else:
                             return

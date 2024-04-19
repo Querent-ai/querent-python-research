@@ -133,6 +133,7 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs = []
         number_sentences = 0
         try:
+            doc_source = data.doc_source
             if not BERTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                                      
                     return
@@ -188,7 +189,6 @@ class BERTLLM(BaseEngine):
                     filtered_triples = pairs_with_predicates
                 print("Found doc_entity_pairs-------------------------------------", len(filtered_triples))
                 if not filtered_triples:
-                    self.logger.debug("No entity pairs")
                     return
                 elif not self.skip_inferences:
                     print("Extracting Entities-------------------------------------", filtered_triples)
@@ -209,11 +209,11 @@ class BERTLLM(BaseEngine):
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                                 if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file)
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                                 vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                                 if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file)
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             else:
                                 return
@@ -221,6 +221,8 @@ class BERTLLM(BaseEngine):
                         return
                 else:
                     return filtered_triples, file
+            else:
+                return
         except Exception as e:
             print("Exception Caught: %s" % e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

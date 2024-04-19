@@ -1,10 +1,11 @@
 class IngestedCode:
     """Class for ingested code type of data"""
 
-    def __init__(self, file: str, data: [str], error: str = None) -> None:
+    def __init__(self, file: str, data: [str], doc_source: str, error: str = None) -> None:
         self.data = data
         self.error = error
         self.file = file
+        self.doc_source = doc_source
         file = str(file)
         self.extension = file.rsplit(".", maxsplit=1)[-1]
 

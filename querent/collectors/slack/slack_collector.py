@@ -63,6 +63,7 @@ class SlackCollector(Collector):
                         yield CollectedBytes(
                             file=f"slack://{self.channel}.slack",
                             data=bytes(message["text"] + "\n\n", "utf-8"),
+                            doc_source = f"slack://{self.channel}"
                         )
 
                     if not response["has_more"]:
@@ -71,6 +72,7 @@ class SlackCollector(Collector):
                             data=None,
                             error=None,
                             eof=True,
+                            doc_source = f"slack://{self.channel}"
                         )
                         break
                 else:
