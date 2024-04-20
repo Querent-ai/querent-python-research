@@ -17,6 +17,8 @@
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
 # import time
+# from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
+# from querent.config.core.gpt_llm_config import GPTConfig
 
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
@@ -46,9 +48,10 @@
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
-#     bert_llm_config = LLM_Config(
+#     bert_llm_config = GPTConfig(
 #     # ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
+#     openai_api_key="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",
 #     filter_params={
 #             'score_threshold': 0.5,
 #             'attention_score_threshold': 0.1,
@@ -87,7 +90,7 @@
         
 #     # user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
 #     )
-#     llm_instance = BERTLLM(result_queue, bert_llm_config)
+#     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             if event_state['event_type'] == EventType.Graph:

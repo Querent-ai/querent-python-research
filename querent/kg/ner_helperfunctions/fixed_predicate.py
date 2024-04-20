@@ -157,12 +157,9 @@ class FixedPredicateExtractor:
 
     def update_embedding_triples_with_similarity(self, predicate_json_emb, embedding_triples):
         try:
-            print("Updating embedding------------------------------")
             predicate_json_emb = [json.loads(item) for item in predicate_json_emb]
             predicate_emb_list = [item["predicate_emb"] for item in predicate_json_emb if item["predicate_emb"] != "Not Implemented"]
-            print("Updating embedding------------------------------1")
             predicate_emb_matrix = np.array(predicate_emb_list)
-            print("Updating embedding------------------------------2")
             updated_embedding_triples = []
             for triple in embedding_triples:
                 entity, triple_json, study_field = triple  
@@ -176,8 +173,7 @@ class FixedPredicateExtractor:
                 similarities = cosine_similarity(current_predicate_emb, predicate_emb_matrix)
                 max_similarity_index = np.argmax(similarities)
                 most_similar_predicate_details = predicate_json_emb[max_similarity_index]
-                print("Score: ", similarities[0][max_similarity_index])
-                if similarities[0][max_similarity_index] > 0.4:
+                if similarities[0][max_similarity_index] > 0.5:
                     triple_data["predicate_type"] = most_similar_predicate_details["type"]
                     if most_similar_predicate_details["relationship"].lower() != "unlabelled":
                         triple_data["predicate"] = most_similar_predicate_details["relationship"]

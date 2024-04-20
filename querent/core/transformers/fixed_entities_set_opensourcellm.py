@@ -136,9 +136,7 @@ class Fixed_Entities_LLM(BaseEngine):
                     self.set_termination_event()                                      
                     return
             if data.data:
-                single_string = ' '.join(data.data)
-                clean_text = single_string
-                # clean_text = unidecode(single_string)
+                clean_text = ' '.join(data.data)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -150,8 +148,6 @@ class Fixed_Entities_LLM(BaseEngine):
             if content:
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
-                # if self.fixed_relationships:
-                #     content = self.predicate_context_extractor.find_predicate_sentences(content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
                 for tokenized_sentence, original_sentence, sentence_idx in tokens:
                     (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
@@ -176,7 +172,6 @@ class Fixed_Entities_LLM(BaseEngine):
                         if self.fixed_relationships and self.sample_relationships:
                             embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
                         elif self.sample_relationships:
-                            print("Only for sample_relationships")
                             embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
                         else:
                             embedding_triples = self.create_emb.generate_embeddings(relationships)

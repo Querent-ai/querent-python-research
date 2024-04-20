@@ -103,13 +103,13 @@ class RelationExtractor():
             self.logger.error(f"Error in validation: {e}")
             return False
     
-    def process_tokens(self, payload):
+    def process_tokens(self, payload, fixed_entities = False):
         try:
             triples = payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
             if self.rag_approach == True:
                 self.rag_retriever.build_faiss_index(trimmed_triples)
-            relationships = self.extract_relationships(triples)
+            relationships = self.extract_relationships(triples, fixed_entities)
         
             return relationships
         
@@ -149,33 +149,6 @@ class RelationExtractor():
                 }),
                 input1.get("object","")
             )
-            # else:
-            #         if input1.get("subject","").lower() in input2_data.get("entity1_nn_chunk","").lower or input2_data.get("entity1_nn_chunk","").lower in input1.get("subject","").lower() or input2_data.get("entity1_nn_chunk","").lower == input1.get("subject","").lower():
-            #             triple = (
-            #             input1.get("subject",""),
-            #             json.dumps({
-            #                 "predicate": input1.get("predicate",""),
-            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
-            #                 "context": input2_data.get("context", ""),
-            #                 "file_path": input2_data.get("file_path", ""),
-            #                 "subject_type": input2_data.get("entity1_label","Unlabeled"),
-            #                 "object_type": input2_data.get("entity2_label","Unlabeled")
-            #             }),
-            #             input1.get("object","")
-            #         )
-            #         else:
-            #             triple = (
-            #             input1.get("subject",""),
-            #             json.dumps({
-            #                 "predicate": input1.get("predicate",""),
-            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
-            #                 "context": input2_data.get("context", ""),
-            #                 "file_path": input2_data.get("file_path", ""),
-            #                 "subject_type": input2.get("entity2_label","Unlabeled"),
-            #                 "object_type": input1.get("entity1_label","Unlabeled")
-            #             }),
-            #             input1.get("object","")
-                    # )
             return triple
         except Exception as e:
             self.logger.error(f"Error in creating semantic triple: {e}")
@@ -195,7 +168,7 @@ class RelationExtractor():
 
         return data
 
-    def extract_relationships(self, triples):
+    def extract_relationships(self, triples, fixed_entities = False):
         try:
             self.logger.debug(f"Length of identified triples {len(triples)}")
             updated_triples = []
@@ -210,17 +183,34 @@ class RelationExtractor():
                     top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
                     documents = top_docs
                 else:
-                    query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
+                    if fixed_entities == False:
+                        query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
 Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
 Query:{question}
-Answer:"""
-                    if not self.config.qa_template:
-                        question = "In the context of reservoir studies, identify the subject, predicate, and object in a semantic triple framework, focusing on reservoir attributes (e.g., porosity, permeability), processes (e.g., influences, determines), and outcomes (e.g., recovery efficiency). Specify the types for the subject (attribute), predicate (process), and object (outcome)."
-                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
+Answer:"""          
+                        if not self.config.qa_template:
+                            question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object along with their respective types. Also determine the predicate and predicate type."   
+                        else:
+                            question = self.config.qa_template
+                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
                     else:
-                        question = self.config.qa_template
-                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
+                        query = """Please analyze the provided context and two entities along with their identified labels. Use this information to answer the users query below.
+Context: {context}
+Entity 1: {entity1} and Entity 1_label: {entity1_label}
+Entity 2: {entity2} and Entity 2_label: {entity2_label}
+Query:{question}
+Answer:"""          
+                        if not self.config.qa_template:
+                            question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object, validate and output their respective types. Also determine the predicate and predicate type."      
+                        else:
+                            question = self.config.qa_template
+                        query = query.format(question = question, 
+                                                 context = context, 
+                                                 entity1=predicate.get('entity1_nn_chunk', ''), 
+                                                 entity2=predicate.get('entity2_nn_chunk', ''),
+                                                 entity1_label=predicate.get('entity1_label', ''), 
+                                                 entity2_label=predicate.get('entity2_label', ''))
                     answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
                     try:
                         choices_text = answer_relation['choices'][0]['text']
@@ -242,6 +232,8 @@ Answer:"""
                     'context': predicate_dict.get('context', ''),
                     'entity1_nn_chunk': predicate_dict.get('entity1_nn_chunk', ''),
                     'entity2_nn_chunk': predicate_dict.get('entity2_nn_chunk', ''),
+                    'entity1_label': predicate_dict.get('entity1_label', ''),
+                    'entity2_label': predicate_dict.get('entity2_label', ''),
                     'file_path': predicate_dict.get('file_path', '')
                 }
                 trimmed_data.append((entity1, trimmed_predicate, entity2))
