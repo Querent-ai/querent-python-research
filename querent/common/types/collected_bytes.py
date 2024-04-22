@@ -2,11 +2,12 @@ from typing import Union
 
 
 class CollectedBytes:
-    def __init__(self, file: str, data: bytes, error: str = None, eof: bool = False):
+    def __init__(self, file: str, data: bytes, error: str = None, eof: bool = False, doc_source = str):
         self.data = data
         self.error = error
         self.file = file
         self.eof = eof
+        self.doc_source = doc_source
         if self.file:
             file = str(file)
             self.extension = file.split(".")[-1]

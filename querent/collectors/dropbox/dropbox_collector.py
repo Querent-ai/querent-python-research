@@ -69,8 +69,8 @@ class DropboxCollector(Collector):
 
                 file_content_bytes = response.content
                 async for chunk in self.stream_blob(file_content_bytes):
-                    yield CollectedBytes(file=entry.name, data=chunk)
-                yield CollectedBytes(file=entry.name, data=None, eof=True)
+                    yield CollectedBytes(file=entry.name, data=chunk, doc_source=f"dropbox://{self.folder_path}")
+                yield CollectedBytes(file=entry.name, data=None, eof=True, doc_source=f"dropbox://{self.folder_path}")
         except dropbox.exceptions.ApiError as e:
             self.logger.error(f"Error polling Dropbox: {e}")
             raise common_errors.PollingError(

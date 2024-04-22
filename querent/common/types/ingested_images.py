@@ -12,6 +12,7 @@ class IngestedImages:
         coordinates: list = [],
         ocr_text: list = [],
         error: str = None,
+        doc_source = str,
     ) -> None:
         self.file = file
         self.text = text
@@ -21,6 +22,7 @@ class IngestedImages:
         self.page_num = page_num
         self.coordinates = coordinates
         self.ocr_text = ocr_text
+        self.doc_source = doc_source
         file = str(file)
         self.extension = file.split(".")[-1]
         self.file_id = file.split("/")[-1].split(".")[0]

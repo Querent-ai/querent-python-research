@@ -29,7 +29,7 @@ class WebScraperCollector(Collector):
             while urls_to_scrape:
                 url = urls_to_scrape.pop()
                 content = await self.scrape_website(url)
-                yield CollectedBytes(file=None, data=content.data, error=None)
+                yield CollectedBytes(file=None, data=content.data, error=None, doc_source=self.website_url)
                 # Find and add links from this page to the list of URLs to scrape
                 new_urls = self.extract_links(url)
                 urls_to_scrape.extend(new_urls)
