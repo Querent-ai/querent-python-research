@@ -70,6 +70,7 @@ requirements = [
     "tika==2.6.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
+    "sentence-transformers==2.2.2",
 ]
 
 
