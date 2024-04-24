@@ -37,7 +37,7 @@ requirements = [
     "lxml==4.9.2",
     "moviepy==1.0.3",
     "newspaper3k==0.2.8",
-    "nltk==3.8.1",
+    "newsapi-python==0.2.7" "nltk==3.8.1",
     "numpy==1.24.3",
     "openai==1.13.3",
     "openpyxl==3.1.2",
@@ -78,7 +78,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.3",
+    version="3.0.4",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

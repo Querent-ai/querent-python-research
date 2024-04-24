@@ -30,6 +30,7 @@ llama_cpp_python==0.2.15
 lxml==4.9.2
 moviepy==1.0.3
 newspaper3k==0.2.8
+newsapi-python==0.2.7
 nltk==3.8.1
 numpy==1.24.3
 openai==1.13.3
