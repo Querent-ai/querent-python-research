@@ -113,8 +113,92 @@ class BERTLLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
     async def process_images(self, data: IngestedImages):
-        return super().process_images(data)
+        doc_entity_pairs = []
+        doc_entity_pairs_ocr = []
+        entity_ocr = []
+        number_sentences = 0
+        try:
+            doc_source = data.doc_source
+            if not BERTLLM.validate_ingested_images(data):
+                self.set_termination_event()                                      
+                return
+            if data.ocr_text:
+                ocr_text = ' '.join(data.ocr_text)
+            if data.text:
+                content = ' '.join(data.text)
+            file = data.file
+            ocr_content = ocr_text             
+            if ocr_content or content:
+                ocr_tokens = self.ner_llm_instance._tokenize_and_chunk(ocr_content)
+                for tokenized_sentence, original_sentence, sentence_idx in ocr_tokens:
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in ocr_tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                    if entities:
+                        entity_ocr.append(entities)
+                    if entity_pairs:
+                        doc_entity_pairs_ocr.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                    number_sentences = number_sentences + 1
+                if len(doc_entity_pairs_ocr) >= 1:
+                    results = doc_entity_pairs_ocr
+                elif len(doc_entity_pairs_ocr) == 0:
+                    if content:
+                        if self.fixed_entities:
+                            content = self.entity_context_extractor.find_entity_sentences(content)
+                        tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+                        for tokenized_sentence, original_sentence, sentence_idx in tokens:
+                            (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                            if entity_pairs:
+                                doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                            number_sentences = number_sentences + 1
+                        if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
+                            results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
+                        elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
+                            results = doc_entity_pairs
+                    else:
+                        return        
+                if results:
+                    doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
+                    filtered_triples = process_data(doc_entity_pairs, file)
+                    if self.skip_inferences:
+                        return filtered_triples, file
+                    else :
+                        unique_id = str(hash(data.image))
+                        for triple in filtered_triples:
+                            if not self.termination_event.is_set():
+                                updated_data = []
+                                entity, info_json, second_entity = triple
+                                info = json.loads(info_json)
+                                info['subject_type'] = info.pop('entity1_label')
+                                info['object_type'] = info.pop('entity2_label')
+                                info['predicate'] = "has image"
+                                info['predicate_type'] = "has image"
+                                info['context_embeddings'] = self.create_emb.embeddings.embed_query(info['context'])
+                                updated_json = json.dumps(info)
+                                updated_tuple = (entity, updated_json, second_entity)
+                                graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
+                                graph_json['unique_image_id'] = unique_id
+                                graph_json = json.dumps(graph_json)
+                                if graph_json:
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                                    await self.set_state(new_state=current_state)
+                                vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple)
+                                vector_json['unique_image_id'] = unique_id
+                                vector_json = json.dumps(vector_json)
+                                if vector_json:
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                                    await self.set_state(new_state=current_state)
+            else:
+                return        
+        except Exception as e:
+            print("Exception -----------", e)
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
     
     async def process_tables(self, data: IngestedTables):
         return super().process_tables(data)
@@ -206,7 +290,7 @@ class BERTLLM(BaseEngine):
                 if not filtered_triples:
                     return
                 elif not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
                     relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)

@@ -200,3 +200,7 @@ lib/vis-9.1.2/vis-network.css
 lib/vis-9.1.2/vis-network.min.js
 tests/data/llm/cleaned_graph_event (copy).csv
 tests/data/llm/cleaned_graph_event1.csv
+graph.png
+my_subgraph_data.csv
+subgraph_output_2.csv
+subgraph_output.csv

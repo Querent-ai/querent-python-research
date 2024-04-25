@@ -319,7 +319,6 @@ class NER_LLM:
 
 
     def extract_entities_from_sentence_for_given_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
-        print("Extracting entity pair")
         try:
             tokens = self.tokenize_sentence(sentence)
             chunks = self.get_chunks(tokens)
@@ -452,33 +451,27 @@ class NER_LLM:
             "contexts": contexts
         }
     
-    def create_subject_object_sentence_tuples(self, ocr_entities, entity_list):
-        # Prepare the list to hold the result tuples
-        results = []
+    def filter_matching_entities(self, tuples_nested_list, entities_nested_list):
+    # Initialize the list to store matching tuples
+        matched_tuples = []
 
-        for single_entity in ocr_entities:
+        # Loop through each list of entities
+        for entities_list in entities_nested_list:
+            # Loop through each entity dictionary in the current list
+            for entity_dict in entities_list:
+                entity_name = entity_dict['entity']  # Extract the entity name
 
-            # Iterate through each entity in the list
-            for entity in entity_list:
-                # Create a tuple with the single entity as 'subject', the current entity as 'object', and use the 'sentence' from the object entity
-                if 'sentence' in entity:
-                    result_tuple = (
-                        single_entity,
-                        entity['sentence'],
-                        entity
-                    )
-                    
-                    results.append(result_tuple)
-                else:
-                    # Handle cases where 'sentence' might not be present in the entity dictionary
-                    result_tuple = (
-                        single_entity,
-                        entity,
-                        "No sentence available"
-                    )
-                    results.append(result_tuple)
+                # Loop through each list of tuples
+                for tuples_list in tuples_nested_list:
+                    # Loop through each tuple in the current list
+                    for tup in tuples_list:
+                        # Check if the entity is in the 1st or 3rd element of the tuple
+                        if entity_name in tup[0] or entity_name in tup[2]:
+                            # Add the tuple to the result list if it's not already included
+                            if tup not in matched_tuples:
+                                matched_tuples.append(tup)
 
-        return results
+        return matched_tuples
 
 
 

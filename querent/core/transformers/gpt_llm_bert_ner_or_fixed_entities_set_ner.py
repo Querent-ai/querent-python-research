@@ -102,15 +102,38 @@ class GPTLLM(BaseEngine):
             if not GPTLLM.validate_ingested_images(data):
                     self.set_termination_event()                    
                     return 
-            
+            unique_id = str(hash(data.image))
             doc_source = data.doc_source
             relationships = []
             unique_keys = set()
             result = await self.llm_instance.process_images(data)  
-            if not result: 
-                return 
-
-            return None
+            if not result: return 
+            else:
+                filtered_triples, file = result
+                for triple in filtered_triples:
+                    if not self.termination_event.is_set():
+                        updated_data = []
+                        entity, info_json, second_entity = triple
+                        info = json.loads(info_json)
+                        info['subject_type'] = info.pop('entity1_label')
+                        info['object_type'] = info.pop('entity2_label')
+                        info['predicate'] = "has image"
+                        info['predicate_type'] = "has image"
+                        info['context_embeddings'] = self.create_emb.embeddings.embed_query(info['context'])
+                        updated_json = json.dumps(info)
+                        updated_tuple = (entity, updated_json, second_entity)
+                        graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
+                        graph_json['unique_image_id'] = unique_id
+                        graph_json = json.dumps(graph_json)
+                        if graph_json:
+                            current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                            await self.set_state(new_state=current_state)
+                        vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple)
+                        vector_json['unique_image_id'] = unique_id
+                        vector_json = json.dumps(vector_json)
+                        if vector_json:
+                            current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                            await self.set_state(new_state=current_state)
 
         except Exception as e:
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

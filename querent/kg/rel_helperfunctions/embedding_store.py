@@ -134,12 +134,6 @@ class EmbeddingStore:
                 else:
                     payload = {"inputs": text}
                     embedding = self.query(payload)
-                if isinstance(self.embeddings,HuggingFaceEmbeddings) or isinstance(self.embeddings, HuggingFaceInferenceAPIEmbeddings) :
-                    embedding = self.embeddings.embed_query(text)
-                    embeddings.append(embedding)
-                else:
-                    payload = {"inputs": text}
-                    embedding = self.query(payload)
             return embeddings
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
