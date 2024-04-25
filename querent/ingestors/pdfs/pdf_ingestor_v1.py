@@ -14,6 +14,7 @@ import uuid
 import fitz
 from PIL import Image
 import io
+import base64
 
 import pybase64
 import pytesseract
@@ -111,8 +112,8 @@ class PdfIngestor(BaseIngestor):
                     doc_source=doc_source,
                 )
             
-            async for table in self.extract_table(collected_bytes):
-                yield table
+            # async for table in self.extract_table(collected_bytes):
+            #     yield table
             
             async for imgae_data in self.extract_img(loader, collected_bytes.file, collected_bytes.data):
                 yield imgae_data
@@ -170,8 +171,8 @@ class PdfIngestor(BaseIngestor):
 
                 yield IngestedImages(
                     file=file_path,
-                    image=pybase64.b64encode(data),
-                    image_name=f"{str(uuid.UUID)}.{image_ext}",
+                    image=base64.b64encode(image_data).decode('utf-8'),
+                    image_name=f"{str(uuid.uuid4())}.{image_ext}",
                     page_num=page_num,
                     text=[text_content],
                     coordinates=None,
@@ -183,6 +184,7 @@ class PdfIngestor(BaseIngestor):
         try:
             image = Image.open(io.BytesIO(image))
             text = pytesseract.image_to_string(image)
+            print("Got text from images ---------------------------")
         except Exception as e:
             self.logger.error("Exception-{e}")
             raise e

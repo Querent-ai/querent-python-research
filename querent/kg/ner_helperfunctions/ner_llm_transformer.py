@@ -9,6 +9,8 @@ import os
 from querent.kg.ner_helperfunctions.dependency_parsing import Dependency_Parsing
 from unidecode import unidecode
 import re
+from collections import Counter
+
 
 
 """
@@ -267,7 +269,7 @@ class NER_LLM:
             self.logger.error(f"Error extracting binary pairs: {e}")
         return binary_pairs
     
-    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=1.0):
+    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=None):
         results = []
         merged_chunk = []  # List to hold merged tokens
         current_word = ""  # String to accumulate current word pieces
@@ -302,16 +304,181 @@ class NER_LLM:
 
                     if start_idx is not None:
                         label = entity_types[normalized_entities.index(entity)] if normalized_entities.index(entity) < len(entity_types) else 'Unknown'
+                        # Calculate score if not provided
+                        score = default_score if default_score is not None else 1.0  # Example default score calculation
                         results.append({
                             "entity": entity,
                             "label": label,
-                            "score": default_score,
+                            "score": score,
                             "start_idx": start_idx
                         })
         except Exception as e:
             self.logger.error(f"Error extracting fixed entities from merged chunk: {e}")
 
         return sorted(results, key=lambda x: x['start_idx'])
+
+
+    def extract_entities_from_sentence_for_given_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
+        print("Extracting entity pair")
+        try:
+            tokens = self.tokenize_sentence(sentence)
+            chunks = self.get_chunks(tokens)
+            all_page_entities = []
+
+            for chunk in chunks:
+                if fixed_entities_flag == False:
+                    entities = self.extract_entities_from_chunk(chunk)
+                else:
+                    entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
+                all_page_entities.append(entities)
+            
+            return all_page_entities
+
+        except Exception as e:
+            self.logger.error(f"Error extracting entities for an ocr sentence: {e}")
+
+    def get_max_score_entity_pair(self, entities_list):
+        max_score = 0
+        best_pair = None
+        for i in range(0, len(entities_list), 2):
+            pair_score = entities_list[i]['score'] + entities_list[i+1]['score']
+            if pair_score > max_score:
+                max_score = pair_score
+                best_pair = (entities_list[i], entities_list[i+1])
+        return best_pair
+    
+    def compare_and_retrieve(self, entities_list, binary_pairs, single_entity):
+        best_pair = self.get_max_score_entity_pair(entities_list)
+
+        found_pair = False
+        for pair, context in binary_pairs:
+            if (single_entity['entity'] == best_pair[0]['entity'] or single_entity['entity'] == best_pair[1]['entity']):
+                found_pair = True
+            if found_pair and (
+                (pair[0]['entity'] == best_pair[0]['entity'] and pair[1]['entity'] == best_pair[1]['entity']) or
+                (pair[1]['entity'] == best_pair[0]['entity'] and pair[0]['entity'] == best_pair[1]['entity'])):
+                return {
+                    "entity_pair": best_pair,
+                    "context": context
+                }
+        if not found_pair:
+            return {"message": "No matching entity found in the best pair based on the single entity input."}
+        return None
+
+    def find_most_frequent_pair_with_entity(self, binary_pairs, ocr_entities):
+
+        result = []
+        for single_entity in ocr_entities:
+
+            # Filter pairs to include only those containing the single entity
+            filtered_pairs = []
+            for pair, context in binary_pairs:
+                if single_entity['entity'] in [pair[0]['entity'], pair[1]['entity']]:
+                    # Since dictionaries are unhashable, convert pair to a tuple of sorted tuples to count occurrences
+                    sorted_pair = tuple(sorted((pair[0]['entity'], pair[1]['entity'])))
+                    filtered_pairs.append((sorted_pair, context))
+
+            # Count occurrences of each pair
+            pair_counter = Counter([pair for pair, _ in filtered_pairs])
+
+            # Find the pair with the maximum occurrence
+            if not pair_counter:
+                return None
+
+            most_frequent_pair, count = pair_counter.most_common(1)[0]
+
+            # Retrieve the context information for the most frequent pair
+            for pair, context in filtered_pairs:
+                if tuple(sorted((pair[0]['entity'], pair[1]['entity']))) == most_frequent_pair:
+                    """
+                    
+                    
+                    """
+                    result.append({
+                        "most_frequent_pair": most_frequent_pair,
+                        "count": count,
+                        "context": context
+                    })
+        
+        return result
+    
+    def find_highest_scoring_pair(self, binary_pairs):
+        max_score = 0  # Initialize with a value lower than the lowest possible score (scores are usually non-negative).
+        highest_scoring_pair = None
+        highest_scoring_context = None
+
+        # Iterate through each pair and calculate the total score
+        for pair, context in binary_pairs:
+            total_score = pair[0]['score'] + pair[1]['score']
+            if total_score > max_score:
+                max_score = total_score
+                highest_scoring_pair = pair
+                highest_scoring_context = context
+
+        # Return the highest scoring pair along with its context and total score
+        if highest_scoring_pair:
+            return {
+                "highest_scoring_pair": highest_scoring_pair,
+                "total_score": max_score,
+                "context": highest_scoring_context
+            }
+        else:
+            return {"message": "No pairs found or all pairs have zero or negative scores."}
+
+
+    def find_most_frequent_entity_pair(self, binary_pairs):
+        # Initialize a counter to keep track of entity pair occurrences
+        pair_counter = Counter()
+
+        # Iterate through each pair and count each unique pair
+        for pair, context in binary_pairs:
+            # Create a canonical form for the pair (sorted by entity name to ensure (A,B) and (B,A) are treated the same)
+            sorted_pair = tuple(sorted((pair[0]['entity'], pair[1]['entity'])))
+            pair_counter[sorted_pair] += 1
+
+        # Find the pair with the highest occurrence
+        if not pair_counter:
+            return None
+
+        most_frequent_pair, count = pair_counter.most_common(1)[0]
+
+        # Collect all contexts where the most frequent pair appears
+        contexts = [context for pair, context in binary_pairs if tuple(sorted((pair[0]['entity'], pair[1]['entity']))) == most_frequent_pair]
+
+        # Return the most frequent pair along with its occurrence count and all associated contexts
+        return {
+            "most_frequent_pair": most_frequent_pair,
+            "occurrence_count": count,
+            "contexts": contexts
+        }
+    
+    def create_subject_object_sentence_tuples(self, ocr_entities, entity_list):
+        # Prepare the list to hold the result tuples
+        results = []
+
+        for single_entity in ocr_entities:
+
+            # Iterate through each entity in the list
+            for entity in entity_list:
+                # Create a tuple with the single entity as 'subject', the current entity as 'object', and use the 'sentence' from the object entity
+                if 'sentence' in entity:
+                    result_tuple = (
+                        single_entity,
+                        entity['sentence'],
+                        entity
+                    )
+                    
+                    results.append(result_tuple)
+                else:
+                    # Handle cases where 'sentence' might not be present in the entity dictionary
+                    result_tuple = (
+                        single_entity,
+                        entity,
+                        "No sentence available"
+                    )
+                    results.append(result_tuple)
+
+        return results
 
 
 

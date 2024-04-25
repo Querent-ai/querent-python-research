@@ -99,14 +99,14 @@ class DocIngestor(BaseIngestor):
             )
 
             i = 1
-            for table in doc.tables:
-                table_data = []
-                for row in table.rows:
-                    row_data = []
-                    for cell in row.cells:
-                        row_data.append(cell.text.strip())
-                    table_data.append(row_data)
-                yield IngestedTables(file=collected_bytes.file, table = table_data, page_num = i, text = text, error=None)
+            # for table in doc.tables:
+            #     table_data = []
+            #     for row in table.rows:
+            #         row_data = []
+            #         for cell in row.cells:
+            #             row_data.append(cell.text.strip())
+            #         table_data.append(row_data)
+            #     yield IngestedTables(file=collected_bytes.file, table = table_data, page_num = i, text = text, error=None)
 
             i = 1
             for rel in doc.part.rels.values():

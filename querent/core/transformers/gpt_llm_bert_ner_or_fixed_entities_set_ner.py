@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+from querent.common.types.ingested_table import IngestedTables
 from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
@@ -96,14 +97,40 @@ class GPTLLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
-        return super().process_messages(data)
+    async def process_images(self, data: IngestedImages):
+        try:
+            if not GPTLLM.validate_ingested_images(data):
+                    self.set_termination_event()                    
+                    return 
+            
+            doc_source = data.doc_source
+            relationships = []
+            unique_keys = set()
+            result = await self.llm_instance.process_images(data)  
+            if not result: 
+                return 
+
+            return None
+
+        except Exception as e:
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
 
     async def process_code(self, data: IngestedCode):
         return super().process_messages(data)
+    
+    async def process_tables(self, data: IngestedTables):
+        return super().process_tables(data)
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
+    
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
         if data.is_error():
             
             return False

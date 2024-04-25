@@ -1,6 +1,7 @@
 import json
 from unidecode import unidecode
 from transformers import AutoTokenizer
+from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
@@ -112,8 +113,11 @@ class BERTLLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
+    async def process_images(self, data: IngestedImages):
         return super().process_images(data)
+    
+    async def process_tables(self, data: IngestedTables):
+        return super().process_tables(data)
 
     async def process_code(self, data: IngestedCode):
         return super().process_code(data)

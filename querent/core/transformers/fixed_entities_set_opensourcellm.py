@@ -1,6 +1,7 @@
 import json
 from unidecode import unidecode
 from transformers import AutoTokenizer
+from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
@@ -94,14 +95,133 @@ class Fixed_Entities_LLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
-        return super().process_images(data)
+    def process_tables(self, data: IngestedTables):
+        pass
+
+    async def process_images(self, data: IngestedImages):
+        doc_entity_pairs = []
+        doc_entity_pairs_ocr = []
+        entities_list = []
+        final_entities_list = []
+        number_sentences = 0
+        try:
+            doc_source = data.doc_source
+            if not Fixed_Entities_LLM.validate_ingested_images(data):
+                self.set_termination_event()                                      
+                return
+            if data.ocr_text:
+                ocr_text = ' '.join(data.ocr_text)
+            else:
+                ocr_text = data.ocr_text
+
+            if data.text:
+                clean_text = ' '.join(data.text)
+            else:
+                clean_text = data.text
+
+            file, content = data.file, clean_text
+            
+            ocr_content = ocr_text
+                            
+            if ocr_content:
+                if self.fixed_entities:
+                    ocr_content = self.entity_context_extractor.find_entity_sentences(ocr_content)
+                ocr_tokens = self.ner_llm_instance._tokenize_and_chunk(ocr_content)
+                for tokenized_sentence, original_sentence, sentence_idx in ocr_tokens:
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in ocr_tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                    print("Entities ---------", entities)
+                    print("Entities pairs   ---------------------------", entity_pairs)
+                    if entity_pairs:
+                        doc_entity_pairs_ocr.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                    else:
+                        continue
+                    number_sentences = number_sentences + 1
+
+                print("Doc entity pairs --------", doc_entity_pairs)
+
+                if len(doc_entity_pairs_ocr) == 0 and len(ocr_content) != 0:
+                    if content:
+                        if self.fixed_entities:
+                            content = self.entity_context_extractor.find_entity_sentences(content)
+                        tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+                        doc_entity_pairs_ocr = self.ner_llm_instance.extract_entities_from_sentence_for_given_sentence(ocr_content, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                        print("doc_entity_pairs_ocr-----------------------", doc_entity_pairs_ocr)
+                        for tokenized_sentence, original_sentence, sentence_idx in tokens:
+                            #return list of entities from document, and entity pair
+                            print("Here in side fo loop")
+                            (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_chunk(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                            print("Entity pairs found from content", entity_pairs)
+                            print("Entities found from content", entities)
+                            if entity_pairs:
+                                
+                                doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                                entities_list.append(entities)
+                            number_sentences = number_sentences + 1
+                        #process those entities and ocr entity here
+                        #if FE, then find the one most occuring
+                        #if not FE, find the entity pair, where 1 entity is OCR text, and other is any other entity, which is most occuring, or which has higher confidence
+                        final_entities_list = self.ner_llm_instance.create_subject_object_sentence_tuples(doc_entity_pairs_ocr, entities_list)
+
+
+            elif len(ocr_content) == 0:
+                #highest confidence entity pair from page text
+                sample_entity_pair = [{'entity': 'Image', 'label': 'image_data', 'score': 1.0, 'start_idx': 1, 'noun_chunk': 'image', 'noun_chunk_length': 1}]
+                final_entities_list = self.ner_llm_instance.create_subject_object_sentence_tuples(sample_entity_pair, entities_list)
+            
+            
+            print("Final entities ------", final_entities_list)
+            #-
+
+            if self.sample_entities:
+                doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=final_entities_list)
+            if doc_entity_pairs and any(doc_entity_pairs):
+                doc_entity_pairs = self.ner_llm_instance.remove_duplicates(final_entities_list)
+                filtered_triples = process_data(doc_entity_pairs, file)
+                if not filtered_triples:
+                    self.logger.debug("No entity pairs")
+                    return
+                elif not self.skip_inferences:
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
+                    self.logger.debug(f"length of relationships {len(relationships)}")
+                    relationships = self.semantictriplefilter.filter_triples(relationships)
+                    if len(relationships) > 0:
+                        embedding_triples = self.create_emb.generate_embeddings(relationships)
+                        if self.sample_relationships:
+                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                        for triple in embedding_triples:
+                            if not self.termination_event.is_set():
+                                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+                                if graph_json:
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                                    await self.set_state(new_state=current_state)
+                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+                                if vector_json:
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                                    await self.set_state(new_state=current_state)
+                            else:
+                                return
+                    else:
+                        return
+                else:
+                    return filtered_triples, file
+            else:
+                return
+        except Exception as e:
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
 
     async def process_code(self, data: IngestedCode):
         return super().process_code(data)
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
+    
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
         if data.is_error():
             
             return False
