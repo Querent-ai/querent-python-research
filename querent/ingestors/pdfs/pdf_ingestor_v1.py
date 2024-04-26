@@ -115,7 +115,7 @@ class PdfIngestor(BaseIngestor):
             # async for table in self.extract_table(collected_bytes):
             #     yield table
             
-            async for imgae_data in self.extract_img(loader, collected_bytes.file, collected_bytes.data):
+            async for imgae_data in self.extract_img(loader, collected_bytes.file, collected_bytes.data, doc_source):
                 yield imgae_data
 
         except TypeError as exc:
@@ -143,7 +143,7 @@ class PdfIngestor(BaseIngestor):
 
                 #     yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
         
-    async def extract_img(self, doc, file_path, data):
+    async def extract_img(self, doc, file_path, data, doc_source):
         image_page_map = {}
 
         # Iterate through the pages to fill the map
@@ -177,6 +177,7 @@ class PdfIngestor(BaseIngestor):
                     text=[text_content],
                     coordinates=None,
                     ocr_text=[ocr_text],
+                    doc_source=doc_source,
                 )
 
     async def get_ocr_from_image(self, image):

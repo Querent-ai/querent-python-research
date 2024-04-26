@@ -32,7 +32,7 @@
 #     #         host="localhost", 
 #     #         port="5432")
 #     # # ml_conn = MilvusDBConnection()
-#     directories = [ "/home/nishantg/querent-main/querent/tests/data/image"]
+#     directories = [ "/home/ansh/pyg-trail/testing-ocr"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
