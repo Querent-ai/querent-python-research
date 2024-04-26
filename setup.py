@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     "aiofiles==23.2.1",
-    "aiohttp==3.9.3",
+    "aiohttp==3.9.4",
     "attrs==23.1.0",
     "azure-storage-blob==12.19.0",
     "beautifulsoup4==4.12.3",
