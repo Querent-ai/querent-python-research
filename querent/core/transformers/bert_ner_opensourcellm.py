@@ -1,5 +1,4 @@
 import json
-from unidecode import unidecode
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -70,7 +69,7 @@ class BERTLLM(BaseEngine):
             self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
             self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
             self.nlp_model = NER_LLM.get_class_variable()
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.create_emb = EmbeddingStore()
             self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
             self.enable_filtering = config.enable_filtering
             self.filter_params = config.filter_params or {}
@@ -101,6 +100,7 @@ class BERTLLM(BaseEngine):
             self.isConfinedSearch = config.is_confined_search
             self.semantictriplefilter = SemanticTripleFilter()
         except Exception as e:
+            print("Exception Initializing BERT: " + str(e))
             self.logger.error("Error initializing BERT LLM Class", e)
             raise e
         
@@ -227,4 +227,5 @@ class BERTLLM(BaseEngine):
             else:
                 return
         except Exception as e:
+            print("Exception in BERT: " + str(e))
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

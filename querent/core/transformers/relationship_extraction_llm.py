@@ -49,19 +49,12 @@ class RelationExtractor():
         try:
             super().__init__()
             self.config = config
-            self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
+            self.create_emb = EmbeddingStore()
             self.qa_system = QASystem(
                 rel_model_path=config.model_path,
                 rel_model_type=config.model_type,
                 )
             self.grammar = LlamaGrammar.from_file(file = config.grammar_file_path)
-            self.rag_approach = config.rag_approach
-            if  self.rag_approach == True:
-                self.rag_retriever = RAGRetriever(
-                faiss_index_path=config.get_faiss_index_path(),
-                emb_model_name=config.emb_model_name,
-                embedding_store=self.create_emb,
-                logger=self.logger)
             self.is_confined_search = config.is_confined_search
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
@@ -107,8 +100,6 @@ class RelationExtractor():
         try:
             triples = payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
-            if self.rag_approach == True:
-                self.rag_retriever.build_faiss_index(trimmed_triples)
             relationships = self.extract_relationships(triples)
         
             return relationships
@@ -149,33 +140,6 @@ class RelationExtractor():
                 }),
                 input1.get("object","")
             )
-            # else:
-            #         if input1.get("subject","").lower() in input2_data.get("entity1_nn_chunk","").lower or input2_data.get("entity1_nn_chunk","").lower in input1.get("subject","").lower() or input2_data.get("entity1_nn_chunk","").lower == input1.get("subject","").lower():
-            #             triple = (
-            #             input1.get("subject",""),
-            #             json.dumps({
-            #                 "predicate": input1.get("predicate",""),
-            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
-            #                 "context": input2_data.get("context", ""),
-            #                 "file_path": input2_data.get("file_path", ""),
-            #                 "subject_type": input2_data.get("entity1_label","Unlabeled"),
-            #                 "object_type": input2_data.get("entity2_label","Unlabeled")
-            #             }),
-            #             input1.get("object","")
-            #         )
-            #         else:
-            #             triple = (
-            #             input1.get("subject",""),
-            #             json.dumps({
-            #                 "predicate": input1.get("predicate",""),
-            #                 "predicate_type": input1.get("predicate_type","Unlabeled"),
-            #                 "context": input2_data.get("context", ""),
-            #                 "file_path": input2_data.get("file_path", ""),
-            #                 "subject_type": input2.get("entity2_label","Unlabeled"),
-            #                 "object_type": input1.get("entity1_label","Unlabeled")
-            #             }),
-            #             input1.get("object","")
-                    # )
             return triple
         except Exception as e:
             self.logger.error(f"Error in creating semantic triple: {e}")
@@ -200,35 +164,28 @@ class RelationExtractor():
             self.logger.debug(f"Length of identified triples {len(triples)}")
             updated_triples = []
             for _, predicate_str, _ in triples:
-                documents=[]
                 data = json.loads(predicate_str)
                 context = data['context']
                 predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)
-                if self.rag_approach == True:
-                    db = self.rag_retriever.load_faiss_index()
-                    prompt=("What is the relationship between {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
-                    top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
-                    documents = top_docs
-                else:
-                    query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
+                query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
 Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
 Query:{question}
 Answer:"""
-                    if not self.config.qa_template:
-                        question = "In the context of reservoir studies, identify the subject, predicate, and object in a semantic triple framework, focusing on reservoir attributes (e.g., porosity, permeability), processes (e.g., influences, determines), and outcomes (e.g., recovery efficiency). Specify the types for the subject (attribute), predicate (process), and object (outcome)."
-                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
-                    else:
-                        question = self.config.qa_template
-                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
-                    answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
-                    try:
-                        choices_text = answer_relation['choices'][0]['text']
-                        answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))
-                        updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
-                        updated_triples.append(updated_triple)
-                    except Exception as e:
-                        continue
+                if not self.config.qa_template:
+                    question = "In the context of reservoir studies, identify the subject, predicate, and object in a semantic triple framework, focusing on reservoir attributes (e.g., porosity, permeability), processes (e.g., influences, determines), and outcomes (e.g., recovery efficiency). Specify the types for the subject (attribute), predicate (process), and object (outcome)."
+                    query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))   
+                else:
+                    question = self.config.qa_template
+                    query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))    
+                answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
+                try:
+                    choices_text = answer_relation['choices'][0]['text']
+                    answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))
+                    updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
+                    updated_triples.append(updated_triple)
+                except Exception as e:
+                    continue
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")

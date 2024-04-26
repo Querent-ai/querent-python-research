@@ -11,9 +11,7 @@ class Opensource_LLM_Config(BaseModel):
     model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf' 
     grammar_file_path: str = './querent/kg/rel_helperfunctions/json.gbnf'
     qa_template: str = Field(default=None)
-    vector_store_path: str = "./querent/kg/rel_helperfunctions/vectorstores/"
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
-    rag_approach: bool = False
     is_confined_search: bool = False
     spacy_model_path: str = 'en_core_web_lg'
     nltk_path: str = '/model/nltk_data'

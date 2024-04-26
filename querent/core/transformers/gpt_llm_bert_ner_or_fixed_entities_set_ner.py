@@ -1,6 +1,4 @@
-import asyncio
 import json
-import re
 from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
@@ -74,7 +72,7 @@ class GPTLLM(BaseEngine):
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,  model = self.nlp_model)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.create_emb = EmbeddingStore()
             if config.is_confined_search:
                 self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
             else :

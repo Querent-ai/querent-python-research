@@ -46,7 +46,7 @@ class GPTNERLLM(BaseEngine):
             else:
                 self.gpt_llm = OpenAI()
             self.function_registry = FunctionRegistry()
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.create_emb = EmbeddingStore()
             self.user_context = config.user_context
         
         except Exception as e:

@@ -1,5 +1,4 @@
 import json
-from unidecode import unidecode
 from transformers import AutoTokenizer
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -23,8 +22,6 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
-import time
-
 
 
 class Fixed_Entities_LLM(BaseEngine):
@@ -56,7 +53,7 @@ class Fixed_Entities_LLM(BaseEngine):
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         huggingface_token = config.huggingface_token
-        self.create_emb = EmbeddingStore(inference_api_key=huggingface_token)
+        self.create_emb = EmbeddingStore()
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
         self.triple_filter = None
