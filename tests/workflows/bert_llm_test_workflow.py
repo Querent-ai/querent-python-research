@@ -21,7 +21,7 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     directories = [ "./tests/data/llm/one_file/"]
+#     directories = [ "./tests/data/llm/case_study_files/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -47,7 +47,7 @@
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
 #     bert_llm_config = LLM_Config(
-#     ner_model_name="botryan96/GeoBERT",
+#     # ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
 #     filter_params={
 #             'score_threshold': 0.5,

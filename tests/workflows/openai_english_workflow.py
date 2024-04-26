@@ -33,7 +33,7 @@
 #     #         host="localhost", 
 #     #         port="5432")
 #     # # ml_conn = MilvusDBConnection()
-#     directories = [ "./tests/data/llm/case_study_files/"]
+#     directories = [ "./tests/data/llm/one_file/"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
@@ -59,7 +59,7 @@
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
 #     gpt_llm_config = GPTConfig(
-#     ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+#     # ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
 #     # rel_model_path="/home/nishantg/Downloads/openhermes-2.5-mistral-7b.Q5_K_M.gguf",
 #     enable_filtering=True,
 #     openai_api_key="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"
@@ -72,50 +72,7 @@
 #             'cluster_persistence_threshold':0.2
 #         }
 #     ,user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
-#     # ,fixed_entities = [
-#     #                 "Hadean", "Archean", "Proterozoic", "Phanerozoic",
-#     #                 "Paleozoic", "Mesozoic", "Cenozoic",
-#     #                 "Cambrian", "Ordovician", "Silurian", "Devonian", "Carboniferous", "Permian",
-#     #                 "Triassic", "Jurassic", "Cretaceous",
-#     #                 "Paleogene", "Neogene", "Quaternary",
-#     #                 "Paleocene", "Eocene", "Oligocene",
-#     #                 "Miocene", "Pliocene",
-#     #                 "Pleistocene", "Holocene",
-#     #                 "Anticline", "Syncline", "Fault", "Salt dome", "Horst", "Graben",
-#     #                 "Reef", "Shoal", "Deltaic deposits", "Turbidite", "Channel sandstone",
-#     #                 "Sandstone", "Limestone", "Dolomite", "Shale",
-#     #                 "Source rock", "Cap rock", "Shale gas",
-#     #                 "Crude oil", "Natural gas", "Shale oil", "Coalbed methane", "Tar sands", "Gas hydrates",
-#     #                 "Structural trap", "Stratigraphic trap", "Combination trap", "Salt trap", "Unconformity trap",
-#     #                 "Hydrocarbon migration", "Hydrocarbon accumulation",
-#     #                 "Placer deposits", "Vein deposit", "Porphyry deposit", "Kimberlite pipe", "Laterite deposit",
-#     #                 "Volcanic rock", "Basalt", "Geothermal gradient", "Sedimentology",
-#     #                 "Paleontology", "Biostratigraphy", "Sequence stratigraphy", "Geophysical survey",
-#     #                 "Magnetic anomaly", "Gravitational anomaly", "Petrology", "Geochemistry", "Hydrogeology"
-#     #             ]
-
-#     # , sample_entities=[
-#     #                 "geological_eon", "geological_eon", "geological_eon", "geological_eon",
-#     #                 "geological_era", "geological_era", "geological_era",
-#     #                 "geological_period", "geological_period", "geological_period", "geological_period", "geological_period", "geological_period",
-#     #                 "geological_period", "geological_period", "geological_period",
-#     #                 "geological_period", "geological_period", "geological_period",
-#     #                 "geological_epoch", "geological_epoch", "geological_epoch",
-#     #                 "geological_epoch", "geological_epoch",
-#     #                 "geological_epoch", "geological_epoch", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature", "structural_feature",
-#     #                 "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature", "stratigraphic_feature",
-#     #                 "rock_type", "rock_type", "rock_type", "rock_type",
-#     #                 "rock_type", "rock_type", "hydrocarbon_source",
-#     #                 "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon", "hydrocarbon",
-#     #                 "trap_type", "trap_type", "trap_type", "trap_type", "trap_type",
-#     #                 "geological_process", "geological_process",
-#     #                 "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit", "mineral_deposit",
-#     #                 "rock_type", "rock_type", "geological_process", "geological_discipline",
-#     #                 "geological_discipline", "geological_method", "geological_method", "geological_method",
-#     #                 "geophysical_feature", "geophysical_feature", "geological_discipline", "geological_discipline", "geological_discipline"
-#     #             ]
-#     #         , is_confined_search = True
-#     #         , huggingface_token = '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'
+#             # , huggingface_token = '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'
 #     )
 #     llm_instance = GPTLLM(result_queue, gpt_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
@@ -137,13 +94,13 @@
 #         }
 #                 # db_conn.insert_graph_event(graph_event_data)
 #                 assert isinstance(triple['subject'], str) and triple['subject']
-#             else :
-#                 vector_triple = json.loads(event_state['payload'])
-#                 print("Inside Vector event ---------------------------------", vector_triple)
+#             # else :
+#             #     vector_triple = json.loads(event_state.payload)
+#             #     print("Inside Vector event ---------------------------------", vector_triple)
 #             #     milvus_coll = ml_conn.create_collection(collection_name=vector_triple['namespace'],dim = 384)
 #             #     ml_conn.insert_vector_event(id = vector_triple['id'], embedding= vector_triple['embeddings'], namespace= vector_triple['namespace'], document=event_state.file, collection= milvus_coll )
-#     # llm_instance.subscribe(EventType.Graph, StateChangeCallback())
-#     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
+#     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
+#     # llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(
 #         [llm_instance],
 #         resource_manager=resource_manager,
