@@ -16,7 +16,7 @@ requirements = [
     "cachetools==5.3.3",
     "coverage==7.3.3",
     "dropbox==11.36.2",
-    "faiss-cpu==1.7.4",
+    "fastembed==0.2.6",
     "ffmpeg-python==0.2.0",
     "gensim==4.3.2",
     "google-api-python-client==2.105.0",
@@ -67,9 +67,10 @@ requirements = [
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
     "tika==2.6.0",
+    "tensorflow==2.14.0",
+    "torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "sentence-transformers==2.2.2",
 ]
 
 
