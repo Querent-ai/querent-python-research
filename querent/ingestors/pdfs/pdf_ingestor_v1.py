@@ -137,11 +137,11 @@ class PdfIngestor(BaseIngestor):
                 # Extract tables from the current page
                 tables = page.extract_tables()
                 i += 1
-                for table in tables:
-                    if len(table) <= 1:
-                        continue
+                # for table in tables:
+                #     if len(table) <= 1:
+                #         continue
 
-                    yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
+                #     yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
         
     async def extract_img(self, doc, file_path, data):
         image_page_map = {}
@@ -184,7 +184,6 @@ class PdfIngestor(BaseIngestor):
         try:
             image = Image.open(io.BytesIO(image))
             text = pytesseract.image_to_string(image)
-            print("Got text from images ---------------------------")
         except Exception as e:
             self.logger.error("Exception-{e}")
             raise e

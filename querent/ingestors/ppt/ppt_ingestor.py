@@ -99,12 +99,12 @@ class PptIngestor(BaseIngestor):
                             table = shape.table
                             
                             table_data = []
-                            for row in table.rows:
-                                row_data = []
-                                for cell in row.cells:
-                                    row_data.append(cell.text)
-                                table_data.append(row_data)
-                            yield IngestedTables(file= collected_bytes.file, table=table_data, page_num=i, text=text, error=None)
+                            # for row in table.rows:
+                            #     row_data = []
+                            #     for cell in row.cells:
+                            #         row_data.append(cell.text)
+                            #     table_data.append(row_data)
+                            # yield IngestedTables(file= collected_bytes.file, table=table_data, page_num=i, text=text, error=None)
                     slide_text = "\n".join(text)
                     processed_slide_text = await self.process_data(slide_text)
                     yield IngestedTokens(
