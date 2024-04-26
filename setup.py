@@ -66,9 +66,8 @@ requirements = [
     "slack-sdk==3.26.1",
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
-    "tf_keras==2.16.0",
     "tika==2.6.0",
-    "transformers==4.38.0",
+    "transformers==4.36.0",
     "unidecode==1.3.7",
     "sentence-transformers==2.2.2",
 ]
@@ -79,7 +78,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.5",
+    version="3.0.4",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
