@@ -70,12 +70,9 @@ requirements = [
     "tensorflow==2.14.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-]
-#     "torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu",
-
-DEPENDENCY_LINKS = [
     "https://download.pytorch.org/whl/cpu/torch-2.0.1-cp39-cp39-linux_x86_64.whl",
 ]
+
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -170,6 +167,5 @@ setup(
     python_requires=">=3.9, <4",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
-    dependency_links=DEPENDENCY_LINKS,
     license="Business Source License 1.1",
 )
