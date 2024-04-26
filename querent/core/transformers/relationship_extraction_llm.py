@@ -2,7 +2,6 @@ import json
 from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
-from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config

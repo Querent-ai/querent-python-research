@@ -16,7 +16,7 @@ requirements = [
     "cachetools==5.3.3",
     "coverage==7.3.3",
     "dropbox==11.36.2",
-    "faiss-cpu==1.7.4",
+    "fastembed==0.2.6",
     "ffmpeg-python==0.2.0",
     "gensim==4.3.2",
     "google-api-python-client==2.105.0",
@@ -69,7 +69,6 @@ requirements = [
     "tika==2.6.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "sentence-transformers==2.2.2",
 ]
 
 
