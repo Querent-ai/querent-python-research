@@ -4,6 +4,7 @@ from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.ingested_images import IngestedImages
 from querent.common.types.ingested_messages import IngestedMessages
+from querent.common.types.ingested_table import IngestedTables
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.querent_event import EventState, EventType
 from querent.common.types.querent_queue import QuerentQueue
@@ -42,6 +43,9 @@ class MockLLMEngine(BaseEngine):
 
     async def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
+    
+    async def process_tables(self, data: IngestedTables):
+        return super().process_tables(data)
 
     async def process_images(self, data: IngestedImages):
         return super().process_images(data)
