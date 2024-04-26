@@ -21,8 +21,6 @@ requirements = [
     "gensim==4.3.2",
     "google-api-python-client==2.105.0",
     "google-cloud-storage==2.14.0",
-    "google-cloud-storage==2.14.0",
-    "google-cloud-storage==2.14.0",
     "hdbscan==0.8.33",
     "jira==3.6.0",
     "jmespath==1.0.1",
@@ -68,6 +66,7 @@ requirements = [
     "slack-sdk==3.26.1",
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
+    "tf_keras==2.16.0",
     "tika==2.6.0",
     "transformers==4.38.0",
     "unidecode==1.3.7",
@@ -81,7 +80,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.4",
+    version="3.0.5",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
