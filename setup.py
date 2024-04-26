@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     "aiofiles==23.2.1",
-    "aiohttp==3.9.3",
+    "aiohttp==3.9.4",
     "attrs==23.1.0",
     "azure-storage-blob==12.19.0",
     "beautifulsoup4==4.12.3",
@@ -69,7 +69,7 @@ requirements = [
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
     "tika==2.6.0",
-    "transformers==4.36.0",
+    "transformers==4.38.0",
     "unidecode==1.3.7",
     "pdfplumber==0.10.0",
     "sentence-transformers==2.2.2",
