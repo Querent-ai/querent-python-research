@@ -67,7 +67,10 @@ requirements = [
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
     "tika==2.6.0",
-    "tensorflow==2.14.0"
+    "tensorflow==2.14.0",
+    "torch==2.3.0+cpu",
+    "torchaudio==2.3.0+cpu",
+    "torchvision==0.18.0+cpu",
     "transformers==4.36.0",
     "unidecode==1.3.7",
 ]
