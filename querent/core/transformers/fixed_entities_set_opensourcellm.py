@@ -14,7 +14,6 @@ from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.file_buffer import FileBuffer
-from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 from querent.logging.logger import setup_logger
 from querent.kg.querent_kg import QuerentKG
 from querent.config.graph_config import GraphConfig
@@ -28,7 +27,8 @@ class Fixed_Entities_LLM(BaseEngine):
     def __init__(
         self,
         input_queue:QuerentQueue,
-        config: LLM_Config
+        config: LLM_Config,
+        Embedding=None
     ):  
         self.logger = setup_logger(__name__, "Fixed_Entities_LLM")
         super().__init__(input_queue)
@@ -53,7 +53,10 @@ class Fixed_Entities_LLM(BaseEngine):
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         huggingface_token = config.huggingface_token
-        self.create_emb = EmbeddingStore()
+        if Embedding is None:
+            self.create_emb = EmbeddingStore()
+        else:
+            self.create_emb = Embedding
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
         self.triple_filter = None
@@ -81,7 +84,6 @@ class Fixed_Entities_LLM(BaseEngine):
             self.predicate_context_extractor = None
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
-        self.semantictriplefilter = SemanticTripleFilter()
         
  
 
@@ -164,7 +166,6 @@ class Fixed_Entities_LLM(BaseEngine):
                 elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     self.logger.debug(f"length of relationships {len(relationships)}")
-                    relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:

@@ -43,12 +43,15 @@ import ast
     """
 
 class RelationExtractor():
-    def __init__(self, config: Opensource_LLM_Config):  
+    def __init__(self, config: Opensource_LLM_Config, Embedding=None):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
             super().__init__()
             self.config = config
-            self.create_emb = EmbeddingStore()
+            if Embedding is None:
+                self.create_emb = EmbeddingStore()
+            else:
+                self.create_emb = Embedding
             self.qa_system = QASystem(
                 rel_model_path=config.model_path,
                 rel_model_type=config.model_type,

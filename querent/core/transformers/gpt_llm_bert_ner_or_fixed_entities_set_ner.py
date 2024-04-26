@@ -74,9 +74,9 @@ class GPTLLM(BaseEngine):
                 self.predicate_context_extractor = None
             self.create_emb = EmbeddingStore()
             if config.is_confined_search:
-                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
+                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config, self.create_emb)
             else :
-                self.llm_instance = BERTLLM(input_queue, llm_config)
+                self.llm_instance = BERTLLM(input_queue, llm_config, self.create_emb)
             self.rel_model_name = config.rel_model_name
             if config.openai_api_key:
                 self.gpt_llm = OpenAI(api_key=config.openai_api_key)

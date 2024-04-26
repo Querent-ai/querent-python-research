@@ -19,7 +19,6 @@ class EmbeddingStore:
                 embedding_generator = self.embeddings.embed(text)
                 embedding = list(embedding_generator)[0]
                 embeddings.append(embedding.tolist())
-                print("Embedding recieved: {}".format(embedding))
             return embeddings
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
@@ -38,9 +37,7 @@ class EmbeddingStore:
                     predicate_type = data.get("predicate_type","Unlabeled").replace('"', '\\"')
                     subject_type = data.get("subject_type","Unlabeled").replace('"', '\\"')
                     object_type = data.get("object_type","Unlabeled").replace('"', '\\"')
-                    print("Context-----", context)
                     context_embeddings = self.get_embeddings([context])[0]
-                    print("Found Embeddings")
                     essential_data = {
                         "context": context,
                         "context_embeddings" : context_embeddings,
