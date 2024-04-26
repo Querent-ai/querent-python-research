@@ -68,7 +68,7 @@ requirements = [
     "speechrecognition==3.10.1",
     "tika==2.6.0",
     "tensorflow==2.14.0",
-    "torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu",
+    "torch==2.0.1+cpu",
     "transformers==4.36.0",
     "unidecode==1.3.7",
 ]
