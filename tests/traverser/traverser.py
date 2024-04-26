@@ -64,7 +64,7 @@ class Neo4jConnection:
                 nodes.add(record['m.name'])
             return list(nodes)
 
-    def explore_connections(self, node_names, query_sentence, top_n=10, similarity_threshold=0.7):
+    def explore_connections(self, node_names, query_sentence, top_n=10, similarity_threshold=0.5):
         query = """MATCH (n)-[r]->(m)
 WHERE n.name IN $node_names AND m.name IN $node_names AND n <> m
 RETURN n, r, m, r.sentence AS sentence, r.document_id AS document_id, r.predicate_type AS predicate_type, r.score AS score ORDER BY r.score DESC"""
@@ -80,6 +80,7 @@ RETURN n, r, m, r.sentence AS sentence, r.document_id AS document_id, r.predicat
                                 'Predicate Type': record['r']['predicate_type'],
                                 'Score': record['r']['score']} for record in result])
 
+        print("DF:", df)
         # Sanitize column names
         df.columns = [col.strip() for col in df.columns]
         
@@ -168,38 +169,51 @@ RETURN n, r, m, r.sentence AS sentence, r.document_id AS document_id, r.predicat
      
 
 # Configuration for Neo4j
-neo4j_uri = "neo4j+s://6b6151d7.databases.neo4j.io"  # Change this to your Neo4j instance
+neo4j_uri = "bolt://localhost:7687"  # Change this to your Neo4j instance
 neo4j_user = "neo4j"  # Change to your Neo4j username
-neo4j_password = "m0PKWfVRYrhDUSQsTCqOGBYoGQLmN4d4gkTiOV0r8AE"  # Change to your Neo4j password
+neo4j_password = "password_neo" 
 
 # Initialize Neo4j connection
 neo4j_conn = Neo4jConnection(neo4j_uri, neo4j_user, neo4j_password)
 input_data = {
-    "session_id": "4709e58df737433e9df0b52927afb795",
-    "query": "What is eagle ford shale reservoir porosity and permeability ?",
-    "insights": [
-        {
-            "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
-            "source": "S64",
-            "knowledge": "carbonate-facilitates-hydraulic_fracturing",
-            "sentence": "4.1 geology the shale formation of eagle ford is of the late cretaceous era, roughly 90 million years old. it has a high carbonate content, up to 70%, which makes it brittle and facilitates hydraulic fracturing (texas rrc, 2014). during the cretaceous time the tectonic movements caused the land masses in the south-east, in the direction of the mexican gulf, to be pressed down.",
-            "tags": "carbonate, hydraulic fracturing, facilitates"
-        },
-        {
-            "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
-            "source": "S70",
-            "knowledge": "permeability-affects-porosity",
-            "sentence": "the wells are located in two counties in different parts of the eagle ford region and there is big chance other parameters than the api gravity differ between the counties. such parameters could be permeability, porosity, brittleness (ability to induce fractures) and other geological parameters. if the porosity is higher more water will be used in the hydro-fracturing and more of fracturing water would stay in the reservoir.",
-            "tags": "permeability, porosity, affects"
-        },
-        {
-            "document": "Reservoir Pressure Mapping from Well-Test Data_ An Eagle Ford Example.docx",
-            "source": "S86",
-            "knowledge": "eagle_ford-displays-depth",
-            "sentence": "154 reservoir pressure mapping from well-test data: an eagle ford example summary and conclusions we have presented a novel method to estimate bottom-hole pressures from public-domain data readily available from the state of texas rrc. the values that we have calculated for the eagle ford shale display an increase in depth below ground surface similar to other published reports. similar analyses can be undertaken for any productive formation, in any area, in texas or other areas where similar data sets are publicly available.",
-            "tags": "eagle ford shale, depth, display an increase in depth below ground surface"
-        }
-    ]
+    "session_id": "30b0815cf52a4b6ebadbe3fe6ab868f9",
+  "query": "How does the geological variation within the Eagle Ford Shale affect the production outcomes of different wells?",
+  "insights": [
+    {
+      "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
+      "source": "azure://testfiles/",
+      "knowledge": "the_eagle_ford_shale_play-covers-texas",
+      "sentence": "21 uppsala university, master thesis in energy systems engineering, linnea lund figure 7. geographic extent of the eagle ford shale play, covering about 20 counties in the state of texas, u.s. the green, yellow and red fields represent the occurrence of oil, wet gas and dry gas respectively.",
+      "tags": "the eagle ford shale play, texas, covers"
+    },
+    {
+      "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
+      "source": "azure://testfiles/",
+      "knowledge": "eagle_ford_shale-located_in-texas_usa",
+      "sentence": "eagle ford shale - an early look at ultimate recovery. presented at the spe annual technical conference and exhibition, society of petroleum engineers, san antonio, texas usa. swint, b., bakhsh, n., 2013.",
+      "tags": "eagle ford shale, texas usa, located in"
+    },
+    {
+      "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
+      "source": "azure://testfiles/",
+      "knowledge": "4_1_geology-is_of-the_late_cretaceous_era",
+      "sentence": "the formation is about 80 km wide and 650 km long with varying depth (texas rrc, 2014). 4.1 geology the shale formation of eagle ford is of the late cretaceous era, roughly 90 million years old. it has a high carbonate content, up to 70%, which makes it brittle and facilitates hydraulic fracturing (texas rrc, 2014).",
+      "tags": "4 1 geology, the late cretaceous era, is of"
+    },
+    {
+      "document": "Reservoir Pressure Mapping from Well-Test Data_ An Eagle Ford Example.docx",
+      "source": "azure://testfiles/",
+      "knowledge": "this_low_permeability_source_rock_reservoir-developed_using-horizontal_wells",
+      "sentence": "we apply our methodology to the eagle ford play of south texas. like other unconven-tional plays, this low-permeability source-rock reservoir is developed using horizontal wells. in our study area, the first eagle ford completion forms were filed in 2010 with the most forms filed in 2014 and 2016 (fig. 2).",
+      "tags": "this low permeability source rock reservoir, horizontal wells, developed using"
+    },
+    {
+      "document": "Decline curve analysis of shale oil production_ The case of Eagle Ford.docx",
+      "source": "azure://testfiles/",
+      "knowledge": "a_high_carbonate_content-facilitates-hydraulic_fracturing",
+      "sentence": "4.1 geology the shale formation of eagle ford is of the late cretaceous era, roughly 90 million years old. it has a high carbonate content, up to 70%, which makes it brittle and facilitates hydraulic fracturing (texas rrc, 2014). during the cretaceous time the tectonic movements caused the land masses in the south-east, in the direction of the mexican gulf, to be pressed down.",
+      "tags": "a high carbonate content, hydraulic fracturing, facilitates"
+    }]
 }
 
 # Extract tags
