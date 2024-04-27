@@ -1,5 +1,8 @@
+"""
+    Querent AI: The Asynchronous Data Dynamo and Graph Neural Network Catalyst
+"""
+
 from setuptools import setup, find_packages
-from setuptools.command.bdist_wheel import bdist_wheel
 
 # List of required packages
 requirements = [
@@ -169,9 +172,5 @@ setup(
     ],
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
-    # Specify that only a wheel distribution is built
-    cmdclass={
-        'bdist_wheel': bdist_wheel,
-    },
     license="Business Source License 1.1",
 )
