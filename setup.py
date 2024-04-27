@@ -71,7 +71,7 @@ requirements = [
     "tensorflow==2.14.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "torch@https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    "torch@https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp310-cp310-linux_x86_64.whl"
 ]
 
 # PyTorch index URL for dependency link
@@ -167,7 +167,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Typing :: Typed",
     ],
-    python_requires=">=3.9, <=3.10",
+    python_requires="==3.10",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
     license="Business Source License 1.1",
