@@ -183,16 +183,14 @@ class BERTLLM(BaseEngine):
                                 updated_json = json.dumps(info)
                                 updated_tuple = (entity, updated_json, second_entity)
                                 graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
-                                graph_json['unique_image_id'] = unique_id
                                 graph_json = json.dumps(graph_json)
                                 if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
                                 vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple)
-                                vector_json['unique_image_id'] = unique_id
                                 vector_json = json.dumps(vector_json)
                                 if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
             else:
                 return        
