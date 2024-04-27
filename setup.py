@@ -1,9 +1,7 @@
-"""
-    Querent AI: The Asynchronous Data Dynamo and Graph Neural Network Catalyst
-"""
-
 from setuptools import setup, find_packages
+from setuptools.command.bdist_wheel import bdist_wheel
 
+# List of required packages
 requirements = [
     "aiofiles==23.2.1",
     "aiohttp==3.9.4",
@@ -70,9 +68,9 @@ requirements = [
     "tensorflow==2.14.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "torch==2.0.1",
 ]
 
+# PyTorch index URL for dependency link
 torch_index_url = "https://download.pytorch.org/whl/cpu"
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -80,7 +78,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.4",
+    version="3.0.5",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
@@ -167,9 +165,13 @@ setup(
     ],
     python_requires=">=3.9, <=3.10",
     dependency_links=[
-        f"{torch_index_url}/torch-2.0.1%2Bcpu-cp39-cp39-win_amd64.whl"
+        f"{torch_index_url}/torch-2.0.1%2Bcpu-cp39-cp39-win_amd64.whl"  # Adjust this accordingly
     ],
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
+    # Specify that only a wheel distribution is built
+    cmdclass={
+        'bdist_wheel': bdist_wheel,
+    },
     license="Business Source License 1.1",
 )
