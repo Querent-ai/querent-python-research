@@ -190,6 +190,7 @@ class BaseEngine(ABC):
         while not self.state_queue.empty() or not self.termination_event.is_set():
             new_state = await self.state_queue.get()
             if isinstance(new_state, EventState):
+                image_id = new_state.image_id
                 if new_state.payload == "Terminate":
                     break
                 new_state = {
@@ -199,6 +200,9 @@ class BaseEngine(ABC):
                     "file": new_state.file,
                     "doc_source": new_state.doc_source,
                 }
+                if image_id is not None:
+                    new_state["image_id"] = image_id
+                print(new_state)
                 await self._notify_subscribers(new_state["event_type"], new_state)
             else:
                 raise Exception(
