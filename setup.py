@@ -71,7 +71,6 @@ requirements = [
     "tensorflow==2.14.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "torch@https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp310-cp310-linux_x86_64.whl"
 ]
 
 # PyTorch index URL for dependency link
@@ -170,5 +169,11 @@ setup(
     python_requires="==3.10",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
+    extras_require={
+        "torch": ["torch"],
+    },
+    dependency_links=[
+        f"{torch_index_url}/torch-2.0.1%2Bcpu-cp310-cp310-linux_x86_64.whl",
+    ],
     license="Business Source License 1.1",
 )
