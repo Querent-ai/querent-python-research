@@ -166,7 +166,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Typing :: Typed",
     ],
-    python_requires="==3.10",
+    python_requires="=>3.10 <3.11",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
     extras_require={
