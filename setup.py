@@ -73,9 +73,6 @@ requirements = [
     "unidecode==1.3.7",
 ]
 
-# PyTorch index URL for dependency link
-torch_index_url = "https://download.pytorch.org/whl/cpu"
-
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
@@ -169,11 +166,5 @@ setup(
     python_requires=">=3.10, <3.11",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
-    extras_require={
-        "torch": ["torch"],
-    },
-    dependency_links=[
-        f"{torch_index_url}/torch-2.0.1%2Bcpu-cp310-cp310-linux_x86_64.whl",
-    ],
     license="Business Source License 1.1",
 )
