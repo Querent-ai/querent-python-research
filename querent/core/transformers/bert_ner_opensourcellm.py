@@ -1,5 +1,4 @@
 import json
-from unidecode import unidecode
 from transformers import AutoTokenizer
 from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
@@ -25,7 +24,6 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
-from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 
 """
     BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
@@ -46,22 +44,13 @@ class BERTLLM(BaseEngine):
     def __init__(
         self,
         input_queue:QuerentQueue,
-        config: LLM_Config
+        config: LLM_Config,
+        Embedding=None
     ):  
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
         try:
-            if not self.skip_inferences:
-                mock_config = Opensource_LLM_Config(qa_template=config.user_context,
-                                                    model_type = config.rel_model_type,
-                                                    model_path = config.rel_model_path,
-                                                    grammar_file_path = config.grammar_file_path,
-                                                    emb_model_name = config.emb_model_name,
-                                                    spacy_model_path = config.spacy_model_path,
-                                                    nltk_path = config.nltk_path
-                                                    )
-                self.semantic_extractor = RelationExtractor(mock_config)
             self.graph_config = GraphConfig(identifier=config.name)
             self.contextual_graph = QuerentKG(self.graph_config)
             self.semantic_graph = QuerentKG(self.graph_config)
@@ -71,7 +60,20 @@ class BERTLLM(BaseEngine):
             self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
             self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
             self.nlp_model = NER_LLM.get_class_variable()
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            if not Embedding:
+                self.create_emb = EmbeddingStore()
+            else:
+                self.create_emb = Embedding
+            if not self.skip_inferences:
+                mock_config = Opensource_LLM_Config(qa_template=config.user_context,
+                                                    model_type = config.rel_model_type,
+                                                    model_path = config.rel_model_path,
+                                                    grammar_file_path = config.grammar_file_path,
+                                                    emb_model_name = config.emb_model_name,
+                                                    spacy_model_path = config.spacy_model_path,
+                                                    nltk_path = config.nltk_path
+                                                    )
+                self.semantic_extractor = RelationExtractor(mock_config,self.create_emb)
             self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
             self.enable_filtering = config.enable_filtering
             self.filter_params = config.filter_params or {}
@@ -100,7 +102,6 @@ class BERTLLM(BaseEngine):
                 self.predicate_context_extractor = None
             self.user_context = config.user_context
             self.isConfinedSearch = config.is_confined_search
-            self.semantictriplefilter = SemanticTripleFilter()
         except Exception as e:
             self.logger.error("Error initializing BERT LLM Class", e)
             raise e
@@ -287,8 +288,7 @@ class BERTLLM(BaseEngine):
                 if not filtered_triples:
                     return
                 elif not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:1])
-                    relationships = self.semantictriplefilter.filter_triples(relationships)
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:

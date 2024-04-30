@@ -1,5 +1,4 @@
 import json
-from unidecode import unidecode
 from transformers import AutoTokenizer
 from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
@@ -16,7 +15,6 @@ from querent.common.types.ingested_messages import IngestedMessages
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_queue import QuerentQueue
 from querent.common.types.file_buffer import FileBuffer
-from querent.kg.rel_helperfunctions.filter_semantic_triples import SemanticTripleFilter
 from querent.logging.logger import setup_logger
 from querent.kg.querent_kg import QuerentKG
 from querent.config.graph_config import GraphConfig
@@ -24,15 +22,14 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
-import time
-
 
 
 class Fixed_Entities_LLM(BaseEngine):
     def __init__(
         self,
         input_queue:QuerentQueue,
-        config: LLM_Config
+        config: LLM_Config,
+        Embedding=None
     ):  
         self.logger = setup_logger(__name__, "Fixed_Entities_LLM")
         super().__init__(input_queue)
@@ -57,7 +54,10 @@ class Fixed_Entities_LLM(BaseEngine):
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         huggingface_token = config.huggingface_token
-        self.create_emb = EmbeddingStore(inference_api_key=huggingface_token)
+        if Embedding is None:
+            self.create_emb = EmbeddingStore()
+        else:
+            self.create_emb = Embedding
         self.enable_filtering = config.enable_filtering
         self.filter_params = config.filter_params or {}
         self.triple_filter = None
@@ -85,7 +85,6 @@ class Fixed_Entities_LLM(BaseEngine):
             self.predicate_context_extractor = None
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
-        self.semantictriplefilter = SemanticTripleFilter()
         
  
 
@@ -229,7 +228,6 @@ class Fixed_Entities_LLM(BaseEngine):
                 elif not self.skip_inferences:
                     relationships = self.semantic_extractor.process_tokens(filtered_triples)
                     self.logger.debug(f"length of relationships {len(relationships)}")
-                    relationships = self.semantictriplefilter.filter_triples(relationships)
                     if len(relationships) > 0:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
