@@ -202,7 +202,6 @@ class BaseEngine(ABC):
                 }
                 if image_id is not None:
                     new_state["image_id"] = image_id
-                print(new_state)
                 await self._notify_subscribers(new_state["event_type"], new_state)
             else:
                 raise Exception(
@@ -246,7 +245,6 @@ class BaseEngine(ABC):
                         elif isinstance(data, IngestedTokens):
                             await self.process_tokens(data)
                         elif isinstance(data, IngestedImages):
-                            print("Got an image from queue--------------------------------------------------------------------------\n\n", data.ocr_text)
                             await self.process_images(data)
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)

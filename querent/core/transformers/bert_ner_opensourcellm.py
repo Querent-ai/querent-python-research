@@ -195,7 +195,6 @@ class BERTLLM(BaseEngine):
             else:
                 return        
         except Exception as e:
-            print("Exception -----------", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
     
     async def process_tables(self, data: IngestedTables):

@@ -9,7 +9,7 @@ class EventType:
 
 
 class EventState:
-    def __init__(self, event_type: EventType, timestamp: float, payload: Any, file: str, doc_source: str, image_id: str):
+    def __init__(self, event_type: EventType, timestamp: float, payload: Any, file: str, doc_source: str, image_id: str=None):
         self.event_type = event_type
         self.timestamp = timestamp
         self.payload = payload

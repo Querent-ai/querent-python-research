@@ -122,11 +122,11 @@ class GPTLLM(BaseEngine):
                         info['context_embeddings'] = self.create_emb.embeddings.embed_query(info['context'])
                         updated_json = json.dumps(info)
                         updated_tuple = (entity, updated_json, second_entity)
-                        graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
+                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
                         if graph_json:
                             current_state = EventState(event_type=EventType.Graph, timestamp=1.0, payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                             await self.set_state(new_state=current_state)
-                        vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple)
+                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple))
                         if vector_json:
                             current_state = EventState(event_type=EventType.Vector, timestamp=1.0, payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
                             await self.set_state(new_state=current_state)
