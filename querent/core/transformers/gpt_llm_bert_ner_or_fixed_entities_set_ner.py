@@ -1,4 +1,3 @@
-import asyncio
 import json
 import re
 from querent.common.types.ingested_table import IngestedTables
@@ -75,11 +74,11 @@ class GPTLLM(BaseEngine):
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,  model = self.nlp_model)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.create_emb = EmbeddingStore()
             if config.is_confined_search:
-                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config)
+                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config, self.create_emb)
             else :
-                self.llm_instance = BERTLLM(input_queue, llm_config)
+                self.llm_instance = BERTLLM(input_queue, llm_config, self.create_emb)
             self.rel_model_name = config.rel_model_name
             if config.openai_api_key:
                 self.gpt_llm = OpenAI(api_key=config.openai_api_key)
