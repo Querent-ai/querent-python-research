@@ -30,7 +30,7 @@ requirements = [
     "jsonmerge==1.9.0",
     "jsonschema==4.17.3",
     "kombu==5.2.4",
-    "langchain==0.1.11",
+    "langchain==0.1.17",
     "langchain-community==0.0.25",
     "llama_cpp_python==0.2.15",
     "lxml==4.9.2",
