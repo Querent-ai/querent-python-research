@@ -13,7 +13,7 @@ requirements = [
     "beautifulsoup4==4.12.3",
     "boto3==1.26.146",
     "botocore==1.29.146",
-    "bs4==0.0.1",
+    "bs4==0.0.2",
     "cachetools==5.3.3",
     "coverage==7.3.3",
     "dropbox==11.36.2",
