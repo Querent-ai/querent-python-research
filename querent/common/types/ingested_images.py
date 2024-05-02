@@ -8,7 +8,7 @@ class IngestedImages:
         image: str,
         image_name: str,
         page_num: int,
-        text: [str],
+        text: [str], # type: ignore
         coordinates: list = [],
         ocr_text: list = [],
         error: str = None,

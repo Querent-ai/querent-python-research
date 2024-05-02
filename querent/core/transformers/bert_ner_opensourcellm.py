@@ -126,6 +126,7 @@ class BERTLLM(BaseEngine):
         doc_entity_pairs_ocr = []
         entity_ocr = []
         number_sentences = 0
+        blob = data.image
         try:
             doc_source = data.doc_source
             if not BERTLLM.validate_ingested_images(data):
@@ -180,7 +181,7 @@ class BERTLLM(BaseEngine):
                                 info['object_type'] = info.pop('entity2_label')
                                 info['predicate'] = "has image"
                                 info['predicate_type'] = "has image"
-                                info['context_embeddings'] = self.create_emb.embeddings.embed_query(info['context'])
+                                info['context_embeddings'] = self.create_emb.get_embeddings([info['context']])[0]
                                 updated_json = json.dumps(info)
                                 updated_tuple = (entity, updated_json, second_entity)
                                 graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
@@ -188,7 +189,7 @@ class BERTLLM(BaseEngine):
                                 if graph_json:
                                     current_state = EventState(event_type= EventType.Graph,timestamp=1.0, payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
-                                vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple)
+                                vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple, blob)
                                 vector_json = json.dumps(vector_json)
                                 if vector_json:
                                     current_state = EventState(event_type=EventType.Vector, timestamp=1.0, payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
