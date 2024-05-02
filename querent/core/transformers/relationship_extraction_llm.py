@@ -2,7 +2,6 @@ import json
 from typing import Any, List, Tuple
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from querent.kg.rel_helperfunctions.questionanswer_llama2 import QASystem
-from querent.kg.rel_helperfunctions.rag_retriever import RAGRetriever
 from querent.kg.rel_helperfunctions.rel_normalize import TextNormalizer
 from querent.logging.logger import setup_logger
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
@@ -44,24 +43,20 @@ import ast
     """
 
 class RelationExtractor():
-    def __init__(self, config: Opensource_LLM_Config):  
+    def __init__(self, config: Opensource_LLM_Config, Embedding=None):  
         self.logger = setup_logger(config.logger, "RelationshipExtractor")
         try:
             super().__init__()
             self.config = config
-            self.create_emb = EmbeddingStore(vector_store_path=config.vector_store_path)
+            if Embedding is None:
+                self.create_emb = EmbeddingStore()
+            else:
+                self.create_emb = Embedding
             self.qa_system = QASystem(
                 rel_model_path=config.model_path,
                 rel_model_type=config.model_type,
                 )
             self.grammar = LlamaGrammar.from_file(file = config.grammar_file_path)
-            self.rag_approach = config.rag_approach
-            if  self.rag_approach == True:
-                self.rag_retriever = RAGRetriever(
-                faiss_index_path=config.get_faiss_index_path(),
-                emb_model_name=config.emb_model_name,
-                embedding_store=self.create_emb,
-                logger=self.logger)
             self.is_confined_search = config.is_confined_search
         except Exception as e:
             self.logger.error(f"Initialization failed: {e}")
@@ -107,8 +102,6 @@ class RelationExtractor():
         try:
             triples = payload
             trimmed_triples = self.normalizetriples_buildindex(triples)
-            if self.rag_approach == True:
-                self.rag_retriever.build_faiss_index(trimmed_triples)
             relationships = self.extract_relationships(triples, fixed_entities)
         
             return relationships
@@ -173,7 +166,6 @@ class RelationExtractor():
             self.logger.debug(f"Length of identified triples {len(triples)}")
             updated_triples = []
             for _, predicate_str, _ in triples:
-                documents=[]
                 data = json.loads(predicate_str)
                 context = data['context']
                 predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)

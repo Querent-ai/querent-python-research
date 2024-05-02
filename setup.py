@@ -4,9 +4,10 @@
 
 from setuptools import setup, find_packages
 
+# List of required packages
 requirements = [
     "aiofiles==23.2.1",
-    "aiohttp==3.9.3",
+    "aiohttp==3.9.4",
     "attrs==23.1.0",
     "azure-storage-blob==12.19.0",
     "beautifulsoup4==4.12.3",
@@ -16,12 +17,10 @@ requirements = [
     "cachetools==5.3.3",
     "coverage==7.3.3",
     "dropbox==11.36.2",
-    "faiss-cpu==1.7.4",
+    "fastembed==0.2.6",
     "ffmpeg-python==0.2.0",
     "gensim==4.3.2",
     "google-api-python-client==2.105.0",
-    "google-cloud-storage==2.14.0",
-    "google-cloud-storage==2.14.0",
     "google-cloud-storage==2.14.0",
     "hdbscan==0.8.33",
     "jira==3.6.0",
@@ -69,18 +68,17 @@ requirements = [
     "spacy==3.7.2",
     "speechrecognition==3.10.1",
     "tika==2.6.0",
+    "tensorflow==2.14.0",
     "transformers==4.36.0",
     "unidecode==1.3.7",
-    "sentence-transformers==2.2.2",
 ]
-
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="querent",
-    version="3.0.4",
+    version="3.0.8",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,
@@ -165,7 +163,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Typing :: Typed",
     ],
-    python_requires=">=3.9, <4",
+    python_requires=">=3.10, <3.11",
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=requirements,
     license="Business Source License 1.1",
