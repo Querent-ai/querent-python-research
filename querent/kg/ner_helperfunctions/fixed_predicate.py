@@ -161,8 +161,6 @@ class FixedPredicateExtractor:
             predicate_emb_list = [item["predicate_emb"] for item in predicate_json_emb if item["predicate_emb"] != "Not Implemented"]
             predicate_emb_matrix = np.array(predicate_emb_list)
             updated_embedding_triples = []
-            print("Embedding Triples withSimilarity----", embedding_triples)
-            print("Predicate Matrixxxxxxxxx", predicate_emb_matrix)
             for triple in embedding_triples:
                 entity, triple_json, study_field = triple  
                 triple_data = json.loads(triple_json)
@@ -175,14 +173,12 @@ class FixedPredicateExtractor:
                 similarities = cosine_similarity(current_predicate_emb, predicate_emb_matrix)
                 max_similarity_index = np.argmax(similarities)
                 most_similar_predicate_details = predicate_json_emb[max_similarity_index]
-                print("Max similarity index -------", similarities)
                 if similarities[0][max_similarity_index] > 0.5:
                     triple_data["predicate_type"] = most_similar_predicate_details["type"]
                     if most_similar_predicate_details["relationship"].lower() != "unlabelled":
                         triple_data["predicate"] = most_similar_predicate_details["relationship"]
                     updated_triple_json = json.dumps(triple_data)
                     updated_embedding_triples.append((entity, updated_triple_json, study_field))
-            print("updated_embedding_triples------------", updated_embedding_triples)
             return updated_embedding_triples
         except Exception as e:
             raise Exception(f"Error processing predicate types: {e}")

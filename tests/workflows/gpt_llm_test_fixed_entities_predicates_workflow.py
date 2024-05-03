@@ -60,20 +60,20 @@
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
 #         }
-#     # ,fixed_entities = ["university", "greenwood", "liam zheng", "department", "Metroville", "Emily Stanton", "Coach", "health", "training", "atheletes" ]
-#     # ,sample_entities=["organization", "organization", "person",  "department", "city", "person", "person", "method", "method", "person"]
-# #     ,fixed_relationships=[
-# #     "Increase in research funding leads to environmental science focus",
-# #     "Dr. Emily Stanton's advocacy for cleaner energy",
-# #     "University's commitment to reduce carbon emissions",
-# #     "Dr. Stanton's research influences architectural plans",
-# #     "Collaborative project between sociology and environmental sciences",
-# #     "Student government launches mental health awareness workshops",
-# #     "Enhanced fitness programs improve sports teams' performance",
-# #     "Coach Torres influences student-athletes' holistic health",
-# #     "Partnership expands access to digital resources",
-# #     "Interdisciplinary approach enriches academic experience"
-# # ]
+#     ,fixed_entities = ["university", "greenwood", "liam zheng", "department", "Metroville", "Emily Stanton", "Coach", "health", "training", "atheletes" ]
+#     ,sample_entities=["organization", "organization", "person",  "department", "city", "person", "person", "method", "method", "person"]
+#     ,fixed_relationships=[
+#     "Increase in research funding leads to environmental science focus",
+#     "Dr. Emily Stanton's advocacy for cleaner energy",
+#     "University's commitment to reduce carbon emissions",
+#     "Dr. Stanton's research influences architectural plans",
+#     "Collaborative project between sociology and environmental sciences",
+#     "Student government launches mental health awareness workshops",
+#     "Enhanced fitness programs improve sports teams' performance",
+#     "Coach Torres influences student-athletes' holistic health",
+#     "Partnership expands access to digital resources",
+#     "Interdisciplinary approach enriches academic experience"
+# ]
 #             , sample_relationships=[
 #     "Causal",
 #     "Contributory",
@@ -86,9 +86,9 @@
 #     "Collaborative",
 #     "Enriching"
 # ],  
-#             # is_confined_search = True,
+#             is_confined_search = True,
         
-#     # user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a geological research study on reservoirs and the above entities and their respective types have already been identified. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
+#     user_context="Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
 #     )
 #     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
@@ -99,7 +99,8 @@
 #                 assert isinstance(triple['subject'], str) and triple['subject']
 #             elif event_state['event_type'] == EventType.Vector:
 #                 triple = json.loads(event_state['payload'])
-#                 # print("triple: {}".format(triple))
+#                 print("id: {}".format(triple['id']))
+#                 print("namespace: {}".format(triple['namespace']))
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
 #     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(

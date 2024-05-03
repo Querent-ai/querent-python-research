@@ -150,7 +150,6 @@ class BERTLLM(BaseEngine):
                 content = clean_text
                 file = data.get_file_path()
             if content:
-                print("BERT Content -----------------------", content)
                 if self.fixed_entities:
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 tokens = self.ner_llm_instance._tokenize_and_chunk(content)
@@ -161,11 +160,9 @@ class BERTLLM(BaseEngine):
                     number_sentences = number_sentences + 1
             else:
                 return
-            print("Doc Entity Pairss-------------------", doc_entity_pairs)
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if any(doc_entity_pairs):
-                print("Found odc entity pairssssssssssssssssssssssssssssssss")
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
@@ -189,9 +186,7 @@ class BERTLLM(BaseEngine):
                 if not filtered_triples:
                     return
                 elif not self.skip_inferences:
-                    print("Going to run BERT")
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples[:5], fixed_entities=(len(self.sample_entities) >= 1))
-                    print ("Found these relationshipssssssss ----", relationships)
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples, fixed_entities=(len(self.sample_entities) >= 1))
                     if len(relationships) > 0:
                         if self.fixed_relationships and self.sample_relationships:
                             embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
@@ -200,7 +195,6 @@ class BERTLLM(BaseEngine):
                         else:
                             embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
-                            print("Inside BERT going to compute scortessssss")
                             embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
                         for triple in embedding_triples:
                             if not self.termination_event.is_set():
@@ -221,5 +215,4 @@ class BERTLLM(BaseEngine):
             else:
                 return
         except Exception as e:
-            print("Exception in BERT: -----------------------------", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

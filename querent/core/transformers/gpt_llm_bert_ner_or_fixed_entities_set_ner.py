@@ -66,7 +66,7 @@ class GPTLLM(BaseEngine):
             self.user_context = config.user_context
             self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
             self.nlp_model = NER_LLM.get_class_variable()
-            self.create_emb = EmbeddingStore(inference_api_key=config.huggingface_token)
+            self.create_emb = EmbeddingStore()
             if self.fixed_relationships and not self.sample_relationships:
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
@@ -79,7 +79,6 @@ class GPTLLM(BaseEngine):
                 self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             else:
                 self.predicate_context_extractor = None
-            self.create_emb = EmbeddingStore()
             if config.is_confined_search:
                 self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config, self.create_emb)
             else :
@@ -231,7 +230,6 @@ class GPTLLM(BaseEngine):
                     {"role": "user", "content": identify_entity_message},
                     {"role": "user", "content": self.user_context},
                 ]
-            print("GPT LLM prompt message -------------------------", messages_classify_entity)
             identify_predicate_response = self.generate_response(
                 messages_classify_entity,
                 "predicate_info"
@@ -292,7 +290,6 @@ class GPTLLM(BaseEngine):
             doc_source = data.doc_source
             relationships = []
             unique_keys = set()
-            print("Inside GPT-----------------------")
             result = await self.llm_instance.process_tokens(data)      
             if not result: return 
             else:

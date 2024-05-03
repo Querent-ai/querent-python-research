@@ -169,48 +169,43 @@ class RelationExtractor():
                 data = json.loads(predicate_str)
                 context = data['context']
                 predicate = predicate_str if isinstance(predicate_str, dict) else json.loads(predicate_str)
-                if self.rag_approach == True:
-                    db = self.rag_retriever.load_faiss_index()
-                    prompt=("What is the relationship between {entity1} and the Object is {entity2}.").format(entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
-                    top_docs = self.rag_retriever.retrieve_documents(db, prompt=prompt)
-                    documents = top_docs
-                else:
-                    if fixed_entities == False:
-                        query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
+                if fixed_entities == False:
+                    query = """Please analyze the provided context and two entities. Use this information to answer the users query below.
 Context: {context}
 Entity 1: {entity1} and Entity 2: {entity2}
 Query:{question}
 Answer:"""          
-                        if not self.config.qa_template:
-                            question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object along with their respective types. Also determine the predicate and predicate type."   
-                        else:
-                            question = self.config.qa_template
-                        query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
+                    if not self.config.qa_template:
+                        question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object along with their respective types. Also determine the predicate and predicate type."   
                     else:
-                        query = """Please analyze the provided context and two entities along with their identified labels. Use this information to answer the users query below.
+                        question = self.config.qa_template
+                    query = query.format(question = question, context = context, entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk', ''))
+                else:
+                    query = """Please analyze the provided context and two entities along with their identified labels. Use this information to answer the users query below.
 Context: {context}
 Entity 1: {entity1} and Entity 1_label: {entity1_label}
 Entity 2: {entity2} and Entity 2_label: {entity2_label}
 Query:{question}
 Answer:"""          
-                        if not self.config.qa_template:
-                            question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object, validate and output their respective types. Also determine the predicate and predicate type."      
-                        else:
-                            question = self.config.qa_template
-                        query = query.format(question = question, 
-                                                 context = context, 
-                                                 entity1=predicate.get('entity1_nn_chunk', ''), 
-                                                 entity2=predicate.get('entity2_nn_chunk', ''),
-                                                 entity1_label=predicate.get('entity1_label', ''), 
-                                                 entity2_label=predicate.get('entity2_label', ''))
-                    answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
-                    try:
-                        choices_text = answer_relation['choices'][0]['text']
-                        answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))
-                        updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
-                        updated_triples.append(updated_triple)
-                    except Exception as e:
-                        continue
+                    if not self.config.qa_template:
+                        question = "In the context of a semantic triple framework, first identify which entity is subject and which is the object, validate and output their respective types. Also determine the predicate and predicate type."      
+                    else:
+                        question = self.config.qa_template
+                    query = query.format(question = question, 
+                                                context = context, 
+                                                entity1=predicate.get('entity1_nn_chunk', ''), 
+                                                entity2=predicate.get('entity2_nn_chunk', ''),
+                                                entity1_label=predicate.get('entity1_label', ''), 
+                                                entity2_label=predicate.get('entity2_label', ''))
+                print("This is the prompt -----------------",query )
+                answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
+                try:
+                    choices_text = answer_relation['choices'][0]['text']
+                    answer_relation = self.replace_entities(choices_text,entity1=predicate.get('entity1_nn_chunk', ''), entity2=predicate.get('entity2_nn_chunk'))
+                    updated_triple= self.create_semantic_triple(answer_relation, predicate_str)
+                    updated_triples.append(updated_triple)
+                except Exception as e:
+                    continue
             return updated_triples
         except Exception as e:
             self.logger.error(f"Error in extracting relationships: {e}")
