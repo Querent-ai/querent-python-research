@@ -123,6 +123,7 @@ class BERTLLM(BaseEngine):
 
         return True
     async def process_images(self, data: IngestedImages):
+        print("Going to run the function from 000000000000000000")
         doc_entity_pairs = []
         doc_entity_pairs_ocr = []
         entity_ocr = []
@@ -138,21 +139,25 @@ class BERTLLM(BaseEngine):
             if data.text:
                 content = ' '.join(data.text)
             file = data.file
-            ocr_content = ocr_text             
+            ocr_content = ocr_text
+            print("Going to run the function from Mian1111111111", ocr_content)             
             if ocr_content or content:
-                (entity_ocr, doc_entity_pairs_ocr) = self.get_ocr_entity_pairs(ocr_content=ocr_content)
+                print("Going to run the function from Mian", ocr_content)
+                (entity_ocr, doc_entity_pairs_ocr) = await self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=ocr_content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
+                print("Results from Main-------------", doc_entity_pairs_ocr)
                 if len(doc_entity_pairs_ocr) >= 1:
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:
                     if content:
                         if self.fixed_entities:
                             content = self.entity_context_extractor.find_entity_sentences(content)
-                        tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                        for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                            (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                            if entity_pairs:
-                                doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                            number_sentences = number_sentences + 1
+                        (_, doc_entity_pairs) = await self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=ocr_content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
                         if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
                             results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
                         elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
@@ -166,10 +171,8 @@ class BERTLLM(BaseEngine):
                         return filtered_triples, file
                     else :
                         unique_id = str(hash(data.image))
-                        for triple in filtered_triples:
+                        for entity, info_json, second_entity in filtered_triples:
                             if not self.termination_event.is_set():
-                                updated_data = []
-                                entity, info_json, second_entity = triple
                                 info = json.loads(info_json)
                                 info['subject_type'] = info.pop('entity1_label')
                                 info['object_type'] = info.pop('entity2_label')
@@ -191,6 +194,7 @@ class BERTLLM(BaseEngine):
             else:
                 return        
         except Exception as e:
+            print("Exception -----------------", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
     
     async def process_tables(self, data: IngestedTables):

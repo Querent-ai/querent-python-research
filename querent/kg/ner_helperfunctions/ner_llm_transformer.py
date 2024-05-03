@@ -1,3 +1,4 @@
+import json
 import spacy
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 import torch
@@ -317,157 +318,15 @@ class NER_LLM:
 
         return sorted(results, key=lambda x: x['start_idx'])
 
-
-    def extract_entities_from_sentence_for_given_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
-        try:
-            tokens = self.tokenize_sentence(sentence)
-            chunks = self.get_chunks(tokens)
-            all_page_entities = []
-
-            for chunk in chunks:
-                if fixed_entities_flag == False:
-                    entities = self.extract_entities_from_chunk(chunk)
-                else:
-                    entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
-                all_page_entities.append(entities)
-            
-            return all_page_entities
-
-        except Exception as e:
-            self.logger.error(f"Error extracting entities for an ocr sentence: {e}")
-
-    def get_max_score_entity_pair(self, entities_list):
-        max_score = 0
-        best_pair = None
-        for i in range(0, len(entities_list), 2):
-            pair_score = entities_list[i]['score'] + entities_list[i+1]['score']
-            if pair_score > max_score:
-                max_score = pair_score
-                best_pair = (entities_list[i], entities_list[i+1])
-        return best_pair
-    
-    def compare_and_retrieve(self, entities_list, binary_pairs, single_entity):
-        best_pair = self.get_max_score_entity_pair(entities_list)
-
-        found_pair = False
-        for pair, context in binary_pairs:
-            if (single_entity['entity'] == best_pair[0]['entity'] or single_entity['entity'] == best_pair[1]['entity']):
-                found_pair = True
-            if found_pair and (
-                (pair[0]['entity'] == best_pair[0]['entity'] and pair[1]['entity'] == best_pair[1]['entity']) or
-                (pair[1]['entity'] == best_pair[0]['entity'] and pair[0]['entity'] == best_pair[1]['entity'])):
-                return {
-                    "entity_pair": best_pair,
-                    "context": context
-                }
-        if not found_pair:
-            return {"message": "No matching entity found in the best pair based on the single entity input."}
-        return None
-
-    def find_most_frequent_pair_with_entity(self, binary_pairs, ocr_entities):
-
-        result = []
-        for single_entity in ocr_entities:
-
-            # Filter pairs to include only those containing the single entity
-            filtered_pairs = []
-            for pair, context in binary_pairs:
-                if single_entity['entity'] in [pair[0]['entity'], pair[1]['entity']]:
-                    # Since dictionaries are unhashable, convert pair to a tuple of sorted tuples to count occurrences
-                    sorted_pair = tuple(sorted((pair[0]['entity'], pair[1]['entity'])))
-                    filtered_pairs.append((sorted_pair, context))
-
-            # Count occurrences of each pair
-            pair_counter = Counter([pair for pair, _ in filtered_pairs])
-
-            # Find the pair with the maximum occurrence
-            if not pair_counter:
-                return None
-
-            most_frequent_pair, count = pair_counter.most_common(1)[0]
-
-            # Retrieve the context information for the most frequent pair
-            for pair, context in filtered_pairs:
-                if tuple(sorted((pair[0]['entity'], pair[1]['entity']))) == most_frequent_pair:
-                    """
-                    
-                    
-                    """
-                    result.append({
-                        "most_frequent_pair": most_frequent_pair,
-                        "count": count,
-                        "context": context
-                    })
-        
-        return result
-    
-    def find_highest_scoring_pair(self, binary_pairs):
-        max_score = 0  # Initialize with a value lower than the lowest possible score (scores are usually non-negative).
-        highest_scoring_pair = None
-        highest_scoring_context = None
-
-        # Iterate through each pair and calculate the total score
-        for pair, context in binary_pairs:
-            total_score = pair[0]['score'] + pair[1]['score']
-            if total_score > max_score:
-                max_score = total_score
-                highest_scoring_pair = pair
-                highest_scoring_context = context
-
-        # Return the highest scoring pair along with its context and total score
-        if highest_scoring_pair:
-            return {
-                "highest_scoring_pair": highest_scoring_pair,
-                "total_score": max_score,
-                "context": highest_scoring_context
-            }
-        else:
-            return {"message": "No pairs found or all pairs have zero or negative scores."}
-
-
-    def find_most_frequent_entity_pair(self, binary_pairs):
-        # Initialize a counter to keep track of entity pair occurrences
-        pair_counter = Counter()
-
-        # Iterate through each pair and count each unique pair
-        for pair, context in binary_pairs:
-            # Create a canonical form for the pair (sorted by entity name to ensure (A,B) and (B,A) are treated the same)
-            sorted_pair = tuple(sorted((pair[0]['entity'], pair[1]['entity'])))
-            pair_counter[sorted_pair] += 1
-
-        # Find the pair with the highest occurrence
-        if not pair_counter:
-            return None
-
-        most_frequent_pair, count = pair_counter.most_common(1)[0]
-
-        # Collect all contexts where the most frequent pair appears
-        contexts = [context for pair, context in binary_pairs if tuple(sorted((pair[0]['entity'], pair[1]['entity']))) == most_frequent_pair]
-
-        # Return the most frequent pair along with its occurrence count and all associated contexts
-        return {
-            "most_frequent_pair": most_frequent_pair,
-            "occurrence_count": count,
-            "contexts": contexts
-        }
     
     def filter_matching_entities(self, tuples_nested_list, entities_nested_list):
-    # Initialize the list to store matching tuples
         matched_tuples = []
-
-        # Loop through each list of entities
         for entities_list in entities_nested_list:
-            # Loop through each entity dictionary in the current list
             for entity_dict in entities_list:
-                entity_name = entity_dict['entity']  # Extract the entity name
-
-                # Loop through each list of tuples
+                entity_name = entity_dict['entity']
                 for tuples_list in tuples_nested_list:
-                    # Loop through each tuple in the current list
                     for tup in tuples_list:
-                        # Check if the entity is in the 1st or 3rd element of the tuple
                         if entity_name in tup[0] or entity_name in tup[2]:
-                            # Add the tuple to the result list if it's not already included
                             if tup not in matched_tuples:
                                 matched_tuples.append(tup)
 
@@ -500,6 +359,32 @@ class NER_LLM:
             return entities_withnnchunk, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
+    
+    
+    async def get_entity_pairs(self, isConfinedSearch, fixed_entities, sample_entities, content):
+        entity = []
+        doc_entity_pairs = []
+        tokens = self._tokenize_and_chunk(content)
+        for tokenized_sentence, original_sentence, sentence_idx in tokens:
+            (entities, entity_pairs,) = self.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],isConfinedSearch, fixed_entities, sample_entities)
+            if entity_pairs:
+                doc_entity_pairs.append(self.transform_entity_pairs(entity_pairs))
+            if entities:
+                entity.append(entities)
+        return (entities, doc_entity_pairs)
+    
+    async def final_ingested_images_tuples(self, filtered_triples):
+        for entity, info_json, second_entity in filtered_triples:
+            if not self.termination_event.is_set():
+                info = json.loads(info_json)
+                info['subject_type'] = info.pop('entity1_label')
+                info['object_type'] = info.pop('entity2_label')
+                info['predicate'] = "has image"
+                info['predicate_type'] = "has image"
+                info['context_embeddings'] = self.create_emb.get_embeddings([info['context']])[0]
+                updated_json = json.dumps(info)
+                updated_tuple = (entity, updated_json, second_entity)
+        return updated_tuple
     
     def remove_duplicates(self, data):
         seen = set()

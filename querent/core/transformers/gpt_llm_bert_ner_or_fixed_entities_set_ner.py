@@ -111,26 +111,15 @@ class GPTLLM(BaseEngine):
             if not result: return 
             else:
                 filtered_triples, file = result
-                for triple in filtered_triples:
-                    if not self.termination_event.is_set():
-                        updated_data = []
-                        entity, info_json, second_entity = triple
-                        info = json.loads(info_json)
-                        info['subject_type'] = info.pop('entity1_label')
-                        info['object_type'] = info.pop('entity2_label')
-                        info['predicate'] = "has image"
-                        info['predicate_type'] = "has image"
-                        info['context_embeddings'] = self.create_emb.get_embeddings([info['context']])[0]
-                        updated_json = json.dumps(info)
-                        updated_tuple = (entity, updated_json, second_entity)
-                        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
-                        if graph_json:
-                            current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
-                            await self.set_state(new_state=current_state)
-                        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
-                        if vector_json:
-                            current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
-                            await self.set_state(new_state=current_state)
+                updated_tuple = self.nlp_model.final_ingested_images_tuples(filtered_triples)
+                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
+                if graph_json:
+                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                    await self.set_state(new_state=current_state)
+                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
+                if vector_json:
+                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
+                    await self.set_state(new_state=current_state)
 
         except Exception as e:
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

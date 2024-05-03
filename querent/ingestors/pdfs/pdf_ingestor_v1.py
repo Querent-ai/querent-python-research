@@ -18,7 +18,7 @@ import base64
 
 import pybase64
 import pytesseract
-import pdfplumber
+# import pdfplumber
 
 
 class PdfIngestorFactory(IngestorFactory):
@@ -130,18 +130,18 @@ class PdfIngestor(BaseIngestor):
                 f"Getting unknown error while handling this file: {collected_bytes.file} error - {exc}"
             ) from exc
         
-    async def extract_table(self, data):
-        with pdfplumber.open(io.BytesIO(data.data)) as pdf:
-            i = 0
-            for page in pdf.pages:
-                # Extract tables from the current page
-                tables = page.extract_tables()
-                i += 1
-                # for table in tables:
-                #     if len(table) <= 1:
-                #         continue
+    # async def extract_table(self, data):
+    #     with pdfplumber.open(io.BytesIO(data.data)) as pdf:
+    #         i = 0
+    #         for page in pdf.pages:
+    #             # Extract tables from the current page
+    #             tables = page.extract_tables()
+    #             i += 1
+    #             # for table in tables:
+    #             #     if len(table) <= 1:
+    #             #         continue
 
-                #     yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
+    #             #     yield IngestedTables(file= data.file, table = table, text=page.extract_text(), error=None, page_num= i)
         
     async def extract_img(self, doc, file_path, data, doc_source):
         image_page_map = {}
