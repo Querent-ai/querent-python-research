@@ -1,5 +1,6 @@
 import json
 from transformers import AutoTokenizer
+import time
 from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -187,12 +188,12 @@ class BERTLLM(BaseEngine):
                                 graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
                                 graph_json = json.dumps(graph_json)
                                 if graph_json:
-                                    current_state = EventState(event_type= EventType.Graph,timestamp=1.0, payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                                    current_state = EventState(event_type= EventType.Graph,timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
                                 vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple, blob)
                                 vector_json = json.dumps(vector_json)
                                 if vector_json:
-                                    current_state = EventState(event_type=EventType.Vector, timestamp=1.0, payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
+                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
             else:
                 return        
@@ -248,19 +249,7 @@ class BERTLLM(BaseEngine):
             else:
                 content = clean_text
                 file = data.get_file_path()
-            if content:
-                if self.fixed_entities:
-                    content = self.entity_context_extractor.find_entity_sentences(content)
-                if self.fixed_relationships:
-                    content = self.predicate_context_extractor.find_predicate_sentences(content)
-                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entity_pairs:
-                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
-            else:
-                return
+            doc_entity_pairs = self.get_doc_entity_pairs(content=content)
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
@@ -298,11 +287,11 @@ class BERTLLM(BaseEngine):
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                                 if graph_json:
-                                    current_state = EventState(event_type=EventType.Graph, timestamp=1.0, payload=graph_json, file=file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                                 vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                                 if vector_json:
-                                    current_state = EventState(event_type=EventType.Vector, timestamp=1.0, payload=vector_json, file=file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             else:
                                 return

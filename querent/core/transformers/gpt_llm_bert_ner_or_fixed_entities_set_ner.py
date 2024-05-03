@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from querent.common.types.ingested_table import IngestedTables
 from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
@@ -124,11 +125,11 @@ class GPTLLM(BaseEngine):
                         updated_tuple = (entity, updated_json, second_entity)
                         graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
                         if graph_json:
-                            current_state = EventState(event_type=EventType.Graph, timestamp=1.0, payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                            current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                             await self.set_state(new_state=current_state)
                         vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
                         if vector_json:
-                            current_state = EventState(event_type=EventType.Vector, timestamp=1.0, payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
+                            current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
                             await self.set_state(new_state=current_state)
 
         except Exception as e:
@@ -328,11 +329,11 @@ class GPTLLM(BaseEngine):
                         if not self.termination_event.is_set():
                             graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                             if graph_json:
-                                    current_state = EventState(event_type=EventType.Graph,timestamp = 1.0, payload= graph_json, file=file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Graph,timestamp = time.time(), payload= graph_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                             if vector_json:
-                                    current_state = EventState(event_type=EventType.Vector,timestamp=1.0, payload = vector_json, file=file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Vector,timestamp=time.time(), payload = vector_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                         else:
                             return

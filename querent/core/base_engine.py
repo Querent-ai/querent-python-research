@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import asyncio
+import time
 from querent.callback.event_callback_dispatcher import EventCallbackDispatcher
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_images import IngestedImages
@@ -255,7 +256,7 @@ class BaseEngine(ABC):
                             none_counter += 1
                             if none_counter >= 2:
                                 self.termination_event.set()
-                                current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                                current_state = EventState(EventType.Terminate,time.time(), "Terminate", "temp.txt")
                                 await self.set_state(new_state=current_state)
 
                         else:
@@ -298,3 +299,21 @@ class BaseEngine(ABC):
             self.termination_event.set()
         except Exception as e:
             self.logger.error(f"Error while stopping workers: {e}")
+
+    async def get_doc_entity_pairs(self, content):
+        doc_entity_pairs = []
+        if content:
+            if self.fixed_entities:
+                content = self.entity_context_extractor.find_entity_sentences(content)
+            if self.fixed_relationships:
+                content = self.predicate_context_extractor.find_predicate_sentences(content)
+            tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+            for tokenized_sentence, original_sentence, sentence_idx in tokens:
+                (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                if entity_pairs:
+                    doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                number_sentences = number_sentences + 1
+        else:
+            return
+        
+        return doc_entity_pairs
