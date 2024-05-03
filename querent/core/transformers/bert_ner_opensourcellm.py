@@ -140,14 +140,7 @@ class BERTLLM(BaseEngine):
             file = data.file
             ocr_content = ocr_text             
             if ocr_content or content:
-                ocr_tokens = self.ner_llm_instance._tokenize_and_chunk(ocr_content)
-                for tokenized_sentence, original_sentence, sentence_idx in ocr_tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in ocr_tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entities:
-                        entity_ocr.append(entities)
-                    if entity_pairs:
-                        doc_entity_pairs_ocr.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
+                (entity_ocr, doc_entity_pairs_ocr) = self.get_ocr_entity_pairs(ocr_content=ocr_content)
                 if len(doc_entity_pairs_ocr) >= 1:
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:

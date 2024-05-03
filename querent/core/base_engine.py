@@ -317,3 +317,15 @@ class BaseEngine(ABC):
             return
         
         return doc_entity_pairs
+    
+    async def get_ocr_entity_pairs(self, ocr_content):
+        entity_ocr = []
+        doc_entity_pairs_ocr = []
+        ocr_tokens = self.ner_llm_instance._tokenize_and_chunk(ocr_content)
+        for tokenized_sentence, original_sentence, sentence_idx in ocr_tokens:
+            (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in ocr_tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+            if entities:
+                entity_ocr.append(entities)
+            if entity_pairs:
+                doc_entity_pairs_ocr.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+            number_sentences = number_sentences + 1
