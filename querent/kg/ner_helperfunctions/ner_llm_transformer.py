@@ -361,7 +361,7 @@ class NER_LLM:
             self.logger.error(f"Error extracting entities from sentence: {e}")
     
     
-    async def get_entity_pairs(self, isConfinedSearch, fixed_entities, sample_entities, content):
+    def get_entity_pairs(self, isConfinedSearch, fixed_entities, sample_entities, content):
         entity = []
         doc_entity_pairs = []
         tokens = self._tokenize_and_chunk(content)
@@ -371,19 +371,18 @@ class NER_LLM:
                 doc_entity_pairs.append(self.transform_entity_pairs(entity_pairs))
             if entities:
                 entity.append(entities)
-        return (entities, doc_entity_pairs)
+        return (entity, doc_entity_pairs)
     
-    async def final_ingested_images_tuples(self, filtered_triples):
-        for entity, info_json, second_entity in filtered_triples:
-            if not self.termination_event.is_set():
-                info = json.loads(info_json)
-                info['subject_type'] = info.pop('entity1_label')
-                info['object_type'] = info.pop('entity2_label')
-                info['predicate'] = "has image"
-                info['predicate_type'] = "has image"
-                info['context_embeddings'] = self.create_emb.get_embeddings([info['context']])[0]
-                updated_json = json.dumps(info)
-                updated_tuple = (entity, updated_json, second_entity)
+    def final_ingested_images_tuples(self, filtered_triples, create_embeddings):
+        entity, info_json, second_entity = filtered_triples
+        info = json.loads(info_json)
+        info['subject_type'] = info.pop('entity1_label')
+        info['object_type'] = info.pop('entity2_label')
+        info['predicate'] = "has image"
+        info['predicate_type'] = "has image"
+        info['context_embeddings'] = create_embeddings.get_embeddings([info['context']])[0]
+        updated_json = json.dumps(info)
+        updated_tuple = (entity, updated_json, second_entity)
         return updated_tuple
     
     def remove_duplicates(self, data):

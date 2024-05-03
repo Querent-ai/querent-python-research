@@ -99,50 +99,7 @@ class Fixed_Entities_LLM(BaseEngine):
         pass
 
     async def process_images(self, data: IngestedImages):
-        doc_entity_pairs = []
-        doc_entity_pairs_ocr = []
-        entity_ocr = []
-        number_sentences = 0
-        try:
-            doc_source = data.doc_source
-            if not Fixed_Entities_LLM.validate_ingested_images(data):
-                self.set_termination_event()                                      
-                return
-            if data.ocr_text:
-                ocr_text = ' '.join(data.ocr_text)
-            if data.text:
-                content = ' '.join(data.text)
-            file = data.file
-            ocr_content = ocr_text             
-            if ocr_content or content:
-                (entity_ocr, doc_entity_pairs_ocr) = self.get_ocr_entity_pairs(ocr_content=ocr_content)
-                if len(doc_entity_pairs_ocr) >= 1:
-                    results = doc_entity_pairs_ocr
-                elif len(doc_entity_pairs_ocr) == 0:
-                    if content:
-                        if self.fixed_entities:
-                            content = self.entity_context_extractor.find_entity_sentences(content)
-                        tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                        for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                            (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                            if entity_pairs:
-                                doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                            number_sentences = number_sentences + 1
-                        if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
-                            results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
-                        elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
-                            results = doc_entity_pairs
-                    else:
-                        return        
-                if results:
-                    doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
-                    filtered_triples = process_data(doc_entity_pairs, file)
-                    if self.skip_inferences:
-                        return filtered_triples, file
-            else:
-                return        
-        except Exception as e:
-            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+        pass
 
     async def process_code(self, data: IngestedCode):
         return super().process_code(data)
@@ -162,20 +119,6 @@ class Fixed_Entities_LLM(BaseEngine):
             return False
 
         return True
-
-    def count_entity_pairs(self, doc_entity_pairs):
-        total_pairs = 0
-        for inner_list in doc_entity_pairs:
-            total_pairs += len(inner_list)
-            
-        return total_pairs
-    
-    def set_filter_params(self, **kwargs):
-        self.filter_params = kwargs
-        if self.triple_filter:
-            self.triple_filter.set_params(**kwargs)
-        else:
-            self.triple_filter = TripleFilter(**kwargs)
     
     
     async def process_tokens(self, data: IngestedTokens):
@@ -198,7 +141,19 @@ class Fixed_Entities_LLM(BaseEngine):
             else:
                 content = clean_text
                 file = data.get_file_path()
-            doc_entity_pairs = self.get_doc_entity_pairs(content=content)
+            if content:
+                if self.fixed_entities:
+                    content = self.entity_context_extractor.find_entity_sentences(content)
+                if self.fixed_relationships:
+                    content = self.predicate_context_extractor.find_predicate_sentences(content)
+                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+                for tokenized_sentence, original_sentence, sentence_idx in tokens:
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                    if entity_pairs:
+                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                    number_sentences = number_sentences + 1
+            else:
+                return
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
@@ -233,4 +188,5 @@ class Fixed_Entities_LLM(BaseEngine):
             else:
                 return
         except Exception as e:
+            print("Error in Fixed @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

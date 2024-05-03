@@ -1,6 +1,9 @@
 import json
+import re
 from transformers import AutoTokenizer
 import time
+
+import unidecode
 from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -124,10 +127,11 @@ class BERTLLM(BaseEngine):
         return True
     async def process_images(self, data: IngestedImages):
         print("Going to run the function from 000000000000000000")
+        content = ""
         doc_entity_pairs = []
         doc_entity_pairs_ocr = []
         entity_ocr = []
-        number_sentences = 0
+        results = []
         blob = data.image
         try:
             doc_source = data.doc_source
@@ -143,51 +147,54 @@ class BERTLLM(BaseEngine):
             print("Going to run the function from Mian1111111111", ocr_content)             
             if ocr_content or content:
                 print("Going to run the function from Mian", ocr_content)
-                (entity_ocr, doc_entity_pairs_ocr) = await self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                (entity_ocr, doc_entity_pairs_ocr) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
                                                                                                   content=ocr_content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
-                print("Results from Main-------------", doc_entity_pairs_ocr)
+                print("Results from OCRRRRRRR-------------", doc_entity_pairs_ocr)
                 if len(doc_entity_pairs_ocr) >= 1:
+                    print("OCRRRRRRR Entity Pair-------------")
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:
+                    print("Will only run if ocr has no pairs--")
                     if content:
                         if self.fixed_entities:
                             content = self.entity_context_extractor.find_entity_sentences(content)
-                        (_, doc_entity_pairs) = await self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
-                                                                                                  content=ocr_content,
+                        (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
+                        print("Results from Content-------------")
+                        print("Results from OCR entities-------------", entity_ocr)
                         if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
+                            print("Results from OCR entities and doc entity pairs-------------", entity_ocr)
                             results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
                         elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
+                            # print("Results from only contenttttt doc entity pairs-------------", doc_entity_pairs)
                             results = doc_entity_pairs
                     else:
                         return        
-                if results:
+                if len(results) > 0:
+                    print("Going to remove duplicates------")
                     doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
+                    print("Going to remove duplicates------22222222222")
                     filtered_triples = process_data(doc_entity_pairs, file)
+                    print("Going to remove duplicates------3333333333333")
                     if self.skip_inferences:
-                        return filtered_triples, file
-                    else :
+                        print("Handing over to GPT-------------------------------------------------")
+                        return filtered_triples, file, self.ner_llm_instance
+                    else:
                         unique_id = str(hash(data.image))
-                        for entity, info_json, second_entity in filtered_triples:
+                        for triple in filtered_triples:
                             if not self.termination_event.is_set():
-                                info = json.loads(info_json)
-                                info['subject_type'] = info.pop('entity1_label')
-                                info['object_type'] = info.pop('entity2_label')
-                                info['predicate'] = "has image"
-                                info['predicate_type'] = "has image"
-                                info['context_embeddings'] = self.create_emb.get_embeddings([info['context']])[0]
-                                updated_json = json.dumps(info)
-                                updated_tuple = (entity, updated_json, second_entity)
-                                graph_json = TripleToJsonConverter.convert_graphjson(updated_tuple)
-                                graph_json = json.dumps(graph_json)
+                                print("Going to remove duplicates------44444444444444")
+                                updated_tuple = self.ner_llm_instance.final_ingested_images_tuples(triple, create_embeddings=self.create_emb)
+                                print("Updated _tuple -------", updated_tuple)
+                                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
                                 if graph_json:
-                                    current_state = EventState(event_type= EventType.Graph,timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
-                                vector_json = TripleToJsonConverter.convert_vectorjson(updated_tuple, blob)
-                                vector_json = json.dumps(vector_json)
+                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
                                 if vector_json:
                                     current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
@@ -236,8 +243,9 @@ class BERTLLM(BaseEngine):
                     return
             if data.data:
                 single_string = ' '.join(data.data)
-                # clean_text = unidecode(single_string)
                 clean_text = single_string
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", clean_text)
+                
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -246,7 +254,19 @@ class BERTLLM(BaseEngine):
             else:
                 content = clean_text
                 file = data.get_file_path()
-            doc_entity_pairs = self.get_doc_entity_pairs(content=content)
+            if content:
+                if self.fixed_entities:
+                    content = self.entity_context_extractor.find_entity_sentences(content)
+                if self.fixed_relationships:
+                    content = self.predicate_context_extractor.find_predicate_sentences(content)
+                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
+                for tokenized_sentence, original_sentence, sentence_idx in tokens:
+                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
+                    if entity_pairs:
+                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
+                    number_sentences = number_sentences + 1
+            else:
+                return
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
             if doc_entity_pairs and any(doc_entity_pairs):
@@ -299,4 +319,5 @@ class BERTLLM(BaseEngine):
             else:
                 return
         except Exception as e:
+            print("Exception in BERTYYYYYY", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
