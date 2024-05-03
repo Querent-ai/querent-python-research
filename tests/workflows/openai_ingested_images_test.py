@@ -32,7 +32,7 @@
 #     #         host="localhost", 
 #     #         port="5432")
 #     # # ml_conn = MilvusDBConnection()
-#     directories = [ "/home/ansh/pyg-trail/testing-ocr"]
+#     directories = [ "/home/ansh/pyg-trail/testing-aspect"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),
