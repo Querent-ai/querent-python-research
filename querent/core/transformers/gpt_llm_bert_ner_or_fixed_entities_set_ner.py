@@ -300,7 +300,7 @@ class GPTLLM(BaseEngine):
             if not result: return 
             else:
                 filtered_triples, file = result
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples[:5])
+                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples)
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
