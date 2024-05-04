@@ -126,7 +126,6 @@ class BERTLLM(BaseEngine):
 
         return True
     async def process_images(self, data: IngestedImages):
-        print("Going to run the function from 000000000000000000")
         content = ""
         doc_entity_pairs = []
         doc_entity_pairs_ocr = []
@@ -144,16 +143,15 @@ class BERTLLM(BaseEngine):
                 content = ' '.join(data.text)
             file = data.file
             ocr_content = ocr_text
-            print("Going to run the function from Mian1111111111", ocr_content)             
+            print("Going to run the function from Ingested Images", ocr_content)             
             if ocr_content or content:
-                print("Going to run the function from Mian", ocr_content)
                 (entity_ocr, doc_entity_pairs_ocr) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
                                                                                                   content=ocr_content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
-                print("Results from OCRRRRRRR-------------", doc_entity_pairs_ocr)
+                print("Entity Pairs from  OCRRRRRRR-------------", doc_entity_pairs_ocr)
+                print("OCR entities-------------", entity_ocr)
                 if len(doc_entity_pairs_ocr) >= 1:
-                    print("OCRRRRRRR Entity Pair-------------")
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:
                     print("Will only run if ocr has no pairs--")
@@ -164,8 +162,7 @@ class BERTLLM(BaseEngine):
                                                                                                   content=content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
-                        print("Results from Content-------------")
-                        print("Results from OCR entities-------------", entity_ocr)
+                        print("Results from Content-------------", doc_entity_pairs)
                         if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
                             print("Results from OCR entities and doc entity pairs-------------", entity_ocr)
                             results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
@@ -177,9 +174,7 @@ class BERTLLM(BaseEngine):
                 if len(results) > 0:
                     print("Going to remove duplicates------")
                     doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
-                    print("Going to remove duplicates------22222222222")
                     filtered_triples = process_data(doc_entity_pairs, file)
-                    print("Going to remove duplicates------3333333333333")
                     if self.skip_inferences:
                         print("Handing over to GPT-------------------------------------------------")
                         return filtered_triples, file, self.ner_llm_instance
@@ -187,9 +182,7 @@ class BERTLLM(BaseEngine):
                         unique_id = str(hash(data.image))
                         for triple in filtered_triples:
                             if not self.termination_event.is_set():
-                                print("Going to remove duplicates------44444444444444")
                                 updated_tuple = self.ner_llm_instance.final_ingested_images_tuples(triple, create_embeddings=self.create_emb)
-                                print("Updated _tuple -------", updated_tuple)
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
                                 if graph_json:
                                     current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
@@ -235,7 +228,6 @@ class BERTLLM(BaseEngine):
     
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
-        number_sentences = 0
         try:
             doc_source = data.doc_source
             if not BERTLLM.validate_ingested_tokens(data):
@@ -259,12 +251,10 @@ class BERTLLM(BaseEngine):
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
                     content = self.predicate_context_extractor.find_predicate_sentences(content)
-                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entity_pairs:
-                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
+                (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
             else:
                 return
             if self.sample_entities:

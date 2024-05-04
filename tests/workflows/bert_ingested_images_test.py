@@ -70,13 +70,13 @@
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
 #         }
-#      ,fixed_entities =["geologists", "asphaltene", "Nitrogen", "eagle ford", "industry"],
-#     sample_entities = ["method", "method", "method", "method", "method"]
+#     #   ,fixed_entities =["geologists", "Earth","asphaltene", "Eagle ford", "Nitrogen", "industry"],
+#     #  sample_entities = ["method", "method", "method", "method", "method"]
             
 #     ,user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. Please Identify the entity which is the subject and the entity which is object based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Determine whether the entity labels provided match the subject type and object type and correct if needed. Also provide the predicate type. Answer:"
 #     # ,fixed_entities =["modeling", "sonic", "symmetry","isotropy", "Carbonate", "Clastic", "Porosity", "Permeability", "Oil saturation", "Water saturation", "Gas saturation", "Depth", "Size", "Temperature", "Pressure", "Oil viscosity", "Gas-oil ratio", "Water cut", "Recovery factor", "Enhanced recovery technique", "Horizontal drilling", "Hydraulic fracturing", "Water injection", "Gas injection", "Steam injection", "Seismic activity", "Structural deformation", "Faulting", "Cap rock integrity", "Compartmentalization", "Connectivity", "Production rate", "Depletion rate", "Exploration technique", "Drilling technique", "Completion technique", "Environmental impact", "Regulatory compliance", "Economic analysis", "Market analysis", "oil well", "gas well", "oil field", "Gas field", "eagle ford shale", "ghawar", "johan sverdrup", "karachaganak", "maracaibo"],
 #     # sample_entities = ["method","method","method","method", "rock_type", "rock_type", "reservoir_property", "reservoir_property", "reservoir_property", "reservoir_property", "reservoir_property", "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic", "reservoir_characteristic", "reservoir_property", "reservoir_property", "production_metric", "production_metric", "recovery_technique", "drilling_technique", "recovery_technique", "recovery_technique", "recovery_technique", "recovery_technique", "geological_feature", "geological_feature", "geological_feature", "reservoir_feature", "reservoir_feature", "reservoir_feature", "production_metric", "production_metric", "exploration_method", "drilling_method", "completion_method", "environmental_aspect", "regulatory_aspect", "economic_aspect", "economic_aspect", "hydrocarbon_source", "hydrocarbon_source", "hydrocarbon_source", "hydrocarbon_source", "reservoir", "reservoir", "reservoir", "reservoir", "reservoir"]
-#             , is_confined_search = True
+#             # , is_confined_search = True
 #     )
 #     llm_instance = BERTLLM(result_queue, gpt_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):

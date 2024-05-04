@@ -123,7 +123,6 @@ class Fixed_Entities_LLM(BaseEngine):
     
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
-        number_sentences = 0
         try:
             doc_source = data.doc_source
             if not Fixed_Entities_LLM.validate_ingested_tokens(data):
@@ -146,12 +145,10 @@ class Fixed_Entities_LLM(BaseEngine):
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
                     content = self.predicate_context_extractor.find_predicate_sentences(content)
-                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entity_pairs:
-                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
+                (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
             else:
                 return
             if self.sample_entities:
