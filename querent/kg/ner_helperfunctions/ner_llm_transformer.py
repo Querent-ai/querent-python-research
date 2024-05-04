@@ -1,3 +1,4 @@
+import json
 import spacy
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 import torch
@@ -9,6 +10,8 @@ import os
 from querent.kg.ner_helperfunctions.dependency_parsing import Dependency_Parsing
 from unidecode import unidecode
 import re
+from collections import Counter
+
 
 
 """
@@ -267,7 +270,7 @@ class NER_LLM:
             self.logger.error(f"Error extracting binary pairs: {e}")
         return binary_pairs
     
-    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=1.0):
+    def extract_fixed_entities_from_chunk(self, chunk: List[str], fixed_entities: List[str], entity_types: List[str], default_score=None):
         results = []
         merged_chunk = []  # List to hold merged tokens
         current_word = ""  # String to accumulate current word pieces
@@ -302,16 +305,32 @@ class NER_LLM:
 
                     if start_idx is not None:
                         label = entity_types[normalized_entities.index(entity)] if normalized_entities.index(entity) < len(entity_types) else 'Unknown'
+                        # Calculate score if not provided
+                        score = default_score if default_score is not None else 1.0  # Example default score calculation
                         results.append({
                             "entity": entity,
                             "label": label,
-                            "score": default_score,
+                            "score": score,
                             "start_idx": start_idx
                         })
         except Exception as e:
             self.logger.error(f"Error extracting fixed entities from merged chunk: {e}")
 
         return sorted(results, key=lambda x: x['start_idx'])
+
+    
+    def filter_matching_entities(self, tuples_nested_list, entities_nested_list):
+        matched_tuples = []
+        for entities_list in entities_nested_list:
+            for entity_dict in entities_list:
+                entity_name = entity_dict['entity']
+                for tuples_list in tuples_nested_list:
+                    for tup in tuples_list:
+                        if entity_name in tup[0] or entity_name in tup[2]:
+                            if tup not in matched_tuples:
+                                matched_tuples.append(tup)
+
+        return matched_tuples
 
 
 
@@ -340,6 +359,31 @@ class NER_LLM:
             return entities_withnnchunk, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
+    
+    
+    def get_entity_pairs(self, isConfinedSearch, fixed_entities, sample_entities, content):
+        entity = []
+        doc_entity_pairs = []
+        tokens = self._tokenize_and_chunk(content)
+        for tokenized_sentence, original_sentence, sentence_idx in tokens:
+            (entities, entity_pairs,) = self.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],isConfinedSearch, fixed_entities, sample_entities)
+            if entity_pairs:
+                doc_entity_pairs.append(self.transform_entity_pairs(entity_pairs))
+            if entities:
+                entity.append(entities)
+        return (entity, doc_entity_pairs)
+    
+    def final_ingested_images_tuples(self, filtered_triples, create_embeddings):
+        entity, info_json, second_entity = filtered_triples
+        info = json.loads(info_json)
+        info['subject_type'] = info.pop('entity1_label')
+        info['object_type'] = info.pop('entity2_label')
+        info['predicate'] = "has image"
+        info['predicate_type'] = "has image"
+        info['context_embeddings'] = create_embeddings.get_embeddings([info['context']])[0]
+        updated_json = json.dumps(info)
+        updated_tuple = (entity, updated_json, second_entity)
+        return updated_tuple
     
     def remove_duplicates(self, data):
         seen = set()

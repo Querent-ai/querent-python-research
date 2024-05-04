@@ -13,5 +13,6 @@ class TextCleanupProcessor(AsyncProcessor):
         data = data.replace("\\n", " ").replace("\\t", " ")
         data = re.sub(r'\\x[0-9a-fA-F]{2}', '', data)
         data = data.replace("\n", " ").replace("\r", " ").replace("\t", " ")
+        data = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]+', '', data)
 
         return data

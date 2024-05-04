@@ -26,9 +26,9 @@
 #     collector = collector_factory.resolve(uri, config)
 
 #     ingestor_factory_manager = IngestorFactoryManager()
-#     ingestor_factory = await ingestor_factory_manager.get_factory("doc")
+#     ingestor_factory = await ingestor_factory_manager.get_factory("docx")
 
-#     ingestor = await ingestor_factory.create("doc", [])
+#     ingestor = await ingestor_factory.create("docx", [])
 
 #     # Collect and ingest the PDF
 #     ingested_call = ingestor.ingest(collector.poll())
@@ -42,7 +42,7 @@
 #             assert ingested.file is not None
 #             counter += 1
 #         # 2 extra IngestedTokens are repreenting end of files
-#         assert counter == 4
+#         assert counter == 5
 
 #     await poll_and_print()
 

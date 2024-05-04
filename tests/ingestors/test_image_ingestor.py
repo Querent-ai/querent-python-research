@@ -38,7 +38,7 @@ async def test_collect_and_ingest_jpg():
             assert ingested.file is not None
             # 1 extra IngestedTokens to signify end of file
             counter += 1
-        assert counter == 2
+        assert counter == 6
 
     await poll_and_print()
 

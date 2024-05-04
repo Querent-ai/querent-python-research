@@ -1,5 +1,10 @@
 import json
+import re
 from transformers import AutoTokenizer
+import time
+
+import unidecode
+from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
@@ -113,8 +118,77 @@ class BERTLLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
-        return super().process_images(data)
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
+    async def process_images(self, data: IngestedImages):
+        content = ""
+        doc_entity_pairs = []
+        doc_entity_pairs_ocr = []
+        entity_ocr = []
+        results = []
+        blob = data.image
+        try:
+            doc_source = data.doc_source
+            if not BERTLLM.validate_ingested_images(data):
+                self.set_termination_event()                                      
+                return
+            if data.ocr_text:
+                ocr_text = ' '.join(data.ocr_text)
+            if data.text:
+                content = ' '.join(data.text)
+            file = data.file
+            ocr_content = ocr_text
+            if ocr_content or content:
+                (entity_ocr, doc_entity_pairs_ocr) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=ocr_content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
+                if len(doc_entity_pairs_ocr) >= 1:
+                    results = doc_entity_pairs_ocr
+                elif len(doc_entity_pairs_ocr) == 0:
+                    if content:
+                        if self.fixed_entities:
+                            content = self.entity_context_extractor.find_entity_sentences(content)
+                        (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
+                        if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
+                            results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
+                        elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
+                            results = doc_entity_pairs
+                    else:
+                        return        
+                if len(results) > 0:
+                    doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
+                    filtered_triples = process_data(doc_entity_pairs, file)
+                    if self.skip_inferences:
+                        return filtered_triples, file, self.ner_llm_instance
+                    else:
+                        unique_id = str(hash(data.image))
+                        for triple in filtered_triples:
+                            if not self.termination_event.is_set():
+                                updated_tuple = self.ner_llm_instance.final_ingested_images_tuples(triple, create_embeddings=self.create_emb)
+                                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
+                                if graph_json:
+                                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                                    await self.set_state(new_state=current_state)
+                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
+                                if vector_json:
+                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
+                                    await self.set_state(new_state=current_state)
+            else:
+                return        
+        except Exception as e:
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+    
+    async def process_tables(self, data: IngestedTables):
+        return super().process_tables(data)
 
     async def process_code(self, data: IngestedCode):
         return super().process_code(data)
@@ -144,7 +218,6 @@ class BERTLLM(BaseEngine):
     
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
-        number_sentences = 0
         try:
             doc_source = data.doc_source
             if not BERTLLM.validate_ingested_tokens(data):
@@ -152,8 +225,8 @@ class BERTLLM(BaseEngine):
                     return
             if data.data:
                 single_string = ' '.join(data.data)
-                # clean_text = unidecode(single_string)
                 clean_text = single_string
+                
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -167,12 +240,10 @@ class BERTLLM(BaseEngine):
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
                     content = self.predicate_context_extractor.find_predicate_sentences(content)
-                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entity_pairs:
-                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
+                (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
             else:
                 return
             if self.sample_entities:
@@ -212,11 +283,11 @@ class BERTLLM(BaseEngine):
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                                 if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                                 vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                                 if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             else:
                                 return

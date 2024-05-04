@@ -1,5 +1,7 @@
 import json
 from transformers import AutoTokenizer
+import time
+from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
 from querent.config.core.opensource_llm_config import Opensource_LLM_Config
@@ -93,8 +95,11 @@ class Fixed_Entities_LLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
-        return super().process_images(data)
+    def process_tables(self, data: IngestedTables):
+        pass
+
+    async def process_images(self, data: IngestedImages):
+        pass
 
     async def process_code(self, data: IngestedCode):
         return super().process_code(data)
@@ -106,25 +111,18 @@ class Fixed_Entities_LLM(BaseEngine):
             return False
 
         return True
-
-    def count_entity_pairs(self, doc_entity_pairs):
-        total_pairs = 0
-        for inner_list in doc_entity_pairs:
-            total_pairs += len(inner_list)
-            
-        return total_pairs
     
-    def set_filter_params(self, **kwargs):
-        self.filter_params = kwargs
-        if self.triple_filter:
-            self.triple_filter.set_params(**kwargs)
-        else:
-            self.triple_filter = TripleFilter(**kwargs)
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
     
     
     async def process_tokens(self, data: IngestedTokens):
         doc_entity_pairs = []
-        number_sentences = 0
         try:
             doc_source = data.doc_source
             if not Fixed_Entities_LLM.validate_ingested_tokens(data):
@@ -147,12 +145,10 @@ class Fixed_Entities_LLM(BaseEngine):
                     content = self.entity_context_extractor.find_entity_sentences(content)
                 if self.fixed_relationships:
                     content = self.predicate_context_extractor.find_predicate_sentences(content)
-                tokens = self.ner_llm_instance._tokenize_and_chunk(content)
-                for tokenized_sentence, original_sentence, sentence_idx in tokens:
-                    (entities, entity_pairs,) = self.ner_llm_instance.extract_entities_from_sentence(original_sentence, sentence_idx, [s[1] for s in tokens],self.isConfinedSearch, self.fixed_entities, self.sample_entities)
-                    if entity_pairs:
-                        doc_entity_pairs.append(self.ner_llm_instance.transform_entity_pairs(entity_pairs))
-                    number_sentences = number_sentences + 1
+                (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
+                                                                                                  content=content,
+                                                                                                  fixed_entities=self.fixed_entities,
+                                                                                                  sample_entities=self.sample_entities)
             else:
                 return
             if self.sample_entities:
@@ -174,11 +170,11 @@ class Fixed_Entities_LLM(BaseEngine):
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                                 if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Graph,timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                                 vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                                 if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
+                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source)
                                     await self.set_state(new_state=current_state)
                             else:
                                 return

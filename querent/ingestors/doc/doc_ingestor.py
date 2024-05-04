@@ -8,6 +8,7 @@ import base64
 import pytesseract
 import uuid
 from PIL import Image
+from querent.common.types.ingested_table import IngestedTables
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -97,14 +98,26 @@ class DocIngestor(BaseIngestor):
                 file=collected_bytes.file, data=text, error=None, doc_source=doc_source
             )
 
-            # i = 1
-            # for rel in doc.part.rels.values():
-            #     if "image" in rel.reltype:
-            #         image = rel.target_part.blob 
-            #         ocr_text = await self.process_image(image)
-            #         encoded_image = base64.b64encode(image)
-            #         yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=ocr_text, error=None, coordinates=None)
-            #         i += 1
+            i = 1
+            # for table in doc.tables:
+            #     table_data = []
+            #     for row in table.rows:
+            #         row_data = []
+            #         for cell in row.cells:
+            #             row_data.append(cell.text.strip())
+            #         table_data.append(row_data)
+            #     yield IngestedTables(file=collected_bytes.file, table = table_data, page_num = i, text = text, error=None)
+
+            i = 1
+            for rel in doc.part.rels.values():
+                if "image" in rel.reltype:
+                    image = rel.target_part.blob 
+                    ocr_text = await self.process_image(image)
+                    if not ocr_text:
+                        continue
+                    encoded_image = base64.b64encode(image)
+                    yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=[ocr_text], error=None, coordinates=None)
+                    i += 1
 
         elif file_extension == "doc":
             current_doc_text = await self.temp_extract_from(collected_bytes)
@@ -165,6 +178,10 @@ class DocIngestor(BaseIngestor):
             image_stream = io.BytesIO(image_blob)
 
             image = Image.open(image_stream)
+
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
 
             ocr_text = pytesseract.image_to_string(image)
 
