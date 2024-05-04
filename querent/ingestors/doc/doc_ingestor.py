@@ -113,6 +113,8 @@ class DocIngestor(BaseIngestor):
                 if "image" in rel.reltype:
                     image = rel.target_part.blob 
                     ocr_text = await self.process_image(image)
+                    if not ocr_text:
+                        continue
                     encoded_image = base64.b64encode(image)
                     yield IngestedImages(file = collected_bytes.file, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=[ocr_text], error=None, coordinates=None)
                     i += 1
@@ -176,6 +178,10 @@ class DocIngestor(BaseIngestor):
             image_stream = io.BytesIO(image_blob)
 
             image = Image.open(image_stream)
+
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
 
             ocr_text = pytesseract.image_to_string(image)
 

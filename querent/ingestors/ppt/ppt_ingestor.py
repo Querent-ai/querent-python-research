@@ -93,6 +93,8 @@ class PptIngestor(BaseIngestor):
                             text.append(shape.text)
                         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (shape.shape_type in [MSO_SHAPE_TYPE.PLACEHOLDER, MSO_SHAPE_TYPE.AUTO_SHAPE] and hasattr(shape, "image")):
                             ocr_text = await self.process_image(shape)
+                            if not ocr_text:
+                                continue
                             yield IngestedImages(file=collected_bytes.file, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
 
                         if shape.has_table:
@@ -151,6 +153,10 @@ class PptIngestor(BaseIngestor):
             # Retrieve image as a BytesIO object
             image_stream = io.BytesIO(shape.image.blob)
             image = Image.open(image_stream)
+
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
 
             # Perform OCR using pytesseract
             ocr_text = pytesseract.image_to_string(image)

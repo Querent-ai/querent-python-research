@@ -143,18 +143,14 @@ class BERTLLM(BaseEngine):
                 content = ' '.join(data.text)
             file = data.file
             ocr_content = ocr_text
-            print("Going to run the function from Ingested Images", ocr_content)             
             if ocr_content or content:
                 (entity_ocr, doc_entity_pairs_ocr) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
                                                                                                   content=ocr_content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
-                print("Entity Pairs from  OCRRRRRRR-------------", doc_entity_pairs_ocr)
-                print("OCR entities-------------", entity_ocr)
                 if len(doc_entity_pairs_ocr) >= 1:
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:
-                    print("Will only run if ocr has no pairs--")
                     if content:
                         if self.fixed_entities:
                             content = self.entity_context_extractor.find_entity_sentences(content)
@@ -162,21 +158,16 @@ class BERTLLM(BaseEngine):
                                                                                                   content=content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
-                        print("Results from Content-------------", doc_entity_pairs)
                         if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
-                            print("Results from OCR entities and doc entity pairs-------------", entity_ocr)
                             results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
                         elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
-                            # print("Results from only contenttttt doc entity pairs-------------", doc_entity_pairs)
                             results = doc_entity_pairs
                     else:
                         return        
                 if len(results) > 0:
-                    print("Going to remove duplicates------")
                     doc_entity_pairs = self.ner_llm_instance.remove_duplicates(results)
                     filtered_triples = process_data(doc_entity_pairs, file)
                     if self.skip_inferences:
-                        print("Handing over to GPT-------------------------------------------------")
                         return filtered_triples, file, self.ner_llm_instance
                     else:
                         unique_id = str(hash(data.image))
@@ -194,7 +185,6 @@ class BERTLLM(BaseEngine):
             else:
                 return        
         except Exception as e:
-            print("Exception -----------------", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
     
     async def process_tables(self, data: IngestedTables):
@@ -236,7 +226,6 @@ class BERTLLM(BaseEngine):
             if data.data:
                 single_string = ' '.join(data.data)
                 clean_text = single_string
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", clean_text)
                 
             else:
                 clean_text = data.data
@@ -309,5 +298,4 @@ class BERTLLM(BaseEngine):
             else:
                 return
         except Exception as e:
-            print("Exception in BERTYYYYYY", e)
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")

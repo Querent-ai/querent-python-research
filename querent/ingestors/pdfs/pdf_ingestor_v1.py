@@ -161,11 +161,9 @@ class PdfIngestor(BaseIngestor):
                 image_data = img["image"]
                 image_ext = img["ext"]
 
-                image_status, aspect_ratio = await self.analyze_image(image_data)
-                if image_status != "Image accepted":
-                    continue
-
                 ocr_text = await self.get_ocr_from_image(image=img["image"])
+                if not ocr_text:
+                    continue
 
                 # Adjust page_num for 0-indexed access and check if it's within range
                 page_index = page_num - 1
@@ -185,25 +183,15 @@ class PdfIngestor(BaseIngestor):
                     doc_source=doc_source,
                 )
 
-    async def analyze_image(self, image_bytes):
-        image = Image.open(io.BytesIO(image_bytes))
-
-        width, height = image.size
-
-        aspect_ratio = width / height
-
-        min_dimension = 100
-
-        # Check if image meets the criteria
-        if width < min_dimension and height < min_dimension:
-            return "Image too small", aspect_ratio
-        else:
-            return "Image accepted", aspect_ratio
 
     async def get_ocr_from_image(self, image):
         """Implement this to return ocr text of the image"""
         try:
             image = Image.open(io.BytesIO(image))
+
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
             text = pytesseract.image_to_string(image)
         except Exception as e:
             self.logger.error("Exception-{e}")
