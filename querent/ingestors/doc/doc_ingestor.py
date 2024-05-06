@@ -116,7 +116,7 @@ class DocIngestor(BaseIngestor):
                     if not ocr_text:
                         continue
                     encoded_image = base64.b64encode(image)
-                    yield IngestedImages(file = collected_bytes.file, doc_source=doc_source, image = encoded_image.decode('utf-8'), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=[ocr_text], error=None, coordinates=None)
+                    yield IngestedImages(file = collected_bytes.file, doc_source=doc_source, image = str(encoded_image), image_name=str(uuid.uuid4()), page_num=i, text=text, ocr_text=[ocr_text], error=None, coordinates=None)
                     i += 1
 
         elif file_extension == "doc":

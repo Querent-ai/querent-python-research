@@ -174,7 +174,7 @@ class PdfIngestor(BaseIngestor):
 
                 yield IngestedImages(
                     file=file_path,
-                    image=base64.b64encode(image_data).decode('utf-8'),
+                    image=str(base64.b64encode(image_data)),
                     image_name=f"{str(uuid.uuid4())}.{image_ext}",
                     page_num=page_num,
                     text=[text_content],
