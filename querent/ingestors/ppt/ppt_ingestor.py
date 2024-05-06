@@ -95,7 +95,7 @@ class PptIngestor(BaseIngestor):
                             ocr_text = await self.process_image(shape)
                             if not ocr_text:
                                 continue
-                            yield IngestedImages(file=collected_bytes.file, doc_source=doc_source, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
+                            yield IngestedImages(file=collected_bytes.file, doc_source=doc_source, image=pybase64.b64encode(shape.image.blob.decode("utf-8")), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
 
                         if shape.has_table:
                             table = shape.table
