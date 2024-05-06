@@ -188,7 +188,6 @@ class GPTNERLLM(BaseEngine):
             doc_source = data.doc_source
             if data.data:
                 clean_text = ' '.join(data.data)
-                #clean_text = unidecode(single_string)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -258,7 +257,8 @@ class GPTNERLLM(BaseEngine):
                                     await self.set_state(new_state=current_state)
                         else:
                             return
-
+            else:
+                return
         except Exception as e:
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT NER LLM class. {e}")
     

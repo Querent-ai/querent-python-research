@@ -17,6 +17,8 @@
 # from querent.querent.resource_manager import ResourceManager
 # from querent.querent.querent import Querent
 # import time
+# from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
+# from querent.config.core.gpt_llm_config import GPTConfig
 
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
@@ -46,9 +48,10 @@
 #     )
 #     ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
 #     resource_manager = ResourceManager()
-#     bert_llm_config = LLM_Config(
+#     bert_llm_config = GPTConfig(
 #     # ner_model_name="botryan96/GeoBERT",
 #     enable_filtering=True,
+#     openai_api_key="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",
 #     filter_params={
 #             'score_threshold': 0.5,
 #             'attention_score_threshold': 0.1,
@@ -82,12 +85,12 @@
 #     "Influential",
 #     "Collaborative",
 #     "Enriching"
-# ] 
+# ]  
 #             ,is_confined_search = True
         
-#     ,user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
+#     ,user_context="Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
 #     )
-#     llm_instance = BERTLLM(result_queue, bert_llm_config)
+#     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
 #         def handle_event(self, event_type: EventType, event_state: EventState):
 #             if event_state['event_type'] == EventType.Graph:
@@ -98,7 +101,6 @@
 #                 triple = json.loads(event_state['payload'])
 #                 print("id: {}".format(triple['id']))
 #                 print("namespace: {}".format(triple['namespace']))
-                
 #     llm_instance.subscribe(EventType.Graph, StateChangeCallback())
 #     llm_instance.subscribe(EventType.Vector, StateChangeCallback())
 #     querent = Querent(

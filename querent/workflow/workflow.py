@@ -38,6 +38,13 @@ async def start_workflow(config_dict: dict):
             if engine_params.get("enable_filtering") is not None:
                 engine_params_json["enable_filtering"] = engine_params.get("enable_filtering")
             
+            if engine_params.get("fixed_relationships") is not None:
+                engine_params_json["fixed_relationships"] = [x for x in engine_params.get("fixed_relationships").split(",")]
+            
+            if engine_params.get("sample_relationships") is not None:
+                engine_params_json["sample_relationships"] = [x for x in engine_params.get("sample_relationships").split(",")]
+            
+            
             engine_params_json["filter_params"] = {
                 "score_threshold": float(engine_params.get("score_threshold")) if engine_params.get("score_threshold") is not None else None,
                 "attention_score_threshold": float(engine_params.get("attention_score_threshold")) if engine_params.get("attention_score_threshold") is not None else None,

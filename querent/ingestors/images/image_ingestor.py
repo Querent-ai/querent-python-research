@@ -57,7 +57,7 @@ class ImageIngestor(BaseIngestor):
                         )
                         if text is not None:
                             yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
-                            yield IngestedImages(file=current_file, image=base64.b64encode(collected_bytes).decode('utf-8'), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
+                            yield IngestedImages(file=current_file, image=str(base64.b64encode(collected_bytes)), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
                             yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
                     current_file = chunk_bytes.file
@@ -71,7 +71,7 @@ class ImageIngestor(BaseIngestor):
                 )
                 if text is not None:
                     yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
-                    yield IngestedImages(file=current_file, image=base64.b64encode(collected_bytes).decode('utf-8'), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
+                    yield IngestedImages(file=current_file, image=str(base64.b64encode(collected_bytes)), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
                     yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
         except Exception as e:

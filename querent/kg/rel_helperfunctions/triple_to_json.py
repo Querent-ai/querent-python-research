@@ -38,11 +38,11 @@ class TripleToJsonConverter:
                 return {}
 
             json_object = {
-                "subject": TripleToJsonConverter._normalize_text(subject),
+                "subject": TripleToJsonConverter._normalize_text(subject, replace_space=True),
                 "subject_type": TripleToJsonConverter._normalize_text(predicate_info.get("subject_type", "Unlabeled"), replace_space=True),
-                "object": TripleToJsonConverter._normalize_text(object_),
+                "object": TripleToJsonConverter._normalize_text(object_, replace_space=True),
                 "object_type": TripleToJsonConverter._normalize_text(predicate_info.get("object_type", "Unlabeled"), replace_space=True),
-                "predicate": TripleToJsonConverter._normalize_text(predicate_info.get("predicate", "")),
+                "predicate": TripleToJsonConverter._normalize_text(predicate_info.get("predicate", ""), replace_space=True),
                 "predicate_type": TripleToJsonConverter._normalize_text(predicate_info.get("predicate_type", "Unlabeled"), replace_space=True),
                 "sentence": predicate_info.get("context", "").lower()
             }
@@ -59,9 +59,9 @@ class TripleToJsonConverter:
             if data is None:
                 return {}
 
-            id_format = f"{TripleToJsonConverter._normalize_text(subject)}-{TripleToJsonConverter._normalize_text(data.get('predicate', ''))}-{TripleToJsonConverter._normalize_text(object_)}"
+            id_format = f"{TripleToJsonConverter._normalize_text(subject,replace_space=True)}-{TripleToJsonConverter._normalize_text(data.get('predicate', ''),replace_space=True)}-{TripleToJsonConverter._normalize_text(object_,replace_space=True)}"
             json_object = {
-                "id": TripleToJsonConverter._normalize_text(id_format,replace_space=True).replace(",","_"),
+                "id": TripleToJsonConverter._normalize_text(id_format),
                 "embeddings": data.get("context_embeddings", []),
                 "size": len(data.get("context_embeddings", [])),
                 "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True),
@@ -77,7 +77,7 @@ class TripleToJsonConverter:
     @staticmethod
     def replace_special_chars_with_underscore(data):
         # This pattern will match anything that is not a letter, number, or underscore
-        pattern = r'[^-a-zA-Z0-9_]'
+        pattern = r'[^a-zA-Z0-9_]'
         # Replace matched patterns with an underscore
         return re.sub(pattern, '_', data)
         

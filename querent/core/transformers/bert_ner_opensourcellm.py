@@ -29,21 +29,6 @@ from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 
-"""
-    BERTLLM is a class derived from BaseEngine designed for processing language models, particularly focusing on named entity recognition and relationship extraction in text. It integrates various components for handling different types of input data (messages, images, code, tokens), extracting entities, filtering relevant information, and constructing knowledge graphs.
-
-    Key functionalities include:
-    - Initializing with a specific configuration for named entity recognition (NER) and language model processing.
-    - Validating the presence of NER models and tokenizers.
-    - Processing various types of input data like messages, images, code, and tokens.
-    - Implementing methods for counting entity pairs, setting filter parameters, and processing tokens.
-    - Extracting and clustering entities and relationships from the text, and converting them into graph and vector formats.
-    - Handling errors and maintaining robustness in data processing.
-
-    The class also incorporates mechanisms for filtering and clustering entities and relationships, as well as extracting embeddings and generating output in different formats.
-    """
-
-
 class BERTLLM(BaseEngine):
     def __init__(
         self,
@@ -100,8 +85,12 @@ class BERTLLM(BaseEngine):
                 raise ValueError("If specific predicates are provided, their types should also be provided.")
             if self.fixed_relationships and self.sample_relationships:
                 self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.fixed_relationships, self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             elif self.sample_relationships:
                 self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
+                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(relationship_types=self.sample_relationships)
+                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
             else:
                 self.predicate_context_extractor = None
             self.user_context = config.user_context
@@ -224,9 +213,7 @@ class BERTLLM(BaseEngine):
                     self.set_termination_event()                                      
                     return
             if data.data:
-                single_string = ' '.join(data.data)
-                clean_text = single_string
-                
+                clean_text = ' '.join(data.data)
             else:
                 clean_text = data.data
             if not data.is_token_stream : 
@@ -248,7 +235,7 @@ class BERTLLM(BaseEngine):
                 return
             if self.sample_entities:
                 doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
-            if doc_entity_pairs and any(doc_entity_pairs):
+            if any(doc_entity_pairs):
                 doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
                 if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
@@ -262,11 +249,9 @@ class BERTLLM(BaseEngine):
                     clustered_triples = cluster_output['filtered_triples']
                     cluster_labels = cluster_output['cluster_labels']
                     cluster_persistence = cluster_output['cluster_persistence']
-                    # final_clustered_triples = self.triple_filter.filter_by_cluster_persistence(pairs_with_predicates, cluster_persistence, cluster_labels)
                     if clustered_triples:
                         filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
                     else:
-                        # filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
                         self.logger.debug(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
                         filtered_triples = pairs_with_predicates
                 else:
@@ -274,11 +259,16 @@ class BERTLLM(BaseEngine):
                 if not filtered_triples:
                     return
                 elif not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples)
+                    relationships = self.semantic_extractor.process_tokens(filtered_triples, fixed_entities=(len(self.sample_entities) >= 1))
                     if len(relationships) > 0:
-                        embedding_triples = self.create_emb.generate_embeddings(relationships)
+                        if self.fixed_relationships and self.sample_relationships:
+                            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
+                        elif self.sample_relationships:
+                            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
+                        else:
+                            embedding_triples = self.create_emb.generate_embeddings(relationships)
                         if self.sample_relationships:
-                            embedding_triples = self.predicate_context_extractor.process_predicate_types(embedding_triples)
+                            embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
                         for triple in embedding_triples:
                             if not self.termination_event.is_set():
                                 graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
