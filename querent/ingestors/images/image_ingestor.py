@@ -1,5 +1,8 @@
 from typing import List, AsyncGenerator
+import base64
+import uuid
 from querent.common.types.collected_bytes import CollectedBytes
+from querent.common.types.ingested_images import IngestedImages
 from querent.ingestors.base_ingestor import BaseIngestor
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
@@ -52,8 +55,10 @@ class ImageIngestor(BaseIngestor):
                         text = await self.extract_and_process_image(
                             CollectedBytes(file=current_file, data=collected_bytes)
                         )
-                        yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
-                        yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
+                        if text is not None:
+                            yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
+                            yield IngestedImages(file=current_file, image=base64.b64encode(collected_bytes).decode('utf-8'), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
+                            yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
                     current_file = chunk_bytes.file
                     collected_bytes = b""
@@ -64,19 +69,26 @@ class ImageIngestor(BaseIngestor):
                 text = await self.extract_and_process_image(
                     CollectedBytes(file=current_file, data=collected_bytes)
                 )
-                yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
-                yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
+                if text is not None:
+                    yield IngestedTokens(file=current_file, data=[text], error=None, doc_source=chunk_bytes.doc_source)
+                    yield IngestedImages(file=current_file, image=base64.b64encode(collected_bytes).decode('utf-8'), image_name=f"{str(uuid.uuid4())}.{chunk_bytes.extension}", page_num=0, text=[], ocr_text=[text], doc_source=chunk_bytes.doc_source)
+                    yield IngestedTokens(file=current_file, data=None, error=None, doc_source=chunk_bytes.doc_source)
 
         except Exception as e:
             yield IngestedTokens(file=current_file, data=None, error=f"Exception: {e}", doc_source=chunk_bytes.doc_source)
 
     async def extract_and_process_image(self, collected_bytes: CollectedBytes) -> str:
         text = await self.extract_text_from_image(collected_bytes)
+        if not text:
+            return
         return await self.process_data(text)
 
     async def extract_text_from_image(self, collected_bytes: CollectedBytes) -> str:
         try:
             image = Image.open(io.BytesIO(collected_bytes.data))
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
 
         except FileNotFoundError as exc:
             raise FileNotFoundError(

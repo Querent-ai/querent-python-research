@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 import asyncio
+import time
 from querent.callback.event_callback_dispatcher import EventCallbackDispatcher
 from querent.callback.event_callback_interface import EventCallbackInterface
 from querent.common.types.ingested_images import IngestedImages
 from querent.common.types.ingested_messages import IngestedMessages
+from querent.common.types.ingested_table import IngestedTables
 from querent.common.types.ingested_tokens import IngestedTokens
 from querent.common.types.ingested_code import IngestedCode
 from querent.common.types.querent_event import EventState, EventType
@@ -121,6 +123,18 @@ class BaseEngine(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def process_tables(self, data: IngestedTables):
+        """
+        Process tables asynchronously.
+        Args:
+            data (IngestedTables): The input data to process.
+        Returns:
+            EventState: The state of the event is set with the event type and the timestamp
+            of the event and set using `self.set_state(event_state)`.
+        """
+        pass
+
+    @abstractmethod
     async def process_images(self, data: IngestedImages):
         """
         Process image files asynchronously.
@@ -177,6 +191,7 @@ class BaseEngine(ABC):
         while not self.state_queue.empty() or not self.termination_event.is_set():
             new_state = await self.state_queue.get()
             if isinstance(new_state, EventState):
+                image_id = new_state.image_id
                 if new_state.payload == "Terminate":
                     break
                 new_state = {
@@ -186,6 +201,8 @@ class BaseEngine(ABC):
                     "file": new_state.file,
                     "doc_source": new_state.doc_source,
                 }
+                if image_id is not None:
+                    new_state["image_id"] = image_id
                 await self._notify_subscribers(new_state["event_type"], new_state)
             else:
                 raise Exception(
@@ -232,16 +249,19 @@ class BaseEngine(ABC):
                             await self.process_images(data)
                         elif isinstance(data, IngestedCode):
                             await self.process_code(data)
+                        elif isinstance(data, IngestedTables):
+                            continue
+                            # await self.process_tables(data)
                         elif data is None:
                             none_counter += 1
                             if none_counter >= 2:
                                 self.termination_event.set()
-                                current_state = EventState(EventType.Terminate,1.0, "Terminate", "temp.txt")
+                                current_state = EventState(EventType.Terminate,time.time(), "Terminate", "temp.txt")
                                 await self.set_state(new_state=current_state)
 
                         else:
                             raise Exception(
-                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages}"
+                                f"Invalid data type {type(data)} for {self.__class__.__name__}. Supported type: {IngestedTokens, IngestedMessages, IngestedTables, IngestedImages}"
                             )
                     except Exception as e:
                         self.logger.error(

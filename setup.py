@@ -43,6 +43,7 @@ requirements = [
     "openpyxl==3.1.2",
     "pandas==2.1.4",
     "pdfminer==20191125",
+    "pdfplumber==0.10.0",
     "pillow==10.3.0",
     "prometheus-client==0.17.1",
     "psutil==5.9.8",
@@ -78,7 +79,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="querent",
-    version="3.0.8",
+    version="3.0.9",
     author="Querent AI",
     description="The Asynchronous Data Dynamo and Graph Neural Network Catalyst",
     long_description=long_description,

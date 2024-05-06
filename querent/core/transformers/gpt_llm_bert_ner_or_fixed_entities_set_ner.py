@@ -1,4 +1,7 @@
 import json
+import re
+import time
+from querent.common.types.ingested_table import IngestedTables
 from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
@@ -83,6 +86,10 @@ class GPTLLM(BaseEngine):
                 self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config, self.create_emb)
             else :
                 self.llm_instance = BERTLLM(input_queue, llm_config, self.create_emb)
+            if not isinstance (self.llm_instance, BERTLLM):
+                self.process_image_instance = BERTLLM(input_queue, llm_config, self.create_emb)
+            else:
+                self.process_image_instance = self.llm_instance
             self.rel_model_name = config.rel_model_name
             if config.openai_api_key:
                 self.gpt_llm = OpenAI(api_key=config.openai_api_key)
@@ -100,14 +107,48 @@ class GPTLLM(BaseEngine):
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
     
-    def process_images(self, data: IngestedImages):
-        return super().process_messages(data)
+    async def process_images(self, data: IngestedImages):
+        try:
+            if not GPTLLM.validate_ingested_images(data):
+                    self.set_termination_event()                    
+                    return 
+            blob = data.image
+            unique_id = str(hash(data.image))
+            doc_source = data.doc_source
+            result = await self.process_image_instance.process_images(data)  
+            if not result: return 
+            else:
+                filtered_triples, file, ner_instance = result
+                for triple in filtered_triples:
+                    updated_tuple = ner_instance.final_ingested_images_tuples(triple, create_embeddings=self.create_emb)
+                    graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(updated_tuple))
+                    if graph_json:
+                        current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
+                        await self.set_state(new_state=current_state)
+                    vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
+                    if vector_json:
+                        current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
+                        await self.set_state(new_state=current_state)
+
+        except Exception as e:
+            self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
 
     async def process_code(self, data: IngestedCode):
         return super().process_messages(data)
+    
+    async def process_tables(self, data: IngestedTables):
+        return super().process_tables(data)
 
     @staticmethod
     def validate_ingested_tokens(data: IngestedTokens) -> bool:
+        if data.is_error():
+            
+            return False
+
+        return True
+    
+    @staticmethod
+    def validate_ingested_images(data: IngestedImages) -> bool:
         if data.is_error():
             
             return False
@@ -286,7 +327,6 @@ class GPTLLM(BaseEngine):
             if not GPTLLM.validate_ingested_tokens(data):
                     self.set_termination_event()                    
                     return 
-            
             doc_source = data.doc_source
             relationships = []
             unique_keys = set()
@@ -326,12 +366,12 @@ class GPTLLM(BaseEngine):
                         if not self.termination_event.is_set():
                             graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
                             if graph_json:
-                                    current_state = EventState(EventType.Graph,1.0, graph_json, file, doc_source=doc_source)
-                                    await self.set_state(new_state=current_state)
+                                current_state = EventState(event_type=EventType.Graph,timestamp = time.time(), payload= graph_json, file=file, doc_source=doc_source)
+                                await self.set_state(new_state=current_state)
                             vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
                             if vector_json:
-                                    current_state = EventState(EventType.Vector,1.0, vector_json, file, doc_source=doc_source)
-                                    await self.set_state(new_state=current_state)
+                                current_state = EventState(event_type=EventType.Vector,timestamp=time.time(), payload = vector_json, file=file, doc_source=doc_source)
+                                await self.set_state(new_state=current_state)
                         else:
                             return
                 else:

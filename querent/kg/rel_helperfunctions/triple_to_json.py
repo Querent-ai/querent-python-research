@@ -52,7 +52,7 @@ class TripleToJsonConverter:
             raise Exception(f"Error in convert_graphjson: {e}")
 
     @staticmethod
-    def convert_vectorjson(triple):
+    def convert_vectorjson(triple, blob = None):
         try:
             subject, json_str, object_ = triple
             data = TripleToJsonConverter._parse_json_str(json_str)
@@ -65,7 +65,8 @@ class TripleToJsonConverter:
                 "embeddings": data.get("context_embeddings", []),
                 "size": len(data.get("context_embeddings", [])),
                 "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True),
-                "sentence": data.get("context", "").lower()
+                "sentence": data.get("context", "").lower(),
+                "blob": blob,
             }
 
             return json_object

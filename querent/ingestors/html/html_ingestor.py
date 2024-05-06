@@ -106,6 +106,8 @@ class HtmlIngestor(BaseIngestor):
                     image_data = base64.b64decode(base64_data)
                     image_ocr = await self.process_image(io.BytesIO(image_data))
 
+                    if not image_ocr:
+                        continue
                     yield IngestedImages(file = collected_bytes.file, image = base64_data, image_name = str(uuid.uuid4()), page_num=i, text = soup, ocr_text = image_ocr, coordinates= None, error= None, doc_source=doc_source)
                     i += 1
         except UnicodeDecodeError as exc:
@@ -138,6 +140,9 @@ class HtmlIngestor(BaseIngestor):
     async def process_image(self, image_stream):
         try:
             image = Image.open(image_stream)
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
             ocr_text = pytesseract.image_to_string(image)
             return ocr_text
         except Exception as e:

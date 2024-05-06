@@ -1,28 +1,20 @@
-from typing import Union
+from typing import Union, List
 
 
-class IngestedImages:
+class IngestedTables:
     def __init__(
         self,
         file: str,
-        image: str,
-        image_name: str,
+        table: List[List[Union[str, int, float]]],
         page_num: int,
-        text: [str], # type: ignore
-        coordinates: list = [],
-        ocr_text: list = [],
+        text: list = [],
         error: str = None,
-        doc_source = str,
     ) -> None:
         self.file = file
         self.text = text
         self.error = error
-        self.image = image
-        self.image_name = image_name
+        self.table = table
         self.page_num = page_num
-        self.coordinates = coordinates
-        self.ocr_text = ocr_text
-        self.doc_source = doc_source
         file = str(file)
         self.extension = file.split(".")[-1]
         self.file_id = file.split("/")[-1].split(".")[0]
@@ -30,7 +22,7 @@ class IngestedImages:
     def __str__(self):
         if self.error:
             return f"Error: {self.error}"
-        return f"Data: {self.ocr_text}"
+        return f"Data: {self.table}"
 
     def is_error(self) -> bool:
         return self.error is not None

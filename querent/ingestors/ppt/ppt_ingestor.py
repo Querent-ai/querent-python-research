@@ -11,6 +11,7 @@ import pytesseract
 import pybase64
 import uuid
 
+from querent.common.types.ingested_table import IngestedTables
 from querent.ingestors.ingestor_factory import IngestorFactory
 from querent.processors.async_processor import AsyncProcessor
 from querent.ingestors.base_ingestor import BaseIngestor
@@ -90,9 +91,22 @@ class PptIngestor(BaseIngestor):
                     for shape in slide.shapes:
                         if hasattr(shape, "text"):
                             text.append(shape.text)
-                        # if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (shape.shape_type in [MSO_SHAPE_TYPE.PLACEHOLDER, MSO_SHAPE_TYPE.AUTO_SHAPE] and hasattr(shape, "image")):
-                        #     ocr_text = await self.process_image(shape)
-                        #     yield IngestedImages(file=collected_bytes.file, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
+                        if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (shape.shape_type in [MSO_SHAPE_TYPE.PLACEHOLDER, MSO_SHAPE_TYPE.AUTO_SHAPE] and hasattr(shape, "image")):
+                            ocr_text = await self.process_image(shape)
+                            if not ocr_text:
+                                continue
+                            yield IngestedImages(file=collected_bytes.file, image=pybase64.b64encode(shape.image.blob), image_name=str(uuid.uuid4()), page_num=i, text = text, ocr_text=[ocr_text], coordinates=None)
+
+                        if shape.has_table:
+                            table = shape.table
+                            
+                            table_data = []
+                            # for row in table.rows:
+                            #     row_data = []
+                            #     for cell in row.cells:
+                            #         row_data.append(cell.text)
+                            #     table_data.append(row_data)
+                            # yield IngestedTables(file= collected_bytes.file, table=table_data, page_num=i, text=text, error=None)
                     slide_text = "\n".join(text)
                     processed_slide_text = await self.process_data(slide_text)
                     yield IngestedTokens(
@@ -139,6 +153,10 @@ class PptIngestor(BaseIngestor):
             # Retrieve image as a BytesIO object
             image_stream = io.BytesIO(shape.image.blob)
             image = Image.open(image_stream)
+
+            image_status = await self.analyze_image(image)
+            if not image_status:
+                return
 
             # Perform OCR using pytesseract
             ocr_text = pytesseract.image_to_string(image)

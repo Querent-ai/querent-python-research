@@ -2,16 +2,19 @@ import json
 from fastembed import TextEmbedding
 from querent.logging.logger import setup_logger
 
+
 class EmbeddingStore:
-    def __init__(self, model_name='sentence-transformers/all-MiniLM-L6-v2'):
+    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         self.logger = setup_logger("EmbeddingStore_config", "EmbeddingStore")
         try:
             self.model_name = model_name
             self.embeddings = TextEmbedding(model_name=model_name)
         except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Failed to initialize EmbeddingStore: {e}")
+            self.logger.error(
+                f"Invalid {self.__class__.__name__} configuration. Failed to initialize EmbeddingStore: {e}"
+            )
             raise Exception(f"Failed to initialize EmbeddingStore: {e}")
-    
+
     def get_embeddings(self, texts):
         try:
             embeddings = []
@@ -22,8 +25,7 @@ class EmbeddingStore:
             return embeddings
         except Exception as e:
             self.logger.error(f"Failed to generate embeddings: {e}")
-            raise Exception(f"Failed to generate embeddings: {e}")
-    
+            raise Exception(f"Failed to generate embeddings: {e}")    
     
     def generate_embeddings(self, payload, relationship_finder=False, generate_embeddings_with_fixed_relationship = False):
         try:
@@ -47,17 +49,21 @@ class EmbeddingStore:
                         predicate_embedding = self.get_embeddings([predicate_type])[0]
                     essential_data = {
                         "context": context,
-                        "context_embeddings" : context_embeddings,
+                        "context_embeddings": context_embeddings,
                         "predicate_type": predicate_type,
-                        "predicate" : predicate,
+                        "predicate": predicate,
                         "subject_type": subject_type,
                         "object_type": object_type,
                         "predicate_emb": predicate_embedding if predicate_embedding is not None else "Not Implemented"
                     }
                     updated_json_string = json.dumps(essential_data)
-                    processed_pairs.append((entity, updated_json_string, related_entity))
+                    processed_pairs.append(
+                        (entity, updated_json_string, related_entity)
+                    )
                 except json.JSONDecodeError as e:
-                    self.logger.debug(f"JSON parsing error: {e} in string: {json_string}")
+                    self.logger.debug(
+                        f"JSON parsing error: {e} in string: {json_string}"
+                    )
 
             return processed_pairs
 

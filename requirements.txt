@@ -35,6 +35,7 @@ openai==1.13.3
 openpyxl==3.1.2
 pandas==2.1.4
 pdfminer==20191125
+pdfplumber==0.10.0
 pillow==10.3.0
 prometheus-client==0.17.1
 psutil==5.9.8

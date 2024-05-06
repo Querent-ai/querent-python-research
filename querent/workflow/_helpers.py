@@ -103,11 +103,11 @@ async def start_llama_workflow(
         )
     )
 
-    # check_message_states_task = asyncio.create_task(
-    #     check_message_states(config, resource_manager, [querent_task, token_feeder])
-    # )
+    check_message_states_task = asyncio.create_task(
+        check_message_states(config, resource_manager, [querent_task, token_feeder])
+    )
 
-    await asyncio.gather(querent_task, token_feeder)
+    await asyncio.gather(querent_task, token_feeder, check_message_states_task)
 
 
 async def start_gpt_workflow(
