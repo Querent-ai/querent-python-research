@@ -335,7 +335,6 @@ class GPTLLM(BaseEngine):
             else:
                 filtered_triples, file = result
                 modified_data = GPTLLM.remove_items_from_tuples(filtered_triples)
-                print("Data in GPT------------------------", modified_data[:1])
                 for entity1, context_json, entity2 in modified_data:
                     context_data = json.loads(context_json)
                     context = context_data.get("context", "")
@@ -352,15 +351,12 @@ class GPTLLM(BaseEngine):
                             relationships.append(output_tuple)
                 if len(relationships) > 0:
                     if self.fixed_relationships and self.sample_relationships:
-                        print("Both are settttttttttttttttttttt-----")
                         embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
                     elif self.sample_relationships:
-                        print("Only Sample Relationships are settttttttttttttttttttttttt-----")
                         embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
                     else:
                         embedding_triples = self.create_emb.generate_embeddings(relationships)
                     if self.sample_relationships:
-                        print("Going to compute scores------------------------------")
                         embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
                     for triple in embedding_triples:
                         if not self.termination_event.is_set():
@@ -377,9 +373,7 @@ class GPTLLM(BaseEngine):
                 else:
                     return
         except Exception as e:
-            print("Exception in GPT-----------------------", e)
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
-            raise Exception(f"An error occurred while extracting predicates using GPT: {e}")
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError

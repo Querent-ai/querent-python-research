@@ -57,33 +57,33 @@
 #             'min_samples': 3,
 #             'cluster_persistence_threshold':0.2
 #         }
-#     # ,fixed_entities = ["university", "greenwood", "liam zheng", "department", "Metroville", "Emily Stanton", "Coach", "health", "training", "atheletes" ]
-#     # ,sample_entities=["organization", "organization", "person",  "department", "city", "person", "person", "method", "method", "person"]
-# #     ,fixed_relationships=[
-# #     "Increase in research funding leads to environmental science focus",
-# #     "Dr. Emily Stanton's advocacy for cleaner energy",
-# #     "University's commitment to reduce carbon emissions",
-# #     "Dr. Stanton's research influences architectural plans",
-# #     "Collaborative project between sociology and environmental sciences",
-# #     "Student government launches mental health awareness workshops",
-# #     "Enhanced fitness programs improve sports teams' performance",
-# #     "Coach Torres influences student-athletes' holistic health",
-# #     "Partnership expands access to digital resources",
-# #     "Interdisciplinary approach enriches academic experience"
-# # ]
-# #             , sample_relationships=[
-# #     "Causal",
-# #     "Contributory",
-# #     "Causal",
-# #     "Influential",
-# #     "Collaborative",
-# #     "Initiative",
-# #     "Beneficial",
-# #     "Influential",
-# #     "Collaborative",
-# #     "Enriching"
-# # ],  
-#             # is_confined_search = True,
+#     ,fixed_entities = ["university", "greenwood", "liam zheng", "department", "Metroville", "Emily Stanton", "Coach", "health", "training", "atheletes" ]
+#     ,sample_entities=["organization", "organization", "person",  "department", "city", "person", "person", "method", "method", "person"]
+#     ,fixed_relationships=[
+#     "Increase in research funding leads to environmental science focus",
+#     "Dr. Emily Stanton's advocacy for cleaner energy",
+#     "University's commitment to reduce carbon emissions",
+#     "Dr. Stanton's research influences architectural plans",
+#     "Collaborative project between sociology and environmental sciences",
+#     "Student government launches mental health awareness workshops",
+#     "Enhanced fitness programs improve sports teams' performance",
+#     "Coach Torres influences student-athletes' holistic health",
+#     "Partnership expands access to digital resources",
+#     "Interdisciplinary approach enriches academic experience"
+# ]
+#             , sample_relationships=[
+#     "Causal",
+#     "Contributory",
+#     "Causal",
+#     "Influential",
+#     "Collaborative",
+#     "Initiative",
+#     "Beneficial",
+#     "Influential",
+#     "Collaborative",
+#     "Enriching"
+# ] 
+#             ,is_confined_search = True
         
 #     ,user_context="Query: Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
 #     )

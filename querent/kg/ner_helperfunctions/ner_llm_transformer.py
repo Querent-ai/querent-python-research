@@ -382,7 +382,7 @@ class NER_LLM:
         info['predicate_type'] = "has image"
         info['context_embeddings'] = create_embeddings.get_embeddings([info['context']])[0]
         updated_json = json.dumps(info)
-        updated_tuple = (entity, updated_json, second_entity)
+        updated_tuple = (info['entity1_nn_chunk'], updated_json, info['entity2_nn_chunk'])
         return updated_tuple
     
     def remove_duplicates(self, data):

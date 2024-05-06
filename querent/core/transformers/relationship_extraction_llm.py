@@ -197,7 +197,6 @@ Answer:"""
                                                 entity2=predicate.get('entity2_nn_chunk', ''),
                                                 entity1_label=predicate.get('entity1_label', ''), 
                                                 entity2_label=predicate.get('entity2_label', ''))
-                print("This is the prompt -----------------",query )
                 answer_relation = self.qa_system.ask_question(prompt=query, llm=self.qa_system.llm, grammar=self.grammar)
                 try:
                     choices_text = answer_relation['choices'][0]['text']

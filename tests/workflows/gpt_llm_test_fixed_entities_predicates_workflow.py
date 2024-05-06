@@ -85,10 +85,10 @@
 #     "Influential",
 #     "Collaborative",
 #     "Enriching"
-# ],  
-#             is_confined_search = True,
+# ]  
+#             ,is_confined_search = True
         
-#     user_context="Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
+#     ,user_context="Your task is to analyze and interpret the context to construct semantic triples. The above context is from a  university document along with the identified entities using NER. Identify which entity is the subject entity and which is the object entity based on the context, and determine the meaningful relationship or predicate linking the subject entity to the object entity. Also identify the respective subject entity type , object entity and predicate type. Answer:"
 #     )
 #     llm_instance = GPTLLM(result_queue, bert_llm_config)
 #     class StateChangeCallback(EventCallbackInterface):
