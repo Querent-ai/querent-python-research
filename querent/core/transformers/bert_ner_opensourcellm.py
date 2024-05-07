@@ -150,7 +150,8 @@ class BERTLLM(BaseEngine):
                         if len(doc_entity_pairs) > 0 and len(entity_ocr) >=1:
                             results = [self.ner_llm_instance.filter_matching_entities(doc_entity_pairs, entity_ocr)]
                         elif len(doc_entity_pairs) > 0 and len(entity_ocr) == 0:
-                            results = doc_entity_pairs
+                            # results = doc_entity_pairs
+                            pass
                     else:
                         return        
                 if len(results) > 0:
