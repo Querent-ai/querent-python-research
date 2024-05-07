@@ -140,7 +140,7 @@ class BERTLLM(BaseEngine):
                 if len(doc_entity_pairs_ocr) >= 1:
                     results = doc_entity_pairs_ocr
                 elif len(doc_entity_pairs_ocr) == 0:
-                    if content:
+                    if content and len(entity_ocr) >=1:
                         if self.fixed_entities:
                             content = self.entity_context_extractor.find_entity_sentences(content)
                         (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
