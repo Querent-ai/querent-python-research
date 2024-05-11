@@ -66,7 +66,7 @@ class SlackCollector(Collector):
                             for file in message['files']:
                                 file_url = file['url_private']
                                 # Assuming `self.download_file` is a method to download files using the URL
-                                file_bytes = self.fetch_image_bytes(file_url)
+                                file_bytes = await self.fetch_file_bytes(file_url)
                                 yield CollectedBytes(
                                     file=f"slack://{self.channel}/{file['name']}",
                                     data=file_bytes,
@@ -100,7 +100,7 @@ class SlackCollector(Collector):
                     f"Slack API Error: {exc.response['error']}"
                 ) from exc
     
-    async def fetch_image_bytes(self, url):
+    async def fetch_file_bytes(self, url):
         """Fetch image bytes directly without downloading the image to disk."""
         headers = {'Authorization': f'Bearer {self.client.token}'}
         response = requests.get(url, headers=headers)

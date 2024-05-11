@@ -89,7 +89,7 @@ class JiraCollector(Collector):
                     data=None, file=f"jira_issue_{issue.key}.json.jira", eof=True, doc_source=f"jira://{self.config.jira_server}/{self.config.jira_project}"
                 )
 
-                if 'attachment' in issue.fields:
+                if hasattr(issue.fields, 'attachment') and isinstance(issue.fields.attachment, list):
                     for attachment in issue.fields.attachment:
                         try:
                             attachment_bytes = self.download_attachment(attachment.content, self.auth)
