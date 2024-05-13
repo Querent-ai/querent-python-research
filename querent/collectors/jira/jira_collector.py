@@ -1,5 +1,6 @@
 import json
 from typing import AsyncGenerator
+import requests
 
 from querent.collectors.collector_base import Collector
 from querent.collectors.collector_factory import CollectorFactory
@@ -88,6 +89,20 @@ class JiraCollector(Collector):
                     data=None, file=f"jira_issue_{issue.key}.json.jira", eof=True, doc_source=f"jira://{self.config.jira_server}/{self.config.jira_project}"
                 )
 
+                if hasattr(issue.fields, 'attachment') and isinstance(issue.fields.attachment, list):
+                    for attachment in issue.fields.attachment:
+                        try:
+                            attachment_bytes = self.download_attachment(attachment.content, self.auth)
+                            yield CollectedBytes(
+                                data=attachment_bytes, file=f"jira_attachment_{attachment.filename}", doc_source=f"jira://{self.config.jira_server}/{self.config.jira_project}"
+                            )
+                            yield CollectedBytes(
+                                data=None, file=f"jira_attachment_{attachment.filename}", eof=True, doc_source=f"jira://{self.config.jira_server}/{self.config.jira_project}"
+                            )
+                        except Exception as e:
+                            self.logger.error(f"Error downloading attachment {attachment.filename}: {str(e)}")
+                
+
         except common_errors.ConnectionError as e:
             self.logger.error(f"Error polling Jira issues: {e}")
             raise  # Re-raise ConnectionError without adding additional information
@@ -97,6 +112,13 @@ class JiraCollector(Collector):
             ) from e
         finally:
             await self.disconnect()
+
+    async def download_attachment(self, attachment_url, auth):
+        response = requests.get(attachment_url, auth=auth)
+        if response.status_code == 200:
+            return response.content
+        else:
+            self.logger.error("Failed to download file: HTTP {}".format(response.status_code))
 
 
 class JiraCollectorFactory(CollectorFactory):

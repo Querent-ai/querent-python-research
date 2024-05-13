@@ -23,7 +23,7 @@
 # @pytest.mark.asyncio
 # async def test_ingest_all_async():
 #     # Set up the collectors
-#     directories = [ "./tests/data/llm/predicate_checker"]
+#     directories = [ "/home/ansh/pyg-trail/testing-xlsx"]
 #     collectors = [
 #         FSCollectorFactory().resolve(
 #             Uri("file://" + str(Path(directory).resolve())),

@@ -1,3 +1,5 @@
+import base64
+import requests
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from typing import AsyncGenerator
@@ -60,11 +62,22 @@ class SlackCollector(Collector):
                 if response["ok"]:
                     messages = response["messages"]
                     for message in messages:
-                        yield CollectedBytes(
-                            file=f"slack://{self.channel}.slack",
-                            data=bytes(message["text"] + "\n\n", "utf-8"),
-                            doc_source = f"slack://{self.channel}"
-                        )
+                        if 'files' in message:  # Check if the message contains files
+                            for file in message['files']:
+                                file_url = file['url_private']
+                                # Assuming `self.download_file` is a method to download files using the URL
+                                file_bytes = await self.fetch_file_bytes(file_url)
+                                yield CollectedBytes(
+                                    file=f"slack://{self.channel}/{file['name']}",
+                                    data=file_bytes,
+                                    doc_source=f"slack://{self.channel}"
+                                )
+                        else:
+                            yield CollectedBytes(
+                                file=f"slack://{self.channel}.slack",
+                                data=bytes(message["text"] + "\n\n", "utf-8"),
+                                doc_source = f"slack://{self.channel}"
+                            )
 
                     if not response["has_more"]:
                         yield CollectedBytes(
@@ -86,6 +99,16 @@ class SlackCollector(Collector):
                 raise common_errors.SlackApiError(
                     f"Slack API Error: {exc.response['error']}"
                 ) from exc
+    
+    async def fetch_file_bytes(self, url):
+        """Fetch image bytes directly without downloading the image to disk."""
+        headers = {'Authorization': f'Bearer {self.client.token}'}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.content
+        else:
+            print(f"Failed to fetch image, status code: {response.status_code}")
+            return None
 
 
 class SlackCollectorFactory(CollectorFactory):
