@@ -2,7 +2,6 @@ import os
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import os
-
 from querent.config.engine.engine_config import EngineConfig
 
 class LLM_Config(EngineConfig):
@@ -11,7 +10,7 @@ class LLM_Config(EngineConfig):
     description: str = "An engine for NER and knowledge graph operations."
     version: str = "0.0.1"
     logger: str = "LLM.engine_config"
-    ner_model_name: str = "dbmdz/bert-large-cased-finetuned-conll03-english"
+    ner_model_name: str = "English"
     spacy_model_path: str = 'en_core_web_lg'
     nltk_path: str = '/model/nltk_data'
     rel_model_type: str = 'llama'

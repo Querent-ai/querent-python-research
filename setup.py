@@ -20,6 +20,7 @@ requirements = [
     "fastembed==0.2.6",
     "ffmpeg-python==0.2.0",
     "gensim==4.3.2",
+    "gguf==0.6.0",
     "google-api-python-client==2.105.0",
     "google-cloud-storage==2.14.0",
     "hdbscan==0.8.33",

@@ -54,7 +54,7 @@ class NER_LLM:
         cls.nlp = spacy.load(model_path)
         
     def __init__(
-        self, ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+        self, ner_model_name="",
         filler_tokens=None,
         provided_tokenizer=None,
         provided_model=None,

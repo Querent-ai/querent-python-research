@@ -28,6 +28,8 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
+from querent.models.model_manager import ModelManager
+from querent.models.gguf_metadata_extractor import GGUFMetadataExtractor
 
 class BERTLLM(BaseEngine):
     def __init__(
@@ -44,9 +46,19 @@ class BERTLLM(BaseEngine):
             self.contextual_graph = QuerentKG(self.graph_config)
             self.semantic_graph = QuerentKG(self.graph_config)
             self.file_buffer = FileBuffer()
-            self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
-            self.ner_model = NER_LLM.load_model(config.ner_model_name, "NER")
-            self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model=self.ner_model)
+            print("------------------------------------------------------------------")
+            self.model_manager = ModelManager()
+            self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
+            print("------------------------------------------------------------------")
+            print(self.ner_model_initialized)
+            extractor = GGUFMetadataExtractor(config.rel_model_path)
+            model_metadata = extractor.dump_metadata()
+            rel_model_name = extractor.extract_general_name(model_metadata)
+            self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
+            print("------------------------------------------------------------------",self.rel_model_initialized)
+            self.ner_llm_instance = NER_LLM(ner_model_name=self.ner_model_initialized)
+            self.ner_tokenizer = self.ner_llm_instance.ner_tokenizer
+            self.ner_model = self.ner_llm_instance.ner_model
             self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
             self.nlp_model = NER_LLM.get_class_variable()
             if not Embedding:
@@ -56,7 +68,7 @@ class BERTLLM(BaseEngine):
             if not self.skip_inferences:
                 mock_config = Opensource_LLM_Config(qa_template=config.user_context,
                                                     model_type = config.rel_model_type,
-                                                    model_path = config.rel_model_path,
+                                                    model_path = self.rel_model_initialized,
                                                     grammar_file_path = config.grammar_file_path,
                                                     emb_model_name = config.emb_model_name,
                                                     spacy_model_path = config.spacy_model_path,
@@ -96,6 +108,7 @@ class BERTLLM(BaseEngine):
             self.user_context = config.user_context
             self.isConfinedSearch = config.is_confined_search
         except Exception as e:
+            print("Exception as e --------------------------------------", e)
             self.logger.error("Error initializing BERT LLM Class", e)
             raise e
         
@@ -232,6 +245,7 @@ class BERTLLM(BaseEngine):
                                                                                                   content=content,
                                                                                                   fixed_entities=self.fixed_entities,
                                                                                                   sample_entities=self.sample_entities)
+                print("Doc Entity Pairs --------------", doc_entity_pairs)
             else:
                 return
             if self.sample_entities:

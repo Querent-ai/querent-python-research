@@ -23,6 +23,8 @@ from querent.kg.ner_helperfunctions.filter_triples import TripleFilter
 from querent.config.core.llm_config import LLM_Config
 from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
+from querent.models.gguf_metadata_extractor import GGUFMetadataExtractor
+from querent.models.model_manager import ModelManager
 
 
 class Fixed_Entities_LLM(BaseEngine):
@@ -35,10 +37,18 @@ class Fixed_Entities_LLM(BaseEngine):
         self.logger = setup_logger(__name__, "Fixed_Entities_LLM")
         super().__init__(input_queue)
         self.skip_inferences=config.skip_inferences
+        self.model_manager = ModelManager()
+        self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
+        print("------------------------------------------------------------------",self.ner_model_initialized)
+        extractor = GGUFMetadataExtractor(config.rel_model_path)
+        model_metadata = extractor.dump_metadata()
+        rel_model_name = extractor.extract_general_name(model_metadata)
+        self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
+        print("------------------------------------------------------------------",self.rel_model_initialized)
         if not self.skip_inferences:
             mock_config = Opensource_LLM_Config(qa_template=config.user_context,
                                                 model_type = config.rel_model_type,
-                                                model_path = config.rel_model_path,
+                                                model_path = self.rel_model_initialized,
                                                 grammar_file_path = config.grammar_file_path,
                                                 emb_model_name = config.emb_model_name,
                                                 is_confined_search = config.is_confined_search,
@@ -50,7 +60,7 @@ class Fixed_Entities_LLM(BaseEngine):
         self.contextual_graph = QuerentKG(self.graph_config)
         self.semantic_graph = QuerentKG(self.graph_config)
         self.file_buffer = FileBuffer()
-        self.ner_tokenizer = AutoTokenizer.from_pretrained(config.ner_model_name)
+        self.ner_tokenizer = AutoTokenizer.from_pretrained(self.ner_model_initialized)
         self.ner_llm_instance = NER_LLM(provided_tokenizer=self.ner_tokenizer, provided_model= "dummy")
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
