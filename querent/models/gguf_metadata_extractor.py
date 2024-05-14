@@ -76,10 +76,3 @@ class GGUFMetadataExtractor:
                 if len(parts) > 1:
                     return parts[1].strip().strip("'")
         return "Name not found"
-
-# Usage example
-if __name__ == '__main__':
-    extractor = GGUFMetadataExtractor("/model/llama-2-7b-chat.Q5_K_M.gguf")
-    model_metadata = extractor.dump_metadata()
-    model_name = extractor.extract_general_name(model_metadata)
-    print(model_name)
