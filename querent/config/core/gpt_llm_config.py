@@ -8,7 +8,7 @@ class GPTConfig(LLM_Config):
     description: str = "An engine for NER using BERT and knowledge graph operations using OPENAI"
     version: str = "0.0.1"
     logger: str = "OPENAI.engine_config"
-    ner_model_name: str = "dbmdz/bert-large-cased-finetuned-conll03-english"
+    ner_model_name: str = ""
     rel_model_name: str = "gpt-3.5-turbo"
     requests_per_minute: int = 3
     openai_api_key: str = ""

@@ -2,7 +2,6 @@ import json
 import re
 import time
 from querent.common.types.ingested_table import IngestedTables
-from querent.core.transformers.fixed_entities_set_opensourcellm import Fixed_Entities_LLM
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
@@ -32,17 +31,26 @@ import json
 
 _ = load_dotenv(find_dotenv())
 
-
 class GPTLLM(BaseEngine):
-    def __init__(
-        self,
-        input_queue: QuerentQueue,
-        config: GPTConfig
-    ):
+    def __init__(self, input_queue: QuerentQueue, config: GPTConfig):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
-            llm_config = LLM_Config(
+            self._initialize_config(config)
+            self._initialize_models(config)
+            self._initialize_predicate_context_extractor(config)
+            self.llm_instance = BERTLLM(input_queue, self.llm_config, self.create_emb)
+            self.process_image_instance = self.llm_instance
+            self.rel_model_name = config.rel_model_name
+            self._initialize_openai(config)
+            self.function_registry = FunctionRegistry()
+        except Exception as e:
+            error_message = f"Invalid {self.__class__.__name__} configuration. Unable to initialize."
+            self.logger.error(error_message, exc_info=True)
+            raise Exception(error_message) from e
+
+    def _initialize_config(self, config):
+        self.llm_config = LLM_Config(
             ner_model_name=config.ner_model_name,
             enable_filtering=config.enable_filtering,
             filter_params={
@@ -51,58 +59,68 @@ class GPTLLM(BaseEngine):
                 'similarity_threshold': config.filter_params['similarity_threshold'],
                 'min_cluster_size': config.filter_params['min_cluster_size'],
                 'min_samples': config.filter_params['min_samples'],
-                'cluster_persistence_threshold':config.filter_params['cluster_persistence_threshold']
+                'cluster_persistence_threshold': config.filter_params['cluster_persistence_threshold']
             },
-            sample_entities = config.sample_entities,
-            fixed_entities = config.fixed_entities,
-            skip_inferences= True,
-            is_confined_search = config.is_confined_search,
-            huggingface_token = config.huggingface_token,
-            spacy_model_path = config.spacy_model_path,
-            nltk_path = config.nltk_path,
-            fixed_relationships = config.fixed_relationships,
-            sample_relationships = config.sample_relationships)
-            self.fixed_entities = config.fixed_entities
-            self.is_confined_search = config.is_confined_search
-            self.fixed_relationships = config.fixed_relationships
-            self.sample_relationships = config.sample_relationships
-            self.user_context = config.user_context
-            self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
-            self.nlp_model = NER_LLM.get_class_variable()
-            self.create_emb = EmbeddingStore()
-            if self.fixed_relationships and not self.sample_relationships:
-                raise ValueError("If specific predicates are provided, their types should also be provided.")
-            if self.fixed_relationships and self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
-                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.fixed_relationships, self.sample_relationships)
-                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
-            elif self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
-                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(relationship_types=self.sample_relationships)
-                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
-            else:
-                self.predicate_context_extractor = None
-            if config.is_confined_search:
-                self.llm_instance = Fixed_Entities_LLM(input_queue, llm_config, self.create_emb)
-            else :
-                self.llm_instance = BERTLLM(input_queue, llm_config, self.create_emb)
-            if not isinstance (self.llm_instance, BERTLLM):
-                self.process_image_instance = BERTLLM(input_queue, llm_config, self.create_emb)
-            else:
-                self.process_image_instance = self.llm_instance
-            self.rel_model_name = config.rel_model_name
-            if config.openai_api_key:
-                self.gpt_llm = OpenAI(api_key=config.openai_api_key)
-            else:
-                self.gpt_llm = OpenAI()
-            self.function_registry = FunctionRegistry()
-            
-        except Exception as e:
-            self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
-            raise Exception(f"Invalid {self.__class__.__name__} configuration. Unable to Initialize. {e}")
+            sample_entities=config.sample_entities,
+            fixed_entities=config.fixed_entities,
+            skip_inferences=True,
+            is_confined_search=config.is_confined_search,
+            huggingface_token=config.huggingface_token,
+            spacy_model_path=config.spacy_model_path,
+            nltk_path=config.nltk_path,
+            fixed_relationships=config.fixed_relationships,
+            sample_relationships=config.sample_relationships
+        )
+        self.fixed_entities = config.fixed_entities
+        self.is_confined_search = config.is_confined_search
+        self.fixed_relationships = config.fixed_relationships
+        self.sample_relationships = config.sample_relationships
+        self.user_context = config.user_context
+
+    def _initialize_models(self, config):
+        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
+        self.nlp_model = NER_LLM.get_class_variable()
+        self.create_emb = EmbeddingStore()
+
+    def _initialize_predicate_context_extractor(self, config):
+        if self.fixed_relationships and not self.sample_relationships:
+            raise ValueError("If specific predicates are provided, their types should also be provided.")
+
+        self.predicate_json = None
+
+        if self.fixed_relationships and self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(
+                fixed_predicates=self.fixed_relationships,
+                predicate_types=self.sample_relationships,
+                model=self.nlp_model
+            )
+            self.predicate_json = self.predicate_context_extractor.construct_predicate_json(
+                self.fixed_relationships,
+                self.sample_relationships
+            )
+        elif self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(
+                predicate_types=self.sample_relationships,
+                model=self.nlp_model
+            )
+            self.predicate_json = self.predicate_context_extractor.construct_predicate_json(
+                relationship_types=self.sample_relationships
+            )
+        else:
+            self.predicate_context_extractor = None
+
+        if self.predicate_json:
+            self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
+
+    def _initialize_openai(self, config):
+        if config.openai_api_key:
+            self.gpt_llm = OpenAI(api_key=config.openai_api_key)
+        else:
+            self.gpt_llm = OpenAI()
+
     
     def validate(self) -> bool:
-        return isinstance(self.llm_instance, BERTLLM) or isinstance(self.llm_instance, Fixed_Entities_LLM)
+        return isinstance(self.llm_instance, BERTLLM)
 
     def process_messages(self, data: IngestedMessages):
         return super().process_messages(data)
@@ -325,55 +343,76 @@ class GPTLLM(BaseEngine):
     async def process_tokens(self, data: IngestedTokens):
         try:
             if not GPTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()                    
-                    return 
+                self.set_termination_event()
+                return
+            
             doc_source = data.doc_source
             relationships = []
             unique_keys = set()
-            result = await self.llm_instance.process_tokens(data)      
-            if not result: return 
-            else:
-                filtered_triples, file = result
-                modified_data = GPTLLM.remove_items_from_tuples(filtered_triples)
-                for entity1, context_json, entity2 in modified_data:
-                    context_data = json.loads(context_json)
-                    context = context_data.get("context", "")
-                    entity1_label = context_data.get("entity1_label", "")
-                    entity2_label = context_data.get("entity2_label", "")
-                    entity1_nn_chunk = context_data.get("entity1_nn_chunk","")
-                    entity2_nn_chunk = context_data.get("entity2_nn_chunk","")
-                    result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk, entity1_label, entity2_label)
-                    if result:
-                        output_tuple = self.generate_output_tuple(result, context_json)
-                        key = GPTLLM.extract_key(output_tuple)
-                        if key not in unique_keys:
-                            unique_keys.add(key)
-                            relationships.append(output_tuple)
-                if len(relationships) > 0:
-                    if self.fixed_relationships and self.sample_relationships:
-                        embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
-                    elif self.sample_relationships:
-                        embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
-                    else:
-                        embedding_triples = self.create_emb.generate_embeddings(relationships)
-                    if self.sample_relationships:
-                        embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
-                    for triple in embedding_triples:
-                        if not self.termination_event.is_set():
-                            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                            if graph_json:
-                                current_state = EventState(event_type=EventType.Graph,timestamp = time.time(), payload= graph_json, file=file, doc_source=doc_source)
-                                await self.set_state(new_state=current_state)
-                            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                            if vector_json:
-                                current_state = EventState(event_type=EventType.Vector,timestamp=time.time(), payload = vector_json, file=file, doc_source=doc_source)
-                                await self.set_state(new_state=current_state)
-                        else:
-                            return
-                else:
-                    return
+            
+            result = await self.llm_instance.process_tokens(data)
+            if not result:
+                return
+
+            filtered_triples, file = result
+            modified_data = GPTLLM.remove_items_from_tuples(filtered_triples)
+            
+            relationships = await self._extract_relationships(modified_data, unique_keys)
+            
+            if relationships:
+                await self._process_relationships(relationships, file, doc_source)
         except Exception as e:
             self.logger.error(f"Invalid {self.__class__.__name__} configuration. Unable to extract predicates using GPT. {e}")
+
+    async def _extract_relationships(self, modified_data, unique_keys):
+        relationships = []
+        
+        for entity1, context_json, entity2 in modified_data:
+            context_data = json.loads(context_json)
+            context = context_data.get("context", "")
+            entity1_label = context_data.get("entity1_label", "")
+            entity2_label = context_data.get("entity2_label", "")
+            entity1_nn_chunk = context_data.get("entity1_nn_chunk", "")
+            entity2_nn_chunk = context_data.get("entity2_nn_chunk", "")
+            
+            result = await self.process_triples(context, entity1_nn_chunk, entity2_nn_chunk, entity1_label, entity2_label)
+            if result:
+                output_tuple = self.generate_output_tuple(result, context_json)
+                key = GPTLLM.extract_key(output_tuple)
+                if key not in unique_keys:
+                    unique_keys.add(key)
+                    relationships.append(output_tuple)
+        
+        return relationships
+
+    async def _process_relationships(self, relationships, file, doc_source):
+        if self.fixed_relationships and self.sample_relationships:
+            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship=True)
+        elif self.sample_relationships:
+            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
+        else:
+            embedding_triples = self.create_emb.generate_embeddings(relationships)
+        
+        if self.sample_relationships:
+            embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
+        
+        for triple in embedding_triples:
+            if self.termination_event.is_set():
+                return
+            
+            await self._create_and_set_event_state(triple, file, doc_source)
+
+    async def _create_and_set_event_state(self, triple, file, doc_source):
+        graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+        if graph_json:
+            current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source)
+            await self.set_state(new_state=current_state)
+        
+        vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+        if vector_json:
+            current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source)
+            await self.set_state(new_state=current_state)
+
 
     async def process_messages(self, data: IngestedMessages):
         raise NotImplementedError

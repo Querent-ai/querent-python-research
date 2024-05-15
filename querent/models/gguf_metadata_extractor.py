@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import numpy as np
 from gguf import GGUFReader, GGUFValueType
+import json
 
 class GGUFMetadataExtractor:
     def __init__(self, model_path: str):
@@ -38,7 +39,6 @@ class GGUFMetadataExtractor:
         return str(field.types[-1].name)
 
     def dump_metadata_json(self) -> None:
-        import json
         host_endian, file_endian = self.get_file_host_endian()
         metadata, tensors = {}, {}
         result = {

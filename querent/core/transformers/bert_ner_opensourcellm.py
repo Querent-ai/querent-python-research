@@ -34,83 +34,123 @@ from querent.models.gguf_metadata_extractor import GGUFMetadataExtractor
 class BERTLLM(BaseEngine):
     def __init__(
         self,
-        input_queue:QuerentQueue,
+        input_queue: QuerentQueue,
         config: LLM_Config,
         Embedding=None
-    ):  
+    ):
         self.logger = setup_logger(__name__, "BERTLLM")
         super().__init__(input_queue)
-        self.skip_inferences=config.skip_inferences
+        self.skip_inferences = config.skip_inferences
+        self.enable_filtering = config.enable_filtering
+        self.filter_params = config.filter_params or {}
+        self.sample_entities = config.sample_entities
+        self.fixed_entities = config.fixed_entities
+        self.fixed_relationships = config.fixed_relationships
+        self.sample_relationships = config.sample_relationships
+        self.user_context = config.user_context
+        self.isConfinedSearch = config.is_confined_search
+        self.create_emb = EmbeddingStore() if not Embedding else Embedding
+
         try:
-            self.graph_config = GraphConfig(identifier=config.name)
-            self.contextual_graph = QuerentKG(self.graph_config)
-            self.semantic_graph = QuerentKG(self.graph_config)
-            self.file_buffer = FileBuffer()
-            print("------------------------------------------------------------------")
-            self.model_manager = ModelManager()
-            self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
-            print("------------------------------------------------------------------")
-            print(self.ner_model_initialized)
-            extractor = GGUFMetadataExtractor(config.rel_model_path)
-            model_metadata = extractor.dump_metadata()
-            rel_model_name = extractor.extract_general_name(model_metadata)
-            self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
-            print("------------------------------------------------------------------",self.rel_model_initialized)
-            self.ner_llm_instance = NER_LLM(ner_model_name=self.ner_model_initialized)
-            self.ner_tokenizer = self.ner_llm_instance.ner_tokenizer
-            self.ner_model = self.ner_llm_instance.ner_model
-            self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
-            self.nlp_model = NER_LLM.get_class_variable()
-            if not Embedding:
-                self.create_emb = EmbeddingStore()
-            else:
-                self.create_emb = Embedding
-            if not self.skip_inferences:
-                mock_config = Opensource_LLM_Config(qa_template=config.user_context,
-                                                    model_type = config.rel_model_type,
-                                                    model_path = self.rel_model_initialized,
-                                                    grammar_file_path = config.grammar_file_path,
-                                                    emb_model_name = config.emb_model_name,
-                                                    spacy_model_path = config.spacy_model_path,
-                                                    nltk_path = config.nltk_path
-                                                    )
-                self.semantic_extractor = RelationExtractor(mock_config,self.create_emb)
-            self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
-            self.enable_filtering = config.enable_filtering
-            self.filter_params = config.filter_params or {}
-            self.triple_filter = None
+            self._initialize_components(config)
+            self._initialize_models(config)
+            self._initialize_extractors(config)
+            self._initialize_entity_context_extractor()
+            self._initialize_predicate_context_extractor(config)
+
             if self.enable_filtering:
                 self.triple_filter = TripleFilter(**self.filter_params)
-            self.sample_entities = config.sample_entities
-            self.fixed_entities = config.fixed_entities
-            if self.fixed_entities and not self.sample_entities:
-                raise ValueError("If specific entities are provided, their types should also be provided.")
-            if self.fixed_entities and self.sample_entities:
-                self.entity_context_extractor = FixedEntityExtractor(fixed_entities=self.fixed_entities, entity_types=self.sample_entities,model = self.nlp_model)
-            elif self.sample_entities:
-                self.entity_context_extractor = FixedEntityExtractor(entity_types=self.sample_entities, model = self.nlp_model)
             else:
-                self.entity_context_extractor = None
-            self.fixed_relationships = config.fixed_relationships
-            self.sample_relationships = config.sample_relationships
-            if self.fixed_relationships and not self.sample_relationships:
-                raise ValueError("If specific predicates are provided, their types should also be provided.")
-            if self.fixed_relationships and self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(fixed_predicates=self.fixed_relationships, predicate_types=self.sample_relationships,model = self.nlp_model)
-                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(self.fixed_relationships, self.sample_relationships)
-                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
-            elif self.sample_relationships:
-                self.predicate_context_extractor = FixedPredicateExtractor(predicate_types=self.sample_relationships,model = self.nlp_model)
-                self.predicate_json = self.predicate_context_extractor.construct_predicate_json(relationship_types=self.sample_relationships)
-                self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
-            else:
-                self.predicate_context_extractor = None
-            self.user_context = config.user_context
-            self.isConfinedSearch = config.is_confined_search
+                self.triple_filter = None
+
         except Exception as e:
-            print("Exception as e --------------------------------------", e)
-            self.logger.error("Error initializing BERT LLM Class", e)
+            self.logger.error("Error initializing BERT LLM Class")
             raise e
+
+    def _initialize_components(self, config):
+        self.graph_config = GraphConfig(identifier=config.name)
+        self.contextual_graph = QuerentKG(self.graph_config)
+        self.semantic_graph = QuerentKG(self.graph_config)
+        self.file_buffer = FileBuffer()
+        self.model_manager = ModelManager()
+
+    def _initialize_models(self, config):
+        self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
+        extractor = GGUFMetadataExtractor(config.rel_model_path)
+        model_metadata = extractor.dump_metadata()
+        rel_model_name = extractor.extract_general_name(model_metadata)
+        self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
+
+        self.ner_llm_instance = NER_LLM(ner_model_name=self.ner_model_initialized)
+        self.ner_tokenizer = self.ner_llm_instance.ner_tokenizer
+        self.ner_model = self.ner_llm_instance.ner_model
+        self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
+        self.nlp_model = NER_LLM.get_class_variable()
+
+    def _initialize_extractors(self, config):
+        if not self.skip_inferences:
+            mock_config = Opensource_LLM_Config(
+                qa_template=config.user_context,
+                model_type=config.rel_model_type,
+                model_path=self.rel_model_initialized,
+                grammar_file_path=config.grammar_file_path,
+                emb_model_name=config.emb_model_name,
+                spacy_model_path=config.spacy_model_path,
+                nltk_path=config.nltk_path
+            )
+            self.semantic_extractor = RelationExtractor(mock_config, self.create_emb)
+
+        self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
+
+    def _initialize_entity_context_extractor(self):
+        if self.fixed_entities and not self.sample_entities:
+            raise ValueError("If specific entities are provided, their types should also be provided.")
+        
+        if self.fixed_entities and self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(
+                fixed_entities=self.fixed_entities, 
+                entity_types=self.sample_entities, 
+                model=self.nlp_model
+            )
+        elif self.sample_entities:
+            self.entity_context_extractor = FixedEntityExtractor(
+                entity_types=self.sample_entities, 
+                model=self.nlp_model
+            )
+        else:
+            self.entity_context_extractor = None
+
+    def _initialize_predicate_context_extractor(self, config):
+        if self.fixed_relationships and not self.sample_relationships:
+            raise ValueError("If specific predicates are provided, their types should also be provided.")
+        
+        self.predicate_json = None
+        if self.skip_inferences:
+            self.predicate_context_extractor = None
+        elif self.fixed_relationships and self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(
+                fixed_predicates=self.fixed_relationships, 
+                predicate_types=self.sample_relationships, 
+                model=self.nlp_model
+            )
+            self.predicate_json = self.predicate_context_extractor.construct_predicate_json(
+                self.fixed_relationships, 
+                self.sample_relationships
+            )
+        elif self.sample_relationships:
+            self.predicate_context_extractor = FixedPredicateExtractor(
+                predicate_types=self.sample_relationships, 
+                model=self.nlp_model
+            )
+            self.predicate_json = self.predicate_context_extractor.construct_predicate_json(
+                relationship_types=self.sample_relationships
+            )
+        else:
+            self.predicate_context_extractor = None
+
+        if self.predicate_json:
+            self.predicate_json_emb = self.create_emb.generate_relationship_embeddings(self.predicate_json)
+
         
  
 
@@ -220,87 +260,142 @@ class BERTLLM(BaseEngine):
     
     
     async def process_tokens(self, data: IngestedTokens):
-        doc_entity_pairs = []
         try:
+            doc_entity_pairs = []
             doc_source = data.doc_source
+
             if not BERTLLM.validate_ingested_tokens(data):
-                    self.set_termination_event()                                      
-                    return
-            if data.data:
-                clean_text = ' '.join(data.data)
-            else:
-                clean_text = data.data
-            if not data.is_token_stream : 
-                file, content = self.file_buffer.add_chunk(
-                data.get_file_path(), clean_text)
-            else:
-                content = clean_text
-                file = data.get_file_path()
-            if content:
-                if self.fixed_entities:
-                    content = self.entity_context_extractor.find_entity_sentences(content)
-                if self.fixed_relationships:
-                    content = self.predicate_context_extractor.find_predicate_sentences(content)
-                (_, doc_entity_pairs) = self.ner_llm_instance.get_entity_pairs(isConfinedSearch= self.isConfinedSearch, 
-                                                                                                  content=content,
-                                                                                                  fixed_entities=self.fixed_entities,
-                                                                                                  sample_entities=self.sample_entities)
-                print("Doc Entity Pairs --------------", doc_entity_pairs)
-            else:
+                self.set_termination_event()
                 return
-            if self.sample_entities:
-                doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
-            if any(doc_entity_pairs):
-                doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
+
+            content, file = self._prepare_content(data)
+            if not content:
+                return
+
+            if self.fixed_entities:
+                content = self.entity_context_extractor.find_entity_sentences(content)
+            doc_entity_pairs = self._get_entity_pairs(content)
+            if not doc_entity_pairs:
+                return
+
+            doc_entity_pairs = self._process_entity_types(doc_entity_pairs)
+            if not self.entity_context_extractor and not self.predicate_context_extractor:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
-                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
-                    pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
-                else:
-                    pairs_withemb = pairs_withattn
-                pairs_with_predicates = process_data(pairs_withemb, file)
-                if self.enable_filtering == True and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn)>1 and not self.predicate_context_extractor:
-                    cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
-                    clustered_triples = cluster_output['filtered_triples']
-                    cluster_labels = cluster_output['cluster_labels']
-                    cluster_persistence = cluster_output['cluster_persistence']
-                    if clustered_triples:
-                        filtered_triples, reduction_count = self.triple_filter.filter_triples(clustered_triples)
-                    else:
-                        self.logger.debug(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled. ")
-                        filtered_triples = pairs_with_predicates
-                else:
-                    filtered_triples = pairs_with_predicates
-                if not filtered_triples:
-                    return
-                elif not self.skip_inferences:
-                    relationships = self.semantic_extractor.process_tokens(filtered_triples, fixed_entities=(len(self.sample_entities) >= 1))
-                    if len(relationships) > 0:
-                        if self.fixed_relationships and self.sample_relationships:
-                            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True, generate_embeddings_with_fixed_relationship = True)
-                        elif self.sample_relationships:
-                            embedding_triples = self.create_emb.generate_embeddings(relationships, relationship_finder=True)
-                        else:
-                            embedding_triples = self.create_emb.generate_embeddings(relationships)
-                        if self.sample_relationships:
-                            embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(self.predicate_json_emb, embedding_triples)
-                        for triple in embedding_triples:
-                            if not self.termination_event.is_set():
-                                graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
-                                if graph_json:
-                                    current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source)
-                                    await self.set_state(new_state=current_state)
-                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
-                                if vector_json:
-                                    current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source)
-                                    await self.set_state(new_state=current_state)
-                            else:
-                                return
-                    else:
-                        return
-                else:
-                    return filtered_triples, file
             else:
+                pairs_withattn = doc_entity_pairs
+            pairs_with_predicates = self._process_pairs_with_embeddings(pairs_withattn, file)
+            filtered_triples = self._filter_triples(pairs_with_predicates, pairs_withattn)
+            if not filtered_triples:
                 return
+
+            if not self.skip_inferences:
+                await self._process_relationships(filtered_triples, file, doc_source)
+            else:
+                return filtered_triples, file
+
         except Exception as e:
             self.logger.debug(f"Invalid {self.__class__.__name__} configuration. Unable to process tokens. {e}")
+
+    def _prepare_content(self, data):
+        if data.data:
+            clean_text = ' '.join(data.data)
+        else:
+            clean_text = data.data
+
+        if not data.is_token_stream:
+            file, content = self.file_buffer.add_chunk(data.get_file_path(), clean_text)
+        else:
+            content = clean_text
+            file = data.get_file_path()
+
+        return content, file
+
+    def _get_entity_pairs(self, content):
+        return self.ner_llm_instance.get_entity_pairs(
+            isConfinedSearch=self.isConfinedSearch,
+            content=content,
+            fixed_entities=self.fixed_entities,
+            sample_entities=self.sample_entities
+        )[1]
+
+    def _process_entity_types(self, doc_entity_pairs):
+        if self.sample_entities:
+            doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
+        if any(doc_entity_pairs):
+            doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
+        return doc_entity_pairs
+
+    def _process_pairs_with_embeddings(self, pairs_withattn, file):
+        if self.enable_filtering and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn) > 1 and not self.predicate_context_extractor:
+            self.entity_embedding_extractor = EntityEmbeddingExtractor(self.ner_model, self.ner_tokenizer)
+            pairs_withemb = self.entity_embedding_extractor.extract_and_append_entity_embeddings(pairs_withattn)
+        else:
+            pairs_withemb = pairs_withattn
+        return process_data(pairs_withemb, file)
+
+    def _filter_triples(self, pairs_with_predicates, pairs_withattn):
+        if self.enable_filtering and not self.entity_context_extractor and self.count_entity_pairs(pairs_withattn) > 1 and not self.predicate_context_extractor:
+            cluster_output = self.triple_filter.cluster_triples(pairs_with_predicates)
+            clustered_triples = cluster_output['filtered_triples']
+            if clustered_triples:
+                filtered_triples, _ = self.triple_filter.filter_triples(clustered_triples)
+            else:
+                self.logger.debug(f"Filtering in {self.__class__.__name__} producing 0 entity pairs. Filtering Disabled.")
+                filtered_triples = pairs_with_predicates
+        else:
+            filtered_triples = pairs_with_predicates
+        return filtered_triples
+
+    async def _process_relationships(self, filtered_triples, file, doc_source):
+        relationships = self.semantic_extractor.process_tokens(
+            filtered_triples, 
+            fixed_entities=(len(self.sample_entities) >= 1)
+        )
+        if not relationships:
+            return
+
+        embedding_triples = self._generate_embeddings(relationships)
+        await self._process_embedding_triples(embedding_triples, file, doc_source)
+
+    def _generate_embeddings(self, relationships):
+        if self.fixed_relationships and self.sample_relationships:
+            return self.create_emb.generate_embeddings(
+                relationships, 
+                relationship_finder=True, 
+                generate_embeddings_with_fixed_relationship=True
+            )
+        elif self.sample_relationships:
+            return self.create_emb.generate_embeddings(relationships, relationship_finder=True)
+        else:
+            return self.create_emb.generate_embeddings(relationships)
+
+    async def _process_embedding_triples(self, embedding_triples, file, doc_source):
+        if self.sample_relationships:
+            embedding_triples = self.predicate_context_extractor.update_embedding_triples_with_similarity(
+                self.predicate_json_emb, embedding_triples)
+
+        for triple in embedding_triples:
+            if self.termination_event.is_set():
+                return
+
+            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+            if graph_json:
+                current_state = EventState(
+                    event_type=EventType.Graph,
+                    timestamp=time.time(),
+                    payload=graph_json,
+                    file=file,
+                    doc_source=doc_source
+                )
+                await self.set_state(new_state=current_state)
+
+            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+            if vector_json:
+                current_state = EventState(
+                    event_type=EventType.Vector,
+                    timestamp=time.time(),
+                    payload=vector_json,
+                    file=file,
+                    doc_source=doc_source
+                )
+                await self.set_state(new_state=current_state)
