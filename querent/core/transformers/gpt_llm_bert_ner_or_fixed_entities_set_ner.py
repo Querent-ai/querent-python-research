@@ -20,12 +20,8 @@ from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.logging.logger import setup_logger
 from querent.config.core.llm_config import LLM_Config
 from openai import OpenAI
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-    wait_fixed
-)
+from querent.models.model_manager import ModelManager
+from querent.models.gguf_metadata_extractor import GGUFMetadataExtractor
 from dotenv import load_dotenv, find_dotenv
 import json
 
@@ -36,14 +32,13 @@ class GPTLLM(BaseEngine):
         self.logger = setup_logger(__name__, "OPENAILLM")
         try:
             super().__init__(input_queue)
+            self.model_manager = ModelManager()
             self._initialize_config(config)
             self._initialize_models(config)
             self._initialize_predicate_context_extractor(config)
             self.llm_instance = BERTLLM(input_queue, self.llm_config, self.create_emb)
             self.process_image_instance = self.llm_instance
-            self.rel_model_name = config.rel_model_name
             self._initialize_openai(config)
-            self.function_registry = FunctionRegistry()
         except Exception as e:
             error_message = f"Invalid {self.__class__.__name__} configuration. Unable to initialize."
             self.logger.error(error_message, exc_info=True)
@@ -78,6 +73,7 @@ class GPTLLM(BaseEngine):
         self.user_context = config.user_context
 
     def _initialize_models(self, config):
+        self.rel_model_initialized = self.model_manager.get_model(config.rel_model_path)
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         self.create_emb = EmbeddingStore()
@@ -312,7 +308,7 @@ class GPTLLM(BaseEngine):
     
     def generate_response(self, messages, name):
         response = self.completion_with_backoff(
-            model=self.rel_model_name,
+            model=self.rel_model_initialized,
             messages=messages,
             temperature=0
         )

@@ -76,10 +76,11 @@ class BERTLLM(BaseEngine):
 
     def _initialize_models(self, config):
         self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
-        extractor = GGUFMetadataExtractor(config.rel_model_path)
-        model_metadata = extractor.dump_metadata()
-        rel_model_name = extractor.extract_general_name(model_metadata)
-        self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
+        if not self.skip_inferences:
+            extractor = GGUFMetadataExtractor(config.rel_model_path)
+            model_metadata = extractor.dump_metadata()
+            rel_model_name = extractor.extract_general_name(model_metadata)
+            self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
 
         self.ner_llm_instance = NER_LLM(ner_model_name=self.ner_model_initialized)
         self.ner_tokenizer = self.ner_llm_instance.ner_tokenizer
@@ -271,7 +272,6 @@ class BERTLLM(BaseEngine):
             content, file = self._prepare_content(data)
             if not content:
                 return
-
             if self.fixed_entities:
                 content = self.entity_context_extractor.find_entity_sentences(content)
             doc_entity_pairs = self._get_entity_pairs(content)

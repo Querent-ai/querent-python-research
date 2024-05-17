@@ -9,7 +9,7 @@ class GPTConfig(LLM_Config):
     version: str = "0.0.1"
     logger: str = "OPENAI.engine_config"
     ner_model_name: str = ""
-    rel_model_name: str = "gpt-3.5-turbo"
+    rel_model_name: str = ""
     requests_per_minute: int = 3
     openai_api_key: str = ""
     user_context: str = None

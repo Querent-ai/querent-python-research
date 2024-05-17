@@ -10,6 +10,7 @@ class GGUFMetadataExtractor:
     def __init__(self, model_path: str):
         self.model_path = model_path
         self.reader = GGUFReader(self.model_path, 'r')
+        self.model_arch_value = None
 
     def get_file_host_endian(self) -> tuple[str, str]:
         host_endian = 'LITTLE' if np.uint32(1) == np.uint32(1).newbyteorder("<") else 'BIG'
@@ -71,8 +72,16 @@ class GGUFMetadataExtractor:
 
     def extract_general_name(self, lines):
         for line in lines:
-            if "general.name" in line:
+            if "general.architecture" in line:
                 parts = line.split('=')
-                if len(parts) > 1:
+                if len(parts[1].strip().strip("'")) > 1:
                     return parts[1].strip().strip("'")
         return "Name not found"
+
+
+# Usage example
+# if __name__ == '__main__':
+#     extractor = GGUFMetadataExtractor("/home/nishantg/querent-main/querent/tests/llama-2-7b-chat.Q5_K_M.gguf")
+#     model_metadata = extractor.dump_metadata()
+#     model_name = extractor.extract_general_name(model_metadata)
+#     print(model_name)
