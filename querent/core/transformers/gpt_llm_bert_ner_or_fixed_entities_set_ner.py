@@ -73,7 +73,7 @@ class GPTLLM(BaseEngine):
         self.user_context = config.user_context
 
     def _initialize_models(self, config):
-        self.rel_model_initialized = self.model_manager.get_model(config.rel_model_path)
+        self.rel_model_initialized = self.model_manager.get_model(config.rel_model_name)
         self.nlp_model = NER_LLM.set_nlp_model(config.spacy_model_path)
         self.nlp_model = NER_LLM.get_class_variable()
         self.create_emb = EmbeddingStore()
