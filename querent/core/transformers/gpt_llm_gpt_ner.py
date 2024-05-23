@@ -7,7 +7,6 @@ import time
 import spacy
 from querent.config.core.gpt_llm_config import GPTConfig
 from querent.common.types.ingested_images import IngestedImages
-from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.ingested_tokens import IngestedTokens
@@ -46,7 +45,6 @@ class GPTNERLLM(BaseEngine):
                 self.gpt_llm = OpenAI(api_key=config.openai_api_key)
             else:
                 self.gpt_llm = OpenAI()
-            self.function_registry = FunctionRegistry()
             self.create_emb = EmbeddingStore()
             self.user_context = config.user_context
         

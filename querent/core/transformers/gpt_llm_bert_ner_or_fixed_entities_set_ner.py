@@ -7,7 +7,6 @@ from querent.config.core.gpt_llm_config import GPTConfig
 from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
 from querent.common.types.ingested_images import IngestedImages
 from querent.kg.ner_helperfunctions.ner_llm_transformer import NER_LLM
-from querent.kg.rel_helperfunctions.openai_functions import FunctionRegistry
 from querent.common.types.querent_event import EventState, EventType
 from querent.core.base_engine import BaseEngine
 from querent.common.types.ingested_tokens import IngestedTokens
