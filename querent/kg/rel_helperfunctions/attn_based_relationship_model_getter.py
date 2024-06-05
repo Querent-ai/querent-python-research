@@ -68,7 +68,6 @@ class AttnRelationshipExtractor:
 
 class BertBasedModel(AttnRelationshipExtractor):
     def __init__(self, model_tokenizer, model):
-        print("initiualzing--------")
         super().__init__(model_tokenizer, model)
 
     def init_token_idx_2_word_doc_idx(self) -> list[tuple[str, int]]:
@@ -96,14 +95,12 @@ class BertBasedModel(AttnRelationshipExtractor):
         output = self.model(**model_input, output_attentions=True)
         last_att_layer = output.attentions[-1]
         mean = torch.mean(last_att_layer, dim=1)
-        print("Mean ", mean[0])
         return mean[0]
 
     def maximum_tokens(self) -> int:
         return 512
     
     def tokenize_sentence(self, sentence: str):
-        print("hereeeeee")
         return self.tokenizer.encode(sentence, add_special_tokens=False)
 
 
@@ -138,6 +135,9 @@ class LlamaBasedModel(AttnRelationshipExtractor):
 
     def maximum_tokens(self) -> int:
         return 2048
+    
+    def tokenize_sentence(self, sentence: str):
+        return self.tokenizer.encode(sentence, add_special_tokens=False)
 
 
 def get_model(model_name:str, model_tokenizer: str, model: str) -> AttnRelationshipExtractor:
@@ -148,24 +148,3 @@ def get_model(model_name:str, model_tokenizer: str, model: str) -> AttnRelations
 
     raise Exception("Model not found")
 
-# Usage example
-if __name__ == '__main__':
-    sentence = """ABSTRACT: Cyclic gas injection methods have been shown to improve oil recovery
-in conventional reservoirs. Even though similar technologies have been used in
-unconventional reservoirs with some success stories in shale resources, cyclic gas
-injection enhanced oil recovery (EOR) is still a little-understood subject in boosting
-oil recovery from unconventional reservoirs."""
-    tokenizer = transformers.BertTokenizer.from_pretrained('botryan96/GeoBERT',from_tf=True )
-    model = transformers.BertModel.from_pretrained('botryan96/GeoBERT', from_tf=True)
-    extractor = get_model("bert",model_tokenizer= tokenizer,model=model)
-    tokenized_sentence = extractor.tokenize_sentence(sentence)
-    print("tokenized--", tokenized_sentence)
-    model_input = extractor.model_input(tokenized_sentence)
-    attention = extractor.inference_attention(model_input)
-    print("Attention-------", attention)
-    # Pairs-------- [HtPair(head=NounChunk(text='introduction gas injection', doc_start_idx=2, doc_end_idx=4, token_start_idx=3, token_end_idx=5, 
-    # wikidata_id=None), tail=NounChunk(text='a widely used technology', doc_start_idx=7, doc_end_idx=10, token_start_idx=8, token_end_idx=11, 
-    # wikidata_id=None)),
-#     model_metadata = extractor.dump_metadata()
-#     model_name = extractor.extract_general_name(model_metadata)
-#     print(model_name)

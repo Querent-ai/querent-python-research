@@ -128,7 +128,6 @@ class NER_LLM:
 
     def _token_distance(self, tokens, start_idx1, nn_chunk_length_idx1, start_idx2, noun_chunk1, noun_chunk2):
         distance = 0
-        print("Tokens-----", tokens)
         for idx in range(start_idx1 + nn_chunk_length_idx1, start_idx2):
             token = tokens[idx]
             if (token not in self.filler_tokens and
@@ -140,32 +139,39 @@ class NER_LLM:
 
 
     def transform_entity_pairs(self, entity_pairs):
-        transformed_pairs = []
-        sentence_group = {}
-        for pair, metadata in entity_pairs:
-            combined_sentence = ' '.join(filter(None, [
-                metadata['previous_sentence'],
-                metadata['current_sentence'],
-                metadata['next_sentence']
-            ]))
-            if combined_sentence not in sentence_group:
-                sentence_group[combined_sentence] = []
-            sentence_group[combined_sentence].append(pair)
+        try:
+            transformed_pairs = []
+            sentence_group = {}
+            for pair, metadata in entity_pairs:
+                combined_sentence = ' '.join(filter(None, [
+                    metadata['previous_sentence'],
+                    metadata['current_sentence'],
+                    metadata['next_sentence']
+                ]))
+                current_sentence = metadata['current_sentence']
+                if combined_sentence not in sentence_group:
+                    sentence_group[combined_sentence] = []
+                sentence_group[combined_sentence].append(pair + (current_sentence,))
 
-        for combined_sentence, pairs in sentence_group.items():
-            for entity1, entity2 in pairs:
-                meta_dict = {
-                    "entity1_score": entity1['score'],
-                    "entity2_score": entity2['score'],
-                    "entity1_label": entity1['label'],
-                    "entity2_label": entity2['label'],
-                    "entity1_nn_chunk":entity1['noun_chunk'],
-                    "entity2_nn_chunk":entity2['noun_chunk'],
-                }
-                new_pair = (entity1['entity'], combined_sentence, entity2['entity'], meta_dict)
-                transformed_pairs.append(new_pair)
+            for combined_sentence, pairs in sentence_group.items():
+                for entity1, entity2, current_sentence in pairs:
+                    meta_dict = {
+                        "entity1_score": entity1['score'],
+                        "entity2_score": entity2['score'],
+                        "entity1_label": entity1['label'],
+                        "entity2_label": entity2['label'],
+                        "entity1_nn_chunk":entity1['noun_chunk'],
+                        "entity2_nn_chunk":entity2['noun_chunk'],
+                        "current_sentence":current_sentence
+                    }
+                    new_pair = (entity1['entity'], combined_sentence, entity2['entity'], meta_dict)
+                    transformed_pairs.append(new_pair)
 
-        return transformed_pairs
+            return transformed_pairs
+        except Exception as e:
+            print("EEEEEEEEEEEEEE", e)
+            self.logger.error(f"Error trasnforming entity pairs: {e}")
+            raise Exception(f"Error trasnforming entity pairs: {e}")
 
     def get_chunks(self, tokens: List[str], max_chunk_size=510):
         chunks = []
@@ -210,13 +216,14 @@ class NER_LLM:
         i = 0
         while i < len(entities):
             entity = entities[i]
-            while i + 1 < len(entities) and entities[i + 1]["entity"].startswith("##"):
+            while i + 1 < len(entities) and entities[i + 1]["entity"].startswith("##") and entities[i + 1]["start_idx"] - entities[i]["start_idx"] ==1:
                 entity["entity"] += entities[i + 1]["entity"][2:]
                 entity["score"] = (entity["score"] + entities[i + 1]["score"]) / 2
                 i += 1
             combined_entities.append(entity)
             i += 1
         final_entities = []
+        print("Combined Entitiesssssss----------", combined_entities)
         for entity in combined_entities:
             entity_text = entity["entity"]
             start_idx = entity["start_idx"]
@@ -261,7 +268,6 @@ class NER_LLM:
                     if entities[i]["start_idx"] + 1 == entities[j]["start_idx"]:
                         continue
                     distance = self._token_distance(tokens, entities[i]["start_idx"], entities[i]["noun_chunk_length"],entities[j]["start_idx"],entities[i]["noun_chunk"], entities[j]["noun_chunk"])
-                    print("Distance---------", distance)
                     if distance <= 10:
                         pair = (entities[i], entities[j])
                         if pair not in binary_pairs:
@@ -338,13 +344,13 @@ class NER_LLM:
         return matched_tuples
 
     def find_subword_indices(self, text, entity):
+        print("entity----", entity)
         subwords = self.ner_tokenizer.tokenize(entity)
         subword_ids = self.ner_tokenizer.convert_tokens_to_ids(subwords)
         token_ids = self.ner_tokenizer.convert_tokens_to_ids(self.ner_tokenizer.tokenize(text))
-        print("Length of token idsssss", len(token_ids))
-        print("Length of Subword IDs---",len(subword_ids), subword_ids)
-
         subword_positions = []
+        print("entity----", subwords)
+        print("entity -----------", self.ner_tokenizer.tokenize(text))
         for i in range(len(token_ids) - len(subword_ids) + 1):
             if token_ids[i:i + len(subword_ids)] == subword_ids:
                 subword_positions.append((i+1, i + len(subword_ids)))
@@ -362,14 +368,17 @@ class NER_LLM:
             tokens = self.tokenize_sentence(sentence)
             chunks = self.get_chunks(tokens)
             all_entities = []
+            print("Tokenssssss-----", tokens)
             for chunk in chunks:
                 if fixed_entities_flag == False:
                     entities = self.extract_entities_from_chunk(chunk)
                 else:
                     entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
                 all_entities.extend(entities)
+            print("Before Wordpiece---------------", all_entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
             if fixed_entities_flag == False:
+                print("Final Entities ----", final_entities)
                 parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence, model=NER_LLM.nlp)
                 entities_withnnchunk = parsed_entities.entities
             else:
@@ -377,9 +386,7 @@ class NER_LLM:
                     entity['noun_chunk'] = entity['entity']
                     entity['noun_chunk_length'] = len(entity['noun_chunk'].split())
                 entities_withnnchunk = final_entities
-            print("Entitiessssss------", entities_withnnchunk)
             binary_pairs = self.extract_binary_pairs(entities_withnnchunk, tokens, all_sentences, sentence_idx)
-            print("Binary Pairs------", binary_pairs)
             
             return entities_withnnchunk, binary_pairs
         except Exception as e:
@@ -429,6 +436,7 @@ class NER_LLM:
             
             if cleaned_sublist:
                 new_data.append(cleaned_sublist)
+        
 
         return new_data
 

@@ -1,9 +1,7 @@
 import json
-import re
-from transformers import AutoTokenizer
+from transformers import AutoConfig, AutoTokenizer
+import transformers
 import time
-
-import unidecode
 from querent.common.types.ingested_table import IngestedTables
 from querent.kg.ner_helperfunctions.fixed_predicate import FixedPredicateExtractor
 from querent.common.types.ingested_images import IngestedImages
@@ -30,6 +28,8 @@ from querent.kg.rel_helperfunctions.triple_to_json import TripleToJsonConverter
 from querent.kg.rel_helperfunctions.embedding_store import EmbeddingStore
 from querent.models.model_manager import ModelManager
 from querent.models.gguf_metadata_extractor import GGUFMetadataExtractor
+from querent.kg.rel_helperfunctions.attn_based_relationship_model_getter import get_model
+from querent.kg.rel_helperfunctions.attn_based_relationship_filter import process_tokens, trim_triples
 
 class BERTLLM(BaseEngine):
     def __init__(
@@ -49,6 +49,7 @@ class BERTLLM(BaseEngine):
         self.sample_relationships = config.sample_relationships
         self.user_context = config.user_context
         self.isConfinedSearch = config.is_confined_search
+        self.attn_based_rel_extraction = True
         self.create_emb = EmbeddingStore() if not Embedding else Embedding
 
         try:
@@ -76,12 +77,11 @@ class BERTLLM(BaseEngine):
 
     def _initialize_models(self, config):
         self.ner_model_initialized = self.model_manager.get_model(config.ner_model_name)
-        if not self.skip_inferences:
+        if not self.skip_inferences and self.attn_based_rel_extraction == False:
             extractor = GGUFMetadataExtractor(config.rel_model_path)
             model_metadata = extractor.dump_metadata()
             rel_model_name = extractor.extract_general_name(model_metadata)
             self.rel_model_initialized = self.model_manager.get_model(rel_model_name, model_path=config.rel_model_path)
-
         self.ner_llm_instance = NER_LLM(ner_model_name=self.ner_model_initialized)
         self.ner_tokenizer = self.ner_llm_instance.ner_tokenizer
         self.ner_model = self.ner_llm_instance.ner_model
@@ -89,7 +89,7 @@ class BERTLLM(BaseEngine):
         self.nlp_model = NER_LLM.get_class_variable()
 
     def _initialize_extractors(self, config):
-        if not self.skip_inferences:
+        if not self.skip_inferences and self.attn_based_rel_extraction == False:
             mock_config = Opensource_LLM_Config(
                 qa_template=config.user_context,
                 model_type=config.rel_model_type,
@@ -100,7 +100,30 @@ class BERTLLM(BaseEngine):
                 nltk_path=config.nltk_path
             )
             self.semantic_extractor = RelationExtractor(mock_config, self.create_emb)
-
+            
+        elif not self.skip_inferences and self.attn_based_rel_extraction == True:
+            model_config = AutoConfig.from_pretrained(config.rel_model_path)
+            print("Model Config -------------", model_config)
+            if 'bert' in model_config.model_type.lower():
+                self.ner_helper_instance = NER_LLM(ner_model_name=config.rel_model_path)
+                self.ner_helper_tokenizer = self.ner_helper_instance.ner_tokenizer
+                self.ner_helper_model = self.ner_helper_instance.ner_model
+                self.extractor = get_model("bert",model_tokenizer= self.ner_helper_tokenizer,model=self.ner_helper_model)
+            elif 'llama' in model_config.model_type.lower() or 'mpt' in model_config.model_type.lower():
+                # model_id = "TheBloke/Llama-2-7B-GGUF"
+                # filename = "llama-2-7b.Q5_K_M.gguf"
+                # self.ner_tokenizer = AutoTokenizer.from_pretrained(model_id, gguf_file=filename)
+                # self.model = transformers.AutoModelForCausalLM.from_pretrained(model_id, gguf_file=filename)
+                # self.ner_helper_instance = NER_LLM(provided_tokenizer =self.ner_tokenizer, provided_model=self.model)
+                print("Loaded Model-------------11")
+                self.model = transformers.AutoModelForCausalLM.from_pretrained(config.rel_model_path,trust_remote_code=True)
+                print("Loaded Model-------------")
+                self.ner_helper_instance = NER_LLM(ner_model_name= config.rel_model_path, provided_model=self.model)
+                self.ner_helper_tokenizer = self.ner_helper_instance.ner_tokenizer
+                self.ner_helper_model = self.ner_helper_instance.ner_model
+                self.extractor = get_model("llama",model_tokenizer= self.ner_helper_tokenizer,model=self.ner_helper_model)
+            else:
+                raise ValueError("Selected Model not supported for Attnetion Based Graph Extraction")
         self.attn_scores_instance = EntityAttentionExtractor(model=self.ner_model, tokenizer=self.ner_tokenizer)
 
     def _initialize_entity_context_extractor(self):
@@ -323,6 +346,7 @@ class BERTLLM(BaseEngine):
             doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
         if any(doc_entity_pairs):
             doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
+            print("Binary Pairs -------------", doc_entity_pairs)
         return doc_entity_pairs
 
     def _process_pairs_with_embeddings(self, pairs_withattn, file):
@@ -347,10 +371,17 @@ class BERTLLM(BaseEngine):
         return filtered_triples
 
     async def _process_relationships(self, filtered_triples, file, doc_source):
-        relationships = self.semantic_extractor.process_tokens(
-            filtered_triples, 
-            fixed_entities=(len(self.sample_entities) >= 1)
-        )
+        if self.attn_based_rel_extraction == False:    
+            relationships = self.semantic_extractor.process_tokens(
+                filtered_triples, 
+                fixed_entities=(len(self.sample_entities) >= 1)
+            )
+        else:
+            print("Trimming -----")
+            filtered_triples = trim_triples(filtered_triples)
+            print("Filtereddddddd Triples ------------", len(filtered_triples))
+            relationships = process_tokens(filtered_triples=filtered_triples, ner_instance=self.ner_helper_instance, extractor=self.extractor, nlp_model=self.nlp_model)
+            print("Predicates Triples From Attn Method----", relationships)
         if not relationships:
             return
 

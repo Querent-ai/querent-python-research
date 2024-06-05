@@ -44,7 +44,8 @@ class TripleToJsonConverter:
                 "object_type": TripleToJsonConverter._normalize_text(predicate_info.get("object_type", "Unlabeled"), replace_space=True),
                 "predicate": TripleToJsonConverter._normalize_text(predicate_info.get("predicate", ""), replace_space=True),
                 "predicate_type": TripleToJsonConverter._normalize_text(predicate_info.get("predicate_type", "Unlabeled"), replace_space=True),
-                "sentence": predicate_info.get("context", "").lower()
+                "sentence": predicate_info.get("context", "").lower(),
+                "score": predicate_info.get("score", 1)
             }
 
             return json_object

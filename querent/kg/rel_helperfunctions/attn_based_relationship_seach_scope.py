@@ -4,7 +4,7 @@ from typing import List, Tuple, Dict
 import numpy
     
 class EntityPair:
-    def __init__(self, head_entity: Dict, tail_entity: Dict, context: Dict, head_positions, tail_positions):
+    def __init__(self, head_entity: Dict, tail_entity: Dict, context: str, head_positions, tail_positions):
         self.head_entity = head_entity
         self.tail_entity = tail_entity
         self.context = context
@@ -53,7 +53,7 @@ def is_valid_token(token_id, pair: EntityPair, candidate_paths: List[SearchConte
 
 
 
-def perform_search(attention_matrix: torch.Tensor, entity_pair: EntityPair, search_candidates: int, require_contiguous: bool, max_relation_length: int, num_initial_tokens: int) -> List[SearchContextualRelationship]:
+def perform_search(entity_start_index, attention_matrix: torch.Tensor, entity_pair: EntityPair, search_candidates: int, require_contiguous: bool, max_relation_length: int, num_initial_tokens: int) -> List[SearchContextualRelationship]:
     """
         Initialize the perform search function with the following parameters:
         :param attention_matrix :Mean attention score, average attention each token pays to every other token showing which tokens are most related to each other in the context of the given sentence(s).
@@ -63,44 +63,43 @@ def perform_search(attention_matrix: torch.Tensor, entity_pair: EntityPair, sear
         :patam num_initial_tokens: Different for different models. E.g. 'Bert' adds a '[CLS]' to the start of a sequence, so it is 1.
         
     """
+    try:
+        queue = [
+            SearchContextualRelationship(entity_start_index)
+        ]
+        candidate_paths = []
+        visited_paths = set()
+        while len(queue) > 0:
+            current_path = queue.pop(0)
 
-    queue = [
-        SearchContextualRelationship(entity_pair.head_entity['start_idx'])
-    ]
-    print("Length of Queue", len(queue))
-    candidate_paths = []
-    visited_paths = set()
-    while len(queue) > 0:
-        current_path = queue.pop(0)
+            if len(current_path.relation_tokens) > max_relation_length:
+                continue
 
-        if len(current_path.relation_tokens) > max_relation_length:
-            continue
+            if require_contiguous and len(current_path.relation_tokens) > 1 and abs(current_path.relation_tokens[-2] - current_path.relation_tokens[-1]) != 1:
+                continue
 
-        if require_contiguous and len(current_path.relation_tokens) > 1 and abs(current_path.relation_tokens[-2] - current_path.relation_tokens[-1]) != 1:
-            continue
+            new_paths = []
+            
+            # How all other tokens attend to an entity e.g. "Emily Stanton"
+            # These scores indicate how much importance the model places on each token when considering "Emily Stanton."
+            # The tokens which consider entity "Emily Stanton" important, highlight entity's relationships and relevance within the sentence.
+            
+            attention_scores = attention_matrix[:, current_path.current_token]
+            for i in range(num_initial_tokens, len(attention_scores) - 1):
+                next_path = tuple(current_path.visited_tokens + [i])
+                if is_valid_token(i, entity_pair, candidate_paths, current_path, attention_scores[i].detach()) and next_path not in visited_paths and current_path.current_token != i:
+                    new_paths.append(
+                        copy.deepcopy(current_path)
+                    )
+                    new_paths[-1].add_token(i, attention_scores[i].detach())
+                    # print("New Paths ------ visited token & relation tokens-",new_paths[-1].visited_tokens, new_paths[-1].relation_tokens )
+                    # print("New Paths ------ Scoressss-",new_paths[-1].total_score)
+                    visited_paths.add(next_path)
+            new_paths.sort(key=sort_by_mean_score, reverse=True)
+            queue += new_paths[:search_candidates]
 
-        new_paths = []
+        return candidate_paths
+    except Exception as e:
+        print("Exceptions while performing search ------",e)
         
-        # How all other tokens attend to an entity e.g. "Emily Stanton"
-        # These scores indicate how much importance the model places on each token when considering "Emily Stanton."
-        # The tokens which consider entity "Emily Stanton" important, highlight entity's relationships and relevance within the sentence.
-        attention_scores = attention_matrix[:, current_path.current_token]
-        
-        print("Length of Attention Matrix....", len(attention_matrix), numpy.shape(attention_matrix))
-        print("Length of Attention Scores....", len(attention_scores), numpy.shape(attention_scores))
-        for i in range(num_initial_tokens, len(attention_scores) - 1):
-            next_path = tuple(current_path.visited_tokens + [i])
-            if is_valid_token(i, entity_pair, candidate_paths, current_path, attention_scores[i].detach()) and next_path not in visited_paths and current_path.current_token != i:
-                new_paths.append(
-                    copy.deepcopy(current_path)
-                )
-                new_paths[-1].add_token(i, attention_scores[i].detach())
-                print("New Paths ------ visited token & relation tokens-",new_paths[-1].visited_tokens, new_paths[-1].relation_tokens )
-                print("New Paths ------ Scoressss-",new_paths[-1].total_score)
-                visited_paths.add(next_path)
-        new_paths.sort(key=sort_by_mean_score, reverse=True)
-        queue += new_paths[:search_candidates]
-
-    return candidate_paths
-
 

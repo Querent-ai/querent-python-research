@@ -40,6 +40,7 @@ class EmbeddingStore:
                     predicate_type = data.get("predicate_type","Unlabeled").replace('"', '\\"')
                     subject_type = data.get("subject_type","Unlabeled").replace('"', '\\"')
                     object_type = data.get("object_type","Unlabeled").replace('"', '\\"')
+                    score = data.get("score")
                     context_embeddings = None
                     predicate_embedding = None
                     context_embeddings = self.get_embeddings([context])[0]
@@ -54,7 +55,8 @@ class EmbeddingStore:
                         "predicate": predicate,
                         "subject_type": subject_type,
                         "object_type": object_type,
-                        "predicate_emb": predicate_embedding if predicate_embedding is not None else "Not Implemented"
+                        "predicate_emb": predicate_embedding if predicate_embedding is not None else "Not Implemented",
+                        "score":score
                     }
                     updated_json_string = json.dumps(essential_data)
                     processed_pairs.append(
