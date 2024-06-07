@@ -169,7 +169,6 @@ class NER_LLM:
 
             return transformed_pairs
         except Exception as e:
-            print("EEEEEEEEEEEEEE", e)
             self.logger.error(f"Error trasnforming entity pairs: {e}")
             raise Exception(f"Error trasnforming entity pairs: {e}")
 
@@ -223,7 +222,6 @@ class NER_LLM:
             combined_entities.append(entity)
             i += 1
         final_entities = []
-        print("Combined Entitiesssssss----------", combined_entities)
         for entity in combined_entities:
             entity_text = entity["entity"]
             start_idx = entity["start_idx"]
@@ -344,13 +342,10 @@ class NER_LLM:
         return matched_tuples
 
     def find_subword_indices(self, text, entity):
-        print("entity----", entity)
         subwords = self.ner_tokenizer.tokenize(entity)
         subword_ids = self.ner_tokenizer.convert_tokens_to_ids(subwords)
         token_ids = self.ner_tokenizer.convert_tokens_to_ids(self.ner_tokenizer.tokenize(text))
         subword_positions = []
-        print("entity----", subwords)
-        print("entity -----------", self.ner_tokenizer.tokenize(text))
         for i in range(len(token_ids) - len(subword_ids) + 1):
             if token_ids[i:i + len(subword_ids)] == subword_ids:
                 subword_positions.append((i+1, i + len(subword_ids)))
@@ -368,17 +363,14 @@ class NER_LLM:
             tokens = self.tokenize_sentence(sentence)
             chunks = self.get_chunks(tokens)
             all_entities = []
-            print("Tokenssssss-----", tokens)
             for chunk in chunks:
                 if fixed_entities_flag == False:
                     entities = self.extract_entities_from_chunk(chunk)
                 else:
                     entities = self.extract_fixed_entities_from_chunk(chunk,fixed_entities, entity_types)
                 all_entities.extend(entities)
-            print("Before Wordpiece---------------", all_entities)
             final_entities = self.combine_entities_wordpiece(all_entities, tokens)
             if fixed_entities_flag == False:
-                print("Final Entities ----", final_entities)
                 parsed_entities = Dependency_Parsing(entities=final_entities, sentence=sentence, model=NER_LLM.nlp)
                 entities_withnnchunk = parsed_entities.entities
             else:

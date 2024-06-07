@@ -92,14 +92,12 @@ def perform_search(entity_start_index, attention_matrix: torch.Tensor, entity_pa
                         copy.deepcopy(current_path)
                     )
                     new_paths[-1].add_token(i, attention_scores[i].detach())
-                    # print("New Paths ------ visited token & relation tokens-",new_paths[-1].visited_tokens, new_paths[-1].relation_tokens )
-                    # print("New Paths ------ Scoressss-",new_paths[-1].total_score)
                     visited_paths.add(next_path)
             new_paths.sort(key=sort_by_mean_score, reverse=True)
             queue += new_paths[:search_candidates]
 
         return candidate_paths
     except Exception as e:
-        print("Exceptions while performing search ------",e)
+        raise e
         
 

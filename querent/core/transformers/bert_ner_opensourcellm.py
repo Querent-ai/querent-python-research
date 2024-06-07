@@ -102,8 +102,9 @@ class BERTLLM(BaseEngine):
             self.semantic_extractor = RelationExtractor(mock_config, self.create_emb)
             
         elif not self.skip_inferences and self.attn_based_rel_extraction == True:
+            # config.rel_model_path = 'bert-base-uncased'
+            config.rel_model_path = self.ner_model_initialized
             model_config = AutoConfig.from_pretrained(config.rel_model_path)
-            print("Model Config -------------", model_config)
             if 'bert' in model_config.model_type.lower():
                 self.ner_helper_instance = NER_LLM(ner_model_name=config.rel_model_path)
                 self.ner_helper_tokenizer = self.ner_helper_instance.ner_tokenizer
@@ -115,9 +116,7 @@ class BERTLLM(BaseEngine):
                 # self.ner_tokenizer = AutoTokenizer.from_pretrained(model_id, gguf_file=filename)
                 # self.model = transformers.AutoModelForCausalLM.from_pretrained(model_id, gguf_file=filename)
                 # self.ner_helper_instance = NER_LLM(provided_tokenizer =self.ner_tokenizer, provided_model=self.model)
-                print("Loaded Model-------------11")
                 self.model = transformers.AutoModelForCausalLM.from_pretrained(config.rel_model_path,trust_remote_code=True)
-                print("Loaded Model-------------")
                 self.ner_helper_instance = NER_LLM(ner_model_name= config.rel_model_path, provided_model=self.model)
                 self.ner_helper_tokenizer = self.ner_helper_instance.ner_tokenizer
                 self.ner_helper_model = self.ner_helper_instance.ner_model
@@ -245,7 +244,18 @@ class BERTLLM(BaseEngine):
                                 if graph_json:
                                     current_state = EventState(event_type=EventType.Graph, timestamp=time.time(), payload=graph_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
-                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob))
+                                subject, json_str, object_ = updated_tuple
+                                context = json.loads(json_str)
+                                sen_emb = self.create_emb.get_embeddings([context['context']])[0]
+                                sub_emb = self.create_emb.get_embeddings(subject)[0]
+                                obj_emb = self.create_emb.get_embeddings(object_)[0]
+                                predicate_score=1
+                                final_emb = TripleToJsonConverter.dynamic_weighted_average_embeddings(
+                                                                                                            [sub_emb, obj_emb, sen_emb],
+                                                                                                            base_weights=[predicate_score, predicate_score, 3],
+                                                                                                            normalize_weights=True  # Normalize weights to ensure they sum to 1
+                                                                                                        )
+                                vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(updated_tuple, blob, final_emb))
                                 if vector_json:
                                     current_state = EventState(event_type=EventType.Vector, timestamp=time.time(), payload=vector_json, file=file, doc_source=doc_source, image_id=unique_id)
                                     await self.set_state(new_state=current_state)
@@ -346,7 +356,6 @@ class BERTLLM(BaseEngine):
             doc_entity_pairs = self.entity_context_extractor.process_entity_types(doc_entities=doc_entity_pairs)
         if any(doc_entity_pairs):
             doc_entity_pairs = self.ner_llm_instance.remove_duplicates(doc_entity_pairs)
-            print("Binary Pairs -------------", doc_entity_pairs)
         return doc_entity_pairs
 
     def _process_pairs_with_embeddings(self, pairs_withattn, file):
@@ -377,11 +386,8 @@ class BERTLLM(BaseEngine):
                 fixed_entities=(len(self.sample_entities) >= 1)
             )
         else:
-            print("Trimming -----")
             filtered_triples = trim_triples(filtered_triples)
-            print("Filtereddddddd Triples ------------", len(filtered_triples))
             relationships = process_tokens(filtered_triples=filtered_triples, ner_instance=self.ner_helper_instance, extractor=self.extractor, nlp_model=self.nlp_model)
-            print("Predicates Triples From Attn Method----", relationships)
         if not relationships:
             return
 
@@ -419,8 +425,18 @@ class BERTLLM(BaseEngine):
                     doc_source=doc_source
                 )
                 await self.set_state(new_state=current_state)
-
-            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple))
+            subject, json_str, object_ = triple
+            context = json.loads(json_str)
+            sen_emb = self.create_emb.get_embeddings([context['context']])[0]
+            sub_emb = self.create_emb.get_embeddings(subject)[0]
+            obj_emb = self.create_emb.get_embeddings(object_)[0]
+            predicate_score=context['score']
+            final_emb = TripleToJsonConverter.dynamic_weighted_average_embeddings(
+                                                                                        [sub_emb, obj_emb, sen_emb],
+                                                                                        base_weights=[predicate_score, predicate_score, 3],
+                                                                                        normalize_weights=True  # Normalize weights to ensure they sum to 1
+                                                                                    )
+            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple=triple, embeddings=final_emb))
             if vector_json:
                 current_state = EventState(
                     event_type=EventType.Vector,
