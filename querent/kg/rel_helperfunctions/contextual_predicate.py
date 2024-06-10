@@ -42,6 +42,7 @@ class ContextualPredicate(BaseModel):
     pair_attnscore: float
     entity1_embedding: List[float]
     entity2_embedding: List[float]
+    current_sentence: str
     
     
     @classmethod
@@ -63,7 +64,8 @@ class ContextualPredicate(BaseModel):
                 pair_attnscore=data[3].get('pair_attnscore',1), 
                 entity1_embedding=entity1_embedding,
                 entity2_embedding=entity2_embedding,
-                file_path=data[4]
+                file_path=data[4],
+                current_sentence = data[3].get('current_sentence'),
             )
         except Exception as e:
             raise ValueError(f"Error creating ContextualPredicate from tuple: {e}")

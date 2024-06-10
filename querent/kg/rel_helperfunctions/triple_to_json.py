@@ -1,5 +1,6 @@
 import json
 import re
+import numpy as np
 """
     A class to convert triples into different JSON formats.
 
@@ -44,15 +45,29 @@ class TripleToJsonConverter:
                 "object_type": TripleToJsonConverter._normalize_text(predicate_info.get("object_type", "Unlabeled"), replace_space=True),
                 "predicate": TripleToJsonConverter._normalize_text(predicate_info.get("predicate", ""), replace_space=True),
                 "predicate_type": TripleToJsonConverter._normalize_text(predicate_info.get("predicate_type", "Unlabeled"), replace_space=True),
-                "sentence": predicate_info.get("context", "").lower()
+                "sentence": predicate_info.get("context", "").lower(),
+                "score": predicate_info.get("score", 1)
             }
 
             return json_object
         except Exception as e:
             raise Exception(f"Error in convert_graphjson: {e}")
+        
+    def dynamic_weighted_average_embeddings(embeddings, base_weights, normalize_weights=True):
+            embeddings = [np.array(emb) for emb in embeddings]
+            weights = np.array(base_weights, dtype=float)
+
+            if normalize_weights:
+                weights /= np.sum(weights)  # Normalize weights to sum to 1
+
+            weighted_sum = np.zeros_like(embeddings[0])
+            for emb, weight in zip(embeddings, weights):
+                weighted_sum += emb * weight
+
+            return weighted_sum
 
     @staticmethod
-    def convert_vectorjson(triple, blob = None):
+    def convert_vectorjson(triple, blob = None, embeddings=None):
         try:
             subject, json_str, object_ = triple
             data = TripleToJsonConverter._parse_json_str(json_str)
@@ -62,8 +77,8 @@ class TripleToJsonConverter:
             id_format = f"{TripleToJsonConverter._normalize_text(subject,replace_space=True)}-{TripleToJsonConverter._normalize_text(data.get('predicate', ''),replace_space=True)}-{TripleToJsonConverter._normalize_text(object_,replace_space=True)}"
             json_object = {
                 "id": TripleToJsonConverter._normalize_text(id_format),
-                "embeddings": data.get("context_embeddings", []),
-                "size": len(data.get("context_embeddings", [])),
+                "embeddings": embeddings.tolist(),
+                "size": len(embeddings.tolist()),
                 "namespace": TripleToJsonConverter._normalize_text(data.get("predicate", ""),replace_space=True),
                 "sentence": data.get("context", "").lower(),
                 "blob": blob,

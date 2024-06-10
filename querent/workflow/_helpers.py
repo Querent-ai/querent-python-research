@@ -8,8 +8,6 @@ from querent.collectors.collector_resolver import CollectorResolver
 from querent.common.uri import Uri
 from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.core.transformers.bert_ner_opensourcellm import BERTLLM
-from querent.core.transformers.gpt_llm_gpt_ner import GPTNERLLM
-from querent.core.transformers.gpt_llm_bert_ner_or_fixed_entities_set_ner import GPTLLM
 from querent.common.types.querent_event import EventType
 from querent.querent.querent import Querent
 from querent.querent.resource_manager import ResourceManager
@@ -107,34 +105,6 @@ async def start_llama_workflow(
         check_message_states(config, resource_manager, [querent_task, token_feeder])
     )
 
-    await asyncio.gather(querent_task, token_feeder, check_message_states_task)
-
-
-async def start_gpt_workflow(
-    resource_manager: ResourceManager, config: Config, result_queue: QuerentQueue
-):
-    search_directory = os.getenv('MODEL_PATH', '/model/')
-    setup_nltk_and_spacy_paths(config, search_directory)
-    # llm_instance = GPTNERLLM(result_queue, config.engines[0])
-    llm_instance = GPTLLM(result_queue, config.engines[0])
-    
-    llm_instance.subscribe(EventType.Graph, config.workflow.event_handler)
-    llm_instance.subscribe(EventType.Vector, config.workflow.event_handler)
-    querent = Querent(
-        [llm_instance],
-        resource_manager=resource_manager,
-    )
-    querent_task = asyncio.create_task(querent.start())
-    token_feeder = asyncio.create_task(
-        receive_token_feeder(
-            resource_manager=resource_manager,
-            config=config,
-            result_queue=result_queue,
-        )
-    )
-    check_message_states_task = asyncio.create_task(
-        check_message_states(config, resource_manager, [querent_task, token_feeder])
-    )
     await asyncio.gather(querent_task, token_feeder, check_message_states_task)
 
 

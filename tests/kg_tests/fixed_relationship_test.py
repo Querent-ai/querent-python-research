@@ -48,20 +48,7 @@
 # images have been made by Kääb (2005). However, this approach is sometimes limited by
 # weather, clouds, and shadows in areas of high relief.
 # In a novel approach, the current study presents one of the most comprehensive assess-
-# ments of the Gangotri glacier in recent times (2004–2011). The methodology entails the
-# utilization of interferometric SAR (InSAR) coherence and sub-pixel offset tracking. While
-# complementing most previous studies, the result presented here establishes the effective-
-# ness of the techniques implemented to produce robust estimates of areal changes and glacier
-# surface velocity in near real time. But, perhaps most importantly, this is one of the few stud-
-# ies which has shown the melting trend of Gangotri glacier over a considerably continuous
-# period during recent times (2004–2011).
-# 2. Study area
-# The Gangotri glacier is a valley-type glacier and one of the largest Himalayan glaciers
-# located in Uttarkashi district of Uttarakhand, India (Figure 1). Extending between the lat-
-# itudes 30◦ 43 22 N–30◦ 55 49 N and longitudes 79◦ 4 41 E–79◦ 16 34 E, Gangotri
-# is the only major Himalayan glacier that flows towards the northwest. It spans a length
-# of 30.2 km, its width varies between 0.20 and 2.35 km, and it thereby covers an area of
-# about 86.32 km2 . While the average thickness of the Gangotri glacier is ∼200 m, its sur-
+# ments of the Gangotri glacier in recent times (20fixed_relationshipsthe Gangotri glacier is ∼200 m, its sur-
 # face elevation varies from 4000 to 7000 m above mean sea level (Jain 2008). Gangotri has
 # three main tributaries, namely the Raktvarna, the Chaturangi, and the Kirti, with lengthsInternational Journal of Remote Sensing
 # 70° 0′ 00″ E 75° 0′ 00″ E 80° 0′ 00″ E 85° 0′ 00″ E 90° 0′ 00″ E
@@ -69,23 +56,7 @@
 # 440 km
 # 79º 10' E
 # Raktvarna
-# 30° 55′ N
-# 220
-# 30° 55′ N
-# 35° 0′ 00″ N
-# 0
-# 8655
-# Chaturangi
-# 30° 0′ 00″ N
-# 30° 50′ N
-# tri
-# go
-# an
-# G
-# 25° 0′ 00″ N
-# 30° 50′ N
-# Kirti
-# Shivling
+# 30° 55′ Nfixed_relationships
 # Hills
 # Bhagirathi
 # Hills

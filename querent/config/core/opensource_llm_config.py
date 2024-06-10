@@ -8,7 +8,7 @@ class Opensource_LLM_Config(BaseModel):
     version: str = "0.0.1"
     logger: str = "RelationshipExtractor.engine_config"
     model_type: str = 'llama'
-    model_path: str = './tests/llama-2-7b-chat.Q5_K_M.gguf' 
+    model_path: str = '' 
     grammar_file_path: str = './querent/kg/rel_helperfunctions/json.gbnf'
     qa_template: str = Field(default=None)
     emb_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'

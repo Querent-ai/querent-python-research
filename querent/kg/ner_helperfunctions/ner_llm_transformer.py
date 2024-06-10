@@ -54,12 +54,13 @@ class NER_LLM:
         cls.nlp = spacy.load(model_path)
         
     def __init__(
-        self, ner_model_name="dbmdz/bert-large-cased-finetuned-conll03-english",
+        self, ner_model_name="",
         filler_tokens=None,
         provided_tokenizer=None,
         provided_model=None,
     ):  
         self.logger = setup_logger(__name__, "NER_LLM")
+        self.device = "cpu"
         if provided_tokenizer:
             self.ner_tokenizer = provided_tokenizer
         else:
@@ -68,6 +69,7 @@ class NER_LLM:
             self.ner_model = provided_model
         else:
             self.ner_model = NER_LLM.load_model(ner_model_name, "NER")
+            self.ner_model.eval()
         self.filler_tokens = filler_tokens or ["of", "a", "the", "in", "on", "at", "and", "or", "with","(",")","-"]
         
         
@@ -124,9 +126,9 @@ class NER_LLM:
             raise Exception(f"An error occurred while tokenizing: {e}")
         return tokenized_sentences
 
-    def _token_distance(self, tokens, start_idx1, start_idx2, noun_chunk1, noun_chunk2):
+    def _token_distance(self, tokens, start_idx1, nn_chunk_length_idx1, start_idx2, noun_chunk1, noun_chunk2):
         distance = 0
-        for idx in range(start_idx1 + 1, start_idx2):
+        for idx in range(start_idx1 + nn_chunk_length_idx1, start_idx2):
             token = tokens[idx]
             if (token not in self.filler_tokens and
                 token not in noun_chunk1 and
@@ -137,32 +139,38 @@ class NER_LLM:
 
 
     def transform_entity_pairs(self, entity_pairs):
-        transformed_pairs = []
-        sentence_group = {}
-        for pair, metadata in entity_pairs:
-            combined_sentence = ' '.join(filter(None, [
-                metadata['previous_sentence'],
-                metadata['current_sentence'],
-                metadata['next_sentence']
-            ]))
-            if combined_sentence not in sentence_group:
-                sentence_group[combined_sentence] = []
-            sentence_group[combined_sentence].append(pair)
+        try:
+            transformed_pairs = []
+            sentence_group = {}
+            for pair, metadata in entity_pairs:
+                combined_sentence = ' '.join(filter(None, [
+                    metadata['previous_sentence'],
+                    metadata['current_sentence'],
+                    metadata['next_sentence']
+                ]))
+                current_sentence = metadata['current_sentence']
+                if combined_sentence not in sentence_group:
+                    sentence_group[combined_sentence] = []
+                sentence_group[combined_sentence].append(pair + (current_sentence,))
 
-        for combined_sentence, pairs in sentence_group.items():
-            for entity1, entity2 in pairs:
-                meta_dict = {
-                    "entity1_score": entity1['score'],
-                    "entity2_score": entity2['score'],
-                    "entity1_label": entity1['label'],
-                    "entity2_label": entity2['label'],
-                    "entity1_nn_chunk":entity1['noun_chunk'],
-                    "entity2_nn_chunk":entity2['noun_chunk'],
-                }
-                new_pair = (entity1['entity'], combined_sentence, entity2['entity'], meta_dict)
-                transformed_pairs.append(new_pair)
+            for combined_sentence, pairs in sentence_group.items():
+                for entity1, entity2, current_sentence in pairs:
+                    meta_dict = {
+                        "entity1_score": entity1['score'],
+                        "entity2_score": entity2['score'],
+                        "entity1_label": entity1['label'],
+                        "entity2_label": entity2['label'],
+                        "entity1_nn_chunk":entity1['noun_chunk'],
+                        "entity2_nn_chunk":entity2['noun_chunk'],
+                        "current_sentence":current_sentence
+                    }
+                    new_pair = (entity1['entity'], combined_sentence, entity2['entity'], meta_dict)
+                    transformed_pairs.append(new_pair)
 
-        return transformed_pairs
+            return transformed_pairs
+        except Exception as e:
+            self.logger.error(f"Error trasnforming entity pairs: {e}")
+            raise Exception(f"Error trasnforming entity pairs: {e}")
 
     def get_chunks(self, tokens: List[str], max_chunk_size=510):
         chunks = []
@@ -179,9 +187,10 @@ class NER_LLM:
         results = []
         try:
             input_ids = self.ner_tokenizer.convert_tokens_to_ids(chunk)
-            input_tensor = torch.tensor([input_ids])
+            input_tensor = torch.tensor([input_ids], device=self.device)
+            attention_mask = torch.ones(input_tensor.shape, device=self.device)
             with torch.no_grad():
-                outputs = self.ner_model(input_tensor)
+                outputs = self.ner_model(input_tensor, attention_mask=attention_mask)
             predictions = torch.argmax(outputs[0], dim=2)
             scores = torch.nn.functional.softmax(outputs[0], dim=2)
             label_ids = predictions[0].tolist()
@@ -206,7 +215,7 @@ class NER_LLM:
         i = 0
         while i < len(entities):
             entity = entities[i]
-            while i + 1 < len(entities) and entities[i + 1]["entity"].startswith("##"):
+            while i + 1 < len(entities) and entities[i + 1]["entity"].startswith("##") and entities[i + 1]["start_idx"] - entities[i]["start_idx"] ==1:
                 entity["entity"] += entities[i + 1]["entity"][2:]
                 entity["score"] = (entity["score"] + entities[i + 1]["score"]) / 2
                 i += 1
@@ -256,8 +265,8 @@ class NER_LLM:
                 for j in range(i + 1, len(entities)):
                     if entities[i]["start_idx"] + 1 == entities[j]["start_idx"]:
                         continue
-                    distance = self._token_distance(tokens, entities[i]["start_idx"], entities[j]["start_idx"],entities[i]["noun_chunk"], entities[j]["noun_chunk"])
-                    if distance <= 30:
+                    distance = self._token_distance(tokens, entities[i]["start_idx"], entities[i]["noun_chunk_length"],entities[j]["start_idx"],entities[i]["noun_chunk"], entities[j]["noun_chunk"])
+                    if distance <= 10:
                         pair = (entities[i], entities[j])
                         if pair not in binary_pairs:
                             metadata = {
@@ -332,7 +341,21 @@ class NER_LLM:
 
         return matched_tuples
 
+    def find_subword_indices(self, text, entity):
+        subwords = self.ner_tokenizer.tokenize(entity)
+        subword_ids = self.ner_tokenizer.convert_tokens_to_ids(subwords)
+        token_ids = self.ner_tokenizer.convert_tokens_to_ids(self.ner_tokenizer.tokenize(text))
+        subword_positions = []
+        for i in range(len(token_ids) - len(subword_ids) + 1):
+            if token_ids[i:i + len(subword_ids)] == subword_ids:
+                subword_positions.append((i+1, i + len(subword_ids)))
+        return subword_positions
 
+    def tokenize_sentence_with_positions(self, sentence: str):
+        tokens = self.ner_tokenizer.tokenize(sentence)
+        token_positions = [(token, idx +1 ) for idx, token in enumerate(tokens)]
+        
+        return token_positions
 
 
     def extract_entities_from_sentence(self, sentence: str, sentence_idx: int, all_sentences: List[str], fixed_entities_flag: bool, fixed_entities: List[str],entity_types: List[str]):
@@ -356,6 +379,7 @@ class NER_LLM:
                     entity['noun_chunk_length'] = len(entity['noun_chunk'].split())
                 entities_withnnchunk = final_entities
             binary_pairs = self.extract_binary_pairs(entities_withnnchunk, tokens, all_sentences, sentence_idx)
+            
             return entities_withnnchunk, binary_pairs
         except Exception as e:
             self.logger.error(f"Error extracting entities from sentence: {e}")
@@ -404,6 +428,7 @@ class NER_LLM:
             
             if cleaned_sublist:
                 new_data.append(cleaned_sublist)
+        
 
         return new_data
 

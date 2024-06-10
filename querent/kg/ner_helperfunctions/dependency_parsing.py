@@ -18,17 +18,13 @@ from querent.logging.logger import setup_logger
         List of noun chunks identified in the sentence.
     filtered_chunks : list
         Filtered noun chunks based on certain criteria.
-    merged_entities : list
+    noun_chunks : list
         Entities merged based on overlapping criteria.
     
     Methods:
     --------
     load_spacy_model():
         Loads the specified SpaCy model.
-    filter_chunks():
-        Filters the noun chunks based on length, stop words, and POS tagging.
-    merge_overlapping_entities():
-        Merges entities that overlap with each other.
     compare_entities_with_chunks():
         Compares the entities with the noun chunks and updates the entity details.
     process_entities():
@@ -43,41 +39,11 @@ class Dependency_Parsing():
             self.nlp = model
             self.doc = self.nlp(self.sentence)
             self.noun_chunks = list(self.doc.noun_chunks)
-            self.filtered_chunks = self.filter_chunks()
-            self.merged_entities = self.merge_overlapping_entities()
+            self.noun_chunks = list(self.doc.noun_chunks)
             self.compare_entities_with_chunks()
             self.entities = self.process_entities()
         except Exception as e:
             raise Exception(f"Error Initializing Dependency Parsing Class: {e}")
-
-    def filter_chunks(self):
-        try:
-            filtered_chunks = []
-            relevant_pos_tags = {"NOUN", "PROPN", "ADJ"}
-            for chunk in self.noun_chunks:
-                # Filtering logic
-                if len(chunk) > 1 and not chunk.root.is_stop and chunk.root.pos_ in relevant_pos_tags:
-                    filtered_chunks.append(chunk)
-            return filtered_chunks
-
-        except Exception as e:
-            raise Exception(f"Error filtering chunks: {e}")
-
-
-    def merge_overlapping_entities(self):
-        try:
-            merged_entities = []
-            i = 0
-            while i < len(self.filtered_chunks):
-                entity = self.filtered_chunks[i]
-                while i + 1 < len(self.filtered_chunks) and entity.end >= self.filtered_chunks[i + 1].start:
-                    entity = self.doc[entity.start:self.filtered_chunks[i + 1].end]
-                    i += 1
-                merged_entities.append(entity)
-                i += 1
-            return merged_entities
-        except Exception as e:
-            raise Exception(f"Error merging overlapping entities: {e}")
 
     def compare_entities_with_chunks(self):
         try:

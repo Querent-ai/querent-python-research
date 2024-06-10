@@ -138,7 +138,8 @@ class RelationExtractor():
                     "context": input2_data.get("context", ""),
                     "file_path": input2_data.get("file_path", ""),
                     "subject_type": input1.get("subject_type","Unlabeled"),
-                    "object_type": input1.get("object_type","Unlabeled")
+                    "object_type": input1.get("object_type","Unlabeled"),
+                    "score":1
                 }),
                 input1.get("object","")
             )
