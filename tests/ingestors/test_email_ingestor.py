@@ -56,7 +56,7 @@ async def test_email_ingestor(email_config):
             assert ingested is not None
             if ingested != "" or ingested is not None:
                 counter += 1
-        assert counter == 4
+        assert counter == 6
 
     await poll_and_print()  # Notice the use of await here
 
