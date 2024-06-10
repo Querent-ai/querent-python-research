@@ -117,7 +117,8 @@ class BERTLLM(BaseEngine):
                 # self.model = transformers.AutoModelForCausalLM.from_pretrained(model_id, gguf_file=filename)
                 # self.ner_helper_instance = NER_LLM(provided_tokenizer =self.ner_tokenizer, provided_model=self.model)
                 self.model = transformers.AutoModelForCausalLM.from_pretrained(config.rel_model_path,trust_remote_code=True)
-                self.ner_helper_instance = NER_LLM(ner_model_name= config.rel_model_path, provided_model=self.model)
+                # self.ner_helper_instance = NER_LLM(ner_model_name= config.rel_model_path, provided_model=self.model)
+                self.ner_helper_instance = self.ner_llm_instance
                 self.ner_helper_tokenizer = self.ner_helper_instance.ner_tokenizer
                 self.ner_helper_model = self.ner_helper_instance.ner_model
                 self.extractor = get_model("llama",model_tokenizer= self.ner_helper_tokenizer,model=self.ner_helper_model)
@@ -340,7 +341,7 @@ class BERTLLM(BaseEngine):
         else:
             content = clean_text
             file = data.get_file_path()
-
+        print("Returning this content -----", data.is_token_stream, "-------------------",content)
         return content, file
 
     def _get_entity_pairs(self, content):

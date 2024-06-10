@@ -1,8 +1,6 @@
 from querent.models.ner_models.english.english import EnglishFactory
 from querent.models.ner_models.geobert.geobert import GeoBERTFactory
 from querent.models.rel_models.llama.llama import LLAMAFactory
-from querent.models.rel_models.openai35.openai35 import OpenAI35Factory
-from querent.models.rel_models.openai4o.openai40 import OPENAI4oFactory
 
 class ModelManager:
     def __init__(self):
@@ -10,9 +8,7 @@ class ModelManager:
         self.factory_map = {
             "English": EnglishFactory,
             "GeoBERT": GeoBERTFactory,
-            "gpt-3.5-turbo" : OpenAI35Factory,
             "llama" : LLAMAFactory,
-            "gpt-4o":OPENAI4oFactory,
         }
 
     def get_model(self, model_identifier, model_path = None):

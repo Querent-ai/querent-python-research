@@ -7,10 +7,6 @@ from querent.config.config import Config
 from querent.config.workflow.workflow_config import WorkflowConfig
 from querent.config.collector.collector_config import CollectorConfig
 from querent.config.core.llm_config import LLM_Config
-from querent.config.core.gpt_llm_config import GPTConfig
-from querent.collectors.collector_resolver import CollectorResolver
-from querent.common.uri import Uri
-from querent.ingestors.ingestor_manager import IngestorFactoryManager
 from querent.querent.resource_manager import ResourceManager
 from querent.workflow._helpers import *
 
@@ -73,10 +69,7 @@ async def start_workflow(config_dict: dict):
         if is_engine_params:
             engine_config.update(engine_params_json)
         engine_config_source = engine_config.get("config", {})
-        if engine_config["name"] == "knowledge_graph_using_openai":
-            engine_config.update({"openai_api_key": engine_config["config"]["openai_api_key"]})
-            engines.append(GPTConfig(config_source=engine_config))
-        elif engine_config["name"] == "knowledge_graph_using_llama2_v1":
+        if engine_config["name"] == "knowledge_graph_using_llama2_v1":
             engines.append(LLM_Config(config_source=engine_config))
     config_dict["engines"] = engines
     config_dict["collectors"] = collectors
@@ -84,7 +77,6 @@ async def start_workflow(config_dict: dict):
     config = Config(config_source=config_dict)
 
     workflows = {
-        "knowledge_graph_using_openai": start_gpt_workflow,
         "knowledge_graph_using_llama2_v1": start_llama_workflow,
     }
 
