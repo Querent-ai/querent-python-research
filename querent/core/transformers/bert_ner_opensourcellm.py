@@ -341,7 +341,6 @@ class BERTLLM(BaseEngine):
         else:
             content = clean_text
             file = data.get_file_path()
-        print("Returning this content -----", data.is_token_stream, "-------------------",content)
         return content, file
 
     def _get_entity_pairs(self, content):

@@ -118,11 +118,9 @@ async def receive_token_feeder(
             ingested_tokens = IngestedTokens(
                 file=tokens.get("file", None), data=tokens.get("data", None), is_token_stream= tokens.get("is_token_stream"), doc_source=tokens.get("doc_source", "")
             )
-            print("Ingested Tokens recieved from RUST-------------", ingested_tokens.is_token_stream)
             await result_queue.put(ingested_tokens)
         else:
             await asyncio.sleep(10)
-            print("Sleeping in Token Feeder-------------")
     await result_queue.put(None)
 
 
