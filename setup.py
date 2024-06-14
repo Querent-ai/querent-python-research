@@ -32,7 +32,7 @@ requirements = [
     "jsonschema==4.17.3",
     "kombu==5.2.4",
     "langchain==0.1.11",
-    "langchain-community==0.0.25",
+    "langchain-community==0.2.5",
     "llama_cpp_python==0.2.15",
     "lxml==4.9.2",
     "moviepy==1.0.3",
@@ -63,7 +63,7 @@ requirements = [
     "rdflib==7.0.0",
     "redis==5.0.3",
     "regex==2023.5.5",
-    "requests==2.31.0",
+    "requests==2.32.2",
     "requests_html==0.10.0",
     "slack-sdk==3.26.1",
     "slack-sdk==3.26.1",
@@ -71,7 +71,7 @@ requirements = [
     "speechrecognition==3.10.1",
     "tika==2.6.0",
     "tensorflow==2.14.0",
-    "transformers==4.36.0",
+    "transformers==4.38.0",
     "unidecode==1.3.7",
 ]
 
