@@ -31,7 +31,7 @@ class TripleToJsonConverter:
             raise ValueError(f"Error decoding JSON: {e}")
 
     @staticmethod
-    def convert_graphjson(triple):
+    def convert_graphjson(triple, event_id = None):
         try:
             subject, json_str, object_ = triple
             predicate_info = TripleToJsonConverter._parse_json_str(json_str)
@@ -39,6 +39,7 @@ class TripleToJsonConverter:
                 return {}
 
             json_object = {
+                "event_id": event_id,
                 "subject": TripleToJsonConverter._normalize_text(subject, replace_space=True),
                 "subject_type": TripleToJsonConverter._normalize_text(predicate_info.get("subject_type", "Unlabeled"), replace_space=True),
                 "object": TripleToJsonConverter._normalize_text(object_, replace_space=True),
@@ -67,7 +68,7 @@ class TripleToJsonConverter:
             return weighted_sum
 
     @staticmethod
-    def convert_vectorjson(triple, blob = None, embeddings=None):
+    def convert_vectorjson(triple, blob = None, embeddings=None, event_id = None):
         try:
             subject, json_str, object_ = triple
             data = TripleToJsonConverter._parse_json_str(json_str)
@@ -76,6 +77,7 @@ class TripleToJsonConverter:
 
             id_format = f"{TripleToJsonConverter._normalize_text(subject,replace_space=True)}-{TripleToJsonConverter._normalize_text(data.get('predicate', ''),replace_space=True)}-{TripleToJsonConverter._normalize_text(object_,replace_space=True)}"
             json_object = {
+                "event_id": event_id,
                 "id": TripleToJsonConverter._normalize_text(id_format),
                 "embeddings": embeddings.tolist(),
                 "size": len(embeddings.tolist()),

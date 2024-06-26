@@ -8,19 +8,17 @@ The Asynchronous Data Dynamo and Graph Neural Network Catalyst
 
 ## Unlock Insights, Asynchronous Scaling, and Forge a Knowledge-Driven Future
 
-🚀 **Async at its Core**: Querent thrives in an asynchronous world. With asynchronous processing, we handle multiple data sources seamlessly, eliminating bottlenecks for utmost efficiency.
+🚀 **Asynchronous Processing**: Querent excels in handling data from multiple sources concurrently with asynchronous processing, eliminating bottlenecks and maximizing efficiency.
 
-💡 **Knowledge Graphs Made Easy**: Constructing intricate knowledge graphs is a breeze. Querent's robust architecture simplifies building comprehensive knowledge graphs, enabling you to uncover hidden data relationships.
+💡 **Effortless Knowledge Graph Construction:**: Querent's robust architecture simplifies building comprehensive knowledge graphs, enabling you to uncover hidden data relationships.
 
-🌐 **Scalability Redefined**: Scaling your data operations is effortless with Querent. We scale horizontally, empowering you to process multiple data streams without breaking a sweat.
+🌐 **Seamless Scalability**: Easily scale your data operations with Querent's horizontal scaling capabilities, allowing for the smooth processing of multiple data streams.
 
-🔬 **GNN Integration**: Querent seamlessly integrates with Graph Neural Networks (GNNs), enabling advanced data analysis, recommendation systems, and predictive modeling.
+🔍 **Data-Driven Insights**: Extract actionable information and make data-informed decisions with ease.
 
-🔍 **Data-Driven Insights**: Dive deep into data-driven insights with Querent's tools. Extract actionable information and make data-informed decisions with ease.
+🧠 **Advanced Language Model Utilization**: Utilize state-of-the-art language models (LLMs) for natural language processing tasks, enabling Querent to tackle complex text-based challenges.
 
-🧠 **Leverage Language Models**: Utilize state-of-the-art language models (LLMs) for text data. Querent empowers natural language processing, tackling complex text-based tasks.
-
-📈 **Efficient Memory Usage**: Querent is mindful of memory constraints. Our framework uses memory-efficient techniques, ensuring you can handle large datasets economically.
+📈 **Memory-Efficient Framework**: Querent is designed to handle large datasets economically, using memory-efficient techniques to ensure optimal performance even under memory constraints.
 
 ## Table of Contents
 
@@ -29,72 +27,35 @@ The Asynchronous Data Dynamo and Graph Neural Network Catalyst
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Features](#features)
-  - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
   - [Usage](#usage)
   - [Configuration](#configuration)
   - [Querent: an asynchronous engine for LLMs](#querent-an-asynchronous-engine-for-llms)
-  - [Ease of Use](#ease-of-use)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Setup DB](#setup-db)
+    - [Example](#example)
   - [Contributing](#contributing)
   - [License](#license)
+  
 
 ## Introduction
 
-Querent is designed to simplify and optimize data collection and processing workflows. Whether you need to scrape web data, ingest files, preprocess text, or create complex knowledge graphs, Querent offers a flexible framework for building and scaling these processes.
+Querent is designed to simplify and optimize data collection and processing workflows. Whether you need to ingest files, preprocess text, or create complex knowledge graphs from local data, Querent offers a flexible framework for building and scaling these processes.
 
 ## Features
 
-- **Collectors:** Gather data from various sources asynchronously, including web scraping and file collection.
+- **Collectors:** Gather local data from file sources asynchronously.
 
 - **Ingestors:** Process collected data efficiently with custom transformations and filtering.
 
 - **Processors:** Apply asynchronous data processing, including text preprocessing, cleaning, and feature extraction.
 
-- **Engines:** Execute a suite of LLM engines to extract insights from data, leveraging parallel processing for enhanced efficiency.
+- **Engines:** Leverage a Language Model (LLM) engine to convert textual data into knowledge triples (Subject, Predicate, Object) based on attention matrix scores.
 
-- **Storage:** Store processed data in various storage systems, such as databases or cloud storage.
+- **Storage:** Store processed data in a PostgreSQL storage system.
 
-- **Workflow Management:** Efficiently manage and scale data workflows with task orchestration.
 
-- **Scalability:** Querent is designed to scale horizontally, handling large volumes of data with ease.
-
-## Getting Started
-
-Let's get Querent up and running on your local machine.
-
-### Prerequisites
-
-- Python 3.9+
-- Virtual environment (optional but recommended)
-
-### Installation
-
-1. Create a virtual environment (recommended):
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-2. Install latest Querent Workflow Orchestrator package:
-
-   ```bash
-   pip install querent
-   ```
-  
-3. Install the project dependencies:
-
-   ```bash
-     python3 -m spacy download en_core_web_lg
-   ```
-
-4. Apt install the project dependencies:
-   ```bash
-        sudo apt install tesseract-ocr
-        sudo apt install libtesseract-dev
-        sudo apt-get install ffmpeg
-        sudo apt install antiword
-    ```
 
 ## Usage
 
@@ -104,17 +65,10 @@ Querent provides a flexible framework that adapts to your specific data collecti
 
 2. **Collecting Data:** Implement collector classes to gather data from chosen sources. Handle errors and edge cases gracefully.
 
-3. **Processing Data:** Create ingestors and processors to clean, transform, and filter collected data. Apply custom logic to meet your requirements.
+3. **Processing Data:** Create ingestors and processors to clean, transform, and filter collected data. 
 
 4. **Storage:** Choose your storage system (e.g., databases) and configure connections. Store processed data efficiently.
 
-5. **Task Orchestration:** For large tasks, implement a task orchestrator to manage and distribute the workload.
-
-6. **Scaling:** To handle scalability, consider running multiple instances of collectors and ingestors in parallel.
-
-7. **Monitoring:** Implement monitoring and logging to track task progress, detect errors, and ensure smooth operation.
-
-8. **Documentation:** Maintain thorough project documentation to make it easy for others (and yourself) to understand and contribute.
 
 ## Configuration
 
@@ -161,138 +115,147 @@ sequenceDiagram
 
 ```
 
-## Ease of Use
+## Getting Started
 
-With Querent, creating scalable workflows with any LLM is just a few lines of code.
+Let's get Querent up and running on your local machine.
+
+### Prerequisites
+
+- Python 3.9+
+- Virtual environment (optional but recommended)
+
+### Installation
+
+1. Create a virtual environment (recommended):
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
+2. Install latest Querent Workflow Orchestrator package:
+
+   ```bash
+   pip install querent
+   ```
+  
+3. Install the project dependencies:
+
+   ```bash
+     python3 -m spacy download en_core_web_lg
+   ```
+
+4. Apt install the project dependencies:
+   ```bash
+        sudo apt install tesseract-ocr
+        sudo apt install libtesseract-dev
+        sudo apt-get install ffmpeg
+        sudo apt install antiword
+    ```
+5. Install torch
+    ```
+    pip install torch
+    ```
+6. Install Docker : Refer to the [official documentation](https://docs.docker.com/engine/install/)
+
+### Setup DB
+
+1. **Download the docker compose file** - [Postgres docker compose file.](tests/tutorial/docker-compose.yaml)
+
+2. **Run Postgres Instance** - Navigate to the directory where the docker compose file is downloaded. Execute the below:
+
+```bash
+    docker compose up
+```
+
+### Example
+
+1. **Download the example file with fixed entities** - [Example file.](tests/tutorial/example_fixed_entities.py). Then also download the [example pdf](tests/data/readme_assets/example.pdf) and place it in a directory.
+
+2. **Run the example file** - This script will load the BERT-based embedding model to extract attention weights. The algorithm is designed to identify semantic triples in the data. In the example.py file above, users should modify the script to change the directory where the `example.pdf` file is stored. If running on personal files, modify the fixed entities and their respective types. This will create semantic triples (Subject, Predicate, Object) based on user-provided data. Execute the below:
 
 ```python
-import pytest
-import uuid
-from pathlib import Path
-import asyncio
-
-from querent.callback.event_callback_interface import EventCallbackInterface
-from querent.common.types.ingested_tokens import IngestedTokens
-from querent.common.types.ingested_code import IngestedCode
-from querent.common.types.ingested_images import IngestedImages
-from querent.common.types.ingested_messages import IngestedMessages
-from querent.common.types.querent_event import EventState, EventType
-from querent.common.types.querent_queue import QuerentQueue
-from querent.core.base_engine import BaseEngine
-from querent.querent.querent import Querent
-from querent.querent.resource_manager import ResourceManager
-from querent.collectors.collector_resolver import CollectorResolver
-from querent.common.uri import Uri
-from querent.config.collector.collector_config import FSCollectorConfig
-from querent.ingestors.ingestor_manager import IngestorFactoryManager
-
-# Create input and output queues
-input_queue = QuerentQueue()
-resource_manager = ResourceManager()
+    python3 example_fixed_entities.py
+```
 
 
-# Define a simple mock LLM engine for testing
-class MockLLMEngine(BaseEngine):
-    def __init__(self, input_queue: QuerentQueue):
-        super().__init__(input_queue)
+3. **Example Output** - Two tables are initialized when the above script is run
 
-    async def process_tokens(self, data: IngestedTokens):
-        if data is None or data.is_error():
-            # the LLM developer can raise an error here or do something else
-            # the developers of Querent can customize the behavior of Querent
-            # to handle the error in a way that is appropriate for the use case
-            self.set_termination_event()
-            return
-        # Set the state of the LLM
-        # At any given point during the execution of the LLM, the LLM developer
-        # can set the state of the LLM using the set_state method
-        # The state of the LLM is stored in the state attribute of the LLM
-        # The state of the LLM is published to subscribers of the LLM
-        current_state = EventState(EventType.Graph, 1.0, "anything", "dummy.txt")
-        await self.set_state(new_state=current_state)
+- **Metadata table** - 
 
-    async def process_code(self, data: IngestedCode):
-        pass
-
-    async def process_messages(self, data: IngestedMessages):
-        return super().process_messages(data)
-
-    async def process_images(self, data: IngestedImages):
-        return super().process_images(data)
-
-    def validate(self):
-        return True
+| id | event_id                             | subject  | subject_type | predicate | object | object_type | sentence                                                                                                                                                                                                                                                                                                                                                            | file                                                                     | doc_source                                                          | score   |
+|----|--------------------------------------|----------|--------------|-----------|--------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------|---------|
+| 1  | 298b4df3-a2f1-4721-b78d-9099309257c2 | coach    | person       | athlete   | health | method      | coach torres, with her innovative approach to student-athlete health and her emphasis on holistic training methods, has significantly influenced the physical and mental preparedness of greenwood's athletes. | /home/user/querent-main/readme_assets/example.pdf | file:///home/user/querent-main/readme_assets | 0.159262 |
 
 
-@pytest.mark.asyncio
-async def test_example_workflow_with_querent():
-    # Initialize some collectors to collect the data
-    directory_path = "path/to/your/data/directory"
-    collectors = [
-        CollectorResolver().resolve(
-            Uri("file://" + str(Path(directory_path).resolve())),
-            FSCollectorConfig(root_path=directory_path, id=str(uuid.uuid4())),
-        )
-    ]
+- **Embedding table** - 
 
-    # Connect to the collector
-    for collector in collectors:
-        await collector.connect()
-
-    # Set up the result queue
-    result_queue = asyncio.Queue()
-
-    # Create the IngestorFactoryManager
-    ingestor_factory_manager = IngestorFactoryManager(
-        collectors=collectors, result_queue=result_queue
-    )
-
-    # Start the ingest_all_async in a separate task
-    ingest_task = asyncio.create_task(ingestor_factory_manager.ingest_all_async())
-
-    ### A Typical Use Case ###
-    # Create an engine to harness the LLM
-    llm_mocker = MockLLMEngine(input_queue)
-
-    # Define a callback function to subscribe to state changes
-    class StateChangeCallback(EventCallbackInterface):
-        async def handle_event(self, event_type: EventType, event_state: EventState):
-            print(f"New state: {event_state}")
-            print(f"New state type: {event_type}")
-            assert event_state.event_type == EventType.Graph
-
-    # Subscribe to state change events
-    # This pattern is ideal as we can expose multiple events for each use case of the LLM
-    llm_mocker.subscribe(EventType.Graph, StateChangeCallback())
-
-    ## one can also subscribe to other events, e.g. EventType.CHAT_COMPLETION ...
-
-    # Create a Querent instance with a single MockLLM
-    # here we see the simplicity of the Querent
-    # massive complexity is hidden in the Querent,
-    # while being highly configurable, extensible, and scalable
-    # async architecture helps to scale to multiple querenters
-    # How async architecture works:
-    #   1. Querent starts a worker task for each querenter
-    #   2. Querenter starts a worker task for each worker
-    #   3. Each worker task runs in a loop, waiting for input data
-    #   4. When input data is received, the worker task processes the data
-    #   5. The worker task notifies subscribers of state changes
-    #   6. The worker task repeats steps 3-5 until termination
-    querent = Querent(
-        [llm_mocker],
-        resource_manager=resource_manager,
-    )
-    # Start the querent
-    querent_task = asyncio.create_task(querent.start())
-    await asyncio.gather(ingest_task, querent_task)
+| id | event_id                             | embeddings                                                                                                                            |
+|----|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| 1  | 298b4df3-a2f1-4721-b78d-9099309257c2 | [-0.00637318,0.0032276064,-0.016642869,0.018911008,-0.004372431,0.035932742,0.010418983,-0.00960234,0.009969827,-0.021499356,...] |
 
 
-if __name__ == "__main__":
-    asyncio.run(test_example_workflow_with_querent())
+## Performing Similarity Search
 
+Users can perform similarity searches in the embedding table to find relevant documents based on the vector embeddings. Here’s how you can do it:
+
+1. Convert your query into a vector embedding using the same embedding model used for creating the embeddings in the embedding table.
+
+2. Find similar matches: Perform a similarity search in the embedding table to find the top N similar embeddings.
+
+3. Retrieve relevant data: Use the `event_id` from the similar embeddings to fetch the corresponding data from the metadata table.
+
+This approach is highly useful when dealing with thousands of files, as it essentially creates pointers to knowledge, making it easy to retrieve relevant information efficiently.
+
+## Traversing the Data
+Querent allows you to traverse the data using SQL queries, enabling you to explore inward and outward edges from either the subject or object. Here’s how:
+
+1. Get Outward Edges: Find all relationships where a given entity is the subject.
+```sql
+SELECT * FROM public.metadata
+WHERE subject = 'your_entity';
+```
+
+2. Get Inward Edges: Find all relationships where a given entity is the object.
+```sql
+SELECT * FROM public.metadata
+WHERE object = 'your_entity';
+```
+3. Find Shortest Path Based on Score: Use recursive queries to find the shortest path between entities based on the score.
+```sql
+WITH RECURSIVE Path (id, event_id, subject, object, score, path, depth) AS (
+  SELECT id, event_id, subject, object, score, ARRAY[subject, object]::VARCHAR[], 1
+  FROM public.metadata
+  WHERE subject = 'start_entity'
+  UNION ALL
+  SELECT m.id, m.event_id, m.subject, m.object, p.score + m.score, p.path || m.object, p.depth + 1
+  FROM metadata m
+  JOIN Path p ON m.subject = p.object
+  WHERE p.depth < 10  -- Limit depth to prevent infinite recursion
+    AND NOT (m.object = ANY(p.path))  -- Avoid cycles
+)
+SELECT *
+FROM Path
+WHERE 'end_entity' = ANY(path)
+ORDER BY score ASC
+LIMIT 1;
+ 1;
 
 ```
+
+
+## Additional Benefits
+
+1. Preparing Factual Data: The extracted triples can be used to prepare factual data for fine-tuning or training large language models (LLMs).
+
+2. GNN Use Cases: Graph Neural Networks (GNNs) can utilize the relationships and entities extracted to perform downstream tasks such as link prediction, node classification, and more.
+
+3. AI Use Cases: Enable advanced AI functionalities like cross-document summarization, entity recognition, and trend analysis across a large corpus of documents.
+
+4. Replacing the Need for a dedicated Graph Database: By using PostgreSQL and the embedded vectors, you can achieve efficient graph traversal and relationship mapping without the overhead of a dedicated graph database. This reduces complexity and cost.
+
+5. Scalability: This method scales well with the number of documents, making it suitable for large datasets.
+
+This system not only enhances data retrieval and analysis but also provides a robust foundation for various AI and machine learning applications.
 
 ## Contributing
 

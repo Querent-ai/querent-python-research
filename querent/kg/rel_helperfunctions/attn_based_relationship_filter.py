@@ -172,9 +172,10 @@ def process_tokens(ner_instance : NER_LLM, extractor, filtered_triples, nlp_mode
         updated_triples = []
         for subject, predicate_metadata, object in filtered_triples:
             try:
-                context = predicate_metadata['current_sentence'].replace("\n"," ")
+                context = predicate_metadata['current_sentence'].replace("\n"," ").lower()
                 head_positions = ner_instance.find_subword_indices(context, predicate_metadata['entity1_nn_chunk'])
                 tail_positions = ner_instance.find_subword_indices(context, predicate_metadata['entity2_nn_chunk'])
+
                 if head_positions[0][0] > tail_positions[0][0]:
                     head_entity = {'entity': object, 'noun_chunk':predicate_metadata['entity2_nn_chunk'], 'entity_label':predicate_metadata['entity2_label'] }
                     tail_entity =  {'entity': subject, 'noun_chunk':predicate_metadata['entity1_nn_chunk'], 'entity_label':predicate_metadata['entity1_label']} 
@@ -188,20 +189,18 @@ def process_tokens(ner_instance : NER_LLM, extractor, filtered_triples, nlp_mode
                 attention_matrix = extractor.inference_attention(model_input)
                 token_idx_with_word = ner_instance.tokenize_sentence_with_positions(context)
                 spacy_doc  = nlp_model(context)
-                filter = IndividualFilter(True, 0.02, token_idx_with_word, spacy_doc)
-            
+                filter = IndividualFilter(True, 0.01, token_idx_with_word, spacy_doc)
+                
                 ## HEAD Entity Based Attention Search
                 candidate_paths = perform_search(entity_pair.head_entity['start_idx'], attention_matrix, entity_pair, search_candidates=5, require_contiguous=True, max_relation_length=8, num_initial_tokens=extractor.num_start_tokens())
                 candidate_paths = remove_duplicates(candidate_paths)
                 filtered_results = filter.filter(candidates=candidate_paths,e_pair=entity_pair)
                 predicate_he, score_he = get_best_relation(filtered_results)
-                
                 ##TAIL ENTITY Based Attention Search
                 candidate_paths = perform_search(entity_pair.tail_entity['start_idx'], attention_matrix, entity_pair, search_candidates=5, require_contiguous=True, max_relation_length=8, num_initial_tokens=extractor.num_start_tokens())
                 candidate_paths = remove_duplicates(candidate_paths)
                 filtered_results = filter.filter(candidates=candidate_paths,e_pair=entity_pair)
                 predicate_te, score_te = get_best_relation(filtered_results)
-
                 if score_he > score_te and (score_he >= 0.1 or score_te >= 0.1):
                     triple = create_semantic_triple(head_entity=head_entity['noun_chunk'],
                                                     tail_entity=tail_entity['noun_chunk'],

@@ -1,0 +1,23 @@
+version: '3'
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_USER=querent
+      - POSTGRES_PASSWORD=querent
+      - POSTGRES_DB=querent_test
+    volumes:
+      - ./quester/storage/sql/:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - querent
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "querent_test"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+
+networks:
+  querent:
