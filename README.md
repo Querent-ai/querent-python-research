@@ -35,6 +35,9 @@ The Asynchronous Data Dynamo and Graph Neural Network Catalyst
     - [Installation](#installation)
     - [Setup DB](#setup-db)
     - [Example](#example)
+  - [Perform Similarity Search](#performing-similarity-search)
+  - [Graph Traversal](#traversing-the-data)
+  - [Benefits](#additional-benefits)
   - [Contributing](#contributing)
   - [License](#license)
   
