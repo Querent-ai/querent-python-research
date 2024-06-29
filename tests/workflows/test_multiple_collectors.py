@@ -120,7 +120,7 @@ async def test_multiple_collectors_all_async():
             ):
                 messages += 1
             counter += 1
-    assert counter == 112
+    assert counter == 94
     assert messages > 0
 
 

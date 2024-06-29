@@ -1,4 +1,5 @@
 import json
+import uuid
 from transformers import AutoConfig, AutoTokenizer
 import transformers
 import time
@@ -298,7 +299,6 @@ class BERTLLM(BaseEngine):
         try:
             doc_entity_pairs = []
             doc_source = data.doc_source
-
             if not BERTLLM.validate_ingested_tokens(data):
                 self.set_termination_event()
                 return
@@ -311,7 +311,7 @@ class BERTLLM(BaseEngine):
             doc_entity_pairs = self._get_entity_pairs(content)
             if not doc_entity_pairs:
                 return
-
+            
             doc_entity_pairs = self._process_entity_types(doc_entity_pairs)
             if not self.entity_context_extractor and not self.predicate_context_extractor:
                 pairs_withattn = self.attn_scores_instance.extract_and_append_attention_weights(doc_entity_pairs)
@@ -341,6 +341,7 @@ class BERTLLM(BaseEngine):
         else:
             content = clean_text
             file = data.get_file_path()
+        
         return content, file
 
     def _get_entity_pairs(self, content):
@@ -414,8 +415,9 @@ class BERTLLM(BaseEngine):
         for triple in embedding_triples:
             if self.termination_event.is_set():
                 return
+            event_id = str(uuid.uuid4())
 
-            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple))
+            graph_json = json.dumps(TripleToJsonConverter.convert_graphjson(triple, event_id=event_id))
             if graph_json:
                 current_state = EventState(
                     event_type=EventType.Graph,
@@ -436,7 +438,7 @@ class BERTLLM(BaseEngine):
                                                                                         base_weights=[predicate_score, predicate_score, 3],
                                                                                         normalize_weights=True  # Normalize weights to ensure they sum to 1
                                                                                     )
-            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple=triple, embeddings=final_emb))
+            vector_json = json.dumps(TripleToJsonConverter.convert_vectorjson(triple=triple, embeddings=final_emb,event_id=event_id))
             if vector_json:
                 current_state = EventState(
                     event_type=EventType.Vector,
