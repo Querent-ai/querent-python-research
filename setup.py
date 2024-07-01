@@ -22,7 +22,7 @@ requirements = [
     "gensim==4.3.2",
     "gguf==0.6.0",
     "google-api-python-client==2.105.0",
-    "google-cloud-storage==2.14.0",
+    "google-cloud-storage==2.17.0",
     "hdbscan==0.8.33",
     "jira==3.6.0",
     "jmespath==1.0.1",
