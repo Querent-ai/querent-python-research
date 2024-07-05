@@ -1,4 +1,4 @@
-# Querent
+# Querent Research Repository 
 
 The Asynchronous Data Dynamo and Graph Neural Network Catalyst
 
